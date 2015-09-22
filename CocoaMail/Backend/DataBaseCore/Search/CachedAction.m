@@ -1,0 +1,171 @@
+//
+//  CachedAction.m
+//  CocoaMail
+//
+//  Created by Christopher Hockley on 16/07/15.
+//  Copyright (c) 2015 CocoaSoft. All rights reserved.
+//
+
+#import "CachedAction.h"
+#import "CacheDBAccessor.h"
+
+@implementation CachedAction
+
+@synthesize pk,uid,actionIndex,toFolder;
+
++ (void)tableCheck
+{
+    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        
+        if (![db executeUpdate:@"CREATE TABLE cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER)"])
+            CCMLog(@"errorMessage = %@",db.lastErrorMessage);
+        
+    }];
+}
+
++ (BOOL)addAction:(CachedAction *) action
+{
+    __block BOOL success = FALSE;
+    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        
+        FMResultSet *result = [db executeQuery:@"SELECT * FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?",
+                               @(action.uid.uid),
+                               @(action.uid.folder),
+                               @(action.uid.account),
+                               @(action.actionIndex)];
+        if([result next]){
+            success = true;
+            return;
+        }
+        [result close];
+        
+        success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder) VALUES (?,?,?,?,?);",
+                    @(action.uid.uid),
+                    @(action.uid.folder),
+                    @(action.uid.account),
+                    @(action.actionIndex),
+                    @(action.toFolder)];
+        
+    }];
+    
+    return success;
+}
+
++ (BOOL)addActionWithUid:(UidEntry *)uidEntry actionIndex:(NSInteger)pActionIndex toFolder:(NSInteger)folder
+{
+    CachedAction * cA = [[CachedAction alloc]init];
+    cA.uid = uidEntry;
+    cA.actionIndex = pActionIndex;
+    cA.toFolder = folder;
+    
+    return [CachedAction addAction:cA];
+}
+
++ (BOOL)removeAction:(CachedAction *) action
+{
+    __block BOOL success = FALSE;
+    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        success =  [db executeUpdate:@"DELETE FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?;",
+                    @(action.uid.uid),
+                    @(action.uid.folder),
+                    @(action.uid.account),
+                    @(action.actionIndex)];
+    }];
+    
+    return success;
+}
+
++ (NSMutableArray *)getActions
+{
+    NSMutableArray *actions = [[NSMutableArray alloc] init];
+    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM cached_actions"];
+        
+        while([results next])
+        {
+            CachedAction *cachedA = [[CachedAction alloc]init];
+            
+            cachedA.pk = [results intForColumn:@"pk"];
+            cachedA.actionIndex = [[results objectForColumnName:@"action"] integerValue];
+            cachedA.toFolder = [[results objectForColumnName:@"to_folder"] integerValue];
+            cachedA.uid = [[UidEntry alloc]init];
+            cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
+            cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
+            cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
+            
+            [actions addObject:cachedA];
+        }
+        
+    }];
+    
+    return actions;
+}
+
++ (NSMutableArray *)getActionsForAccount:(NSInteger)account
+{
+    NSMutableArray *actions = [[NSMutableArray alloc] init];
+    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM cached_actions WHERE account = ?",
+                                @(account)];
+        
+        while([results next])
+        {
+            CachedAction *cachedA = [[CachedAction alloc]init];
+            
+            cachedA.pk = [results intForColumn:@"pk"];
+            cachedA.actionIndex = [[results objectForColumnName:@"action"] integerValue];
+            cachedA.toFolder = [[results objectForColumnName:@"to_folder"] integerValue];
+            cachedA.uid = [[UidEntry alloc]init];
+            cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
+            cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
+            cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
+            
+            [actions addObject:cachedA];
+        }
+        
+    }];
+    
+    return actions;
+}
+
+- (BOOL)doAction
+{
+    BOOL success = false;
+    
+    switch (self.actionIndex) {
+        case 0:
+            success = [UidEntry move:self.uid toFolder:self.toFolder];
+            break;
+        case 1:
+            self.uid.pk = -1;
+            success = [UidEntry delete:self.uid];
+            break;
+        case 2:
+            success = [UidEntry addFlag:MCOMessageFlagFlagged to:self.uid];
+            break;
+        case 3:
+            success = [UidEntry removeFlag:MCOMessageFlagFlagged to:self.uid];
+            break;
+            
+        default:
+            break;
+    }
+    
+    if (success) {
+        [CachedAction removeAction:self];
+    }
+    
+    return success;
+}
+
+@end

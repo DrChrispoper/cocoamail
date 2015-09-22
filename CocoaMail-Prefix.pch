@@ -1,0 +1,23 @@
+//
+// Prefix header for all source files of the 'CocoaMail' target in the 'CocoaMail' project
+//
+
+#import <Availability.h>
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
+#endif
+
+#define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+#define OptionsHasValue(options, value) (((options) & (value)) == (value))
+
+#define CCMColorFromHEX(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
+
+#define CCMAccountOne 0xc99d66
+#define CCMAccountTwo 0xa0cfef
+#define CCMAccountThree 0xe6332a
+#define CCMAccountFour 0x81d8ab
+#define CCMAccountFive 0xf6db6e

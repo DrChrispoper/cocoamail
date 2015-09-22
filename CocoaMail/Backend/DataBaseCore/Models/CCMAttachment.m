@@ -1,0 +1,212 @@
+//
+//  Attachemnt.m
+//  CocoaMail
+//
+//  Created by Christopher Hockley on 20/01/2014.
+//  Copyright (c) 2014 Christopher Hockley. All rights reserved.
+//
+
+#import "CCMAttachment.h"
+#import "AttachmentDBAccessor.h"
+#import "FMDatabase.h"
+#import "Attachments.h"
+
+@implementation CCMAttachment
+
++ (void)addAttachments:(NSArray*)atts
+{
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        for (CCMAttachment *at in atts) {
+            if (!at.data) {
+                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,isInline) VALUES (?,?,?,?,?,?);",
+                at.fileName,@(at.size),at.mimeType,at.msgId,at.partID,@(at.isInline)];
+            }
+            else {
+                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,isInline) VALUES (?,?,?,?,?,?,?);",
+                at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,@(at.isInline)];
+            }
+        }
+    }];
+}
+
++ (void)addAttachmentsUnsafe:(NSMutableArray*)atts
+{
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    FMDatabase *database = [FMDatabase databaseWithPath:databaseManager.databaseFilepath];
+    [database open];
+    
+        for (CCMAttachment *at in atts) {
+            [database executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,isInline) VALUES (?,?,?,?,?,?,?);",
+             at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.isInline];
+        }
+    
+    [database close];
+}
+
++ (NSMutableArray *) getAttachments
+{
+    return [Attachment getAttachments:FALSE];
+}
+
++ (NSMutableArray *) getAttachments:(BOOL)andInline
+{
+    NSMutableArray *attachments = [[NSMutableArray alloc] init];
+    
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE isInline = ?",@(andInline)];
+        
+        while([results next])
+        {
+            Attachment *attachment = [[Attachment alloc] init];
+            
+            attachment.pk = [results intForColumn:@"pk"];
+            attachment.fileName = [results stringForColumn:@"file_name"];
+            attachment.size = [results intForColumn:@"size"];
+            attachment.mimeType = [results stringForColumn:@"mime_type"];
+            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.data = [results dataForColumn:@"data"];
+            attachment.partID = [results stringForColumn:@"partID"];
+            attachment.isInline = [results intForColumn:@"isInline"];
+            
+            [attachments addObject:attachment];
+        }
+    }];
+    
+    return attachments;
+}
+
+
++ (NSMutableArray*)getAttachmentsWithMsgId:(NSString*)msgId {
+    
+    NSMutableArray *attachments = [[NSMutableArray alloc] init];
+    
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? ",msgId];
+        
+        while([results next])
+        {
+            Attachment *attachment = [[Attachment alloc] init];
+            
+            attachment.pk = [results intForColumn:@"pk"];
+            attachment.fileName = [results stringForColumn:@"file_name"];
+            attachment.size = [results intForColumn:@"size"];
+            attachment.mimeType = [results stringForColumn:@"mime_type"];
+            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.data = [results dataForColumn:@"data"];
+            attachment.partID = [results stringForColumn:@"partID"];
+            attachment.isInline = [results intForColumn:@"isInline"];
+            
+            [attachments addObject:attachment];
+        }
+    }];
+    
+    return attachments;
+}
+
++ (NSMutableArray*)getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline{
+    
+    NSMutableArray *attachments = [[NSMutableArray alloc] init];
+    
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and isInline = ?",msgId,@(isInline)];
+        
+        while([results next])
+        {
+            Attachment *attachment = [[Attachment alloc] init];
+            
+            attachment.pk = [results intForColumn:@"pk"];
+            attachment.fileName = [results stringForColumn:@"file_name"];
+            attachment.size = [results intForColumn:@"size"];
+            attachment.mimeType = [results stringForColumn:@"mime_type"];
+            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.data = [results dataForColumn:@"data"];
+            attachment.partID = [results stringForColumn:@"partID"];
+            attachment.isInline = [results intForColumn:@"isInline"];
+            
+            [attachments addObject:attachment];
+        }
+    }];
+    
+    return attachments;
+}
+
+
++ (BOOL)searchAttachmentswithMsgId:(NSString*)msgId
+{
+    __block BOOL result = NO;
+    
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        
+        FMResultSet *results = [db executeQuery:@"SELECT pk FROM attachments WHERE msg_id = ?", msgId];
+        
+        if([results next]) result = YES;
+        
+        [results close];
+    }];
+    
+    return result;
+    
+}
+
++ (void)updateData:(CCMAttachment*)attachment{
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?",attachment.data, attachment.msgId,attachment.partID];
+    }];
+}
+
+
++ (void)tableCheck
+{
+    AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+        
+        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, isInline INTEGER)"])
+            CCMLog(@"errorMessage = %@",db.lastErrorMessage);
+        
+        
+        if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS attachments_msg_id on attachments(msg_id);"])
+            CCMLog(@"errorMessage = %@",db.lastErrorMessage);
+        
+        
+    }];
+}
+
+- (BOOL)isEqual:(id)other
+{
+    if (other == self)
+        return YES;
+    if (!other || ![other isKindOfClass:[self class]])
+        return NO;
+    
+    return [self isEqualToAttachment:other];
+}
+
+- (BOOL)isEqualToAttachment:(CCMAttachment *)attachment
+{
+    if (self == attachment)
+        return YES;
+    if (![[self data] isEqualToData:[attachment data]])
+        return NO;
+    
+    return YES;
+}
+
+- (NSUInteger)hash
+{
+    return [self.data hash];
+}
+
+@end
