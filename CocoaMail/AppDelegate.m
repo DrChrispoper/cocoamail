@@ -19,6 +19,7 @@
 
 #import "Reachability.h"
 #import <DropboxSDK/DropboxSDK.h>
+#import <Instabug/Instabug.h>
 
 @implementation AppDelegate
 
@@ -30,6 +31,8 @@
     
     //TOOD:IAP
     [self activatePurchasedFeatures];
+    
+    [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" captureSource:IBGCaptureSourceUIKit invocationEvent:IBGInvocationEventShake];
     
     UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
     [application registerUserNotificationSettings:settings];

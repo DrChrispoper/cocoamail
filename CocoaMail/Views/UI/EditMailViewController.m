@@ -11,6 +11,10 @@
 #import "Accounts.h"
 #import "AppSettings.h"
 
+#import "GTLDrive.h"
+#import <BoxBrowseSDK/BoxBrowseSDK.h>
+#import "DropboxBrowserViewController.h"
+#import "GoogleDriveExplorer.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -35,7 +39,9 @@ typedef enum : NSUInteger {
 
 
 @interface EditMailViewController () <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, ExpendableBadgeDelegate,
-UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate>
+UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate>
+
+@property (nonatomic, readwrite, strong) UINavigationController *navControllerForBrowseSDK;
 
 @property (nonatomic, weak) UIView* contentView;
 @property (nonatomic, weak) UIScrollView* scrollView;
@@ -81,7 +87,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 
 @implementation EditMailViewController
-
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -184,6 +189,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [self.toTextField becomeFirstResponder];
     }
     
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
 
@@ -1017,6 +1029,11 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return YES;
 }
 
+-(BOOL)prefersStatusBarHidden
+{
+    return NO;
+}
+
 #pragma mark - SearchUI
 
 -(void) _presentSearchUI
@@ -1313,8 +1330,206 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         }
         [self _updateAttachView];
         
-        [picker dismissViewControllerAnimated:YES completion:nil];
+        [picker popViewControllerAnimated:YES];
     }
+}
+
+//------------------------------------------------------------------------------------------------------------//
+//------- Dropbox --------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------//
+#pragma mark - Dropbox
+
+- (void)gdriveExplorer:(GoogleDriveExplorer *)explorer didDownloadFile:(NSString *)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+{
+    if (isLocalFileOverwritten == YES) {
+        CCMLog(@"Downloaded %@ by overwriting local file", fileName);
+    } else {
+        CCMLog(@"Downloaded %@ without overwriting", fileName);
+    }
+    
+    Attachment *attach = [[Attachment alloc]init];
+    attach.fileName = fileName;
+    
+    [attach loadLocalFile];
+    
+    if (self.mail.attachments == nil) {
+        self.mail.attachments = @[attach];
+    }
+    else {
+        NSMutableArray* ma = [self.mail.attachments mutableCopy];
+        [ma addObject:attach];
+        self.mail.attachments = ma;
+    }
+    [self _updateAttachView];
+}
+
+- (void)gdriveExplorer:(GoogleDriveExplorer *)explorer fileConflictWithLocalFile:(NSURL *)localFileURL withGDriveFile:(GTLDriveFile *)gdriveFile withError:(NSError *)error
+{
+    
+}
+
+- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didDownloadFile:(NSString *)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+{
+    if (isLocalFileOverwritten == YES) {
+        CCMLog(@"Downloaded %@ by overwriting local file", fileName);
+    } else {
+        CCMLog(@"Downloaded %@ without overwriting", fileName);
+    }
+    
+    Attachment *attach = [[Attachment alloc]init];
+    attach.fileName = fileName;
+    
+    [attach loadLocalFile];
+    
+    if (self.mail.attachments == nil) {
+        self.mail.attachments = @[attach];
+    }
+    else {
+        NSMutableArray* ma = [self.mail.attachments mutableCopy];
+        [ma addObject:attach];
+        self.mail.attachments = ma;
+    }
+    [self _updateAttachView];
+
+}
+
+- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didFailToDownloadFile:(NSString *)fileName
+{
+    CCMLog(@"Failed to download %@", fileName);
+}
+
+- (void)dropboxBrowser:(DropboxBrowserViewController *)browser fileConflictWithLocalFile:(NSURL *)localFileURL withDropboxFile:(DBMetadata *)dropboxFile withError:(NSError *)error
+{
+    CCMLog(@"File conflict between %@ and %@\n%@ last modified on %@\nError: %@", localFileURL.lastPathComponent, dropboxFile.filename, dropboxFile.filename, dropboxFile.lastModifiedDate, error);
+}
+
+- (void)dropboxBrowserDismissed:(DropboxBrowserViewController *)browser
+{
+    // This method is called after Dropbox Browser is dismissed. Do NOT dismiss DropboxBrowser from this method
+    // Perform any UI updates here to display any new data from Dropbox Browser
+    // ex. Update a UITableView that shows downloaded files or get the name of the most recently selected file:
+    //     NSString *fileName = [DropboxBrowserViewController fileName];
+    //[self.attachmentCollectionView reloadData];
+}
+
+- (void)dropboxBrowser:(DropboxBrowserViewController *)browser deliveredFileDownloadNotification:(UILocalNotification *)notification {}
+
+#pragma mark - BOXFolderViewControllerDelegate
+
+////////////////////////////////////////////////////////////////////////////////////////
+// These are all optional and will allow you to customize behavior for your app.
+////////////////////////////////////////////////////////////////////////////////////////
+
+- (BOOL)itemsViewControllerShouldShowCloseButton:(BOXItemsViewController *)itemsViewController
+{
+    return NO;
+}
+
+- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController shouldShowItem:(BOXItem *)item
+{
+    return YES;
+}
+
+- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController shouldEnableItem:(BOXItem *)item
+{
+    return YES;
+}
+
+- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController willNavigateToFolder:(BOXFolder *)folder
+{
+    return YES;
+}
+
+- (void)itemsViewController:(BOXItemsViewController *)itemsViewController didTapFolder:(BOXFolder *)folder inItems:(NSArray *)items
+{
+    NSLog(@"Did tap folder: %@", folder.name);
+}
+
+- (void)itemsViewController:(BOXItemsViewController *)itemsViewController didTapFile:(BOXFile *)file inItems:(NSArray *)items
+{
+    NSLog(@"Did tap file: %@", file.name);
+    
+    BOXContentClient *contentClient = [BOXContentClient defaultClient];
+    NSString *localFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.name];
+    BOXFileDownloadRequest *boxRequest = [contentClient fileDownloadRequestWithID:file.modelID toLocalFilePath:localFilePath];
+    
+    [boxRequest performRequestWithProgress:^(long long totalBytesTransferred, long long totalBytesExpectedToTransfer) {
+        // Update a progress bar, etc.
+    } completion:^(NSError *error) {
+        // Download has completed. If it failed, error will contain reason (e.g. network connection)
+        if (error == nil) {
+            Attachment *attach = [[Attachment alloc]init];
+            attach.fileName = file.name;
+            
+            [attach loadLocalFile];
+            
+            if (self.mail.attachments == nil) {
+                self.mail.attachments = @[attach];
+            }
+            else {
+                NSMutableArray* ma = [self.mail.attachments mutableCopy];
+                [ma addObject:attach];
+                self.mail.attachments = ma;
+            }
+            [self _updateAttachView];
+
+            
+            [self.navControllerForBrowseSDK popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController *)itemsViewController
+{
+    // If you don't implement this, the navigation controller will be dismissed for you.
+    // Only implement if you need to customize behavior.
+    NSLog(@"Did tap close button");
+    [self.navControllerForBrowseSDK popViewControllerAnimated:YES];
+}
+
+// By default the following sort order will be applied:
+// - Folders come before files
+// - Sort by modification date descending
+// - Sort by name ascending
+// You can implement your own sort order by implementing this delegate method.
+//
+//- (NSComparisonResult)itemsViewController:(BOXItemsViewController *)itemsViewController compareForSortingItem:(BOXItem *)itemA toItem:(BOXItem *)itemB
+//{
+//}
+
+- (BOOL)folderViewControllerShouldShowChooseFolderButton:(BOXFolderViewController *)folderViewController
+{
+    return YES;
+}
+
+- (void)folderViewController:(BOXFolderViewController *)folderViewController didChooseFolder:(BOXFolder *)folder
+{
+    NSLog(@"Did choose folder: %@", folder.name);
+}
+
+- (BOOL)folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController *)folderViewController
+{
+    return YES;
+}
+
+- (void)folderViewController:(BOXFolderViewController *)folderViewController didCreateNewFolder:(BOXFolder *)folder
+{
+    NSLog(@"Did create new folder: %@", folder.name);
+}
+
+- (BOOL)folderViewController:(BOXFolderViewController *)folderViewController shouldShowDeleteButtonForItem:(BOXItem *)item
+{
+    return YES;
+}
+
+- (void)folderViewController:(BOXFolderViewController *)folderViewController didDeleteItem:(BOXItem *)item
+{
+    NSLog(@"Did delete item: %@", item.name);
+}
+
+- (BOOL)folderViewControllerShouldShowSearchBar:(BOXFolderViewController *)folderViewController
+{
+    return YES;
 }
 
 -(void) _addAttach
@@ -1347,13 +1562,69 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Dropbox", @"Dropbox")
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
-                                        //
-                                        [ViewController presentAlertWIP:@"dropbox link…"];
+                                        // Pass any objects to the view controller here, like...
+                                        DropboxBrowserViewController *dropboxBrowser = [[DropboxBrowserViewController alloc]init];
+                                        
+                                        // dropboxBrowser.allowedFileTypes = @[@"doc", @"pdf"]; // Uncomment to filter file types. Create an array of allowed types. To allow all file types simply don't set the property
+                                        // dropboxBrowser.tableCellID = @"DropboxBrowserCell"; // Uncomment to use a custom UITableViewCell ID. This property is not required
+                                        
+                                        // When a file is downloaded (either successfully or unsuccessfully) you can have DBBrowser notify the user with Notification Center. Default property is NO.
+                                        dropboxBrowser.deliverDownloadNotifications = YES;
+                                        
+                                        // Dropbox Browser can display a UISearchBar to allow the user to search their Dropbox for a file or folder. Default property is NO.
+                                        dropboxBrowser.shouldDisplaySearchBar = YES;
+                                        
+                                        // Set the delegate property to recieve delegate method calls
+                                        dropboxBrowser.rootViewDelegate = self;
+                                        
+                                        // You must load it in a UINavigationController.
+                                        self.navControllerForBrowseSDK = [[UINavigationController alloc] initWithRootViewController:dropboxBrowser];
+                                        //[self.navControllerForBrowseSDK.supportedInterfaceOrientations = UIInterfaceOrientationMaskPortrait];
+                                        self.navControllerForBrowseSDK.navigationBar.translucent = NO;
+                                        [self presentViewController:self.navControllerForBrowseSDK animated:YES completion:nil];
+
                                     }];
-    [action setValue:[[UIImage imageNamed:@"pj_dropbox"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forKey:@"image"];
+    [action setValue:[[UIImage imageNamed:@"icone_dropbox"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forKey:@"image"];
     
     [ac addAction:action];
     
+    /*action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Google Drive", @"Google Drive")
+                                      style:UIAlertActionStyleDefault
+                                    handler:^(UIAlertAction* aa) {
+                                        // Pass any objects to the view controller here, like...
+                                        GoogleDriveExplorer *gdriveBrowser = [[GoogleDriveExplorer alloc]init];
+                                        
+                                        // dropboxBrowser.allowedFileTypes = @[@"doc", @"pdf"]; // Uncomment to filter file types. Create an array of allowed types. To allow all file types simply don't set the property
+                                        // dropboxBrowser.tableCellID = @"DropboxBrowserCelltwitter"; // Uncomment to use a custom UITableViewCell ID. This property is not required
+                                        
+                                        // When a file is downloaded (either successfully or unsuccessfully) you can have DBBrowser notify the user with Notification Center. Default property is NO.
+                                        gdriveBrowser.deliverDownloadNotifications = YES;
+                                        
+                                        // Set the delegate property to recieve delegate method calls
+                                        gdriveBrowser.rootViewDelegate = self;
+                                        
+                                        // You must load it in a UINavigationController.
+                                        self.navControllerForBrowseSDK = [[UINavigationController alloc] initWithRootViewController:gdriveBrowser];
+                                        [self presentViewController:self.navControllerForBrowseSDK animated:YES completion:nil];
+                                    }];
+    [action setValue:[[UIImage imageNamed:@"icone_google"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forKey:@"image"];
+    
+    [ac addAction:action];
+    
+    action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Box", @"Box")
+                                      style:UIAlertActionStyleDefault
+                                    handler:^(UIAlertAction* aa) {
+                                        [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];
+                                        BOXFolderViewController *folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
+                                        folderViewController.delegate = self;
+                                        
+                                        // You must load it in a UINavigationController.
+                                        self.navControllerForBrowseSDK = [[UINavigationController alloc] initWithRootViewController:folderViewController];
+                                        [self presentViewController:self.navControllerForBrowseSDK animated:YES completion:nil];
+                                    }];
+    [action setValue:[[UIImage imageNamed:@"icone_box"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forKey:@"image"];
+    
+    [ac addAction:action];*/
     
     
     UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIAlertActionStyleCancel

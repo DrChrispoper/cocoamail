@@ -23,6 +23,7 @@
 #import "EmailProcessor.h"
 #import "AppSettings.h"
 #import <Google/SignIn.h>
+#import "DropboxBrowserViewController.h"
 
 @interface ViewController () <CocoaButtonDatasource, GIDSignInUIDelegate>
 
@@ -623,6 +624,19 @@ static ViewController* s_self;
         EditMailViewController* f = [[EditMailViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
+    }];
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_DROPBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock: ^(NSNotification* notif){
+        if ([self _checkInteractionAndBlock]) {
+            return;
+        }
+        
+        DropboxBrowserViewController *f = [[DropboxBrowserViewController alloc]init];
+        f.rootViewDelegate = [notif.userInfo objectForKey:kPRESENT_DELEGATE_KEY];
+        f.deliverDownloadNotifications = YES;
+        f.shouldDisplaySearchBar = YES;
+        
+        //[self _animatePushVC:f];
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock: ^(NSNotification* notif){

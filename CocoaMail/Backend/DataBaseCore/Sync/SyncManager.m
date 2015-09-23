@@ -24,8 +24,6 @@ static SyncManager *singleton = nil;
 @synthesize aNewEmailDelegate;
 @synthesize syncStates;
 @synthesize syncInProgress;
-@synthesize okContentTypes;
-@synthesize extensionContentType;
 
 + (SyncManager*)getSingleton
 {

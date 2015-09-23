@@ -93,6 +93,16 @@
     return self.image;
 }
 
+-(void)loadLocalFile
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *localPath = [NSTemporaryDirectory() stringByAppendingPathComponent:self.fileName];
+    if([fileManager fileExistsAtPath:localPath]){
+        self.data = [fileManager contentsAtPath:localPath];
+        self.size = [self.data length];
+    }
+}
+
 @end
 
 

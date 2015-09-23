@@ -16,6 +16,7 @@
 @property (nonatomic, strong) UIImage* image;
 
 -(UIImage*) miniature;
+-(void) loadLocalFile;
 
 @end
 

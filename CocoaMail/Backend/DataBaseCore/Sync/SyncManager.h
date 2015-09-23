@@ -19,17 +19,13 @@
 @interface SyncManager : NSObject {    
 	// sync-related stuff
 	NSMutableArray *syncStates;
-	BOOL syncInProgress;    
-	NSSet* okContentTypes;
-	NSDictionary* extensionContentType;
+	BOOL syncInProgress;
 }
 
 @property (nonatomic,weak) id aNewEmailDelegate;
 @property (nonatomic,strong) NSMutableArray *syncStates;
 @property (assign) BOOL syncInProgress;
 @property (assign) BOOL isFromStart;
-@property (nonatomic, copy) NSSet* okContentTypes;
-@property (nonatomic, copy) NSDictionary* extensionContentType;
 
 +(SyncManager*)getSingleton;
 

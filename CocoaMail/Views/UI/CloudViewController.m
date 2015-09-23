@@ -8,7 +8,13 @@
 
 #import "CloudViewController.h"
 
-@interface CloudViewController ()
+#import <Google/SignIn.h>
+#import <BoxBrowseSDK/BoxBrowseSDK.h>
+#import "DropboxBrowserViewController.h"
+
+@interface CloudViewController () <BOXFolderViewControllerDelegate,GIDSignInUIDelegate>
+
+@property (nonatomic, readwrite, strong) UINavigationController *navControllerForBrowseSDK;
 
 @property (nonatomic, weak) UIImageView* mainImage;
 @property (nonatomic, weak) UIButton* mainButton;
@@ -29,7 +35,8 @@
     item.leftBarButtonItem = [self backButtonInNavBar];
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle: self.cloudServiceName];
     
-    
+    [GIDSignIn sharedInstance].uiDelegate = self;
+
     UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 50, screenBounds.size.width, 120)];
     iv.contentMode = UIViewContentModeCenter;
     
@@ -72,13 +79,55 @@
     
 }
 
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    if([self.cloudServiceName isEqualToString:@"Dropbox"]){
+        if ([[DBSession sharedSession] isLinked]) {
+            [self.mainButton setSelected:YES];
+            [self.mainImage setHighlighted:YES];
+        }
+    }
+}
 
 -(void) _tap
 {
-    self.mainButton.selected = !self.mainButton.selected;
-    self.mainImage.highlighted = !self.mainImage.highlighted;
+    //self.mainButton.selected = !self.mainButton.selected;
+   // self.mainImage.highlighted = !self.mainImage.highlighted;
     
-    [ViewController presentAlertWIP:@"do the link…"];
+    if([self.cloudServiceName isEqualToString:@"Dropbox"]){
+        if (![[DBSession sharedSession] isLinked]) {
+            [[DBSession sharedSession] linkFromController:self];
+        } else {
+            [[DBSession sharedSession] unlinkAll];
+            UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Account Unlinked!", @"Title of alert view when unlinking Dropbox")
+                                                                               message:NSLocalizedString(@"Your dropbox account has been unlinked", @"Message of alert view when unlinking Dropbox")
+                                                                        preferredStyle:UIAlertControllerStyleAlert];
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Confirmation of alert view when unlinking Dropbox") style:UIAlertActionStyleDefault handler:nil]];
+            
+            [self presentViewController:alertView
+                               animated:YES
+                             completion:nil];
+        }
+    }
+    else if([self.cloudServiceName isEqualToString:@"Google Drive"]){
+        if (![[GIDSignIn sharedInstance] hasAuthInKeychain]) {
+            [[GIDSignIn sharedInstance] signIn];
+        }
+    }
+    else if([self.cloudServiceName isEqualToString:@"Box"]){
+        [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];
+        BOXFolderViewController *folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
+        folderViewController.delegate = self;
+        
+        // You must load it in a UINavigationController.
+        self.navControllerForBrowseSDK = [[UINavigationController alloc] initWithRootViewController:folderViewController];
+        [self presentViewController:self.navControllerForBrowseSDK animated:YES completion:nil];
+    }
+    else {
+        [ViewController presentAlertWIP:@"do the link…"];
+    }
 }
 
 -(BOOL) haveCocoaButton
@@ -86,5 +135,12 @@
     return NO;
 }
 
+- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController *)itemsViewController
+{
+    // If you don't implement this, the navigation controller will be dismissed for you.
+    // Only implement if you need to customize behavior.
+    NSLog(@"Did tap close button");
+    [self.navControllerForBrowseSDK dismissViewControllerAnimated:YES completion:nil];
+}
 
 @end
