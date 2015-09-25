@@ -74,7 +74,7 @@
     
     [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
     
-    if([Accounts sharedInstance].accounts.count ==  1){
+    if([Accounts sharedInstance].accountsCount ==  1){
         [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
     }
 }
@@ -266,7 +266,7 @@
             
             Conversation* conv = [[Conversation alloc] init];
             [conv addMail:[Mail mail:email]];
-            [((Account*)[Accounts sharedInstance].accounts[[AppSettings numIndexForAccount:[email account]]]) addConversation:conv];
+            [[[Accounts sharedInstance] getAccount:[AppSettings numIndexForAccount:[email account]]] addConversation:conv];
         }
     } error:^(NSError *error) {
         _completionHandler(hasNewEmail);

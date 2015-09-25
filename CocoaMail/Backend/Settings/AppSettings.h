@@ -85,9 +85,9 @@
 +(NSString*)initials:(NSInteger)accountNum;
 +(void)setInitials:(NSString*)y accountNum:(NSInteger)accountNum;
 
++(NSArray*)defaultColors;
 +(UIColor*)color:(NSInteger)accountNum;
 +(void)setColor:(UIColor*)y accountNum:(NSInteger)accountNum;
-+(void)setDefaultColorForAccountNum:(NSInteger)accountNum;
 
 // For active account
 +(BOOL)isUsingOAuth;

@@ -78,7 +78,7 @@
 -(void)_prepareTable
 {
     
-    NSArray* accounts = [Accounts sharedInstance].accounts;
+    NSArray* accounts = [[Accounts sharedInstance] getAllTheAccounts];
     NSMutableArray* as = [NSMutableArray arrayWithCapacity:accounts.count];
     NSMutableArray* da = [NSMutableArray arrayWithCapacity:1];
 

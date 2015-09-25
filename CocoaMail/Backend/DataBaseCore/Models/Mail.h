@@ -55,6 +55,7 @@
 @property (nonatomic, strong, readonly) NSMutableArray* mails;
 @property (nonatomic, strong, readonly) NSMutableSet* foldersType;
 
+-(NSDate*) latestDate;
 -(Mail*) firstMail;
 
 -(void) addMail:(Mail*)mail;

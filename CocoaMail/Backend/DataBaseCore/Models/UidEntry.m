@@ -89,7 +89,7 @@
     
     success =  [database executeUpdate:@"INSERT INTO uid_entry (uid,folder,msg_id,son_msg_id) VALUES (?,?,?,?);",
                 @(uid_entry.uid),
-                @(uid_entry.folder+1000*[AppSettings activeAccount]),
+                @(uid_entry.folder+1000*uid_entry.account),
                 uid_entry.msgId,
                 uid_entry.sonMsgId];
     
@@ -105,7 +105,7 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? AND folder = ?;",
                     uid_entry.msgId,
-                    @(uid_entry.folder+1000*[AppSettings activeAccount])];
+                    @(uid_entry.folder+1000*uid_entry.account)];
         
     }];
     
@@ -188,14 +188,14 @@
     UidDBAccessor *databaseManager = [UidDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? AND folder LIKE ?",msgId,[NSString stringWithFormat:@"%ld%%",(long)[AppSettings activeAccount]]];
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? ",msgId];//AND folder LIKE ?",msgId,[NSString stringWithFormat:@"%ld%%",(long)[AppSettings activeAccount]]];
         
         while([results next])
         {
             [uids addObject:[UidEntry resToUidEntry:results]];
-            
         }
     }];
+    
     return uids;
 }
 
@@ -207,10 +207,10 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         FMResultSet *results;
-        //if(folderNum != 0)
+        if([AppSettings activeAccount] != -1)
             results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ?",@(folderNum+1000*[AppSettings activeAccount])];
-        //else
-        //    results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE '_000'"];
+        else
+            results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE ?",[NSString stringWithFormat:@"_%03d",folderNum]];
         
         while([results next])
         {
@@ -249,7 +249,7 @@
             results = [db executeQuery:query];
         }
         else {
-            query = [NSString stringWithFormat:@"SELECT * FROM uid_entry WHERE folder LIKE '_000' ORDER BY uid DESC LIMIT 500 OFFSET %@",offset];
+            query = [NSString stringWithFormat:@"SELECT * FROM uid_entry ORDER BY uid DESC LIMIT 500 OFFSET %@",offset];
             results = [db executeQuery:query];
         }
         

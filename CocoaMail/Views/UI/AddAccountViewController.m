@@ -473,7 +473,7 @@
 {
     CCMLog(@"2 - Start saving settings");
     
-    NSInteger newAccountNum = [Accounts sharedInstance].accounts.count;
+    NSInteger newAccountNum = [Accounts sharedInstance].accountsCount;
     
     CCMLog(@"3 - Start setting Folders");
     
@@ -695,7 +695,9 @@
     [[PKHUD sharedHUD] hideWithAnimated:NO];
     
     Account* ac = [Account emptyAccount];
-    ac.userColor = [[Accounts sharedInstance] accountColors][newAccountNum-1];
+
+    ac.userColor = [AppSettings defaultColors][newAccountNum-1];
+    
     [AppSettings setColor:ac.userColor accountNum:newAccountNum];
     ac.idx = newAccountNum-1;
     

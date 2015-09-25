@@ -135,6 +135,7 @@
     Account* cac = [[Accounts sharedInstance] currentAccount];
     self.backView.backgroundColor = cac.userColor;
     self.nameView.text = cac.codeName;
+    self.backViewAnim.backgroundColor = cac.userColor;
 }
 
 

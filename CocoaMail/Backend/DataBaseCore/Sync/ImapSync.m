@@ -191,28 +191,27 @@
 
 - (NSInteger) nextFolderToSync
 {
-    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeAll] accountNum:[AppSettings activeAccount]][@"fullsynced"] boolValue])
-        return [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeAll];
+    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeAll] accountNum:self.currentAccount][@"fullsynced"] boolValue])
+        return [AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeAll];
     
-    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeInbox] accountNum:[AppSettings activeAccount]][@"fullsynced"] boolValue])
-        return [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeInbox];
+    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeInbox] accountNum:self.currentAccount][@"fullsynced"] boolValue])
+        return [AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeInbox];
     
-    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeFavoris] accountNum:[AppSettings activeAccount]][@"fullsynced"] boolValue])
-        if([AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeFavoris] != -1){
-            return [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeFavoris];
+    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeFavoris] accountNum:self.currentAccount][@"fullsynced"] boolValue])
+        if([AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeFavoris] != -1){
+            return [AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeFavoris];
         }
     
-    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeSent] accountNum:[AppSettings activeAccount]][@"fullsynced"] boolValue])
-        return [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:FolderTypeSent];
+    if(![[[SyncManager getSingleton] retrieveState:[AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeSent] accountNum:self.currentAccount][@"fullsynced"] boolValue])
+        return [AppSettings importantFolderNumForAcct:self.currentAccount forBaseFolder:FolderTypeSent];
     
-    NSArray* folders = [AppSettings allFoldersName:[AppSettings activeAccount]];
+    NSArray* folders = [AppSettings allFoldersName:self.currentAccount];
     for (int indexFolder = 0; indexFolder < folders.count; indexFolder++) {
-        if(![[[SyncManager getSingleton] retrieveState:indexFolder accountNum:[AppSettings activeAccount]][@"fullsynced"] boolValue])
+        if(![[[SyncManager getSingleton] retrieveState:indexFolder accountNum:self.currentAccount][@"fullsynced"] boolValue])
             return indexFolder;
     }
     
     return -1;
-    //return [AppSettings importantFolderForAcct:[AppSettings activeAccount] atIndex:4];
 }
 
 - (RACSignal *)runSearchThing:(NSArray*)things
@@ -796,7 +795,7 @@
 {
     MCOIndexSet *uidsIS = [[MCOIndexSet alloc]init];
     NSString *path = [AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccount:self.currentAccount];
-    NSInteger activeA = [AppSettings activeAccount];
+    NSInteger activeA = self.currentAccount;
     
     for (int i = 0; i < emails.count; i++) {
         if ([emails[i] uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]) {

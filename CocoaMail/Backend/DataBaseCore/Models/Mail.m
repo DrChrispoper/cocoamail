@@ -187,7 +187,7 @@ static NSDateFormatter* s_df_hour = nil;
     Mail* mail = [[Mail alloc] init];
     
     Accounts* allAccounts = [Accounts sharedInstance];
-    if (allAccounts.currentAccountIdx == allAccounts.accounts.count -1) {
+    if (allAccounts.currentAccountIdx == allAccounts.accountsCount -1) {
         mail.fromPersonID = -(1+[Accounts sharedInstance].defaultAccountIdx);;
     }
     else {
@@ -236,6 +236,11 @@ static NSDateFormatter* s_df_hour = nil;
     return self;
 }
 
+-(NSDate*) latestDate
+{
+    return [[self firstMail] date];
+}
+
 -(Mail*) firstMail
 {
     return [self.mails firstObject];
@@ -244,9 +249,9 @@ static NSDateFormatter* s_df_hour = nil;
 -(void) addMail:(Mail *)mail
 {
     for (UidEntry* uid in mail.email.uids) {
-        if (uid.account != [AppSettings activeAccount]) {
-            CCMLog(@"WTF: %@",uid.msgId);
-        }
+        //if (uid.account != [AppSettings activeAccount]) {
+        //    CCMLog(@"WTF: %@",uid.msgId);
+        //}
         FolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccount:uid.account];
         [self.foldersType addObject:@(encodeFolderTypeWith(Fuser))];
     }
@@ -258,6 +263,9 @@ static NSDateFormatter* s_df_hour = nil;
     }
     
     [self.mails addObject:mail];
+    
+    NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
+    [self.mails sortUsingDescriptors:@[sortByDate]];
 }
 
 -(BOOL) haveAttachment

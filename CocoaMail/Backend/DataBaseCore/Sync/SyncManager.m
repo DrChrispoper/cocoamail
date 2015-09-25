@@ -71,8 +71,8 @@ static SyncManager *singleton = nil;
         NSMutableArray *newEmailsSignalArray = [[NSMutableArray alloc]init];
         
         for (NSInteger i = 0 ; i < [AppSettings numActiveAccounts];i++) {
-            NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[[Accounts sharedInstance].accounts[i] currentFolderIdx] fromStart:isFromStart]]];
+            NSInteger accountNum = [AppSettings numAccountForIndex:i];
+            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountNum] runFolder:[[[Accounts sharedInstance] getAccount:i] currentFolderIdx] fromStart:isFromStart]]];
         }
         
         return [RACSignal merge:newEmailsSignalArray];

@@ -54,11 +54,9 @@
     ccv.tapColor = ^(UIColor* color) {
         self.account.userColor = color;
         [AppSettings setColor:color accountNum:self.account.accountNum];
-
         if (self.cocobuttonUpdated != nil) {
             self.cocobuttonUpdated();
         }
-        
     };
     
     [self addSubview:ccv];
@@ -139,7 +137,7 @@
     CGFloat posX = 8.f + halfBIG;
     const CGFloat step = (frame.size.width - (2.f*posX))/6.f;
     
-    NSArray* allColors = [Accounts sharedInstance].accountColors;
+    NSArray* allColors = [AppSettings defaultColors];
     
     NSMutableArray* c = [NSMutableArray arrayWithCapacity:allColors.count];
     
@@ -147,7 +145,7 @@
     
     for (UIColor* color in allColors) {
         
-        if (color == accColor) {
+        if (CGColorEqualToColor(color.CGColor,accColor.CGColor)) {
             wantedIdx = [allColors indexOfObject:color];
         }
         
@@ -231,7 +229,7 @@
     }
     [self selectColorIdx:posX];
     
-    UIColor* c = [Accounts sharedInstance].accountColors[posX];
+    UIColor* c = [AppSettings defaultColors][posX];
     self.tapColor(c);
     
 }

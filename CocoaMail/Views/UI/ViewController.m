@@ -82,7 +82,7 @@ static ViewController* s_self;
     
     [GIDSignIn sharedInstance].uiDelegate = self;
     
-    [[[Accounts sharedInstance] currentAccount] initContent];
+    [[[Accounts sharedInstance] currentAccount] connect];
     
     [self setup];
     
@@ -732,7 +732,6 @@ static ViewController* s_self;
                              
                              [self _manageCocoaButton:[f haveCocoaButton]];
                          }];
-        
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock: ^(NSNotification* notif){
@@ -752,7 +751,7 @@ static ViewController* s_self;
             self.viewControllers = [NSMutableArray arrayWithObject:f];
         }
         else {
-            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccount:[AppSettings activeAccount]]];
             inbox.view.frame = self.contentView.bounds;
             nextView = inbox.view;
             
@@ -919,9 +918,18 @@ static ViewController* s_self;
     [self.cocoaButton closeHorizontalButton:button refreshCocoaButtonAndDo:^{
         
         Accounts* A = [Accounts sharedInstance];
+        FolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccount:[A currentAccountIdx]+1];
         [[A currentAccount] releaseContent];
         A.currentAccountIdx = button.tag;
-        [[A currentAccount] initContent];
+        
+        if(folder.type != FolderTypeUser) {
+            [[A currentAccount] setCurrentFolder:folder];
+        }
+        else {
+            [[A currentAccount] setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
+        }
+    
+        [[A currentAccount] connect];
         [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
     }];
 }
@@ -931,7 +939,7 @@ static ViewController* s_self;
 {
     const CGRect baseRect = self.cocoaButton.bounds;
     
-    NSArray* alls = [Accounts sharedInstance].accounts;
+    NSArray* alls = [Accounts sharedInstance].getAllTheAccounts;
     NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:alls.count];
     NSInteger currentAIdx = [Accounts sharedInstance].currentAccountIdx;
     

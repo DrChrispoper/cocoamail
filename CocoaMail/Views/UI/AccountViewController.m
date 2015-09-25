@@ -325,7 +325,7 @@
 
                 [ViewController refreshCocoaButton];
                 
-                if ([Accounts sharedInstance].accounts.count>1) {
+                if ([Accounts sharedInstance].accountsCount>1) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
                 }
                 else {

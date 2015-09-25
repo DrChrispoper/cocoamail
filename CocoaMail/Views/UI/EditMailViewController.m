@@ -115,12 +115,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     Accounts* allAccounts = [Accounts sharedInstance];
     Account* ca = nil;
     if (self.mail.fromPersonID < 0) {
-        ca = allAccounts.accounts[-(1+self.mail.fromPersonID)];
+        ca = [allAccounts getAccount:-(1+self.mail.fromPersonID)];
     }
     else {
         Account* ca = [allAccounts currentAccount];
         if (ca.isAllAccounts) {
-            ca = [allAccounts.accounts objectAtIndex:allAccounts.defaultAccountIdx];
+            ca = [allAccounts getAccount:allAccounts.defaultAccountIdx];
         }
     }
     
@@ -135,7 +135,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     UILabel* titleView = [WhiteBlurNavBar titleViewForItemTitle:ca.userMail];
     
-    if (allAccounts.accounts.count>1) {
+    if (allAccounts.accountsCount>1) {
         
         titleView.userInteractionEnabled = YES;
         UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tapTitle:)];
@@ -1661,7 +1661,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
-    if ([Accounts sharedInstance].accounts.count == 2) {
+    if ([Accounts sharedInstance].accountsCount == 2) {
         UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"Create a new acccount" style:UIAlertActionStyleDefault
                                                               handler:^(UIAlertAction* aa) {
                                                                   // TODO …
@@ -1671,7 +1671,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSInteger idx = -1;
     
-    for (Account* a in [Accounts sharedInstance].accounts) {
+    for (Account* a in [[Accounts sharedInstance] getAllTheAccounts]) {
         idx++;
         
         if (a.isAllAccounts) {

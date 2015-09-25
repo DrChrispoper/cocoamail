@@ -68,6 +68,9 @@
 - (BOOL)haveSonInFolder:(NSInteger)folderIdx;
 - (NSArray*)getSons;
 - (void)fetchAllAttachments;
+- (BOOL)isInMultipleAccounts;
+- (void)forActiveAccount;
+- (Email*)secondAccountDuplicate;
 
 + (void)tableCheck;
 + (void)tableCheck:(FMDatabase *)db;

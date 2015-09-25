@@ -76,7 +76,7 @@
 
 -(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [Accounts sharedInstance].accounts.count - 1;
+    return [Accounts sharedInstance].accountsCount - 1;
 }
 
 -(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -87,7 +87,7 @@
 
 -(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    Account* a = [Accounts sharedInstance].accounts[indexPath.row];
+    Account* a = [[Accounts sharedInstance] getAccount:indexPath.row];
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
@@ -137,7 +137,7 @@
 
 -(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [Accounts sharedInstance].defaultAccountIdx = indexPath.row;
+    [[Accounts sharedInstance] setDefaultAccountIdx:indexPath.row];
     [tableView reloadData];
     
     return nil;

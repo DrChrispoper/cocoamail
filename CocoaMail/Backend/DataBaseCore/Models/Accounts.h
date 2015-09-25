@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "Persons.h"
+#import "Mail.h"
 
 @class Conversation;
 @class Account;
@@ -30,18 +31,21 @@ typedef enum : NSUInteger {
 +(NSArray*) systemFolderIcons;
 +(NSString*) userFolderIcon;
 
-@property (nonatomic, strong) NSArray* accountColors;
+//@property (nonatomic, strong) NSArray* accountColors;
 @property (nonatomic) QuickSwipeType quickSwipeType;
 @property (nonatomic) BOOL navBarBlurred;
 
-@property (nonatomic) NSInteger defaultAccountIdx;
+-(NSInteger) defaultAccountIdx;
+-(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx;
+
 @property (nonatomic) BOOL showBadgeCount;
 // TODO save these config values
-@property (nonatomic, strong) NSArray* accounts;
 @property (nonatomic) NSInteger currentAccountIdx;
 
 -(Account*) currentAccount;
-
+-(NSArray*) getAllTheAccounts;
+-(Account*)getAccount:(NSInteger)accountIndex;
+-(NSInteger)accountsCount;
 -(void) addAccount:(Account*)account;
 -(BOOL) deleteAccount:(Account*)account;
 
@@ -107,8 +111,10 @@ static inline FolderType decodeFolderTypeWith(NSInteger code)
 
 -(NSInteger) accountNum;
 -(void) initContent;
+-(void) connect;
 -(void) releaseContent;
 
+-(void) insertRows:(Email *)email;
 -(void) addConversation:(Conversation*)conv;
 -(NSMutableArray*) getConversationsForFolder:(FolderType)type;
 -(BOOL) moveConversation:(Conversation*)conversation from:(FolderType)folderFrom to:(FolderType)folderTo;

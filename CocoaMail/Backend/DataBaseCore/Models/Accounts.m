@@ -8,11 +8,17 @@
 
 #import "Accounts.h"
 #import "AppSettings.h"
-#import "Mail.h"
 #import "Reachability.h"
 #import "SyncManager.h"
 #import "SearchRunner.h"
 #import "ImapSync.h"
+
+@interface Accounts()
+
+@property (nonatomic, retain) NSOperationQueue *localFetchQueue;
+@property (nonatomic, strong) NSArray* accounts;
+
+@end
 
 @interface Account ()
 
@@ -23,8 +29,6 @@
 @property (nonatomic, strong) NSArray* systemFoldersContent;
 
 @property (nonatomic, strong) NSMutableArray* drafts;
-
-@property (nonatomic, retain) NSOperationQueue *localFetchQueue;
 
 @end
 
@@ -40,13 +44,16 @@
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = QuickSwipeReply;
         
-        sharedInstance.accountColors = @[[UIColor colorWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
+        sharedInstance.localFetchQueue = [NSOperationQueue new];
+        [sharedInstance.localFetchQueue setMaxConcurrentOperationCount:1];
+        
+        /*sharedInstance.accountColors = @[[UIColor colorWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
                                          [UIColor colorWithRed:0.44f green:0.02f blue:1.f alpha:1.f],
                                          [UIColor colorWithRed:1.f green:0.01f blue:0.87f alpha:1.f],
                                          [UIColor colorWithRed:1.f green:0.07f blue:0.01f alpha:1.f],
                                          [UIColor colorWithRed:1.f green:0.49f blue:0.01f alpha:1.f],
                                          [UIColor colorWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
-                                         [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];
+                                         [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];*/
         
         NSMutableArray *accounts = [[NSMutableArray alloc]initWithCapacity:[AppSettings numActiveAccounts]];
         
@@ -55,10 +62,10 @@
             for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
                 NSInteger accountIndex = [AppSettings numAccountForIndex:i];
                 Account* a = [self _createAccountMail:[AppSettings username:accountIndex]
-                                                color:sharedInstance.accountColors[accountIndex]
+                                                color:[AppSettings color:accountIndex]
                                                  code:[AppSettings initials:accountIndex]
                                                   idx:i];
-
+                [a initContent];
                 [accounts addObject:a];
             }
         }
@@ -67,6 +74,8 @@
         [accounts addObject:all];
 
         sharedInstance.accounts = accounts;
+        
+        [sharedInstance runLoadData];
     });
     return sharedInstance;    
 }
@@ -75,12 +84,13 @@
 +(Account*) _createAccountMail:(NSString*)mail color:(UIColor*)color code:(NSString*)code idx:(NSInteger)idx
 {
     Account* ac = [Account emptyAccount];
+    ac.idx = idx;
+
     ac.userMail = mail;
     ac.userColor = color;
     ac.codeName = code;
-    ac.idx = idx;
     
-    ac.currentFolder = FolderTypeWith(FolderTypeInbox,0);
+    //ac.currentFolder = FolderTypeWith(FolderTypeInbox,0);
     
     //Folders Indentation?
     NSArray* tmpFolders = [AppSettings allNonImportantFoldersName:ac.accountNum];
@@ -104,15 +114,41 @@
     ac.userColor = [UIColor blackColor];
     ac.isAllAccounts = YES;
     
-    NSMutableArray* userfolders = [NSMutableArray arrayWithCapacity:50];
-    for (Account* a in accounts) {
+    NSMutableArray* userfolders = [NSMutableArray arrayWithCapacity:0];
+    /*for (Account* a in accounts) {
         [userfolders addObjectsFromArray:a.userFolders];
-    }
+    }*/
     
     ac.userFolders = userfolders;
     ac.person = [Person createWithName:nil email:nil icon:nil codeName:@"ALL"];
     
     return ac;
+}
+
+- (void)runLoadData
+{
+    [self.localFetchQueue addOperationWithBlock:^{
+        [[[SearchRunner getSingleton] allEmailsSearch]
+         subscribeNext:^(Email *email) {
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 //CCMLog(@"Adding email to account:%u",self.idx);
+                 if(email.account == -1){
+                     CCMLog(@"Houston on a un probleme avec l'email:%@",email.subject);
+                 } else {
+                     [self.accounts[email.account-1] insertRows:email];
+                 }
+             }];
+         }
+         completed:^{
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 /*if (self.idx != -1) {
+                  if (self.allsMails.count != 0){
+                  ///[[ImapSync sharedServices] runUpToDateTest:self.allsMails];
+                  }
+                  }*/
+             }];
+         }];
+    }];
 }
 
 -(BOOL) deleteAccount:(Account*)account
@@ -138,6 +174,20 @@
     return NO;
 }
 
+-(Account*)getAccount:(NSInteger)accountIndex
+{
+    if (accountIndex < self.accounts.count) {
+        return self.accounts[accountIndex];
+    }
+    
+    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%li num:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numAccountForIndex:accountIndex],(long)[AppSettings numActiveAccounts]);
+    return nil;
+}
+
+-(NSInteger)accountsCount
+{
+    return self.accounts.count;
+}
 
 -(void) addAccount:(Account*)account
 {
@@ -156,6 +206,11 @@
     }
 }
 
+-(NSInteger) defaultAccountIdx
+{
+    return [AppSettings defaultAccount]-1;
+}
+
 -(void) setCurrentAccountIdx:(NSInteger)currentAccountIdx
 {
     _currentAccountIdx = currentAccountIdx;
@@ -164,7 +219,6 @@
 
 -(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx
 {
-    _defaultAccountIdx = defaultAccountIdx;
     [AppSettings setDefaultAccount:defaultAccountIdx+1];
 }
 
@@ -175,6 +229,11 @@
     }
     
     return nil;
+}
+
+-(NSArray*) getAllTheAccounts
+{
+    return self.accounts;
 }
 
 -(NSArray*) getAllDrafts
@@ -253,19 +312,19 @@
     self.userFoldersContent = arrayU;
     
     [self setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
-    
-    self.localFetchQueue = [NSOperationQueue new];
-    [self.localFetchQueue setMaxConcurrentOperationCount:1];
-    
+}
+
+-(void) connect
+{
     [self doLoadServer];
-    [self runLoadData];
 }
 
 -(void) releaseContent
 {
-    self.allsMails = nil;
-    self.userFoldersContent = nil;
-    self.systemFoldersContent = nil;
+    //TODO:If memory issues
+    //self.allsMails = nil;
+    //self.userFoldersContent = nil;
+    //self.systemFoldersContent = nil;
     // let the drafts
 }
 
@@ -514,9 +573,8 @@
 
 -(void) setCurrentFolder:(FolderType)folder
 {
-    NSString* name = nil;
     if (folder.type == FolderTypeUser) {
-        name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx];
+        NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         NSArray* names = [AppSettings allFoldersName:[AppSettings activeAccount]];
         for (int i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]){
@@ -526,7 +584,11 @@
         }
     }
     else {
-        self.currentFolderIdx = [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:folder.type];
+        if ([AppSettings activeAccount] == -1) {
+            self.currentFolderIdx = folder.type;
+        } else {
+            self.currentFolderIdx = [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:folder.type];
+        }
     }
 }
 
@@ -569,29 +631,6 @@
              //}
          }];
     }
-}
-
-- (void)runLoadData
-{
-        [self.localFetchQueue addOperationWithBlock:^{
-            [[[SearchRunner getSingleton] allFoldersSearchInAccount:self.accountNum]
-             subscribeNext:^(Email *email) {
-                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                     //CCMLog(@"Adding email");
-                     [self insertRows:email];
-                 }];
-             }
-             completed:^{
-                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-
-                     if (self.idx != -1) {
-                         if (self.allsMails.count != 0){
-                             ///[[ImapSync sharedServices] runUpToDateTest:self.allsMails];
-                         }
-                     }
-                 }];
-             }];
-        }];
 }
 
 -(NSArray*) systemFolderNames

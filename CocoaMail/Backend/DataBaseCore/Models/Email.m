@@ -117,6 +117,63 @@
     self.attachments = [CCMAttachment getAttachmentsWithMsgId:self.msgId];
 }
 
+- (BOOL)isInMultipleAccounts
+{
+    if (!self.uids) {
+        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
+    }
+    
+    int account = [self getFirstUIDE].account;
+    
+    for (UidEntry* e in self.uids) {
+        if (account != e.account) {
+            return YES;
+        }
+    }
+    
+    return NO;
+}
+
+- (void)forActiveAccount
+{
+    if (!self.uids) {
+        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
+    }
+    
+    NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
+    
+    for (UidEntry* e in self.uids) {
+        if(e.account == [AppSettings activeAccount]){
+            [uidsOne addObject:e];
+        }
+    }
+    
+    self.uids = uidsOne;
+}
+
+- (Email*)secondAccountDuplicate
+{
+    Email *e = [self copy];
+    
+    NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
+    NSMutableArray *uidsTwo = [[NSMutableArray alloc]init];
+    
+    int firstAccount = [self getFirstUIDE].account;
+    
+    for (UidEntry* e in self.uids) {
+        if(e.account == firstAccount){
+            [uidsOne addObject:e];
+        } else {
+            [uidsTwo addObject:e];
+        }
+    }
+    
+    self.uids = uidsOne;
+    e.uids = uidsTwo;
+    
+    return e;
+}
+
 - (UidEntry *)uidEWithFolder:(NSInteger)folderNum
 {
     if (!self.uids) {

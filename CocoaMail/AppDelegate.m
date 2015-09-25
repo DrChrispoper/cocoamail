@@ -32,7 +32,9 @@
     //TOOD:IAP
     [self activatePurchasedFeatures];
     
-    [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" captureSource:IBGCaptureSourceUIKit invocationEvent:IBGInvocationEventShake];
+    [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924"
+               captureSource:IBGCaptureSourceUIKit
+             invocationEvent:IBGInvocationEventScreenshot];
     
     UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
     [application registerUserNotificationSettings:settings];
@@ -54,13 +56,6 @@
     NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
-    
-    /*if ([AppSettings numActiveAccounts] == 0) {
-        UIStoryboard *storyboard = self.window.rootViewController.storyboard;
-        UIViewController *rootViewController = [storyboard instantiateViewControllerWithIdentifier:@"LoginID"];
-        self.window.rootViewController = rootViewController;
-        [self.window makeKeyAndVisible];
-    }*/
     
     return YES;
 }

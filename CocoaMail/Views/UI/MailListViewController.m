@@ -258,10 +258,17 @@
 -(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    [self.table reloadData];
+    
     if(!self.onlyPerson && self.convByDay.count == 0){
-        [self setupData];
+        [self.localFetchQueue addOperationWithBlock:^{
+            [self setupData];
+        }];
     }
-
+    
+    [self.table reloadData];
+    
     _showingEmail = NO;
 }
 
@@ -292,8 +299,6 @@
         
         [self doPersonSearchServer];
     } 
-    
-    [self.table reloadData];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -306,13 +311,27 @@
 -(void) setupData
 {
     //self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
-    CCMLog(@"Folder:%@, %ld ",self.folderName, (long)[AppSettings numFolderWithFolder:self.folder forAccount:[Accounts sharedInstance].currentAccountIdx]);
+    //CCMLog(@"Folder:%@, %ld ",self.folderName, (long)[AppSettings numFolderWithFolder:self.folder forAccount:[Accounts sharedInstance].currentAccountIdx]);
 
-    for (Conversation* conv in [[[Accounts sharedInstance] currentAccount] getConversationsForFolder:self.folder]) {
-        [self insertConversation:conv];
+    if([AppSettings activeAccount] == -1){
+        for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+            for (Conversation* conv in [[[Accounts sharedInstance] getAccount:idx] getConversationsForFolder:self.folder]) {
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [self insertConversation:conv];
+                    [self.table reloadData];
+                }];
+            }
+        }
+    }else {
+        for (Conversation* conv in [[[Accounts sharedInstance] currentAccount] getConversationsForFolder:self.folder]) {
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                [self insertConversation:conv];
+                [self.table reloadData];
+            }];
+        }
     }
-    
-    [self.table reloadData];
+
+    //[self.table reloadData];
 }
 
 -(void)insertConversation:(Conversation*)conv
@@ -325,10 +344,10 @@
         [_convIDs addObject:[[conv firstMail].email getSonID]];
     }
     
-    CCMLog(@"%@",[conv firstMail].email.subject);
-    for (UidEntry* uid in [conv firstMail].email.uids) {
-        CCMLog(@"%ld",(long)uid.folder);
-    }
+    //CCMLog(@"%@",[conv firstMail].email.subject);
+    //for (UidEntry* uid in [conv firstMail].email.uids) {
+        //CCMLog(@"%ld",(long)uid.folder);
+    //}
     
     
     NSString *stringDate = [[DateUtil getSingleton] humanDate:[conv firstMail].email.datetime];
@@ -566,9 +585,9 @@
 
 -(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
+    
     Conversation* conv = convs[indexPath.row];
     
     NSString* idToUse = (conv.mails.count>1) ? kCONVERSATION_CELL_ID : kMAIL_CELL_ID;
@@ -931,7 +950,8 @@
     //If we are looking at Starred and there is no Starred Folder
     //We load all emails and hide emails not starred :D
     //Writing this I'm realising how bad this fix is but bricolage ftw! This case will rarely come up
-    if (self.folder.type == FolderTypeFavoris &&
+    if ([AppSettings activeAccount] != -1 &&
+        self.folder.type == FolderTypeFavoris &&
         [AppSettings importantFolderNumForAcct:[AppSettings activeAccount]  forBaseFolder:FolderTypeFavoris] ==  [AppSettings importantFolderNumForAcct:[AppSettings activeAccount]  forBaseFolder:FolderTypeAll] &&
         !(email.flag & MCOMessageFlagFlagged)) {
         
@@ -960,6 +980,9 @@
                 if ([[[conv firstMail].email getSonID] isEqualToString:[email getSonID]]) {
                     [conv addMail:[Mail mail:email]];
 
+                    NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(latestDate)) ascending:NO];
+                    [tmpDay[@"list"] sortUsingDescriptors:@[sortByDate]];
+                    
                     return;
                 }
             }
@@ -1000,6 +1023,9 @@
                 NSMutableArray* list = self.convByDay[i][@"list"];
                 [list addObject:conv];
                 
+                NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(latestDate)) ascending:NO];
+                [list sortUsingDescriptors:@[sortByDate]];
+                
                 return;
             }
             
@@ -1019,6 +1045,8 @@
 
 - (void)deliverUpdate:(NSArray *)emails
 {
+    CCMLog(@"update");
+
     for (Email *email in emails) {
         for(NSDictionary* current in self.convByDay) {
             //Email* tempEmail = _headEmailData[i];
@@ -1062,6 +1090,8 @@
 
 - (void)deliverDelete:(NSArray *)emails
 {
+    CCMLog(@"Delete");
+
     for (Email *email in emails) {
         if ([email haveSonInFolder:[AppSettings numFolderWithFolder:self.folder forAccount:[Accounts sharedInstance].currentAccountIdx+1]]) {
             continue;

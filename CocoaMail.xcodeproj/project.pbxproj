@@ -1073,7 +1073,6 @@
 				271D4CFB1B846E4500D19373 /* Frameworks */,
 				271D4CFC1B846E4500D19373 /* Resources */,
 				1C2F9E1F295DFDC02481677C /* Copy Pods Resources */,
-				27D3B0FB1BB2D7D800D5B1E4 /* Instabug Script */,
 			);
 			buildRules = (
 			);
@@ -1313,20 +1312,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		27D3B0FB1BB2D7D800D5B1E4 /* Instabug Script */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Instabug Script";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
 		};
 		97348202A481B1D799F877B8 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

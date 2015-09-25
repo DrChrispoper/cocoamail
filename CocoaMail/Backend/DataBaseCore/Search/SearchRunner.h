@@ -20,7 +20,7 @@
 
 - (RACSignal *)activeFolderSearch:(NSInteger)email;
 - (RACSignal *)threadSearch:(NSString *)thread;
-- (RACSignal *)allFoldersSearchInAccount:(NSInteger)accountIdx;
+- (RACSignal *)allEmailsSearch;
 
 @property (assign) volatile BOOL cancelled; // flag for when we cancel a search op
 @property (nonatomic,readwrite,strong) NSOperationQueue *operationQueue;

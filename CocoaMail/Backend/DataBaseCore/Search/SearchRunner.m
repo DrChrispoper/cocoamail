@@ -183,6 +183,71 @@ static SearchRunner *searchSingleton = nil;
     }];
 }
 
+- (RACSignal *)performFolderSearchwithDbNum:(NSArray *)dbNums
+{
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        EmailDBAccessor *manager = [EmailDBAccessor sharedManager];
+        
+        NSInteger __block allFound = 500;
+        
+        for (NSNumber* dbNum in dbNums){
+            if (self.cancelled || allFound < 0) {
+                [subscriber sendCompleted];
+                return [RACDisposable disposableWithBlock:^{}];
+            }
+            
+            [manager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
+            [manager.databaseQueue inDatabase:^(FMDatabase *db) {
+                NSMutableString *query = [NSMutableString string];
+                [query appendString:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
+                 "search_email.body, email.flag, email.msg_id, email.tos,email.ccs,email.bccs,email.html_body "
+                 "FROM  email, search_email "
+                 "WHERE email.pk = search_email.rowid"];
+                
+                FMResultSet *results = [db executeQuery:query];
+                
+                if([db hadError] && [db lastErrorCode] == 1){
+                    CCMLog(@"Checking table");
+                    [Email tableCheck:db];
+                }
+                
+                while([results next]) {
+                    Email * email = [[Email alloc]init];
+                    
+                    email.pk = [results intForColumnIndex:0];
+                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
+                    email.subject = [results stringForColumnIndex:2];
+                    email.datetime = [results dateForColumnIndex:3];
+                    email.body = [results stringForColumnIndex:4];
+                    email.flag = [results intForColumnIndex:5];
+                    email.msgId = [results stringForColumnIndex:6];
+                    
+                    [[results stringForColumnIndex:7] isEqualToString:@""]?(email.tos = [[NSArray alloc]init]):(email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:7]]);
+                    [[results stringForColumnIndex:8] isEqualToString:@""]?(email.ccs = [[NSArray alloc]init]):(email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:8]]);
+                    [[results stringForColumnIndex:9] isEqualToString:@""]?(email.bccs = [[NSArray alloc]init]):(email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]]);
+                    
+                    email.htmlBody = [results stringForColumnIndex:10];
+                    email.body = email.body?:@"";
+                    email.htmlBody = email.htmlBody?:@"";
+                    
+                    if([email isInMultipleAccounts]){
+                        allFound--;
+                        [subscriber sendNext:[email secondAccountDuplicate]];
+                    }
+                    allFound--;
+                    [subscriber sendNext:email];
+                }
+                [results close];
+            }];
+        }
+            
+        [subscriber sendCompleted];
+        
+        return [RACDisposable disposableWithBlock:^{
+        }];
+    }];
+}
+
 - (RACSignal *)performFolderSearch:(NSInteger)folderNum withDbNum:(NSArray *)dbNums from:(NSInteger)pEmail
 {
     return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
@@ -249,6 +314,8 @@ static SearchRunner *searchSingleton = nil;
                             email.body = email.body?:@"";
                             email.htmlBody = email.htmlBody?:@"";
                             
+                            [email forActiveAccount];
+                            
                             allFound--;
                             
                             [subscriber sendNext:email];
@@ -268,7 +335,7 @@ static SearchRunner *searchSingleton = nil;
     }];
 }
 
-- (RACSignal *)allFoldersSearchInAccount:(NSInteger)accountIdx
+- (RACSignal *)allEmailsSearch
 {
     SyncManager* sm = [SyncManager getSingleton];
     NSDictionary* folderState;
@@ -276,16 +343,19 @@ static SearchRunner *searchSingleton = nil;
     
     self.cancelled = NO;
     
-    for(int i = 0; i < [AppSettings allFoldersName:accountIdx].count; i++){
-        folderState = [sm retrieveState:i accountNum:accountIdx];
-        [nums addObjectsFromArray:folderState[@"dbNums"]];
+    for (int accountIdx = 0; accountIdx < [AppSettings numActiveAccounts]; accountIdx++) {
+        int accountNum = [AppSettings numAccountForIndex:accountIdx];
+        for(int i = 0; i < [AppSettings allFoldersName:accountNum].count; i++){
+            folderState = [sm retrieveState:i accountNum:accountNum];
+            [nums addObjectsFromArray:folderState[@"dbNums"]];
+        }
     }
     
     NSArray* dbs = [[NSArray alloc]initWithArray:[nums allObjects]];
     NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending: NO];
     dbs = [dbs sortedArrayUsingDescriptors:@[sortOrder]];
     
-    return [self searchForSignal:[self performFolderSearch:[AppSettings importantFolderNumForAcct:accountIdx forBaseFolder:FolderTypeAll] withDbNum:dbs from:accountIdx]];
+    return [self searchForSignal:[self performFolderSearchwithDbNum:dbs]];
 }
 
 - (RACSignal *)activeFolderSearch:(NSInteger)email
@@ -300,7 +370,7 @@ static SearchRunner *searchSingleton = nil;
         NSMutableSet* numsM = [[NSMutableSet alloc]init];
         for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
             NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            folderState = [sm retrieveState:[[Accounts sharedInstance].accounts[i] currentFolderIdx] accountNum:accountIndex];
+            folderState = [sm retrieveState:[[[Accounts sharedInstance] getAccount:i] currentFolderIdx] accountNum:accountIndex];
             [numsM addObjectsFromArray:folderState[@"dbNums"]];
         }
         nums = [[NSArray alloc]initWithArray:[numsM allObjects]];

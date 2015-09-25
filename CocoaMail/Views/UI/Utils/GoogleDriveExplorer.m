@@ -9,7 +9,6 @@
 #import "GoogleDriveExplorer.h"
 
 // View tags to differeniate alert views
-static NSUInteger const kGDFileExistsAlertViewTag = 2;
 static NSString *const kKeychainItemName = @"CocoaMail: Google Drive";
 static NSString *const kClientId = @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com";
 static NSString *const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";

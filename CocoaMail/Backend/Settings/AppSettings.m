@@ -446,35 +446,22 @@
 	[defaults synchronize];
 }
 
++(NSArray*)defaultColors
+{
+    return @[[UIColor colorWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
+             [UIColor colorWithRed:0.44f green:0.02f blue:1.f alpha:1.f],
+             [UIColor colorWithRed:1.f green:0.01f blue:0.87f alpha:1.f],
+             [UIColor colorWithRed:1.f green:0.07f blue:0.01f alpha:1.f],
+             [UIColor colorWithRed:1.f green:0.49f blue:0.01f alpha:1.f],
+             [UIColor colorWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
+             [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];
+}
+
 + (UIColor *)color:(NSInteger)accountNum
 {
     if (accountNum == -1) return [UIColor blackColor];
-    return [UIColor colorWithCIColor:[CIColor colorWithString:[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat: @"Color_%lu", (long)accountNum]]]];
-
-}
-
-+ (void)setDefaultColorForAccountNum:(NSInteger)accountNum
-{
-    CGColorRef colorRef;
-    
-    if(accountNum == 1){
-        colorRef = CCMColorFromHEX(CCMAccountOne).CGColor;
-    }else if (accountNum == 2){
-        colorRef = CCMColorFromHEX(CCMAccountTwo).CGColor;
-    }else if (accountNum == 3){
-        colorRef = CCMColorFromHEX(CCMAccountThree).CGColor;
-    }else if (accountNum == 4){
-        colorRef = CCMColorFromHEX(CCMAccountFour).CGColor;
-    }else if (accountNum == 5){
-        colorRef = CCMColorFromHEX(CCMAccountFive).CGColor;
-    }else{
-        colorRef = [UIColor colorWithHue:arc4random() % 256 / 256.0 saturation:0.7 brightness:0.8 alpha:1.0].CGColor;
-    }
-    
-    NSString *colorString = [CIColor colorWithCGColor:colorRef].stringRepresentation;
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:colorString forKey:[NSString stringWithFormat:@"Color_%lu", (long)accountNum]];
-    [defaults synchronize];
+    UIColor* color = [UIColor colorWithCIColor:[CIColor colorWithString:[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat: @"Color_%lu", (long)accountNum]]]];
+    return color;
 }
 
 + (void)setColor:(UIColor *)y accountNum:(NSInteger)accountNum
@@ -532,10 +519,14 @@
 
 + (FolderType)typeOfFolder:(NSInteger)folder forAccount:(NSInteger)account
 {
+    if(account == -1){
+        return FolderTypeWith(folder, 0);
+    }
+    
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSArray* importantFolderPreference = [defaults objectForKey:[NSString stringWithFormat:@"iFolder_%lu", (long)account]];
     
-    for (int idx = 0;idx<importantFolderPreference.count;idx++) {
+    for (int idx = importantFolderPreference.count-1 ; idx >= 0 ; idx--) {
         if (folder == [importantFolderPreference[idx] integerValue]) {
             return FolderTypeWith(idx, 0);
         }
@@ -638,6 +629,9 @@
 
 + (void)setActiveAccount:(NSInteger)account
 {
+    if(account > [AppSettings numActiveAccounts]){
+        account = -1;
+    }
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(account) forKey:[NSString stringWithFormat:@"aAccount"]];
 	[defaults synchronize];
