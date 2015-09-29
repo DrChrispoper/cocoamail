@@ -21,3 +21,8 @@
 #define CCMAccountThree 0xe6332a
 #define CCMAccountFour 0x81d8ab
 #define CCMAccountFive 0xf6db6e
+
+#define kActiveAccountNum [AppSettings numForData:[Accounts sharedInstance].currentAccountIdx]
+#define kActiveAccountIndex [Accounts sharedInstance].currentAccountIdx
+#define kActiveFolderIndex [[Accounts sharedInstance] currentAccount].currentFolderIdx
+#define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].isAllAccounts

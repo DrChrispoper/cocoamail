@@ -134,8 +134,13 @@
 
 -(NSInteger) addPerson:(Person*)person
 {
-    [self.alls addObject:person];
-    return (self.alls.count - 1);
+    NSInteger idx = [self indexForPerson:person];
+    if (idx == NSNotFound || idx == -NSNotFound) {
+        [self.alls addObject:person];
+        return (self.alls.count - 1);
+    }
+
+    return idx;
 }
 
 
@@ -270,7 +275,7 @@
 - (BOOL)isEqualToPerson:(Person *)aPerson {
     if (self == aPerson)
         return YES;
-    if (![(id)[self email] isEqual:[aPerson email]])
+    if (![(id)[self email] isEqualToString:[aPerson email]])
         return NO;
     return YES;
 }

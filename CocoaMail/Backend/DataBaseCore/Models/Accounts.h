@@ -10,19 +10,11 @@
 #import <UIKit/UIKit.h>
 #import "Persons.h"
 #import "Mail.h"
+#import "AppSettings.h"
 
 @class Conversation;
 @class Account;
 @class Mail;
-
-
-typedef enum : NSUInteger {
-    QuickSwipeArchive,
-    QuickSwipeDelete,
-    QuickSwipeReply,
-    QuickSwipeMark
-} QuickSwipeType;
-
 
 @interface Accounts : NSObject
 
@@ -51,45 +43,6 @@ typedef enum : NSUInteger {
 
 @end
 
-
-typedef enum : NSUInteger {
-    FolderTypeInbox,
-    FolderTypeFavoris,
-    FolderTypeSent,
-    FolderTypeDrafts,
-    FolderTypeAll,
-    FolderTypeDeleted,
-    FolderTypeSpam,
-    FolderTypeUser
-} BaseFolderType;
-
-typedef struct FolderType {
-    BaseFolderType type;
-    NSInteger idx;
-} FolderType;
-
-static inline FolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
-{
-    FolderType type;
-    type.type = t;
-    type.idx = idx;
-    return type;
-}
-
-static inline NSInteger encodeFolderTypeWith(FolderType t)
-{
-    return t.type * 4096 + t.idx;
-}
-
-static inline FolderType decodeFolderTypeWith(NSInteger code)
-{
-    FolderType type;
-    type.type = code / 4096;
-    type.idx = code % 4096;
-    return type;
-}
-
-
 @interface Account : NSObject
 
 @property (nonatomic, getter=codeName, setter=setCodeName:) NSString* codeName;
@@ -99,7 +52,7 @@ static inline FolderType decodeFolderTypeWith(NSInteger code)
 
 @property (nonatomic, strong) NSArray* userFolders;
 @property (nonatomic) NSInteger currentFolderIdx;
--(void) setCurrentFolder:(FolderType)folder;
+-(void) setCurrentFolder:(CCMFolderType)folder;
 @property (nonatomic, strong) Person* person;
 
 @property (nonatomic) BOOL isAllAccounts;
@@ -109,15 +62,14 @@ static inline FolderType decodeFolderTypeWith(NSInteger code)
 
 +(instancetype) emptyAccount;
 
--(NSInteger) accountNum;
 -(void) initContent;
 -(void) connect;
 -(void) releaseContent;
 
 -(void) insertRows:(Email *)email;
 -(void) addConversation:(Conversation*)conv;
--(NSMutableArray*) getConversationsForFolder:(FolderType)type;
--(BOOL) moveConversation:(Conversation*)conversation from:(FolderType)folderFrom to:(FolderType)folderTo;
+-(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
+-(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
 // return NO if not removed from form folder, YES if really removed
 
 -(NSInteger) unreadInInbox;

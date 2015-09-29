@@ -59,12 +59,12 @@
         
         if([AppSettings numActiveAccounts] > 0){
             
-            for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
-                NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+            for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
+                //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
                 Account* a = [self _createAccountMail:[AppSettings username:accountIndex]
                                                 color:[AppSettings color:accountIndex]
                                                  code:[AppSettings initials:accountIndex]
-                                                  idx:i];
+                                                  idx:accountIndex];
                 [a initContent];
                 [accounts addObject:a];
             }
@@ -93,11 +93,12 @@
     //ac.currentFolder = FolderTypeWith(FolderTypeInbox,0);
     
     //Folders Indentation?
-    NSArray* tmpFolders = [AppSettings allNonImportantFoldersName:ac.accountNum];
+    NSArray* tmpFolders = [AppSettings allNonImportantFoldersNameforAccountIndex:ac.idx];
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
     for (NSString* folderNames in tmpFolders) {
         [foldersNIndent addObject:@[folderNames,@([folderNames containsString:@"]/"])]];
     }
+    
     ac.userFolders = foldersNIndent;
     
     ac.person = [Person createWithName:mail email:ac.userMail icon:nil codeName:code];
@@ -180,7 +181,7 @@
         return self.accounts[accountIndex];
     }
     
-    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%li num:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numAccountForIndex:accountIndex],(long)[AppSettings numActiveAccounts]);
+    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
     return nil;
 }
 
@@ -208,18 +209,17 @@
 
 -(NSInteger) defaultAccountIdx
 {
-    return [AppSettings defaultAccount]-1;
+    return [AppSettings defaultAccountIndex];
 }
 
 -(void) setCurrentAccountIdx:(NSInteger)currentAccountIdx
 {
     _currentAccountIdx = currentAccountIdx;
-    [AppSettings setActiveAccount:currentAccountIdx+1];
 }
 
 -(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx
 {
-    [AppSettings setDefaultAccount:defaultAccountIdx+1];
+    [AppSettings setDefaultAccountIndex:defaultAccountIdx];
 }
 
 -(Account*) currentAccount
@@ -287,12 +287,7 @@
 -(void) setCodeName:(NSString *)codeName
 {
     self.person.codeName = codeName;
-    [AppSettings setInitials:codeName accountNum:[self accountNum]];
-}
-
--(NSInteger) accountNum
-{
-    return self.idx+1;
+    [AppSettings setInitials:codeName accountIndex:self.idx];
 }
 
 -(void) initContent
@@ -335,7 +330,7 @@
     }
 }
 
--(void) _addIdx:(NSUInteger)idx inArray:(FolderType)type
+-(void) _addIdx:(NSUInteger)idx inArray:(CCMFolderType)type
 {
     NSMutableIndexSet* set = nil;
     if (type.type == FolderTypeUser) {
@@ -364,7 +359,7 @@
     }
 }
 
--(NSMutableArray*) getConversationsForFolder:(FolderType)type
+-(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
 {
     
     /*if (type.type == FolderTypeDrafts) {
@@ -406,9 +401,7 @@
 
 -(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc
 {
-    NSInteger accountNum = self.accountNum;
-    
-    MCOMailProvider *accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:accountNum]];
+    MCOMailProvider *accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:self.idx]];
     
     NSArray *smtpServicesArray = accountProvider.smtpServices;
     MCONetService *service = smtpServicesArray[0];
@@ -416,14 +409,14 @@
     MCOSMTPSession *smtpSession = [[MCOSMTPSession alloc] init];
     smtpSession.hostname = service.hostname ;
     smtpSession.port = service.port;
-    smtpSession.username = [AppSettings username:accountNum];
-    smtpSession.password = [AppSettings password:accountNum];
+    smtpSession.username = [AppSettings username:self.idx];
+    smtpSession.password = [AppSettings password:self.idx];
     smtpSession.connectionType = service.connectionType;
     
     CCMLog(@"Sending with:%@ port:%u authType:%ld",smtpSession.hostname,smtpSession.port,(long)MCOAuthTypeSASLNone);
     
     MCOMessageBuilder * builder = [[MCOMessageBuilder alloc] init];
-    [[builder header] setFrom:[MCOAddress addressWithDisplayName:[AppSettings name:accountNum] mailbox:[AppSettings username:accountNum]]];
+    [[builder header] setFrom:[MCOAddress addressWithDisplayName:[AppSettings name:self.idx] mailbox:[AppSettings username:self.idx]]];
     
     NSMutableArray *to = [[NSMutableArray alloc] init];
     
@@ -464,9 +457,9 @@
     [sendOperation start:^(NSError *error) {
         
         if(error) {
-            CCMLog(@"%@ Error sending email:%@", [AppSettings username:accountNum], error);
+            CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
         } else {
-            CCMLog(@"%@ Successfully sent email!", [AppSettings username:accountNum]);
+            CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
         }
     }];
     
@@ -495,7 +488,7 @@
     [self.drafts removeObject:mail];
 }
 
--(BOOL) moveConversation:(Conversation*)conversation from:(FolderType)folderFrom to:(FolderType)folderTo
+-(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
 {
     NSUInteger idx = [self.allsMails indexOfObject:conversation];
     
@@ -533,7 +526,7 @@
     switch (folderFrom.type) {
         case FolderTypeFavoris:
         case FolderTypeAll:
-            remove = (folderFrom.type == FolderTypeDeleted || folderFrom.type == FolderTypeSpam);
+            remove = (folderTo.type != FolderTypeDeleted && folderTo.type != FolderTypeSpam);
             break;
         case FolderTypeInbox:
         case FolderTypeDeleted:
@@ -546,7 +539,7 @@
             break;
     }
     
-    [conversation moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccount:self.accountNum] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccount:self.accountNum]];
+    [conversation moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
 
     if (remove) {
         [setFrom removeIndex:idx];
@@ -571,11 +564,11 @@
     return count;
 }
 
--(void) setCurrentFolder:(FolderType)folder
+-(void) setCurrentFolder:(CCMFolderType)folder
 {
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-        NSArray* names = [AppSettings allFoldersName:[AppSettings activeAccount]];
+        NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
         for (int i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]){
                 self.currentFolderIdx = i;
@@ -584,10 +577,10 @@
         }
     }
     else {
-        if ([AppSettings activeAccount] == -1) {
+        if (self.isAllAccounts) {
             self.currentFolderIdx = folder.type;
         } else {
-            self.currentFolderIdx = [AppSettings importantFolderNumForAcct:[AppSettings activeAccount] forBaseFolder:folder.type];
+            self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:folder.type];
         }
     }
 }
@@ -639,11 +632,11 @@
     
     [names addObject:NSLocalizedString(@"Inbox", @"Inbox")];
     [names addObject:NSLocalizedString(@"Favoris", @"Favoris")];
-    if ([AppSettings importantFolderNumForAcct:self.idx-1 forBaseFolder:FolderTypeSent] != -1) { [names addObject:NSLocalizedString(@"Sent", @"Sent")]; }
-    if ([AppSettings importantFolderNumForAcct:self.idx-1 forBaseFolder:FolderTypeDrafts] != -1) { [names addObject:NSLocalizedString(@"Drafts", @"Drafts")]; }
+    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSent] != -1) { [names addObject:NSLocalizedString(@"Sent", @"Sent")]; }
+    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDrafts] != -1) { [names addObject:NSLocalizedString(@"Drafts", @"Drafts")]; }
     [names addObject:NSLocalizedString(@"All emails", @"All emails")];
-    if ([AppSettings importantFolderNumForAcct:self.idx-1 forBaseFolder:FolderTypeDeleted] != -1) { [names addObject:NSLocalizedString(@"Deleted", @"Deleted")]; }
-    if ([AppSettings importantFolderNumForAcct:self.idx-1 forBaseFolder:FolderTypeSpam] != -1) { [names addObject:NSLocalizedString(@"Spam", @"Spam")]; }
+    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDeleted] != -1) { [names addObject:NSLocalizedString(@"Deleted", @"Deleted")]; }
+    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSpam] != -1) { [names addObject:NSLocalizedString(@"Spam", @"Spam")]; }
     
     return names;
 }

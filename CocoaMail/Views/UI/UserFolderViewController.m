@@ -127,7 +127,7 @@
 
 -(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    FolderType type = FolderTypeWith(FolderTypeUser, indexPath.row);
+    CCMFolderType type = FolderTypeWith(FolderTypeUser, indexPath.row);
     [self.delegate chooseUserFolder:type];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }

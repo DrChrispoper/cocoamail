@@ -355,8 +355,8 @@
     if ([networkReachability currentReachabilityStatus] == ReachableViaWiFi) {
         if(!att.data){
             UidEntry* uidE = [UidEntry getUidEntryWithFolder:[[Accounts sharedInstance] currentAccount].currentFolderIdx msgId:att.msgId];
-            NSString *folderName = [AppSettings folderName:uidE.folder forAccount:uidE.account];
-            self.op = [[ImapSync sharedServices:uidE.account].imapSession fetchMessageAttachmentOperationWithFolder:folderName
+            NSString *folderName = [AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]];
+            self.op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession fetchMessageAttachmentOperationWithFolder:folderName
                                                                                                                 uid:uidE.uid
                                                                                                              partID:att.partID
                                                                                                            encoding:MCOEncodingBase64];

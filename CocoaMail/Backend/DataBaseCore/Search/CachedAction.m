@@ -109,14 +109,14 @@
     return actions;
 }
 
-+ (NSMutableArray *)getActionsForAccount:(NSInteger)account
++ (NSMutableArray *)getActionsForAccount:(NSInteger)accountNum
 {
     NSMutableArray *actions = [[NSMutableArray alloc] init];
     CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         FMResultSet *results = [db executeQuery:@"SELECT * FROM cached_actions WHERE account = ?",
-                                @(account)];
+                                @(accountNum)];
         
         while([results next])
         {

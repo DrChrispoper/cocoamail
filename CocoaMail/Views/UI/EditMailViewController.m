@@ -321,7 +321,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) _send
 {
     self.mail.title = self.subjectTextView.text;
-    self.mail.content = [NSString stringWithFormat:@"%@ \n%@", self.bodyTextView.text, [AppSettings signature:self.selectedAccount.accountNum]];
+    self.mail.content = [NSString stringWithFormat:@"%@ \n%@", self.bodyTextView.text, [AppSettings signature:self.selectedAccount.idx]];
     
     [self.selectedAccount sendMail:self.mail bcc:self.personsAreHidden];
     

@@ -53,7 +53,7 @@
     [ccv updateForAccount:self.account];
     ccv.tapColor = ^(UIColor* color) {
         self.account.userColor = color;
-        [AppSettings setColor:color accountNum:self.account.accountNum];
+        [AppSettings setColor:color accountIndex:self.account.idx];
         if (self.cocobuttonUpdated != nil) {
             self.cocobuttonUpdated();
         }

@@ -651,7 +651,7 @@ static ViewController* s_self;
         }
         
         if (self.viewControllers.count>2) {
-            MailListViewController* f = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+            MailListViewController* f = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
             [self.viewControllers replaceObjectAtIndex:1 withObject:f];
         }
         
@@ -751,7 +751,7 @@ static ViewController* s_self;
             self.viewControllers = [NSMutableArray arrayWithObject:f];
         }
         else {
-            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccount:[AppSettings activeAccount]]];
+            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
             inbox.view.frame = self.contentView.bounds;
             nextView = inbox.view;
             
@@ -918,7 +918,7 @@ static ViewController* s_self;
     [self.cocoaButton closeHorizontalButton:button refreshCocoaButtonAndDo:^{
         
         Accounts* A = [Accounts sharedInstance];
-        FolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccount:[A currentAccountIdx]+1];
+        CCMFolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccountIndex:[A currentAccountIdx]];
         [[A currentAccount] releaseContent];
         A.currentAccountIdx = button.tag;
         

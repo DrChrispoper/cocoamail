@@ -17,6 +17,7 @@
 #import "UidEntry.h"
 #import "CCMAttachment.h"
 #import "FMDatabase.h"
+#import "Accounts.h"
 
 #define SECONDS_PER_DAY 86400.0 //24*3600
 #define FOLDER_COUNT_LIMIT 999 // maximum number of folders allowed

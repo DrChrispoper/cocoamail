@@ -112,7 +112,7 @@
     
     NSArray* clouds = @[
                         @{BIMAGE:@"icone_dropbox", TEXT: @"Dropbox", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"Dropbox"},
-                        @{BIMAGE:@"icone_icloud", TEXT: @"iCloud", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"iCloud"},
+                        //@{BIMAGE:@"icone_icloud", TEXT: @"iCloud", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"iCloud"},
                         //@{BIMAGE:@"icone_google", TEXT: @"Google Drive", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"Google Drive"},
                         //@{BIMAGE:@"icone_box", TEXT: @"Box", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"Box"}
                         ];

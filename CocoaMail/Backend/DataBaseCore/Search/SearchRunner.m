@@ -19,6 +19,7 @@
 #import "Persons.h"
 #import "CCMAttachment.h"
 #import "StringUtil.h"
+#import "Accounts.h"
 
 static SearchRunner *searchSingleton = nil;
 
@@ -57,7 +58,7 @@ static SearchRunner *searchSingleton = nil;
 
 - (RACSignal *)searchOfFolder:(NSString*)searchText
 {
-    NSSet* dbNumbers = [[SyncManager getSingleton] retrieveAllDBNumsAccountNum:[AppSettings activeAccount]];
+    NSSet* dbNumbers = [[SyncManager getSingleton] retrieveAllDBNums:kActiveAccountIndex];
     
     searchText = [searchText stringByAppendingString:@"*"];
     
@@ -344,9 +345,9 @@ static SearchRunner *searchSingleton = nil;
     self.cancelled = NO;
     
     for (int accountIdx = 0; accountIdx < [AppSettings numActiveAccounts]; accountIdx++) {
-        int accountNum = [AppSettings numAccountForIndex:accountIdx];
-        for(int i = 0; i < [AppSettings allFoldersName:accountNum].count; i++){
-            folderState = [sm retrieveState:i accountNum:accountNum];
+        //int accountNum = [AppSettings numAccountForIndex:accountIdx];
+        for(int i = 0; i < [AppSettings allFoldersNameforAccountIndex:accountIdx].count; i++){
+            folderState = [sm retrieveState:i accountIndex:accountIdx];
             [nums addObjectsFromArray:folderState[@"dbNums"]];
         }
     }
@@ -366,11 +367,11 @@ static SearchRunner *searchSingleton = nil;
     
     self.cancelled = NO;
     
-    if ([AppSettings activeAccount] == -1) {
+    if (kisActiveAccountAll) {
         NSMutableSet* numsM = [[NSMutableSet alloc]init];
-        for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
-            NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            folderState = [sm retrieveState:[[[Accounts sharedInstance] getAccount:i] currentFolderIdx] accountNum:accountIndex];
+        for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
+            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+            folderState = [sm retrieveState:[[[Accounts sharedInstance] getAccount:accountIndex] currentFolderIdx] accountIndex:accountIndex];
             [numsM addObjectsFromArray:folderState[@"dbNums"]];
         }
         nums = [[NSArray alloc]initWithArray:[numsM allObjects]];
@@ -378,7 +379,7 @@ static SearchRunner *searchSingleton = nil;
         nums = [nums sortedArrayUsingDescriptors:@[sortOrder]];
     }
     else {
-        folderState = [sm retrieveState:[[Accounts sharedInstance].currentAccount currentFolderIdx] accountNum:[AppSettings activeAccount]];
+        folderState = [sm retrieveState:[[Accounts sharedInstance].currentAccount currentFolderIdx] accountIndex:kActiveAccountIndex];
         nums = folderState[@"dbNums"];
         NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending: NO];
         nums = [nums sortedArrayUsingDescriptors:@[sortOrder]];
@@ -389,7 +390,7 @@ static SearchRunner *searchSingleton = nil;
 
 - (RACSignal *)threadSearch:(NSString *)thread
 {
-    NSArray* nums  = [[[SyncManager getSingleton] retrieveAllDBNumsAccountNum:[AppSettings activeAccount]] allObjects];
+    NSArray* nums  = [[[SyncManager getSingleton] retrieveAllDBNums:kActiveAccountIndex] allObjects];
     
     NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending: NO];
     nums = [nums sortedArrayUsingDescriptors: @[sortOrder]];
@@ -404,7 +405,7 @@ static SearchRunner *searchSingleton = nil;
 {
     self.cancelled = NO;
     
-    NSArray* dbNumbers = [[[SyncManager getSingleton] retrieveAllDBNumsAccountNum:[AppSettings activeAccount]] allObjects];
+    NSArray* dbNumbers = [[[SyncManager getSingleton] retrieveAllDBNums:kActiveAccountIndex] allObjects];
     
     NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending: NO];
     dbNumbers = [dbNumbers sortedArrayUsingDescriptors: @[sortOrder]];

@@ -30,6 +30,8 @@
     NSMutableArray *_allData;
     BOOL _showingEmail;
     BOOL _localFetchComplete;
+    BOOL _serverFetchComplete;
+    BOOL _serverTestComplete;
 }
 
 @property (nonatomic, strong) NSMutableArray* convByDay;
@@ -45,7 +47,7 @@
 
 @property (nonatomic, retain) NSOperationQueue *localFetchQueue;
 
-@property (nonatomic) FolderType folder;
+@property (nonatomic) CCMFolderType folder;
 
 @property (nonatomic) BOOL longPressOnCocoabutton;
 
@@ -69,7 +71,7 @@
     return self;
 }
 
--(instancetype) initWithFolder:(FolderType)folder
+-(instancetype) initWithFolder:(CCMFolderType)folder
 {
     NSString* name = nil;
     if (folder.type == FolderTypeUser) {
@@ -125,7 +127,8 @@
     self.localFetchQueue = [NSOperationQueue new];
     [self.localFetchQueue setMaxConcurrentOperationCount:1];
     _localFetchComplete = YES;
-    
+    _serverFetchComplete = YES;
+
     self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
     //self.convByDay[0] = [[NSDictionary alloc]initWithObjectsAndKeys:[[NSMutableArray alloc]init],@"list",@"Today",@"day", nil];
     
@@ -200,6 +203,12 @@
     self.table = table;
 
     [self addPullToRefreshWithDelta:0];
+    
+    if(!self.onlyPerson && self.convByDay.count == 0){
+        [self.localFetchQueue addOperationWithBlock:^{
+            [self setupData];
+        }];
+    }
 }
 
 -(Conversation*) _createAttachs
@@ -260,14 +269,9 @@
     [super viewWillAppear:animated];
     
     [self.table reloadData];
-    
-    if(!self.onlyPerson && self.convByDay.count == 0){
-        [self.localFetchQueue addOperationWithBlock:^{
-            [self setupData];
-        }];
-    }
-    
-    [self.table reloadData];
+
+    _serverFetchComplete = NO;
+    _serverTestComplete = NO;
     
     _showingEmail = NO;
 }
@@ -313,7 +317,7 @@
     //self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
     //CCMLog(@"Folder:%@, %ld ",self.folderName, (long)[AppSettings numFolderWithFolder:self.folder forAccount:[Accounts sharedInstance].currentAccountIdx]);
 
-    if([AppSettings activeAccount] == -1){
+    if(kisActiveAccountAll){
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             for (Conversation* conv in [[[Accounts sharedInstance] getAccount:idx] getConversationsForFolder:self.folder]) {
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -330,7 +334,10 @@
             }];
         }
     }
-
+    
+    /*[[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self.table reloadData];
+    }];*/
     //[self.table reloadData];
 }
 
@@ -392,7 +399,7 @@
     NSArray* imgNames = @[@"swipe_archive", @"swipe_delete", @"swipe_reply_single", @"swipe_read", @"swipe_inbox"];
     NSInteger swipetype = [Accounts sharedInstance].quickSwipeType;
     
-    FolderType type;
+    CCMFolderType type;
     if (swipetype==QuickSwipeArchive) {
         type.type = FolderTypeAll;
     }
@@ -491,7 +498,7 @@
         default:
         {
             // QuickSwipeArchive / QuickSwipeDelete
-            FolderType type;
+            CCMFolderType type;
             type.type = (swipetype==QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
             
             // back action
@@ -751,7 +758,7 @@
     [[CocoaButton sharedButton] forceCloseButton];
 }
 
--(void) _executeMoveOnSelectedCellsTo:(FolderType)toFolder
+-(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
     // find the conversations
     NSMutableArray* res = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
@@ -825,7 +832,7 @@
 {
     [CocoaButton animateHorizontalButtonCancelTouch:button];
     
-    FolderType toFolder;
+    CCMFolderType toFolder;
     toFolder.idx = 0;
     BOOL doNothing = NO;
     
@@ -911,7 +918,7 @@
     }
 }
 
--(void) chooseUserFolder:(FolderType)folder
+-(void) chooseUserFolder:(CCMFolderType)folder
 {
     [self _executeMoveOnSelectedCellsTo:folder];
     [self chooseUserFolderCancel];
@@ -950,9 +957,9 @@
     //If we are looking at Starred and there is no Starred Folder
     //We load all emails and hide emails not starred :D
     //Writing this I'm realising how bad this fix is but bricolage ftw! This case will rarely come up
-    if ([AppSettings activeAccount] != -1 &&
+    if (!kisActiveAccountAll &&
         self.folder.type == FolderTypeFavoris &&
-        [AppSettings importantFolderNumForAcct:[AppSettings activeAccount]  forBaseFolder:FolderTypeFavoris] ==  [AppSettings importantFolderNumForAcct:[AppSettings activeAccount]  forBaseFolder:FolderTypeAll] &&
+        [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex  forBaseFolder:FolderTypeFavoris] ==  [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex  forBaseFolder:FolderTypeAll] &&
         !(email.flag & MCOMessageFlagFlagged)) {
         
         return;
@@ -1093,7 +1100,7 @@
     CCMLog(@"Delete");
 
     for (Email *email in emails) {
-        if ([email haveSonInFolder:[AppSettings numFolderWithFolder:self.folder forAccount:[Accounts sharedInstance].currentAccountIdx+1]]) {
+        if ([email haveSonInFolder:[AppSettings numFolderWithFolder:self.folder forAccountIndex:[Accounts sharedInstance].currentAccountIdx]]) {
             continue;
         }
         for (int section = 0; section < self.convByDay.count ; section++) {
@@ -1166,9 +1173,9 @@
      }
      completed:^{
          CCMLog(@"Important folders sync completed");
-         if(![AppSettings isFirstFullSyncDone]){
+         //if(![AppSettings isFirstFullSyncDone]){
              [self foldersSync];
-         }
+         //}
      }];
 }
 
@@ -1184,7 +1191,10 @@
     if (networkStatus == NotReachable) {
         //[_cocoaButton.activityServerIndicatorView stopAnimating];
         //[self.pullToRefresh endRefreshing];
-    } else {
+    } else  if(_serverFetchComplete){
+        //[ViewController animateCocoaButtonRefresh:YES];
+        
+        _serverFetchComplete = NO;
         
         RACSignal *newEmailsSignal = [[[SyncManager getSingleton] syncActiveFolderFromStart:refresh] deliverOn:[RACScheduler mainThreadScheduler]];
         
@@ -1200,7 +1210,10 @@
             if (!new) {}
             
             CCMLog(@"Done");
+            _serverFetchComplete = YES;
             
+            //[ViewController animateCocoaButtonRefresh:(!(_serverTestComplete&&_serverFetchComplete))];
+
             //[_cocoaButton.activityServerIndicatorView stopAnimating];
             //[self.pullToRefresh endRefreshing];
             
@@ -1252,15 +1265,25 @@
                      
                      _localFetchComplete = YES;
                      
-                     if ([AppSettings activeAccount] != -1) {
+                     _serverTestComplete = NO;
+                     
+                     //[ViewController animateCocoaButtonRefresh:(!(_serverTestComplete&&_serverFetchComplete))];
+
+                     if (!kisActiveAccountAll) {
                          if (_allData.count != 0){
-                             [[ImapSync sharedServices] runUpToDateTest:_allData];
+                             [[ImapSync sharedServices] runUpToDateTest:_allData completed:^{
+                                 _serverTestComplete = YES;
+                                 //[ViewController animateCocoaButtonRefresh:(!(_serverTestComplete&&_serverFetchComplete))];
+                             }];
                          }
                      }
                      else {
-                         for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
+                         for (NSInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
                              if (_allData.count != 0){
-                                 [[ImapSync sharedServices:[AppSettings numAccountForIndex:i]] runUpToDateTest:_allData];
+                                 [[ImapSync sharedServices:accountIndex] runUpToDateTest:_allData completed:^{
+                                     _serverTestComplete = YES;
+                                     //[ViewController animateCocoaButtonRefresh:(!(_serverTestComplete&&_serverFetchComplete))];
+                                 }];
                              }
                          }
                      }

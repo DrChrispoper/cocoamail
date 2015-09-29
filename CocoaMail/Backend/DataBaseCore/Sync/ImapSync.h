@@ -7,6 +7,7 @@
 
 #import <MailCore/MailCore.h>
 #import "Email.h"
+#import "Accounts.h"
 
 @class RACSignal;
 
@@ -23,7 +24,7 @@
 
 - (RACSignal *)runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart;
 - (RACSignal *)runSearchThing:(NSArray*)things;
-- (void)runUpToDateTest:(NSArray *)data;
+- (void)runUpToDateTest:(NSArray *)data completed:(void (^)(void))completedBlock;
 - (void)runUpToDateCachedTest:(NSArray*)data;
 - (void)saveCachedData;
 

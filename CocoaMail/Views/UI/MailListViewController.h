@@ -13,7 +13,7 @@
 
 @interface MailListViewController : InViewController <CocoaButtonDatasource>
 
--(instancetype) initWithFolder:(FolderType)folder;
+-(instancetype) initWithFolder:(CCMFolderType)folder;
 -(instancetype) initWithPerson:(Person*)person;
 
 -(BOOL) istheSame:(MailListViewController*)other;

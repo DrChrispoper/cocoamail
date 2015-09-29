@@ -67,7 +67,7 @@
 {
     [super viewDidAppear:animated];
     
-    if ([AppSettings activeAccount]!= -1 && [AppSettings allFoldersName:[AppSettings activeAccount]].count == 0) {
+    if (!kisActiveAccountAll && [AppSettings allFoldersNameforAccountIndex:kActiveAccountIndex].count == 0) {
         [self performSegueWithIdentifier:@"PROFIL_FINISH" sender:self];
     }
     
@@ -198,15 +198,21 @@
                  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                      _localFetchComplete = YES;
                      
-                     if ([AppSettings activeAccount] != -1) {
+                     if (!kisActiveAccountAll) {
                          if (_allEmailData.count != 0){
-                             [[ImapSync sharedServices] runUpToDateTest:_allEmailData];
+                             [[ImapSync sharedServices] runUpToDateTest:_allEmailData completed:^{
+                                 //_serverTestComplete = YES;
+                                 //[ViewController animateCocoaButtonRefresh:(_serverTestComplete&&_serverFetchComplete)];
+                             }];
                          }
                      }
                      else {
-                         for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
+                         for (NSInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
                              if (_allEmailData.count != 0){
-                                 [[ImapSync sharedServices:[AppSettings numAccountForIndex:i]] runUpToDateTest:_allEmailData];
+                                 [[ImapSync sharedServices:accountIndex] runUpToDateTest:_allEmailData completed:^{
+                                     //_serverTestComplete = YES;
+                                     //[ViewController animateCocoaButtonRefresh:(_serverTestComplete&&_serverFetchComplete)];
+                                 }];
                              }
                          }
                      }
@@ -405,9 +411,9 @@
      }
      completed:^{
          CCMLog(@"Important folders sync completed");
-         if(![AppSettings isFirstFullSyncDone]){
+         //if(![AppSettings isFirstFullSyncDone]){
              [self foldersSync];
-         }
+         //}
      }];
 }
 

@@ -7,117 +7,129 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "Accounts.h"
 #import <MailCore/MailCore.h>
+#import "CCMConstants.h"
 
 @interface AppSettings : NSObject
 
-+(NSString*)version;
-+(NSString*)appID;
-+(NSString*)udid;
-+(NSString*)systemVersion;
-+(NSString*)model;
-+(BOOL)firstInit;
-+(void)setFirstInit:(BOOL)value;
-+(void)initDefaultValues;
-+(BOOL)reset;
-+(void)setReset:(BOOL)value;
-+(BOOL)firstSync;
-+(void)setFirstSync:(BOOL)firstSync;
-+(NSString*)dataInitVersion;
-+(void)setDataInitVersion;
-+(NSInteger)datastoreVersion;
-+(void)setDatastoreVersion:(NSInteger)value;
++ (NSString*)version;
++ (NSString*)appID;
++ (NSString*)udid;
++ (NSString*)systemVersion;
++ (NSString*)model;
++ (BOOL)firstInit;
++ (void)setFirstInit:(BOOL)value;
++ (void)initDefaultValues;
++ (BOOL)reset;
++ (void)setReset:(BOOL)value;
+//+(BOOL)firstSync;
+//+(void)setFirstSync:(BOOL)firstSync;
++ (NSString*)dataInitVersion;
++ (void)setDataInitVersion;
++ (NSInteger)datastoreVersion;
++ (void)setDatastoreVersion:(NSInteger)value;
 
-+(NSInteger)globalDBVersion;
-+(void)setGlobalDBVersion:(NSInteger)version;
++ (NSInteger)globalDBVersion;
++ (void)setGlobalDBVersion:(NSInteger)version;
 
 //Global Settings
-+(void)setBadgeCount:(NSInteger)y;
-+(NSInteger)badgeCount;
-+(void)setNotifications:(BOOL)y;
-+(BOOL)notifications;
++ (void)setBadgeCount:(NSInteger)y;
++ (NSInteger)badgeCount;
++ (void)setNotifications:(BOOL)y;
++ (BOOL)notifications;
++ (NSArray*)defaultColors;
 
-// data about accounts
-+(NSInteger)numAccountForEmail:(NSString*)email;
-+(NSInteger)numAccountForIndex:(NSInteger)index;
-+(NSInteger)numIndexForAccount:(NSInteger)accountNum;
-+(NSInteger)numActiveAccounts;
-+(NSInteger)numAccounts;
-+(void)setNumAccounts:(NSInteger)value;
-+(NSInteger)numDelAccounts;
-+(void)setNumDelAccounts:(NSInteger)value;
-+(BOOL)accountDeleted:(NSInteger)accountNum;
-+(void)setAccountDeleted:(BOOL)value accountNum:(NSInteger)accountNum;
+// Data about accounts
++ (NSInteger)accountIndexForEmail:(NSString*)email;
++ (NSInteger)indexForAccount:(NSInteger)accountNum;
 
-+(NSString*)identifier;
-+(NSString*)identifier:(NSInteger)accountNum;
-+(void)setIdentifier:(NSString*)value accountNum:(NSInteger)accountNum;
++ (NSInteger)numActiveAccounts;
 
-+(NSString*)username;
-+(NSString*)username:(NSInteger)accountNum;
-+(void)setUsername:(NSString*)y accountNum:(NSInteger)accountNum;
++ (NSInteger)numAccounts;
++ (void)addAccount;
 
-+(NSString*)password;
-+(NSString*)password:(NSInteger)accountNum;
-+(void)setPassword:(NSString*)y accountNum:(NSInteger)accountNum;
+//For SyncManager
++ (BOOL)isAccountNumDeleted:(NSInteger)accountNum;
++ (NSInteger)numForData:(NSInteger)accountIndex;
 
-+(MCOIMAPSession*)imapSession:(NSInteger)accountNum;
-+(NSString*)imapServer:(NSInteger)accountNum;
-+(void)setImapServer:(NSString*)y accountNum:(NSInteger)accountNum;
-+(unsigned int)imapPort:(NSInteger)accountNum;
-+(void)setImapPort:(NSInteger)y accountNum:(NSInteger)accountNum;
-+(NSInteger)imapEnc:(NSInteger)accountNum;
-+(void)setImapEnc:(NSInteger)y accountNum:(NSInteger)accountNum;
-+(NSString*)smtpServer:(NSInteger)accountNum;
-+(void)setSmtpServer:(NSString*)y accountNum:(NSInteger)accountNum;
-+(NSInteger)smtpPort:(NSInteger)accountNum;
-+(void)setSmtpPort:(NSInteger)y accountNum:(NSInteger)accountNum;
-+(NSInteger)smtpEnc:(NSInteger)accountNum;
-+(void)setSmtpEnc:(NSInteger)y accountNum:(NSInteger)accountNum;
++ (NSInteger)numDelAccounts;
++ (void)setNumDelAccounts:(NSInteger)value;
 
-+(NSString*)signature:(NSInteger)accountNum;
-+(void)setSignature:(NSString*)y accountNum:(NSInteger)accountNum;
++ (BOOL)isAccountDeleted:(NSInteger)accountIndex;
++ (void)setAccountDeleted:(BOOL)value accountIndex:(NSInteger)accountIndex;
 
-+(NSString*)name:(NSInteger)accountNum;
-+(void)setName:(NSString*)y accountNum:(NSInteger)accountNum;
+//Account Main Settings
++ (NSString*)identifier:(NSInteger)accountIndex;
++ (void)setIdentifier:(NSString*)identifier accountIndex:(NSInteger)accountIndex;
 
-+(NSString*)initials:(NSInteger)accountNum;
-+(void)setInitials:(NSString*)y accountNum:(NSInteger)accountNum;
++ (NSString*)username:(NSInteger)accountIndex;
++ (void)setUsername:(NSString*)username accountIndex:(NSInteger)accountIndex;
 
-+(NSArray*)defaultColors;
-+(UIColor*)color:(NSInteger)accountNum;
-+(void)setColor:(UIColor*)y accountNum:(NSInteger)accountNum;
++ (NSString*)password:(NSInteger)accountIndex;
++ (void)setPassword:(NSString*)password accountIndex:(NSInteger)accountIndex;
 
-// For active account
-+(BOOL)isUsingOAuth;
-+(BOOL)isUsingOAuth:(NSInteger)accountNum;
-+(void)setOAuth:(NSString*)y accountNum:(NSInteger)accountNum;
-+(NSString*)oAuth:(NSInteger)accountNum;
+//Account Server Settings
++ (MCOIMAPSession*)imapSession:(NSInteger)accountIndex;
+
++ (NSString*)imapServer:(NSInteger)accountIndex;
++ (void)setImapServer:(NSString*)y accountIndex:(NSInteger)accountIndex;
+
++ (unsigned int)imapPort:(NSInteger)accountIndex;
++ (void)setImapPort:(NSInteger)y accountIndex:(NSInteger)accountIndex;
+
++ (NSInteger)imapEnc:(NSInteger)accountIndex;
++ (void)setImapEnc:(NSInteger)y accountIndex:(NSInteger)accountIndex;
+
++ (NSString*)smtpServer:(NSInteger)accountIndex;
++ (void)setSmtpServer:(NSString*)y accountIndex:(NSInteger)accountIndex;
+
++ (NSInteger)smtpPort:(NSInteger)accountIndex;
++ (void)setSmtpPort:(NSInteger)y accountIndex:(NSInteger)accountIndex;
+
++ (NSInteger)smtpEnc:(NSInteger)accountIndex;
++ (void)setSmtpEnc:(NSInteger)y accountIndex:(NSInteger)accountIndex;
+
++ (void)setOAuth:(NSString*)y accountIndex:(NSInteger)accountIndex;
++ (NSString*)oAuth:(NSInteger)accountIndex;
++ (BOOL)isUsingOAuth:(NSInteger)accountIndex;
+
+//Account Other Settings
++ (NSString*)signature:(NSInteger)accountIndex;
++ (void)setSignature:(NSString*)y accountIndex:(NSInteger)accountIndex;
+
++ (NSString*)name:(NSInteger)accountIndex;
++ (void)setName:(NSString*)y accountIndex:(NSInteger)accountIndex;
+
++ (NSString*)initials:(NSInteger)accountIndex;
++ (void)setInitials:(NSString*)y accountIndex:(NSInteger)accountIndex;
+
++ (UIColor*)color:(NSInteger)accountIndex;
++ (void)setColor:(UIColor*)y accountIndex:(NSInteger)accountIndex;
 
 /// Indexes are: 0-INBOX 1-Starred 2-Sent Mail 3-Draft 4-All Mail 5-Trash  6-Spam
-+(NSInteger)importantFolderNumForAcct:(NSInteger)account forBaseFolder:(BaseFolderType)baseFolder;
-+(void)setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder forAccount:(NSInteger)account;
-+(FolderType)typeOfFolder:(NSInteger)folder forAccount:(NSInteger)account;
-+(NSString*)folderName:(NSInteger)folder forAccount:(NSInteger)account;
-+(NSInteger)numFolderWithFolder:(FolderType)folder forAccount:(NSInteger)account;
-+(NSArray*)allFoldersName:(NSInteger)account;
-+(NSArray*)allNonImportantFoldersName:(NSInteger)account;
-+(void)setFoldersName:(NSArray*)folders forAccount:(NSInteger)account;
-//+(FolderType)activeFolder;
-//+(void)setActiveFolder:(FolderType)folder;
-+(NSInteger)activeAccount;
-+(void)setActiveAccount:(NSInteger)account;
-+(NSInteger)defaultAccount;
-+(void)setDefaultAccount:(NSInteger)account;
++ (NSInteger)importantFolderNumforAccountIndex:(NSInteger)accountIndex forBaseFolder:(BaseFolderType)baseFolder;
++ (void)setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder forAccountIndex:(NSInteger)accountIndex;
++ (CCMFolderType)typeOfFolder:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
++ (NSInteger)numFolderWithFolder:(CCMFolderType)folder forAccountIndex:(NSInteger)accountIndex;
+
++(NSString*)folderName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
++(NSArray*)allFoldersNameforAccountIndex:(NSInteger)accountIndex;
++(NSArray*)allNonImportantFoldersNameforAccountIndex:(NSInteger)accountIndex;
++(void)setFoldersName:(NSArray*)folders forAccountIndex:(NSInteger)accountIndex;
+//+(CCMFolderType)activeFolder;
+//+(void)setActiveFolder:(CCMFolderType)folder;
+//+(NSInteger)activeAccount;
+//+(void)setActiveAccount:(NSInteger)account;
++(NSInteger)defaultAccountIndex;
++(void)setDefaultAccountIndex:(NSInteger)accountIndex;
 
 // in-store sales
 +(BOOL)featurePurchased:(NSString*)productIdentifier;
 +(void)setFeaturePurchased:(NSString*)productIdentifier;
 
-+(void)firstFullSyncDone;
-+(BOOL)isFirstFullSyncDone;
++ (void)firstFullSyncDone:(NSInteger)accountIndex;
++ (BOOL)isFirstFullSyncDone:(NSInteger)accountIndex;;
 
-+(void)setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountNum:(NSInteger)accountNum;
++(void)setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex;
 
 @end

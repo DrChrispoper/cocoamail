@@ -90,6 +90,8 @@ static NSDateFormatter* s_df_hour = nil;
     codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
     codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
     
+    //CCMLog(@"Name:%@ with email:%@ added to contacts",name,email.sender.mailbox);
+    
     mail.fromPersonID = [[Persons sharedInstance]indexForPerson:[Person createWithName:name email:email.sender.mailbox icon:nil codeName:codeName]];
     mail.date = email.datetime;
     mail.title = email.subject;
@@ -103,9 +105,9 @@ static NSDateFormatter* s_df_hour = nil;
     NSMutableArray* ids = [[NSMutableArray alloc]initWithCapacity:tmp.count];
     
     for (MCOAddress* address in tmp) {
-        NSString* name = email.sender.displayName;
+        NSString* name = address.displayName;
         if ([name isEqualToString:@""]) {
-            name = email.sender.mailbox;
+            name = address.mailbox;
         }
         
         NSString* codeName = [name uppercaseString];
@@ -249,10 +251,10 @@ static NSDateFormatter* s_df_hour = nil;
 -(void) addMail:(Mail *)mail
 {
     for (UidEntry* uid in mail.email.uids) {
-        //if (uid.account != [AppSettings activeAccount]) {
+        //if (uid.account != kActiveAccount) {
         //    CCMLog(@"WTF: %@",uid.msgId);
         //}
-        FolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccount:uid.account];
+        CCMFolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccountIndex:[AppSettings indexForAccount:uid.account]];
         [self.foldersType addObject:@(encodeFolderTypeWith(Fuser))];
     }
     

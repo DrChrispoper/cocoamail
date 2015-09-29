@@ -11,6 +11,7 @@
 #import <Google/SignIn.h>
 #import <BoxBrowseSDK/BoxBrowseSDK.h>
 #import "DropboxBrowserViewController.h"
+#import "CocoaMail-Swift.h"
 
 @interface CloudViewController () <BOXFolderViewControllerDelegate,GIDSignInUIDelegate>
 
@@ -34,6 +35,12 @@
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle: self.cloudServiceName];
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(receiveAuthNotification:)
+     name:@"AuthNotification"
+     object:nil];
     
     [GIDSignIn sharedInstance].uiDelegate = self;
 
@@ -77,19 +84,42 @@
     
     [self setupSimpleNavBarWith:item andWidth:screenBounds.size.width];
     
-}
-
--(void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    
-    if([self.cloudServiceName isEqualToString:@"Dropbox"]){
-        if ([[DBSession sharedSession] isLinked]) {
+    if ([self.cloudServiceName isEqualToString:@"Dropbox"] && [[DBSession sharedSession] isLinked]) {
             [self.mainButton setSelected:YES];
             [self.mainImage setHighlighted:YES];
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
+}
+
+-(void)receiveAuthNotification:(NSNotification *) notification {
+    if ([[notification name] isEqualToString:@"AuthNotification"]) {
+        [[PKHUD sharedHUD] hideWithAnimated:YES];
+        
+        if ([[notification userInfo][@"cloudServiceName"] isEqualToString:@"Dropbox"]) {
+            if ([[DBSession sharedSession] isLinked]) {
+            [self.mainButton setSelected:YES];
+            [self.mainImage setHighlighted:YES];
+            }
+            else {
+                UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Account not linked.", @"Title of alert view when error of linking Dropbox")
+                                                                                   message:NSLocalizedString(@"An error occured, your dropbox account has not been linked", @"Message of alert view when error of linking Dropbox")
+                                                                            preferredStyle:UIAlertControllerStyleAlert];
+                [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Confirmation of alert view when unlinking Dropbox") style:UIAlertActionStyleDefault handler:nil]];
+                
+                [self presentViewController:alertView
+                                   animated:YES
+                                 completion:nil];
+            }
         }
     }
 }
+
 
 -(void) _tap
 {
@@ -98,6 +128,9 @@
     
     if([self.cloudServiceName isEqualToString:@"Dropbox"]){
         if (![[DBSession sharedSession] isLinked]) {
+            [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
+            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Linking Dropbox..."];
+            [[PKHUD sharedHUD] show];
             [[DBSession sharedSession] linkFromController:self];
         } else {
             [[DBSession sharedSession] unlinkAll];

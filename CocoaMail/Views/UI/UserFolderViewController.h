@@ -13,7 +13,7 @@
 
 @protocol UserFolderViewControllerDelegate
 
--(void) chooseUserFolder:(FolderType)folder;
+-(void) chooseUserFolder:(CCMFolderType)folder;
 -(void) chooseUserFolderCancel;
 
 @end

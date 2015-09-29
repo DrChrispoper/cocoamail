@@ -232,7 +232,7 @@
 
 -(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    FolderType type;
+    CCMFolderType type;
     if (indexPath.section == 0) {
         type.type = indexPath.row;
         type.idx = 0;
@@ -266,7 +266,7 @@
             
             Conversation* conv = [[Conversation alloc] init];
             [conv addMail:[Mail mail:email]];
-            [[[Accounts sharedInstance] getAccount:[AppSettings numIndexForAccount:[email account]]] addConversation:conv];
+            [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[email account]]] addConversation:conv];
         }
     } error:^(NSError *error) {
         _completionHandler(hasNewEmail);

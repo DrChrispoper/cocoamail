@@ -45,7 +45,7 @@
     DBSession *dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
-    [[Accounts sharedInstance] setCurrentAccountIdx:[AppSettings defaultAccount]-1];
+    [[Accounts sharedInstance] setCurrentAccountIdx:[AppSettings defaultAccountIndex]];
     
     NSString *driveScope = @"https://mail.google.com/";
     NSArray *currentScopes = [GIDSignIn sharedInstance].scopes;
@@ -84,8 +84,8 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     if (([AppSettings numActiveAccounts])>0) {
-        for (NSInteger i = 0 ; i < [AppSettings numActiveAccounts];i++) {
-            NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
             [[ImapSync sharedServices:accountIndex] saveCachedData];
             
             if ([AppSettings badgeCount] == 1) {
@@ -132,10 +132,11 @@
     }
     
     if ([[DBSession sharedSession] handleOpenURL:url]) {
-        if ([[DBSession sharedSession] isLinked]) {
-            CCMLog(@"App linked successfully!");
-            // At this point you can start making API calls
-        }
+        NSDictionary *statusText = @{@"cloudServiceName":@"Dropbox"};
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:@"AuthNotification"
+         object:nil
+         userInfo:statusText];
         
         return YES;
     }
@@ -160,12 +161,10 @@ didSignInForUser:(GIDGoogleUser *)user
     // [END_EXCLUDE]
     
     if (!error && idToken) {
-        NSInteger accountNum = [AppSettings numAccountForEmail:email];
-        if(accountNum == -1){
-            accountNum = [AppSettings numAccounts]+1;
+        NSInteger accountIndex = [AppSettings accountIndexForEmail:email];
+        if(accountIndex != -1){
+            [AppSettings setOAuth:idToken accountIndex:accountIndex];
         }
-            
-        [AppSettings setOAuth:idToken accountNum:accountNum];
     }
 }
 
@@ -180,20 +179,20 @@ didSignInForUser:(GIDGoogleUser *)user
 {
     // reset - delete all data and settings
     [AppSettings setReset:NO];
-    for (int i = 0; i < [AppSettings numActiveAccounts]; i++) {
-        NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-        [AppSettings setUsername:@"" accountNum:accountIndex];
-        [AppSettings setPassword:@"" accountNum:accountIndex];
-        [AppSettings setOAuth:@"" accountNum:accountIndex];
-        [AppSettings setIdentifier:@"" accountNum:accountIndex];
-        [AppSettings setAccountDeleted:YES accountNum:accountIndex];
+    for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
+        //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+        [AppSettings setUsername:@"" accountIndex:accountIndex];
+        [AppSettings setPassword:@"" accountIndex:accountIndex];
+        [AppSettings setOAuth:@"" accountIndex:accountIndex];
+        [AppSettings setIdentifier:@"" accountIndex:accountIndex];
+        [AppSettings setAccountDeleted:YES accountIndex:accountIndex];
     }
     
     [AppSettings setDataInitVersion];
-    [AppSettings setFirstSync:YES];
+    //[AppSettings setFirstSync:YES];
     [AppSettings setGlobalDBVersion:0];
     
-    [AppSettings setNumAccounts:0];
+    //[AppSettings setNumAccounts:0];
     
     [GlobalDBFunctions deleteAll];
 }

@@ -123,7 +123,7 @@
         self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
     
-    int account = [self getFirstUIDE].account;
+    NSInteger account = [self getFirstUIDE].account;
     
     for (UidEntry* e in self.uids) {
         if (account != e.account) {
@@ -143,7 +143,7 @@
     NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
     
     for (UidEntry* e in self.uids) {
-        if(e.account == [AppSettings activeAccount]){
+        if(e.account == kActiveAccountNum){
             [uidsOne addObject:e];
         }
     }
@@ -158,7 +158,7 @@
     NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
     NSMutableArray *uidsTwo = [[NSMutableArray alloc]init];
     
-    int firstAccount = [self getFirstUIDE].account;
+    NSInteger firstAccount = [self getFirstUIDE].account;
     
     for (UidEntry* e in self.uids) {
         if(e.account == firstAccount){
@@ -428,7 +428,7 @@
 
 - (void)archive
 {
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumForAcct:[self account] forBaseFolder:FolderTypeAll]];
+    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:[self account]] forBaseFolder:FolderTypeAll]];
     [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
 }
 
@@ -440,7 +440,7 @@
 
 - (void)trash
 {
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumForAcct:[self account] forBaseFolder:FolderTypeDeleted]];
+    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:[self account]] forBaseFolder:FolderTypeDeleted]];
     [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
 }
 

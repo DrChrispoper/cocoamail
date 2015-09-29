@@ -34,7 +34,7 @@
 
 @property (nonatomic, strong) NSMutableArray* allMailViews;
 
-@property (nonatomic) FolderType folder;
+@property (nonatomic) CCMFolderType folder;
 
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 
@@ -42,11 +42,12 @@
 
 
 
-@interface SingleMailView : UIView
+@interface SingleMailView : UIView <MCOMessageViewDelegate>
 
 -(void) setupWithText:(NSString*)texte extended:(BOOL)extended;
 
 @property (nonatomic, strong) NSString* textContent;
+@property (nonatomic, strong) UIView* htmlView;
 @property (nonatomic, weak) id<SingleMailViewDelegate> delegate;
 
 @property (nonatomic) CGFloat posXtoUsers;
@@ -54,6 +55,7 @@
 @property (nonatomic, weak) UIImageView* markAsRead;
 
 @property (nonatomic) NSInteger idxInConversation;
+@property (nonatomic) CGFloat height;
 
 @property (nonatomic, weak) UIButton* favoriBtn;
 
@@ -79,7 +81,7 @@
     }
     // TODO put it elsewhere
     
-    self.folder = [AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccount:[AppSettings activeAccount]];
+    self.folder = [AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccountIndex:kActiveAccountIndex];
 
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
@@ -355,7 +357,7 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil];
 }
 
--(void) _executeMoveOnSelectedCellsTo:(FolderType)toFolder
+-(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
@@ -378,7 +380,7 @@
 {
     //[CocoaButton animateHorizontalButtonCancelTouch:button];
     
-    FolderType toFolder;
+    CCMFolderType toFolder;
     toFolder.idx = 0;
     BOOL doNothing = NO;
     
@@ -422,7 +424,7 @@
     }
 }
 
--(void) chooseUserFolder:(FolderType)folder
+-(void) chooseUserFolder:(CCMFolderType)folder
 {
     [self _executeMoveOnSelectedCellsTo:folder];
     [self chooseUserFolderCancel];
@@ -565,7 +567,7 @@
         CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
         size.width = ceilf(size.width);
         size.height = ceilf(size.height);
-        
+        //self.height = size.height;
         
         const CGFloat topBorder = 14.f;
         
@@ -578,10 +580,19 @@
             [inIV addSubview:text];
         }
         else {
-            size.height = 500;
-            MCOMessageView *view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
-            [view setHtml:mail.email.htmlBody];
-            [inIV addSubview:view];
+            if (!self.htmlView) {
+                self.height = size.height = 100;
+                MCOMessageView *view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
+                [view setHtml:mail.email.htmlBody];
+                view.delegate = self;
+                self.htmlView = view;
+            }
+            else {
+                size.height = self.height;
+                [self.htmlView setFrame:CGRectMake(8, 48.f + topBorder, size.width, self.height)];
+            }
+
+            [inIV addSubview:self.htmlView];
         }
 
         
@@ -820,6 +831,33 @@
     
 }
 
+- (void)webViewLoaded:(UIWebView*)webView
+{
+
+    /*CGFloat diff = webView.scrollView.contentSize.height - self.height;
+    CGFloat fram = self.frame.size.height - self.height;
+    
+    self.height = webView.scrollView.contentSize.height ;
+    CGRect f = self.frame;
+    f.size.height = self.height + fram;
+    self.frame = f;*/
+    
+    CCMLog(@"%f",webView.scrollView.contentSize.height);
+    CCMLog(@"%f",webView.frame.size.height);
+    
+    self.height = webView.scrollView.contentSize.height;
+
+    [self setupWithText:self.textContent extended:YES];
+    CGFloat nextHeight = self.bounds.size.height;
+    
+    CGFloat diff = nextHeight - self.frame.size.height;
+    
+    CGRect f = self.frame;
+    f.size.height = nextHeight;
+    self.frame = f;
+    
+    [self.delegate mailView:self changeHeight:diff];
+}
 
 @end
 
