@@ -143,7 +143,7 @@
     NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
     
     for (UidEntry* e in self.uids) {
-        if(e.account == kActiveAccountNum){
+        if(kisActiveAccountAll || e.account == kActiveAccountNum){
             [uidsOne addObject:e];
         }
     }

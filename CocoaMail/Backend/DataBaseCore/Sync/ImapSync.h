@@ -24,7 +24,7 @@
 
 - (RACSignal *)runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart;
 - (RACSignal *)runSearchThing:(NSArray*)things;
-- (void)runUpToDateTest:(NSArray *)data completed:(void (^)(void))completedBlock;
+- (void)runUpToDateTest:(NSSet *)data completed:(void (^)(void))completedBlock;
 - (void)runUpToDateCachedTest:(NSArray*)data;
 - (void)saveCachedData;
 

@@ -212,6 +212,10 @@
 //NumAccout:1 - 2 - 4 If 3 is deleted
 + (NSInteger)numAccountForIndex:(NSInteger)accountIndex
 {
+    if (accountIndex == [AppSettings numActiveAccounts]) {
+        return -1;
+    }
+    
     NSAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
     
     NSInteger accountNum = 0;
@@ -649,13 +653,18 @@
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"dAccount"]];
-    return [AppSettings indexForAccount:[activeAcctPreference integerValue]];
+    NSInteger index = [activeAcctPreference integerValue];
+    if(index != 999){
+        return [AppSettings indexForAccount:index];
+    } else {
+        return [AppSettings numActiveAccounts];
+    }
 }
 
 +(void)setDefaultAccountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@([AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"dAccount"]];
+    [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"dAccount"]];
     [defaults synchronize];
 }
 

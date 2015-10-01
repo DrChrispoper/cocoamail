@@ -82,15 +82,13 @@ static NSDateFormatter* s_df_hour = nil;
     Mail* mail = [[Mail alloc]init];
     
     NSString* name = email.sender.displayName;
-    if ([name isEqualToString:@""]) {
+    if (!name || [name isEqualToString:@""]) {
         name = email.sender.mailbox;
     }
     
     NSString* codeName = [name uppercaseString];
     codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
     codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
-    
-    //CCMLog(@"Name:%@ with email:%@ added to contacts",name,email.sender.mailbox);
     
     mail.fromPersonID = [[Persons sharedInstance]indexForPerson:[Person createWithName:name email:email.sender.mailbox icon:nil codeName:codeName]];
     mail.date = email.datetime;
@@ -106,13 +104,15 @@ static NSDateFormatter* s_df_hour = nil;
     
     for (MCOAddress* address in tmp) {
         NSString* name = address.displayName;
-        if ([name isEqualToString:@""]) {
+        if (!name || [name isEqualToString:@""]) {
             name = address.mailbox;
         }
         
         NSString* codeName = [name uppercaseString];
         codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
         codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
+
+        
         [ids addObject:@([[Persons sharedInstance]indexForPerson:[Person createWithName:name email:address.mailbox icon:nil codeName:codeName]])];
     }
     

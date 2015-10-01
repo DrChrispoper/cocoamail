@@ -23,6 +23,7 @@
 @property (nonatomic) NSInteger currentAccountIndex;
 @property (nonatomic, strong) MCOIMAPOperation *imapCheckOp;
 @property (nonatomic) BOOL connected;
+@property (nonatomic) BOOL isConnecting;
 
 @end
 
@@ -54,6 +55,7 @@
                 ImapSync *sharedService = [[super allocWithZone:nil] init];
                 sharedService.currentAccountIndex = accountIndex;
                 sharedService.connected = NO;
+                sharedService.isConnecting = NO;
                 
                 if (updated && [updated.username isEqualToString:[AppSettings username:accountIndex]]) {
                     sharedService.imapSession = updated;
@@ -86,15 +88,18 @@
     return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         ImapSync * sharedService = [ImapSync allSharedServices:nil][accountIndex];
         
-        /*[sharedService.imapSession setConnectionLogger:^(void * connectionID, MCOConnectionLogType type, NSData * data) {
-         CCMLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-         }];*/
+        [sharedService.imapSession setConnectionLogger:^(void * connectionID, MCOConnectionLogType type, NSData * data) {
+            //if(type != MCOConnectionLogTypeReceived && type != MCOConnectionLogTypeSent){
+                CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+            //}
+        }];
         
-        if (!sharedService.connected) {
+        if (!sharedService.connected && !sharedService.isConnecting) {
             Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
             NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
             
             if (networkStatus != NotReachable) {
+                sharedService.isConnecting = YES;
                 if ([AppSettings isUsingOAuth:sharedService.currentAccountIndex]) {
                     
                     sharedService.imapSession.OAuth2Token = [AppSettings oAuth:sharedService.currentAccountIndex];
@@ -102,9 +107,11 @@
                     
                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
                     [sharedService.imapCheckOp start:^(NSError *error) {
+                        sharedService.isConnecting = NO;
                         if (error) {
                             sharedService.connected = NO;
                             CCMLog(@"error:%@ loading account:%li %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
+                            //NSAssert(!error, @"Connection error?");
                             [[GIDSignIn sharedInstance] signInSilently];
                         } else {
                             CCMLog(@"Account:%li check OK",(long)sharedService.currentAccountIndex);
@@ -113,42 +120,11 @@
                         }
                         [subscriber sendCompleted];
                     }];
-                    
-                    /*if([auth canAuthorize]){
-                     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[auth tokenURL]];
-                     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
-                     
-                     NSString *userAgent = [auth userAgent];
-                     [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
-                     
-                     [auth authorizeRequest:request completionHandler:^(NSError *error){
-                     if (error == nil) {
-                     sharedService.imapSession.OAuth2Token = [auth accessToken];
-                     sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
-                     
-                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
-                     [sharedService.imapCheckOp start:^(NSError *error) {
-                     if (error) {
-                     sharedService.connected = NO;
-                     CCMLog(@"error:%@ loading account:%li ", error,(long)sharedService.currentAccount);
-                     } else {
-                     CCMLog(@"Account:%li check OK",(long)sharedService.currentAccount);
-                     sharedService.connected = YES;
-                     [sharedService checkForCachedActions];
-                     }
-                     [subscriber sendCompleted];
-                     }];
-                     } else {
-                     CCMLog(@"%@",error.description);
-                     sharedService.connected = NO;
-                     [subscriber sendCompleted];
-                     }
-                     }];
-                     }*/
                 }
                 else {
                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
                     [sharedService.imapCheckOp start:^(NSError *error) {
+                        sharedService.isConnecting = NO;
                         if (error) {
                             sharedService.connected = NO;
                             CCMLog(@"error:%@ loading account:%li %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
@@ -160,11 +136,14 @@
                         [subscriber sendCompleted];
                     }];
                 }
+            } else {
+                [subscriber sendCompleted];
             }
         }
         else {
             [subscriber sendCompleted];
         }
+        
         return [RACDisposable disposableWithBlock:^{
         }];
     }];
@@ -792,18 +771,27 @@
     return;
 }
 
-- (void)runUpToDateTest:(NSArray *)emails completed:(void (^)(void))completedBlock
+- (void)runUpToDateTest:(NSSet *)convs completed:(void (^)(void))completedBlock
 {
     MCOIndexSet *uidsIS = [[MCOIndexSet alloc]init];
     NSString *path = [AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:self.currentAccountIndex];
    //NSInteger activeA = self.currentAccount;
     
-    for (int i = 0; i < emails.count; i++) {
-        if ([emails[i] uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]) {
-            if(!kisActiveAccountAll)
-                [uidsIS addIndex:[emails[i] uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
-            else if([emails[i] uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].account == [AppSettings numForData:self.currentAccountIndex])
-                [uidsIS addIndex:[emails[i] uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
+    NSMutableArray* emails = [NSMutableArray arrayWithCapacity:100];
+    
+    //for (int i = 0; i < emails.count; i++) {
+    for (Conversation* conv in convs) {
+        for (Mail* mail in conv.mails) {
+            if ([mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]) {
+                if(!kisActiveAccountAll) {
+                    [uidsIS addIndex:[mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
+                    [emails addObject:mail.email];
+                }
+                else if([mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].account == [AppSettings numForData:self.currentAccountIndex]) {
+                    [uidsIS addIndex:[mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
+                    [emails addObject:mail.email];
+                }
+            }
         }
     }
     
@@ -847,6 +835,7 @@
                     
                 }
             }
+            
             if(delDatas.count > 0) {
                 CCMLog(@"Delete %lu emails",(unsigned long)delDatas.count);
                 [ep removeFromFolderWrapper:delDatas];

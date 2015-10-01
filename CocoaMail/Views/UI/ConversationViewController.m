@@ -581,7 +581,7 @@
         }
         else {
             if (!self.htmlView) {
-                self.height = size.height = 100;
+                self.height = size.height = ([UIScreen mainScreen].bounds.size.height/2);
                 MCOMessageView *view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
                 [view setHtml:mail.email.htmlBody];
                 view.delegate = self;
@@ -589,7 +589,7 @@
             }
             else {
                 size.height = self.height;
-                [self.htmlView setFrame:CGRectMake(8, 48.f + topBorder, size.width, self.height)];
+                [self.htmlView setFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
             }
 
             [inIV addSubview:self.htmlView];
@@ -833,19 +833,7 @@
 
 - (void)webViewLoaded:(UIWebView*)webView
 {
-
-    /*CGFloat diff = webView.scrollView.contentSize.height - self.height;
-    CGFloat fram = self.frame.size.height - self.height;
-    
-    self.height = webView.scrollView.contentSize.height ;
-    CGRect f = self.frame;
-    f.size.height = self.height + fram;
-    self.frame = f;*/
-    
-    CCMLog(@"%f",webView.scrollView.contentSize.height);
-    CCMLog(@"%f",webView.frame.size.height);
-    
-    self.height = webView.scrollView.contentSize.height;
+    self.height = webView.frame.size.height;
 
     [self setupWithText:self.textContent extended:YES];
     CGFloat nextHeight = self.bounds.size.height;

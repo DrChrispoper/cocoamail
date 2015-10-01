@@ -172,6 +172,8 @@
 		27818C6D1BABF28D00D26D1A /* Persons.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C6A1BABF28D00D26D1A /* Persons.m */; settings = {ASSET_TAGS = (); }; };
 		27818C701BABF35F00D26D1A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C6F1BABF35F00D26D1A /* ViewController.m */; settings = {ASSET_TAGS = (); }; };
 		278BF2F61BA95D9200A68D9E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */; };
+		27C077BA1BBC1E4300FC1841 /* RegExCategories.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C077B91BBC1E4300FC1841 /* RegExCategories.m */; settings = {ASSET_TAGS = (); }; };
+		27C077C51BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C077C41BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.m */; settings = {ASSET_TAGS = (); }; };
 		27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */; };
 		27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */; };
 		27D3B1071BB2D8C500D5B1E4 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FE1BB2D8C400D5B1E4 /* CoreMotion.framework */; };
@@ -478,6 +480,10 @@
 		27818C6E1BABF35F00D26D1A /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		27818C6F1BABF35F00D26D1A /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		27C077B81BBC1E4300FC1841 /* RegExCategories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegExCategories.h; sourceTree = "<group>"; };
+		27C077B91BBC1E4300FC1841 /* RegExCategories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegExCategories.m; sourceTree = "<group>"; };
+		27C077C31BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "WKWebView+SynchronousEvaluateJavaScript.h"; sourceTree = "<group>"; };
+		27C077C41BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "WKWebView+SynchronousEvaluateJavaScript.m"; sourceTree = "<group>"; };
 		27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		27D3B0FE1BB2D8C400D5B1E4 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
@@ -603,6 +609,8 @@
 		271D4D321B84708E00D19373 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				27C077B81BBC1E4300FC1841 /* RegExCategories.h */,
+				27C077B91BBC1E4300FC1841 /* RegExCategories.m */,
 				271D4D9E1B8475B700D19373 /* DateUtil.h */,
 				271D4D9F1B8475B700D19373 /* DateUtil.m */,
 				271D4DA01B8475B700D19373 /* StringUtil.h */,
@@ -749,6 +757,8 @@
 				273EA0881BA18221009AC691 /* MCOMessageView.h */,
 				273EA0891BA18221009AC691 /* MCOMessageView.mm */,
 				273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */,
+				27C077C31BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.h */,
+				27C077C41BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.m */,
 			);
 			name = HTMLMessageView;
 			path = ../HTMLMessageView;
@@ -1366,6 +1376,7 @@
 				277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */,
 				271D4D0A1B846E4500D19373 /* InboxViewController.m in Sources */,
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
+				27C077C51BBC282A00FC1841 /* WKWebView+SynchronousEvaluateJavaScript.m in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
 				27818C5E1BABF22500D26D1A /* CocoaButton.m in Sources */,
 				271D4D041B846E4500D19373 /* main.m in Sources */,
@@ -1378,6 +1389,7 @@
 				27818C4C1BABF22500D26D1A /* AttachmentsViewController.m in Sources */,
 				2777380B1B8B03830030F299 /* Accounts.m in Sources */,
 				271D4D541B84721A00D19373 /* PDKeychainBindings.m in Sources */,
+				27C077BA1BBC1E4300FC1841 /* RegExCategories.m in Sources */,
 				271D4D4E1B84720000D19373 /* AppSettings.m in Sources */,
 				271D4D921B84758E00D19373 /* EmailDBAccessor.m in Sources */,
 				271D4DA31B8475B700D19373 /* StringUtil.m in Sources */,

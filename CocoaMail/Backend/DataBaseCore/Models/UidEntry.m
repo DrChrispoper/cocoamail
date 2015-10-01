@@ -227,13 +227,14 @@
     NSMutableArray *uids = [[NSMutableArray alloc] init];
     
     UidDBAccessor *databaseManager = [UidDBAccessor sharedManager];
-    NSNumber *folderAccount = @(folderNum+1000*kActiveAccountNum);
     NSNumber *offset = @(from);
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         FMResultSet *results;
         NSString* query = @"";
         if(!kisActiveAccountAll) {
+            NSNumber *folderAccount = @(folderNum+1000*kActiveAccountNum);
+
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
                 query = [NSString stringWithFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
                          "OR t.folder != %@ "

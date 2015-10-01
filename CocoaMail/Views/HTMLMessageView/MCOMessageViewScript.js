@@ -27,3 +27,8 @@ var replaceImageSrc = function(info) {
         }
     }
 };
+
+window.onload = function() {
+    window.location.href = "ready://" + document.body.offsetHeight + "," + document.body.offsetWidth;
+
+};

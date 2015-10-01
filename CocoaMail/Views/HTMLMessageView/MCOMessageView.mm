@@ -41,8 +41,8 @@
         _loadingView = [[UIView alloc]initWithFrame:[self bounds]];
         _loadingView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
         
-        UIActivityIndicatorView *activityView=[[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        activityView.center = CGPointMake(_loadingView.frame.size.width / 2.0, 35);
+        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        activityView.center = CGPointMake(_loadingView.frame.size.width / 2.0, _loadingView.frame.size.height / 2.0);
         [activityView startAnimating];
         activityView.tag = 100;
         
@@ -130,7 +130,7 @@
 	
 	NSMutableString * html = [NSMutableString string];
 	NSURL * jsURL = [[NSBundle mainBundle] URLForResource:@"MCOMessageViewScript" withExtension:@"js"];
-    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width; minimum-scale=1.0; maximum-scale=1.0; user-scalable=no'><script src=\"%@\"></script></head><body>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
+    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script></head><body>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
      [jsURL absoluteString], content];
     
 	[_webView loadHTMLString:html baseURL:nil];
@@ -243,6 +243,43 @@
         if ([[url absoluteString] rangeOfString:@"gmail"].location == NSNotFound) {
             [self.delegate openWebURL:url];
             //[[UIApplication sharedApplication] openURL:[request URL]];
+            return NO;
+        }
+    }
+    else if (navigationType == UIWebViewNavigationTypeOther) {
+        NSURL *url = [request URL];
+        if ([[url scheme] isEqualToString:@"ready"]) {
+            float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
+
+            if(contentHeight == ([UIScreen mainScreen].bounds.size.height/2)){
+                contentHeight = _webView.scrollView.contentSize.height;
+            }
+            //float height = [[[url host] componentsSeparatedByString:@","][2] integerValue];
+            //float width = [[[url host] componentsSeparatedByString:@","][3] integerValue];
+
+            if(contentWidth != [UIScreen mainScreen].bounds.size.width-30) {
+                
+                //CGSize viewSize = webView.bounds.size;
+                
+                //float rw = viewSize.width / contentWidth;
+                float rw2 = 1;//(([UIScreen mainScreen].bounds.size.width-30) / viewSize.width);
+
+                _webView.scrollView.minimumZoomScale = rw2;
+                _webView.scrollView.maximumZoomScale = rw2;
+                _webView.scrollView.zoomScale = rw2;
+                contentHeight = _webView.scrollView.contentSize.height;
+                //contentWidth = [UIScreen mainScreen].bounds.size.width-30;
+            }
+            
+            CGRect fr = _webView.frame;
+            fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
+            _webView.frame = fr;
+            
+            [_loadingView setHidden:YES];
+            
+            [self.delegate webViewLoaded:_webView];
+            
             return NO;
         }
     }
@@ -430,9 +467,7 @@
     }];
 }
 
--(void)webViewDidFinishLoad:(UIWebView *)webView {
-    //CGFloat height = webView.scrollView.contentSize.height;
-    
+-(void)webViewDidFinishLoad:(UIWebView *)webView {    
     CGSize contentSize = webView.scrollView.contentSize;
     CGSize viewSize = webView.bounds.size;
     
@@ -442,28 +477,7 @@
     webView.scrollView.maximumZoomScale = rw;
     webView.scrollView.zoomScale = rw;
     
-    
-    _webView.frame = CGRectMake(0, 0, webView.frame.size.width, webView.scrollView.contentSize.height);
-    
-    //webView.scalesPageToFit = YES;
-    //webView.contentMode = UIViewContentModeScaleAspectFit;
-    
-    //[webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
-    
-    //CCMLog(@"%f",height);
-    
-    //_webView.frame = CGRectMake(0, 0, _webView.frame.size.width, height);
-    //[_webView.scrollView setContentSize:CGSizeMake(_webView.frame.size.width, _webView.frame.size.height)];
-
-    CCMLog(@"%f",_webView.scrollView.contentSize.height);
-    CCMLog(@"%f",_webView.frame.size.height);
-
-    CCMLog(@"%f",webView.scrollView.contentSize.height);
-    CCMLog(@"%f",webView.frame.size.height);
-    
-    [_loadingView setHidden:YES];
-    
-    [self.delegate webViewLoaded:_webView];
+    //_webView.frame = CGRectMake(0, 0, webView.frame.size.width, webView.scrollView.contentSize.height);
 }
 
 @end

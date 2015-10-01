@@ -76,7 +76,7 @@
 
 -(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [Accounts sharedInstance].accountsCount - 1;
+    return [Accounts sharedInstance].accountsCount;
 }
 
 -(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath

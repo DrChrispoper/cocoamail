@@ -348,7 +348,10 @@
     
     if(index == NSNotFound){
         [self.allsMails addObject:conv];
-        [self _addIdx:self.allsMails.count-1 inArray:FolderTypeWith(FolderTypeAll, 0)];
+        if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] &&
+            ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)]) {
+            [self _addIdx:self.allsMails.count-1 inArray:FolderTypeWith(FolderTypeAll, 0)];
+        }
         [self _addCon:self.allsMails.count-1 toFoldersContent:conv.foldersType];
     }
     else {

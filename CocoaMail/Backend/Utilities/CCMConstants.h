@@ -45,6 +45,11 @@ static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
     return t.type * 4096 + t.idx;
 }
 
+static inline NSNumber* numberWithFolderType(BaseFolderType t)
+{
+    return @(encodeFolderTypeWith(FolderTypeWith(t, 0)));
+}
+
 static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
 {
     CCMFolderType type;
