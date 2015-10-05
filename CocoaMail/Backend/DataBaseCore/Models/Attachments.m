@@ -111,9 +111,11 @@
 @interface AttachmentView ()
 
 @property (nonatomic, weak) UILabel* name;
+@property (nonatomic, weak) UILabel* extention;
 @property (nonatomic, weak) UILabel* size;
 @property (nonatomic, weak) UIImageView* mini;
 @property (nonatomic, weak) UIButton* btn;
+@property (nonatomic, weak) Attachment* att;
 
 @property (nonatomic) NSInteger internalState;
 @property (nonatomic, weak) UIImageView* circleView;
@@ -161,6 +163,16 @@
     [self addSubview:iv];
     iv.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
     self.mini = iv;
+    
+    UILabel* e = [[UILabel alloc] initWithFrame:CGRectMake(posX-60, 11, 50, 50)];
+    e.textAlignment = NSTextAlignmentCenter;
+    e.font = [UIFont systemFontOfSize:16];
+    e.textColor = [UIColor whiteColor];
+    e.backgroundColor = [UIColor clearColor];
+    [self addSubview:e];
+    e.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+    self.extention = e;
+    [self.extention setHidden:YES];
     
     UIButton* d = [[UIButton alloc] initWithFrame:CGRectMake(width-33.f-10.f, 20.f, 33.f, 33.f)];
     d.backgroundColor = self.backgroundColor;
@@ -236,9 +248,18 @@
 
 -(void) fillWith:(Attachment*)at
 {
+    self.att = at;
     self.name.text = at.fileName;
     self.size.text = [at stringSize];
     self.mini.image = [at miniature];
+    
+    if([at.mimeType  isEqualToString:@"application/msword"] ||
+       [at.mimeType isEqualToString:@"application/vnd.oasis.opendocument.text"]||
+       [at.mimeType rangeOfString:@"text/"].location != NSNotFound ||
+       [at.mimeType isEqualToString:@"application/pdf"]) {
+        self.extention.text = [[at.fileName componentsSeparatedByString:@"."] lastObject];
+        [self.extention setHidden:NO];
+    }
     
     if(at.data){
         [self.circleView removeFromSuperview];
@@ -275,7 +296,7 @@
     }
     else if (self.internalState == 2)
     {
-        [ViewController presentAlertWIP:@"open attachment…"];
+        [self _applyButtonDownload:self.btn];
     }
 }
 
@@ -328,9 +349,7 @@
     }
     else {
         // internalState == 2
-        
-        [ViewController presentAlertWIP:@"open attachment…"];
-        
+        [self.delegate openAttachment:self.att];
     }
 }
 
@@ -377,6 +396,8 @@
                 [Attachment updateData:att];
                 
                 self.size.text = [att stringSize];
+                
+                att.image = nil;
                 self.mini.image = [att miniature];
 
                 [self doneDownloading];

@@ -12,7 +12,7 @@
 
 @property (assign) NSInteger pk;
 
-@property (nonatomic,readwrite) NSInteger isInline;
+@property (nonatomic,readwrite,copy) NSString* contentID;
 @property (nonatomic,readwrite,copy) NSString* msgId;
 @property (nonatomic,readwrite,copy) NSString* fileName;
 @property (nonatomic,readwrite,copy) NSString* mimeType;
@@ -27,9 +27,10 @@
 + (void)updateData:(CCMAttachment *)attachment;
 + (NSMutableArray*)getAttachmentsWithMsgId:(NSString *)msgId;
 + (NSMutableArray*)getAttachmentsWithMsgId:(NSString *)msgId isInline:(BOOL)isInline;
-+ (BOOL)searchAttachmentswithMsgId:(NSString *)msgId;
+//+ (BOOL)searchAttachmentswithMsgId:(NSString *)msgId;
 + (void)tableCheck;
 - (BOOL)isEqual:(id)other;
 - (NSUInteger)hash;
+- (BOOL) isInline;
 
 @end

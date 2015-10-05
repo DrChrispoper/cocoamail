@@ -562,16 +562,19 @@
     
     if (extended) {
         
-        UIFont* textFont = [UIFont systemFontOfSize:16];
+        //UIFont* textFont = [UIFont systemFontOfSize:16];
         
-        CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
+        //CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
+        CGSize size = CGSizeMake(WIDTH - 30,  ([UIScreen mainScreen].bounds.size.height/2));
+
         size.width = ceilf(size.width);
         size.height = ceilf(size.height);
         //self.height = size.height;
         
         const CGFloat topBorder = 14.f;
         
-        if (![mail.email.body containsString:@"http"]) {
+        //TODO:For now they are all html
+        /*if (![mail.email.body containsString:@"http"]) {
             UILabel* text = [[UILabel alloc] initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
             text.text = texte;
             text.font = textFont;
@@ -579,7 +582,7 @@
             text.textAlignment = NSTextAlignmentJustified;
             [inIV addSubview:text];
         }
-        else {
+        else {*/
             if (!self.htmlView) {
                 self.height = size.height = ([UIScreen mainScreen].bounds.size.height/2);
                 MCOMessageView *view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
@@ -593,7 +596,7 @@
             }
 
             [inIV addSubview:self.htmlView];
-        }
+        //}
 
         
         CGRect f = inIV.frame;
@@ -834,17 +837,65 @@
 - (void)webViewLoaded:(UIWebView*)webView
 {
     self.height = webView.frame.size.height;
+    
+    CGFloat oldFrame = self.frame.size.height;
 
-    [self setupWithText:self.textContent extended:YES];
+    CCMLog(@"Height:%f",self.height);
+    
+    [self setupWithText:nil extended:YES];
+    
     CGFloat nextHeight = self.bounds.size.height;
     
-    CGFloat diff = nextHeight - self.frame.size.height;
+    CCMLog(@"BoundsHeight:%f",nextHeight);
+    CCMLog(@"FrameHeight:%f",oldFrame);
+    
+    CGFloat diff = nextHeight - oldFrame;
+    
+    CCMLog(@"DiffHeight:%f",diff);
+
     
     CGRect f = self.frame;
     f.size.height = nextHeight;
     self.frame = f;
     
     [self.delegate mailView:self changeHeight:diff];
+}
+
+- (MCOAttachment *)partForUniqueID:(NSString *)partID
+{
+    for (Mail* mail in ((ConversationViewController*)self.delegate).conversation.mails) {
+        for (Attachment* att in mail.email.attachments) {
+        
+            if (att.isInline && [att.fileName isEqualToString:partID]) {
+            /*if(!att.data){
+             
+             MCOIMAPFetchContentOperation * op = [[ImapSync sharedServices].imapSession fetchMessageAttachmentOperationWithFolder:[AppSettings folderName:[AppSettings activeFolder]]
+             uid:[UidEntry getUidEntryWithFolder:[AppSettings activeFolder] msgId:att.msgId].uid
+             partID:att.partID
+             encoding:MCOEncodingBase64];
+             op.progress = ^(unsigned int current, unsigned int maximum){
+             CCMLog(@"%u, %u", current,maximum);
+             };
+             
+             [op start:^(NSError * error, NSData * partData) {
+             if(error){
+             CCMLog(@"%@",error);
+             return;
+             }
+             att.data = partData;
+             [Attachment updateData:att];
+             }];
+             
+             
+             }*/
+            
+                MCOAttachment* attM = [[MCOAttachment alloc]init];
+                attM.data = att.data;
+                return attM;
+            }
+        }
+    }
+    return nil;
 }
 
 @end

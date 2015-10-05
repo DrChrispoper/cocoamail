@@ -188,7 +188,7 @@
     UidDBAccessor *databaseManager = [UidDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? ",msgId];//AND folder LIKE ?",msgId,[NSString stringWithFormat:@"%ld%%",(long)kActiveAccount]];
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ?",msgId]; //AND folder LIKE ?",msgId,[NSString stringWithFormat:@"%ld%%",(long)accountNum]];
         
         while([results next])
         {

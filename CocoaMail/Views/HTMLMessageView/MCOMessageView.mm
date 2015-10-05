@@ -173,7 +173,7 @@
             CCMLog(@"url is x-mailcore-img:%@", url);
 			NSString * specifier = [url resourceSpecifier];
 			NSString * partUniqueID = specifier;
-			part = [self _partForUniqueID:partUniqueID];
+			//part = [self _partForUniqueID:partUniqueID];
 		}*/
 		
 		if (part == nil)
@@ -255,6 +255,7 @@
             if(contentHeight == ([UIScreen mainScreen].bounds.size.height/2)){
                 contentHeight = _webView.scrollView.contentSize.height;
             }
+
             //float height = [[[url host] componentsSeparatedByString:@","][2] integerValue];
             //float width = [[[url host] componentsSeparatedByString:@","][3] integerValue];
 
@@ -467,7 +468,7 @@
     }];
 }
 
--(void)webViewDidFinishLoad:(UIWebView *)webView {    
+/*-(void)webViewDidFinishLoad:(UIWebView *)webView {
     CGSize contentSize = webView.scrollView.contentSize;
     CGSize viewSize = webView.bounds.size;
     
@@ -478,6 +479,6 @@
     webView.scrollView.zoomScale = rw;
     
     //_webView.frame = CGRectMake(0, 0, webView.frame.size.width, webView.scrollView.contentSize.height);
-}
+}*/
 
 @end

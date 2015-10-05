@@ -185,8 +185,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
 	[self addEmail:email];
     [self addAttachments:email.attachments];
-    [self addAttachments:email.inlineAttachments];
-    
 }
 
 - (void)addEmail:(Email *)email

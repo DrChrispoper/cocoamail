@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import "CCMAttachment.h"
 
+@protocol CCMAttachmentViewDelegate;
+
 @interface Attachment : CCMAttachment
 
 @property (nonatomic, strong) NSString* imageName;
@@ -39,5 +41,15 @@ typedef enum : NSUInteger {
 
 -(void) beginActionDownload:(Attachment*)att;
 -(void) doneDownloading;
+
+@property (nonatomic,weak) id <CCMAttachmentViewDelegate> delegate;
+
+
+
+@end
+
+@protocol CCMAttachmentViewDelegate <NSObject>
+
+- (void)openAttachment:(Attachment*)att;
 
 @end

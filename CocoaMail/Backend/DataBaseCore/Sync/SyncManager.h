@@ -31,6 +31,7 @@
 
 //-(RACSignal *) refreshActiveFolder;
 -(RACSignal *) syncActiveFolderFromStart:(BOOL)isFromStart;
+- (RACSignal *)refreshInbox;
 -(RACSignal *) syncFolders;
 -(RACSignal *) refreshImportantFolder:(NSInteger)folder;
 -(RACSignal *) syncInboxFoldersBackground;

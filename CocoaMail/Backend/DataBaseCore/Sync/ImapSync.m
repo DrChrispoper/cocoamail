@@ -88,11 +88,11 @@
     return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         ImapSync * sharedService = [ImapSync allSharedServices:nil][accountIndex];
         
-        [sharedService.imapSession setConnectionLogger:^(void * connectionID, MCOConnectionLogType type, NSData * data) {
+        //[sharedService.imapSession setConnectionLogger:^(void * connectionID, MCOConnectionLogType type, NSData * data) {
             //if(type != MCOConnectionLogTypeReceived && type != MCOConnectionLogTypeSent){
-                CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+               //. CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
             //}
-        }];
+        //}];
         
         if (!sharedService.connected && !sharedService.isConnecting) {
             Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
@@ -157,13 +157,13 @@
         for (Email* email in self.cachedData) {
             CCMLog(@"Saving Cached Email: %@",email.subject);
             
-            if ([[email uids] count] == 0){
+            if ([email.uids count] == 0){
                 CCMLog(@"Houston on a un probleme avec les emails en cache");
                 continue;
             }
             NSInvocationOperation *nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:email];
             [ep.operationQueue addOperation:nextOp];
-            UidEntry *uidE = [email uids][0];
+            UidEntry *uidE = email.uids[0];
             [self writeFinishedFolderState:[SyncManager getSingleton] dbNum:@([EmailProcessor dbNumForDate:email.datetime]) withAccountIndex:[AppSettings indexForAccount:uidE.account] andFolder:uidE.folder];
         }
     }
@@ -251,6 +251,7 @@
                     if (!email.subject) email.subject = @"";
                     email.datetime = msg.header.receivedDate;
                     email.msgId = msg.header.messageID;
+                    email.accountNum = [AppSettings numForData:self.currentAccountIndex];
                     
                     UidEntry *uid_entry = [[UidEntry alloc]init];
                     uid_entry.uid = msg.uid;
@@ -325,26 +326,22 @@
                         at.fileName = part.filename;
                         at.partID = part.partID;
                         at.size = part.size;
-                        at.isInline = 0;
+                        at.contentID = @"";
                         [atts addObject:at];
                     }
                     
-                    NSMutableArray *inlineAtts = [[NSMutableArray alloc] init];
                     for(MCOIMAPPart *part in msg.htmlInlineAttachments){
                         CCMAttachment *at = [[CCMAttachment alloc]init];
                         at.mimeType = part.mimeType;
                         at.msgId = email.msgId;
-                        at.fileName = part.filename;//part.contentID;
+                        at.fileName = part.filename;
                         at.partID = part.partID;
-                        //at.data = part.contentID;
                         at.size = part.size;
-                        at.isInline = 1;
-                        [inlineAtts addObject:at];
+                        at.contentID = part.contentID;
+                        [atts addObject:at];
                     }
                     
-                    email.inlineAttachments = inlineAtts;
                     email.attachments = atts;
-                    email.hasAttachments = (atts.count > 0 || inlineAtts.count > 0);
                     
                     email.uids = @[uid_entry];
                     
@@ -499,7 +496,7 @@
                     
                     
                     //CCMLog(@"Checking account:%li folder:%@ from:%li batch:%llu",(long)self.currentAccount, folderPath,(long)from,batch);
-                    CCMLog(@"Folder:%@ %li%% complete", folderPath,(long)(([info messageCount]-from)*100)/[info messageCount]);
+                    CCMLog(@"Account:%u Folder:%@ %li%% complete fetching %u to %llu of %u",self.currentAccountIndex, folderPath,(long)((from+batch)*100)/[info messageCount],(from),(from+batch),[info messageCount]);
                     
                     MCOIndexSet *numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
                     MCOIMAPFetchMessagesOperation *imapMessagesFetchOp = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchMessagesByNumberOperationWithFolder:folderPath requestKind:requestKind numbers:numbers];
@@ -526,11 +523,11 @@
                             if (!email.subject) email.subject = @"";
                             email.datetime = msg.header.receivedDate;
                             email.msgId = msg.header.messageID;
-                            
+                            email.accountNum = [AppSettings numForData:self.currentAccountIndex];
                             UidEntry *uid_entry = [[UidEntry alloc]init];
                             uid_entry.uid = msg.uid;
                             uid_entry.folder = currentFolder;
-                            uid_entry.account = [AppSettings numForData:self.currentAccountIndex];
+                            uid_entry.account = email.accountNum;
                             uid_entry.msgId = email.msgId;
                             
                             email.tos = msg.header.to;
@@ -592,7 +589,7 @@
                                 [UIApplication sharedApplication].applicationIconBadgeNumber++;
                             }
                             
-                            NSMutableArray *atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count];
+                            NSMutableArray *atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count+msg.htmlInlineAttachments.count];
                             
                             for(MCOIMAPPart *part in msg.attachments){
                                 CCMAttachment *at = [[CCMAttachment alloc]init];
@@ -601,26 +598,22 @@
                                 at.fileName = part.filename;
                                 at.partID = part.partID;
                                 at.size = part.size;
-                                at.isInline = 0;
+                                at.contentID = @"";
                                 [atts addObject:at];
                             }
                             
-                            NSMutableArray *inlineAtts = [[NSMutableArray alloc] init];
                             for(MCOIMAPPart *part in msg.htmlInlineAttachments){
                                 CCMAttachment *at = [[CCMAttachment alloc]init];
                                 at.mimeType = part.mimeType;
                                 at.msgId = email.msgId;
-                                at.fileName = part.filename;//part.contentID;
+                                at.fileName = part.filename;
                                 at.partID = part.partID;
-                                //at.data = part.contentID;
                                 at.size = part.size;
-                                at.isInline = 1;
-                                [inlineAtts addObject:at];
+                                at.contentID = part.contentID;
+                                [atts addObject:at];
                             }
                             
-                            email.inlineAttachments = inlineAtts;
                             email.attachments = atts;
-                            email.hasAttachments = (atts.count > 0 || inlineAtts.count > 0);
                             
                             email.uids = @[uid_entry];
                             

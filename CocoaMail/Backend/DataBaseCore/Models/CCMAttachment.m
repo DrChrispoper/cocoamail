@@ -20,12 +20,12 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         for (CCMAttachment *at in atts) {
             if (!at.data) {
-                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,isInline) VALUES (?,?,?,?,?,?);",
-                at.fileName,@(at.size),at.mimeType,at.msgId,at.partID,@(at.isInline)];
+                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
+                at.fileName,@(at.size),at.mimeType,at.msgId,at.partID,at.contentID];
             }
             else {
-                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,isInline) VALUES (?,?,?,?,?,?,?);",
-                at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,@(at.isInline)];
+                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
+                at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.contentID];
             }
         }
     }];
@@ -39,8 +39,8 @@
     [database open];
     
         for (CCMAttachment *at in atts) {
-            [database executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,isInline) VALUES (?,?,?,?,?,?,?);",
-             at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.isInline];
+            [database executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
+             at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.contentID];
         }
     
     [database close];
@@ -58,7 +58,16 @@
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE isInline = ?",@(andInline)];
+        NSString* query;
+        
+        if (andInline) {
+            query = [NSString stringWithFormat:@"SELECT * FROM attachments"];
+        }
+        else {
+            query = [NSString stringWithFormat:@"SELECT * FROM attachments WHERE contentID = ''"];
+        }
+        
+        FMResultSet *results = [db executeQuery:query];
         
         while([results next])
         {
@@ -71,7 +80,7 @@
             attachment.msgId = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
-            attachment.isInline = [results intForColumn:@"isInline"];
+            attachment.contentID = [results stringForColumn:@"contentID"];
             
             [attachments addObject:attachment];
         }
@@ -101,7 +110,7 @@
             attachment.msgId = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
-            attachment.isInline = [results intForColumn:@"isInline"];
+            attachment.contentID = [results stringForColumn:@"contentID"];
             
             [attachments addObject:attachment];
         }
@@ -117,7 +126,14 @@
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and isInline = ?",msgId,@(isInline)];
+        FMResultSet *results;
+        
+        if (isInline) {
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID <> ''",msgId];
+        }
+        else {
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID = ''",msgId];
+        }
         
         while([results next])
         {
@@ -130,7 +146,7 @@
             attachment.msgId = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
-            attachment.isInline = [results intForColumn:@"isInline"];
+            attachment.contentID = [results stringForColumn:@"contentID"];
             
             [attachments addObject:attachment];
         }
@@ -140,7 +156,7 @@
 }
 
 
-+ (BOOL)searchAttachmentswithMsgId:(NSString*)msgId
+/*+ (BOOL)searchAttachmentswithMsgId:(NSString*)msgId
 {
     __block BOOL result = NO;
     
@@ -157,7 +173,7 @@
     
     return result;
     
-}
+}*/
 
 + (void)updateData:(CCMAttachment*)attachment{
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
@@ -173,7 +189,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         
-        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, isInline INTEGER)"])
+        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"])
             CCMLog(@"errorMessage = %@",db.lastErrorMessage);
         
         
@@ -207,6 +223,11 @@
 - (NSUInteger)hash
 {
     return [self.data hash];
+}
+
+-(BOOL)isInline
+{
+    return ![self.contentID isEqualToString:@""];
 }
 
 @end

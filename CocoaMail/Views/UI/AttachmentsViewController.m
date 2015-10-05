@@ -16,7 +16,7 @@
 #import "StringUtil.h"
 #import <QuickLook/QuickLook.h>
 
-@interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate>{
+@interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, CCMAttachmentViewDelegate>{
     NSArray *_activityItems;
 }
 
@@ -151,7 +151,8 @@
     }
     
     [cell.attachView fillWith:at];
-
+    cell.attachView.delegate = self;
+    
     return cell;
 }
 
@@ -281,6 +282,14 @@
 {
     //    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     //    [self setNeedsStatusBarAppearanceUpdate];
+}
+
+- (void)openAttachment:(Attachment*)att
+{
+    NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+    [att.data writeToFile:filePath atomically:YES];
+    NSURL *URL = [NSURL fileURLWithPath:filePath];
+    [self openURL:URL];
 }
 
 @end

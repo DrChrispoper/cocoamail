@@ -225,9 +225,7 @@
 #pragma mark - Process Data
 
 - (void)insertRows:(Email *)email
-{
-    email.hasAttachments |= [CCMAttachment searchAttachmentswithMsgId:email.msgId];
-    
+{    
     if (![email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]) {
         CCMLog(@"Issue adding email but not in active folder");
         return;

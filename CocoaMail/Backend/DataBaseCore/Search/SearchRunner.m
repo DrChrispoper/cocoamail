@@ -103,10 +103,12 @@ static SearchRunner *searchSingleton = nil;
                     email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
                     email.subject = [results stringForColumnIndex:2];
                     email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:5];
+                    email.body = [results stringForColumnIndex:4];
                     //CCMLog(@"Snippet: %@",[results stringForColumnIndex:5]);
                     email.msgId = [results stringForColumnIndex:6];
                     
+                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+
                     [subscriber sendNext:email];
                     
                     if(self.cancelled) { break; }
@@ -172,6 +174,10 @@ static SearchRunner *searchSingleton = nil;
                     email.body = email.body?:@"";
                     email.htmlBody = email.htmlBody?:@"";
                     
+                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+
+                    [email isInMultipleAccounts];
+                    
                     [subscriber sendNext:email];
                     
                 }
@@ -231,10 +237,14 @@ static SearchRunner *searchSingleton = nil;
                     email.body = email.body?:@"";
                     email.htmlBody = email.htmlBody?:@"";
                     
-                    if([email isInMultipleAccounts]){
+                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+
+                    if ([email isInMultipleAccounts]) {
                         allFound--;
-                        [subscriber sendNext:[email secondAccountDuplicate]];
+                        Email* secondEmail = [email secondAccountDuplicate];
+                        [subscriber sendNext:secondEmail];
                     }
+                    
                     allFound--;
                     [subscriber sendNext:email];
                 }
@@ -315,7 +325,18 @@ static SearchRunner *searchSingleton = nil;
                             email.body = email.body?:@"";
                             email.htmlBody = email.htmlBody?:@"";
                             
-                            [email forActiveAccount];
+                            email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+
+                            if([email isInMultipleAccounts]){
+                                Email* e = [email secondAccountDuplicate];
+                                if (kisActiveAccountAll) {
+                                    allFound--;
+                                    [subscriber sendNext:e];
+                                }
+                                else if (e.accountNum == kActiveAccountNum){
+                                    email = e;
+                                }
+                            }
                             
                             allFound--;
                             

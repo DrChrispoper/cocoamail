@@ -266,7 +266,7 @@
             
             Conversation* conv = [[Conversation alloc] init];
             [conv addMail:[Mail mail:email]];
-            [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[email account]]] addConversation:conv];
+            [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
         }
     } error:^(NSError *error) {
         _completionHandler(hasNewEmail);

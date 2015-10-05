@@ -20,9 +20,11 @@
 
 @implementation Email
 
+@synthesize accountNum = _accountNum;
 @synthesize pk, datetime, sender, tos, ccs, bccs, htmlBody, msgId,flag;
 @synthesize subject,body;
-@synthesize inlineAttachments,attachments,uids;
+@synthesize attachments;
+@synthesize uids = _uids;
 
 - (void)loadData
 {
@@ -40,21 +42,31 @@
 
 - (BOOL) existsLocally
 {
-    if (!self.uids) {
-        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
-    }
-    
     return self.uids.count > 0 ;
 }
 
-- (NSInteger)account
+- (NSArray *)getUids
+{
+    if (!_uids) {
+        _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
+    }
+    
+    return _uids;
+}
+
+- (void)setUids:(NSArray *)pUids
+{
+    _uids = pUids;
+}
+
+/*- (NSInteger)account
 {
     if ([self getFirstUIDE]) {
         return [[self getFirstUIDE] account];
     }
     
     return -1;
-}
+}*/
 
 - (NSString*)getSonID
 {
@@ -67,10 +79,6 @@
 
 - (UidEntry*)getFirstUIDE
 {
-    if (!self.uids) {
-        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
-    }
-    
     if (self.uids.count > 0) {
         return self.uids[0];
     }
@@ -117,16 +125,22 @@
     self.attachments = [CCMAttachment getAttachmentsWithMsgId:self.msgId];
 }
 
+- (void)setAccountNum:(NSInteger)accountNum
+{
+    _accountNum = accountNum;
+}
+
+- (NSInteger)getAccountNum
+{
+    return _accountNum;
+}
+
 - (BOOL)isInMultipleAccounts
 {
-    if (!self.uids) {
-        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
-    }
-    
-    NSInteger account = [self getFirstUIDE].account;
+    self.accountNum = [self getFirstUIDE].account;
     
     for (UidEntry* e in self.uids) {
-        if (account != e.account) {
+        if (self.accountNum != e.account) {
             return YES;
         }
     }
@@ -134,7 +148,7 @@
     return NO;
 }
 
-- (void)forActiveAccount
+/*- (void)forActiveAccount
 {
     if (!self.uids) {
         self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
@@ -149,19 +163,17 @@
     }
     
     self.uids = uidsOne;
-}
+}*/
 
 - (Email*)secondAccountDuplicate
 {
-    Email *e = [self copy];
+    Email *emailTwo = [self copy];
     
-    NSMutableArray *uidsOne = [[NSMutableArray alloc]init];
-    NSMutableArray *uidsTwo = [[NSMutableArray alloc]init];
-    
-    NSInteger firstAccount = [self getFirstUIDE].account;
+    NSMutableArray <UidEntry*> *uidsOne = [[NSMutableArray alloc]init];
+    NSMutableArray <UidEntry*> *uidsTwo = [[NSMutableArray alloc]init];
     
     for (UidEntry* e in self.uids) {
-        if(e.account == firstAccount){
+        if(e.account == self.accountNum){
             [uidsOne addObject:e];
         } else {
             [uidsTwo addObject:e];
@@ -169,17 +181,15 @@
     }
     
     self.uids = uidsOne;
-    e.uids = uidsTwo;
     
-    return e;
+    emailTwo.accountNum = uidsTwo[0].account;
+    emailTwo.uids = uidsTwo;
+    
+    return emailTwo;
 }
 
 - (UidEntry *)uidEWithFolder:(NSInteger)folderNum
 {
-    if (!self.uids) {
-        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
-    }
-    
     if(folderNum == -1){
         for (UidEntry* uidE in self.uids) {
             if (uidE.folder == 0) {
@@ -385,7 +395,7 @@
 + (Email*) resToEmail:(FMResultSet*)result
 {
     Email *email = [[Email alloc] init];
-    
+    email.accountNum = -2;
     email.pk = [result intForColumnIndex:0];
     email.datetime = [result dateForColumnIndex:1];
     email.sender = [MCOAddress addressWithNonEncodedRFC822String:[result stringForColumnIndex:2]];
@@ -398,8 +408,17 @@
     email.flag = (MCOMessageFlag)@([result intForColumnIndex:8]);
     email.subject = [result stringForColumnIndex:9];
     email.body = [result stringForColumnIndex:10];
-    email.hasAttachments = [CCMAttachment searchAttachmentswithMsgId:email.msgId];
+    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
     return email;
+}
+
+- (BOOL)hasAttachments
+{
+    if(!self.attachments){
+        self.attachments = [CCMAttachment getAttachmentsWithMsgId:self.msgId];
+    }
+    
+    return self.attachments.count > 0;
 }
 
 -(id)copyWithZone:(NSZone *)zone{
@@ -416,10 +435,8 @@
         newEmail.flag = self.flag;
         newEmail.subject = self.subject;
         newEmail.body = self.body;
-        newEmail.inlineAttachments = self.inlineAttachments;
         newEmail.attachments = self.attachments;
         newEmail.uids = self.uids;
-        newEmail.hasAttachments = self.hasAttachments;
     }
     return newEmail;
 }
@@ -428,7 +445,7 @@
 
 - (void)archive
 {
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:[self account]] forBaseFolder:FolderTypeAll]];
+    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeAll]];
     [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
 }
 
@@ -440,7 +457,7 @@
 
 - (void)trash
 {
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:[self account]] forBaseFolder:FolderTypeDeleted]];
+    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
     [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
 }
 

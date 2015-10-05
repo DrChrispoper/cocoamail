@@ -11,28 +11,11 @@
 #import "UidEntry.h"
 #import "FMDatabase.h"
 
-@interface Email : NSObject <NSCopying> {
-	NSInteger pk;
-    MCOAddress* sender;
+@interface Email : NSObject <NSCopying>
 
-	NSArray* tos;
-	NSArray* ccs;
-	NSArray* bccs;
-	
-	NSDate* datetime;
-	
-	NSString* msgId;
-    
-	MCOMessageFlag flag;
-	NSString* subject;
-	NSString* body;
-    NSString* htmlBody;
-    
-    NSArray* inlineAttachments;
-    NSArray* attachments;
-    NSArray* uids;
-}
 //email
+@property (assign,getter=getAccountNum,setter=setAccountNum:) NSInteger accountNum;
+
 @property (assign) NSInteger pk;
 @property (nonatomic,readwrite,strong) NSDate* datetime;
 
@@ -54,22 +37,21 @@
 @property (nonatomic,readwrite,copy) NSString* body;
 
 //ToFetch
-@property (nonatomic,readwrite,copy) NSArray* inlineAttachments;
 @property (nonatomic,readwrite,copy) NSArray* attachments;
-@property (nonatomic,readwrite,copy) NSArray* uids;
+@property (nonatomic,readwrite,copy,getter=getUids, setter=setUids:) NSArray* uids;
 
-@property (assign) BOOL hasAttachments;
+- (BOOL) hasAttachments;
 
 - (void)loadData;
 - (BOOL)existsLocally;
-- (NSInteger)account;
+//- (NSInteger)account;
 - (UidEntry*)uidEWithFolder:(NSInteger)folderNum;
 - (NSString*)getSonID;
 - (BOOL)haveSonInFolder:(NSInteger)folderIdx;
 - (NSArray*)getSons;
 - (void)fetchAllAttachments;
 - (BOOL)isInMultipleAccounts;
-- (void)forActiveAccount;
+//- (void)forActiveAccount;
 - (Email*)secondAccountDuplicate;
 
 + (void)tableCheck;

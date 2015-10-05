@@ -133,10 +133,10 @@
          subscribeNext:^(Email *email) {
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  //CCMLog(@"Adding email to account:%u",self.idx);
-                 if(email.account == -1){
+                 if(email.accountNum == 0){
                      CCMLog(@"Houston on a un probleme avec l'email:%@",email.subject);
                  } else {
-                     [self.accounts[email.account-1] insertRows:email];
+                     [self.accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
                  }
              }];
          }
@@ -311,7 +311,18 @@
 
 -(void) connect
 {
-    [self doLoadServer];
+    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
+        [[[[SyncManager getSingleton] refreshInbox] deliverOn:[RACScheduler mainThreadScheduler]]
+         subscribeNext:^(Email *email) {
+             [self insertRows:email];
+         }
+         error:^(NSError *error) {
+             CCMLog(@"Error: %@",error.localizedDescription);
+         }
+         completed:^{
+             [self doLoadServer];
+         }];
+    }
 }
 
 -(void) releaseContent
@@ -622,9 +633,7 @@
              CCMLog(@"Error: %@",error.localizedDescription);
          }
          completed:^{
-             //if(![AppSettings isFirstFullSyncDone]){
                  [self doLoadServer];
-             //}
          }];
     }
 }

@@ -1015,7 +1015,7 @@
         return;
     }
     
-    email.hasAttachments |= [CCMAttachment searchAttachmentswithMsgId:email.msgId];
+    //email.hasAttachments |= [CCMAttachment searchAttachmentswithMsgId:email.msgId];
     
     //if (![email uidEWithFolder:[AppSettings numFolderWithFolder:self.folder forAccount:[[Accounts sharedInstance].currentAccount currentFolderIdx]]])
         //![email haveSonInFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]/*![email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]*/) {
@@ -1154,19 +1154,18 @@
             continue;
         }
         for (int section = 0; section < self.convByDay.count ; section++) {
-            
             if ([[[DateUtil getSingleton] humanDate:email.datetime] isEqualToString:self.convByDay[section][@"day"]]) {
                 NSArray* convs = self.convByDay[section][@"list"];
                 for (int row = 0; row < convs.count ; row++) {
-                    if([[[convs[row] firstMail].email getSonID] isEqualToString:email.getSonID]  &&
-                       [[convs[row] mails] count] == 0){
-                        CCMLog(@"Delete Email");
-                        [self _removeCell:(ConversationTableViewCell*)[self.table cellForRowAtIndexPath:[NSIndexPath indexPathForRow:row inSection:section]]];
+                    for (Mail* m in convs[row]) {
+                        if([m.email.msgId isEqualToString:email.msgId]){
+                            CCMLog(@"Delete Email");
+                            [self _removeCell:(ConversationTableViewCell*)[self.table cellForRowAtIndexPath:[NSIndexPath indexPathForRow:row inSection:section]]];
+                        }
                     }
                 }
             }
             
-
             //Email* tempEmail = _headEmailData[i];
             /*if([tempEmail.msgId isEqualToString:email.msgId]) {
              [_headEmailData removeObjectAtIndex:i];

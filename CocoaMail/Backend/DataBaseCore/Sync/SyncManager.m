@@ -100,6 +100,23 @@ static SyncManager *singleton = nil;
     }
 }
 
+- (RACSignal *)refreshInbox
+{
+    if (kisActiveAccountAll) {
+        NSMutableArray *newEmailsSignalArray = [[NSMutableArray alloc]init];
+        
+        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0) forAccountIndex:accountIndex] fromStart:YES]]];
+        }
+        
+        return [RACSignal merge:newEmailsSignalArray];
+    }
+    else {
+        return [self emailForSignal:[[ImapSync sharedServices] runFolder:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0) forAccountIndex:kActiveAccountIndex] fromStart:YES]];
+    }
+}
+
 - (RACSignal *)syncFolders
 {
     if (kisActiveAccountAll) {
