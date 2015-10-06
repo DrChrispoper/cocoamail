@@ -12,7 +12,7 @@
 
 @interface EmailProcessor : NSObject {
 	NSOperationQueue *operationQueue;
-	NSDateFormatter* dbDateFormatter;
+	NSDateFormatter *dbDateFormatter;
 	NSInteger currentDBNum;
 	NSInteger addsSinceTransaction;
 	volatile BOOL shuttingDown; // this avoids doing db access while the app is shutting down. It's triggered in ReMailAppDelegate.applicationWillTerminate
@@ -21,11 +21,11 @@
 }
 
 @property (nonatomic, strong) NSOperationQueue *operationQueue;
-@property (nonatomic, strong) NSDateFormatter* dbDateFormatter;
+@property (nonatomic, strong) NSDateFormatter *dbDateFormatter;
 @property (nonatomic, strong) id updateSubscriber;
 @property (assign) volatile BOOL shuttingDown;
 
-+ (EmailProcessor*)getSingleton;
++ (EmailProcessor *)getSingleton;
 
 + (NSInteger)dbNumForDate:(NSDate *)date;
 - (void)switchToDBNum:(NSInteger)dbNum;

@@ -24,4 +24,5 @@
 - (void)removeObjectForKey:(NSString *)defaultName;
 
 - (NSString *)stringForKey:(NSString *)defaultName;
+
 @end

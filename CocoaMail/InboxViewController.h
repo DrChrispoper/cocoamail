@@ -12,10 +12,10 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 
 @interface InboxViewController : UITableViewController
 
-@property (nonatomic, retain) NSIndexPath* selectedIndexPath;
+@property (nonatomic, retain) NSIndexPath *selectedIndexPath;
 @property (nonatomic) BOOL folderChanged;
 
--(void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
+- (void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
 
 @end
 

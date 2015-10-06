@@ -8,14 +8,12 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-
-
 // TODO add a delegate to do the async action
 
 @interface PullToRefresh : NSObject
 
--(void) scrollViewDidEndDragging:(UIScrollView *)scrollView;
--(void) scrollViewDidScroll:(UIScrollView *)scrollView;
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView;
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView;
 
 @property (nonatomic) CGFloat delta;
 

@@ -23,8 +23,8 @@
 
 @implementation AppDelegate
 
-- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
+- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    
     if ([AppSettings reset]) {
         [self resetApp];
     }
@@ -51,8 +51,8 @@
     NSArray *currentScopes = [GIDSignIn sharedInstance].scopes;
     [GIDSignIn sharedInstance].scopes = [currentScopes arrayByAddingObject:driveScope];
     
-    NSError* configureError;
-    [[GGLContext sharedInstance] configureWithError: &configureError];
+    NSError *configureError;
+    [[GGLContext sharedInstance] configureWithError:&configureError];
     NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
@@ -60,15 +60,13 @@
     return YES;
 }
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options
-{
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     [self.window makeKeyAndVisible];
     
     return YES;
 }
 
-- (void)applicationWillTerminate:(UIApplication *)application
-{
+- (void)applicationWillTerminate:(UIApplication *)application {
     EmailProcessor *em = [EmailProcessor getSingleton];
     em.shuttingDown = YES;
     
@@ -79,10 +77,10 @@
     [NSUserDefaults resetStandardUserDefaults];
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application{}
+- (void)applicationWillResignActive:(UIApplication *)application {}
 
-- (void)applicationDidBecomeActive:(UIApplication *)application
-{
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    
     if (([AppSettings numActiveAccounts])>0) {
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
             //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
@@ -92,19 +90,17 @@
                 [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
             }
         }
-    }else{
+    } else {
         [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     }
 }
 
-- (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
-{
-    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable )
-    {
+- (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+    
+    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable ) {
         completionHandler(UIBackgroundFetchResultNoData);
     }
-    else if ([self.window.rootViewController isKindOfClass:[ViewController class]])
-    {
+    else if ([self.window.rootViewController isKindOfClass:[ViewController class]]) {
         [(ViewController *)self.window.rootViewController refreshWithCompletionHandler:^(BOOL didReceiveNewPosts) {
             if (didReceiveNewPosts) {
                 completionHandler(UIBackgroundFetchResultNewData);
@@ -112,21 +108,16 @@
                 if ([AppSettings badgeCount] == 1) {
                     [UIApplication sharedApplication].applicationIconBadgeNumber = 1;
                 }
-            }
-            else
-            {
+            } else {
                 completionHandler(UIBackgroundFetchResultNoData);
             }
         }];
-    }
-    else
-    {
+    } else {
         completionHandler(UIBackgroundFetchResultNoData);
     }
 }
 
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
-{
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
     if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
         return YES;
     }
@@ -153,7 +144,7 @@ didSignInForUser:(GIDGoogleUser *)user
     NSString *email = user.profile.email;
     
     // [START_EXCLUDE]
-    NSDictionary *statusText = @{@"accessToken":idToken,@"email":email,@"name":name};
+    NSDictionary *statusText = @{@"accessToken":idToken, @"email":email, @"name":name};
     [[NSNotificationCenter defaultCenter]
      postNotificationName:@"ToggleAuthUINotification"
      object:nil
@@ -162,7 +153,8 @@ didSignInForUser:(GIDGoogleUser *)user
     
     if (!error && idToken) {
         NSInteger accountIndex = [AppSettings accountIndexForEmail:email];
-        if(accountIndex != -1){
+        
+        if (accountIndex != -1) {
             [AppSettings setOAuth:idToken accountIndex:accountIndex];
         }
     }
@@ -170,13 +162,11 @@ didSignInForUser:(GIDGoogleUser *)user
 
 #pragma mark - Settings
 
-- (void)activatePurchasedFeatures
-{
+- (void)activatePurchasedFeatures {
     [AppSettings setFeaturePurchased:@"Premium"];
 }
 
-- (void)resetApp
-{
+- (void)resetApp {
     // reset - delete all data and settings
     [AppSettings setReset:NO];
     for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {

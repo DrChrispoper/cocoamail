@@ -23,7 +23,7 @@
 - (RACSignal *)allEmailsSearch;
 
 @property (assign) volatile BOOL cancelled; // flag for when we cancel a search op
-@property (nonatomic,readwrite,strong) NSOperationQueue *operationQueue;
+@property (nonatomic, readwrite,strong) NSOperationQueue *operationQueue;
 
 + (id)getSingleton;
 - (void)cancel;

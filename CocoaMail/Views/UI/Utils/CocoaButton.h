@@ -13,38 +13,36 @@
 
 @protocol CocoaButtonDatasource
 
--(NSArray*) buttonsWideFor:(CocoaButton*)cocoabutton;
--(NSArray*) buttonsHorizontalFor:(CocoaButton*)cocoabutton;
--(BOOL) automaticCloseFor:(CocoaButton*)cocoabutton;
--(BOOL) cocoabuttonLongPress:(CocoaButton*)cocoabutton;
+- (NSArray *)buttonsWideFor:(CocoaButton *)cocoabutton;
+- (NSArray *)buttonsHorizontalFor:(CocoaButton *)cocoabutton;
+- (BOOL)automaticCloseFor:(CocoaButton *)cocoabutton;
+- (BOOL)cocoabuttonLongPress:(CocoaButton *)cocoabutton;
 
 @end
 
-
 @interface CocoaButton : UIView
 
-+(instancetype) sharedButton;
++ (instancetype)sharedButton;
 
-+(instancetype) fakeCocoaButtonForCredits;
++ (instancetype)fakeCocoaButtonForCredits;
 
 @property (nonatomic, weak) id<CocoaButtonDatasource> datasource;
 
--(void) forceCloseButton;
--(void) updateColor;
--(void) openHorizontal;
+- (void)forceCloseButton;
+- (void)updateColor;
+- (void)openHorizontal;
 
--(void) forceCloseHorizontal;
--(void) forceOpenHorizontal;
+- (void)forceCloseHorizontal;
+- (void)forceOpenHorizontal;
 
--(void) replaceMainButton:(UIButton*)button;
+- (void)replaceMainButton:(UIButton *)button;
 
--(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)())action;
+- (void)closeHorizontalButton:(UIButton *)button refreshCocoaButtonAndDo:(void (^)())action;
 
-+(void) animateHorizontalButtonCancelTouch:(UIButton*)button;
++ (void)animateHorizontalButtonCancelTouch:(UIButton *)button;
 
+- (void)refreshAnimation:(BOOL)anim;
 
--(void) refreshAnimation:(BOOL)anim;
-
--(void) openWide;
+- (void)openWide;
 
 @end

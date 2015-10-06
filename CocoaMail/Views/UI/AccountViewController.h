@@ -12,6 +12,6 @@
 
 @interface AccountViewController : InViewController
 
-@property (nonatomic, strong) Account* account;
+@property (nonatomic, strong) Account *account;
 
 @end

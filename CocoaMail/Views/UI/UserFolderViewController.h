@@ -13,11 +13,10 @@
 
 @protocol UserFolderViewControllerDelegate
 
--(void) chooseUserFolder:(CCMFolderType)folder;
--(void) chooseUserFolderCancel;
+- (void)chooseUserFolder:(CCMFolderType)folder;
+- (void)chooseUserFolderCancel;
 
 @end
-
 
 @interface UserFolderViewController : InViewController
 

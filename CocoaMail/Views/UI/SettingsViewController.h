@@ -17,7 +17,6 @@
 #import "CreditViewController.h"
 #import "CreditContentViewController.h"
 
-
 @interface SettingsViewController : InViewController
 
 @end

@@ -11,17 +11,17 @@
 	NSDate *yesterday;
 	NSDate *lastWeek;
 	
-	NSDateFormatter* dateFormatter;
-	NSDateComponents* todayComponents;
-	NSDateComponents* yesterdayComponents;
+	NSDateFormatter *dateFormatter;
+	NSDateComponents *todayComponents;
+	NSDateComponents *yesterdayComponents;
 }
 
 @property (nonatomic, strong) NSDate *today;
 @property (nonatomic, strong) NSDate *yesterday;
 @property (nonatomic, strong) NSDate *lastWeek;
-@property (nonatomic, strong) NSDateFormatter* dateFormatter;
-@property (nonatomic, strong) NSDateComponents* todayComponents;
-@property (nonatomic, strong) NSDateComponents* yesterdayComponents;
+@property (nonatomic, strong) NSDateFormatter *dateFormatter;
+@property (nonatomic, strong) NSDateComponents *todayComponents;
+@property (nonatomic, strong) NSDateComponents *yesterdayComponents;
 
 + (id)getSingleton;
 - (NSString *)humanDate:(NSDate *)date;

@@ -14,34 +14,32 @@
 
 @interface Persons : NSObject
 
-+(Persons*) sharedInstance;
++ (Persons *)sharedInstance;
 
--(Person*) getPersonID:(NSInteger)idx;
+- (Person *)getPersonID:(NSInteger)idx;
 
--(void) registerPersonWithNegativeID:(Person*)p;
+- (void)registerPersonWithNegativeID:(Person *)p;
 
--(NSInteger) addPerson:(Person*)person;
+- (NSInteger)addPerson:(Person *)person;
 
 @property (nonatomic) NSInteger idxMorePerson;
 @property (nonatomic) NSInteger idxCocoaPerson;
 
--(NSArray*) allPersons;
--(NSInteger) indexForPerson:(Person*)p;
-
+- (NSArray *)allPersons;
+- (NSInteger)indexForPerson:(Person *)p;
 
 @end
 
-
 @interface Person : NSObject
 
-@property (nonatomic, strong) NSString* name;
-@property (nonatomic, strong) NSString* codeName;
-@property (nonatomic, strong) NSString* email;
+@property (nonatomic, strong) NSString *name;
+@property (nonatomic, strong) NSString *codeName;
+@property (nonatomic, strong) NSString *email;
 
--(void) linkToAccount:(Account*)account;
+- (void)linkToAccount:(Account *)account;
 
--(UIView*) badgeView;
+- (UIView *)badgeView;
 
-+(Person*) createWithName:(NSString*)name email:(NSString*)mail icon:(UIImage*)icon codeName:(NSString*)codeName;
++ (Person *)createWithName:(NSString *)name email:(NSString *)mail icon:(UIImage *)icon codeName:(NSString *)codeName;
 
 @end

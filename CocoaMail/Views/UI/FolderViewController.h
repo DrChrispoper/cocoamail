@@ -10,6 +10,6 @@
 
 @interface FolderViewController : InViewController
 
--(void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
+- (void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
 
 @end

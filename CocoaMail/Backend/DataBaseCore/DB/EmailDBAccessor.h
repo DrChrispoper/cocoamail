@@ -18,7 +18,7 @@
 + (id)sharedManager;
 
 - (NSString *)databaseFilepath;
-- (void)setDatabaseFilepath:(NSString*)databaseFilepath;
+- (void)setDatabaseFilepath:(NSString *)databaseFilepath;
 - (void)deleteDatabase;
 
 @end

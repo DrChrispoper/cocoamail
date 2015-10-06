@@ -17,5 +17,4 @@
 - (NSString *)databaseFilepath;
 - (void)deleteDatabase;
 
-
 @end

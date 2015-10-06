@@ -12,6 +12,6 @@
 
 @interface SearchTableViewCell : UITableViewCell
 
-- (void)fillWithConversation:(Conversation*)conv subText:(NSString*)subtext highlightWord:(NSString*)word;
+- (void)fillWithConversation:(Conversation *)conv subText:(NSString *)subtext highlightWord:(NSString *)word;
 
 @end

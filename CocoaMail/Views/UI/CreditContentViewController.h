@@ -10,6 +10,6 @@
 
 @interface CreditContentViewController : InViewController
 
-@property (nonatomic, strong) NSString* type;
+@property (nonatomic, strong) NSString *type;
 
 @end

@@ -13,26 +13,23 @@
 
 @implementation CCMAttachment
 
-+ (void)addAttachments:(NSArray*)atts
-{
++ (void)addAttachments:(NSArray *)atts {
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         for (CCMAttachment *at in atts) {
             if (!at.data) {
                 [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
-                at.fileName,@(at.size),at.mimeType,at.msgId,at.partID,at.contentID];
-            }
-            else {
+                at.fileName, @(at.size), at.mimeType, at.msgId, at.partID, at.contentID];
+            } else {
                 [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
-                at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.contentID];
+                at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
             }
         }
     }];
 }
 
-+ (void)addAttachmentsUnsafe:(NSMutableArray*)atts
-{
++ (void)addAttachmentsUnsafe:(NSMutableArray *)atts {
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     FMDatabase *database = [FMDatabase databaseWithPath:databaseManager.databaseFilepath];
@@ -40,37 +37,33 @@
     
         for (CCMAttachment *at in atts) {
             [database executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
-             at.fileName,@(at.size),at.mimeType,at.msgId,at.data,at.partID,at.contentID];
+             at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
         }
     
     [database close];
 }
 
-+ (NSMutableArray *) getAttachments
-{
++ (NSMutableArray *)getAttachments {
     return [Attachment getAttachments:FALSE];
 }
 
-+ (NSMutableArray *) getAttachments:(BOOL)andInline
-{
++ (NSMutableArray *)getAttachments:(BOOL)andInline {
     NSMutableArray *attachments = [[NSMutableArray alloc] init];
     
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        NSString* query;
+        NSString *query;
         
         if (andInline) {
             query = [NSString stringWithFormat:@"SELECT * FROM attachments"];
-        }
-        else {
+        } else {
             query = [NSString stringWithFormat:@"SELECT * FROM attachments WHERE contentID = ''"];
         }
         
         FMResultSet *results = [db executeQuery:query];
         
-        while([results next])
-        {
+        while ([results next]) {
             Attachment *attachment = [[Attachment alloc] init];
             
             attachment.pk = [results intForColumn:@"pk"];
@@ -89,18 +82,16 @@
     return attachments;
 }
 
-
-+ (NSMutableArray*)getAttachmentsWithMsgId:(NSString*)msgId {
++ (NSMutableArray *)getAttachmentsWithMsgId:(NSString *)msgId {
     
     NSMutableArray *attachments = [[NSMutableArray alloc] init];
     
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? ",msgId];
+        FMResultSet *results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? ", msgId];
         
-        while([results next])
-        {
+        while ([results next]) {
             Attachment *attachment = [[Attachment alloc] init];
             
             attachment.pk = [results intForColumn:@"pk"];
@@ -119,8 +110,7 @@
     return attachments;
 }
 
-+ (NSMutableArray*)getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline{
-    
++ (NSMutableArray *)getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline {
     NSMutableArray *attachments = [[NSMutableArray alloc] init];
     
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
@@ -129,14 +119,12 @@
         FMResultSet *results;
         
         if (isInline) {
-            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID <> ''",msgId];
-        }
-        else {
-            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID = ''",msgId];
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID <> ''", msgId];
+        } else {
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID = ''", msgId];
         }
         
-        while([results next])
-        {
+        while ([results next]) {
             Attachment *attachment = [[Attachment alloc] init];
             
             attachment.pk = [results intForColumn:@"pk"];
@@ -154,8 +142,6 @@
     
     return attachments;
 }
-
-
 /*+ (BOOL)searchAttachmentswithMsgId:(NSString*)msgId
 {
     __block BOOL result = NO;
@@ -175,58 +161,58 @@
     
 }*/
 
-+ (void)updateData:(CCMAttachment*)attachment{
++ (void)updateData:(CCMAttachment *)attachment {
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?",attachment.data, attachment.msgId,attachment.partID];
+        [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?", attachment.data, attachment.msgId, attachment.partID];
     }];
 }
 
-
-+ (void)tableCheck
-{
++ (void)tableCheck {
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         
-        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"])
-            CCMLog(@"errorMessage = %@",db.lastErrorMessage);
+        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"]) {
+            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        }
         
-        
-        if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS attachments_msg_id on attachments(msg_id);"])
-            CCMLog(@"errorMessage = %@",db.lastErrorMessage);
-        
+        if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS attachments_msg_id on attachments(msg_id);"]) {
+            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        }
         
     }];
 }
 
-- (BOOL)isEqual:(id)other
-{
-    if (other == self)
+- (BOOL)isEqual:(id)other {
+    if (other == self) {
         return YES;
-    if (!other || ![other isKindOfClass:[self class]])
+    }
+    
+    if (!other || ![other isKindOfClass:[self class]]) {
         return NO;
+    }
     
     return [self isEqualToAttachment:other];
 }
 
-- (BOOL)isEqualToAttachment:(CCMAttachment *)attachment
-{
-    if (self == attachment)
+- (BOOL)isEqualToAttachment:(CCMAttachment *)attachment {
+    if (self == attachment) {
         return YES;
-    if (![[self data] isEqualToData:[attachment data]])
+    }
+    
+    if (![[self data] isEqualToData:[attachment data]]) {
         return NO;
+    }
     
     return YES;
 }
 
-- (NSUInteger)hash
-{
+- (NSUInteger)hash {
     return [self.data hash];
 }
 
--(BOOL)isInline
-{
+- (BOOL)isInline {
     return ![self.contentID isEqualToString:@""];
 }
 

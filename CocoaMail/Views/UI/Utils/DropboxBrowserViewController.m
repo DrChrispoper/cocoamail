@@ -88,11 +88,15 @@ static NSString * currentFileName = nil;
     [super viewDidLoad];
     
     // Set Title and Path
-    if (self.title == nil || [self.title isEqualToString:@""]) self.title = NSLocalizedString(@"Dropbox",@"DropboxBrower title");
-    if (self.currentPath == nil || [self.currentPath isEqualToString:@""]) self.currentPath = @"/";
+    if (self.title == nil || [self.title isEqualToString:@""]) {
+        self.title = NSLocalizedString(@"Dropbox", @"DropboxBrower title");
+    }
     
+    if (self.currentPath == nil || [self.currentPath isEqualToString:@""]) {
+        self.currentPath = @"/";
+    }
     // Setup Navigation Bar, use different styles for iOS 7 and higher
-    UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done",@"DropboxBrower close button") style:UIBarButtonItemStyleDone target:self action:@selector(removeDropboxBrowser)];
+    UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done", @"DropboxBrower close button") style:UIBarButtonItemStyleDone target:self action:@selector(removeDropboxBrowser)];
     // UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle:@"Logout" style:UIBarButtonItemStylePlain target:self action:@selector(logoutDropbox)];
     self.navigationItem.rightBarButtonItem = rightButton;
     // self.navigationItem.leftBarButtonItem = leftButton;
@@ -163,15 +167,15 @@ static NSString * currentFileName = nil;
     [super viewWillAppear:animated];
     
     if (![self isDropboxLinked]) {
-        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Login to Dropbox",@"Dropbox login alert view title")
+        UIAlertController *alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Login to Dropbox", @"Dropbox login alert view title")
                                                                            message:[NSString stringWithFormat:@"%@ is not linked to your Dropbox. Would you like to login now and allow access?", [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString *)kCFBundleNameKey]]
                                                                     preferredStyle:UIAlertControllerStyleActionSheet];
         
-        [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel",@"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction *_Nonnull action) {
             [self removeDropboxBrowser];
         }]];
         
-        [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Login",@"Dropbox login alert confirm login button") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Login", @"Dropbox login alert confirm login button") style:UIAlertActionStyleDefault handler:^(UIAlertAction *_Nonnull action) {
             [[DBSession sharedSession] linkFromController:self];
         }]];
         
@@ -181,13 +185,13 @@ static NSString * currentFileName = nil;
 }
 
 - (void)logoutDropbox {
-    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Logout of Dropbox?",@"Dropbox logout alert view title")
+    UIAlertController *alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Logout of Dropbox?", @"Dropbox logout alert view title")
                                                                        message:[NSString stringWithFormat:@"Are you sure you want to logout of Dropbox and revoke Dropbox access for %@?", [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString *)kCFBundleNameKey]]
                                                                 preferredStyle:UIAlertControllerStyleActionSheet];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel",@"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {}]];
+    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction *_Nonnull action) {}]];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Logout",@"Dropbox login alert confirm logout button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Logout", @"Dropbox login alert confirm logout button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *_Nonnull action) {
         [[DBSession sharedSession] unlinkAll];
         [self removeDropboxBrowser];
     }]];
@@ -297,8 +301,9 @@ static NSString * currentFileName = nil;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath == nil)
+    if (indexPath == nil) {
         return;
+    }
     
     if ([fileList count] == 0) {
         // Do nothing, there are no items in the list. We don't want to download a file that doesn't exist (that'd cause a crash)
@@ -378,7 +383,8 @@ static NSString * currentFileName = nil;
     if ([searchBar.text isEqualToString:@""] || searchBar.text == nil) {
         // [searchBar resignFirstResponder];
         [self listDirectoryAtPath:currentPath];
-    } else if (![searchBar.text isEqualToString:@" "] || ![searchBar.text isEqualToString:@""]) {
+    }
+    else if (![searchBar.text isEqualToString:@" "] || ![searchBar.text isEqualToString:@""]) {
         [[self restClient] searchPath:currentPath forKeyword:searchBar.text];
     }
 }
@@ -404,11 +410,11 @@ static NSString * currentFileName = nil;
 //------------------------------------------------------------------------------------------------------------//
 #pragma mark - DataController Delegate
 
-
 - (void)removeDropboxBrowser {
     [self dismissViewControllerAnimated:YES completion:^{
-        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowserDismissed:)])
+        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowserDismissed:)]) {
             [[self rootViewDelegate] dropboxBrowserDismissed:self];
+        }
     }];
 }
 
@@ -425,7 +431,7 @@ static NSString * currentFileName = nil;
                                                                        message:[NSString stringWithFormat:@"%@ was downloaded from Dropbox.", currentFileName]
                                                                 preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Dismiss the message alert view") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {}]];
+    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Dismiss the message alert view") style:UIAlertActionStyleDefault handler:^(UIAlertAction *_Nonnull action) {}]];
     
     [self presentViewController:alertView animated:YES completion:nil];
     
@@ -436,12 +442,14 @@ static NSString * currentFileName = nil;
         localNotification.soundName = UILocalNotificationDefaultSoundName;
         [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
         
-        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowser:deliveredFileDownloadNotification:)])
+        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowser:deliveredFileDownloadNotification:)]) {
             [[self rootViewDelegate] dropboxBrowser:self deliveredFileDownloadNotification:localNotification];
+        }
     }
     
-    if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didDownloadFile:didOverwriteFile:)])
+    if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didDownloadFile:didOverwriteFile:)]) {
         [self.rootViewDelegate dropboxBrowser:self didDownloadFile:currentFileName didOverwriteFile:isLocalFileOverwritten];
+    }
     
     // End the background task
     [[UIApplication sharedApplication] endBackgroundTask:backgroundProcess];
@@ -472,8 +480,9 @@ static NSString * currentFileName = nil;
         localNotification.soundName = UILocalNotificationDefaultSoundName;
         [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
         
-        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowser:deliveredFileDownloadNotification:)])
+        if ([[self rootViewDelegate] respondsToSelector:@selector(dropboxBrowser:deliveredFileDownloadNotification:)]) {
             [[self rootViewDelegate] dropboxBrowser:self deliveredFileDownloadNotification:localNotification];
+        }
     }
     
     if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didFailToDownloadFile:)]) {
@@ -515,7 +524,9 @@ static NSString * currentFileName = nil;
     }];
     
     // Check if the file is a directory
-    if (file.isDirectory) return NO;
+    if (file.isDirectory) {
+        return NO;
+    }
     
     // Set download success
     BOOL downloadSuccess = NO;
@@ -564,6 +575,7 @@ static NSString * currentFileName = nil;
             UIAlertController *alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"File Conflict", @"Dropbox alert view title")
                                                                                message:@""
                                                                         preferredStyle:UIAlertControllerStyleAlert];
+            
             if (result == NSOrderedAscending) {
                 // Dropbox file is older than local file
                 alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox one. The file in local files is newer than the Dropbox file.", file.filename];
@@ -575,7 +587,8 @@ static NSString * currentFileName = nil;
                     [self.rootViewDelegate dropboxBrowser:self fileConflictWithLocalFile:fileUrl withDropboxFile:file withError:error];
                 }
                 
-            } else if (result == NSOrderedDescending) {
+            }
+            else if (result == NSOrderedDescending) {
                 // Dropbox file is newer than local file
                 alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. The file in Dropbox is newer than the local file.", file.filename];
                 
@@ -585,7 +598,8 @@ static NSString * currentFileName = nil;
                 if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:fileConflictWithLocalFile:withDropboxFile:withError:)]) {
                     [self.rootViewDelegate dropboxBrowser:self fileConflictWithLocalFile:fileUrl withDropboxFile:file withError:error];
                 }
-            } else if (result == NSOrderedSame) {
+            }
+            else if (result == NSOrderedSame) {
                 // Dropbox File and local file were both modified at the same time
                 alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. Both the local file and the Dropbox file were modified at the same time.", file.filename];
                 
@@ -597,8 +611,8 @@ static NSString * currentFileName = nil;
                 }
             }
             
-            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel",@"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {}]];
-            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Overwrite",@"Dropbox alert view confirm button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction *_Nonnull action) {}]];
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Overwrite", @"Dropbox alert view confirm button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *_Nonnull action) {
                 [self downloadFile:selectedFile replaceLocalVersion:YES];
             }]];
             [self presentViewController:alertView animated:YES completion:nil];

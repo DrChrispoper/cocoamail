@@ -14,54 +14,54 @@
 @interface Email : NSObject <NSCopying>
 
 //email
-@property (assign,getter=getAccountNum,setter=setAccountNum:) NSInteger accountNum;
+@property (assign, getter=getAccountNum, setter=setAccountNum:) NSInteger accountNum;
 
 @property (assign) NSInteger pk;
-@property (nonatomic,readwrite,strong) NSDate* datetime;
+@property (nonatomic, readwrite, strong) NSDate *datetime;
 
-@property (nonatomic,readwrite,strong) MCOAddress* sender;
+@property (nonatomic, readwrite, strong) MCOAddress *sender;
 
-@property (nonatomic,readwrite,copy) NSArray* tos;
-@property (nonatomic,readwrite,copy) NSArray* ccs;
-@property (nonatomic,readwrite,copy) NSArray* bccs;
+@property (nonatomic, readwrite, copy) NSArray *tos;
+@property (nonatomic, readwrite, copy) NSArray *ccs;
+@property (nonatomic, readwrite, copy) NSArray *bccs;
 
-@property (nonatomic,readwrite,strong) NSArray* toPersonIDs;
+@property (nonatomic, readwrite, strong) NSArray *toPersonIDs;
 
-@property (nonatomic,readwrite,copy) NSString* htmlBody;
+@property (nonatomic, readwrite, copy) NSString *htmlBody;
 
-@property (nonatomic,readwrite,copy) NSString* msgId;
-@property (nonatomic,readwrite) MCOMessageFlag flag;
+@property (nonatomic, readwrite, copy) NSString *msgId;
+@property (nonatomic, readwrite) MCOMessageFlag flag;
 
 //search
-@property (nonatomic,readwrite,copy) NSString* subject;
-@property (nonatomic,readwrite,copy) NSString* body;
+@property (nonatomic, readwrite, copy) NSString *subject;
+@property (nonatomic, readwrite, copy) NSString *body;
 
 //ToFetch
-@property (nonatomic,readwrite,copy) NSArray* attachments;
-@property (nonatomic,readwrite,copy,getter=getUids, setter=setUids:) NSArray* uids;
+@property (nonatomic, readwrite, copy) NSArray *attachments;
+@property (nonatomic, readwrite, copy, getter=getUids, setter=setUids:) NSArray * uids;
 
-- (BOOL) hasAttachments;
+- (BOOL)hasAttachments;
 
 - (void)loadData;
 - (BOOL)existsLocally;
 //- (NSInteger)account;
-- (UidEntry*)uidEWithFolder:(NSInteger)folderNum;
-- (NSString*)getSonID;
+- (UidEntry *)uidEWithFolder:(NSInteger)folderNum;
+- (NSString *)getSonID;
 - (BOOL)haveSonInFolder:(NSInteger)folderIdx;
-- (NSArray*)getSons;
+- (NSArray *)getSons;
 - (void)fetchAllAttachments;
 - (BOOL)isInMultipleAccounts;
 //- (void)forActiveAccount;
-- (Email*)secondAccountDuplicate;
+- (Email *)secondAccountDuplicate;
 
 + (void)tableCheck;
 + (void)tableCheck:(FMDatabase *)db;
-+ (NSInteger)insertEmail:(Email *) email;
++ (NSInteger)insertEmail:(Email *)email;
 + (NSInteger)insertEmailUnsafe:(Email *)email;
-+ (void)updateEmailFlag:(Email*)email;
++ (void)updateEmailFlag:(Email *)email;
 + (BOOL)removeEmail:(NSString *)msgId;
 + (NSMutableArray *)getEmails;
-+ (Email*)resToEmail:(FMResultSet*)result;
++ (Email *)resToEmail:(FMResultSet *)result;
 
 - (void)moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
 - (void)archive;

@@ -9,9 +9,9 @@
 #import "GoogleDriveExplorer.h"
 
 // View tags to differeniate alert views
-static NSString *const kKeychainItemName = @"CocoaMail: Google Drive";
-static NSString *const kClientId = @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com";
-static NSString *const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";
+static NSString * const kKeychainItemName = @"CocoaMail: Google Drive";
+static NSString * const kClientId = @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com";
+static NSString * const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";
 
 @interface GoogleDriveExplorer () {
     GTLDriveFile *selectedFile;
@@ -23,6 +23,7 @@ static NSString *const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";
 @end
 
 @implementation GoogleDriveExplorer
+
 @synthesize service = _service;
 //@synthesize refreshButton = _refreshButton;
 @synthesize driveFiles = _driveFiles;
@@ -30,15 +31,16 @@ static NSString *const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";
 @synthesize currentPath, rootViewDelegate,downloadProgressView,deliverDownloadNotifications;
 static NSString * currentFileName = nil;
 
-- (void)awakeFromNib
-{
+- (void)awakeFromNib {
     [super awakeFromNib];
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
-    if (self.currentPath == nil || [self.currentPath isEqualToString:@""]) self.currentPath = @"root";
+    
+    if (self.currentPath == nil || [self.currentPath isEqualToString:@""]) {
+        self.currentPath = @"root";
+    }
 
     self.service = [[GTLServiceDrive alloc] init];
     self.service.authorizer =
@@ -47,8 +49,7 @@ static NSString * currentFileName = nil;
                                                       clientSecret:kClientSecret];
 }
 
-- (void)viewDidUnload
-{
+- (void)viewDidUnload {
     //[self setRefreshButton:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
@@ -56,6 +57,7 @@ static NSString * currentFileName = nil;
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    
     if (!self.isAuthorized) {
         [self presentViewController:[self createAuthController] animated:YES completion:nil];
     } else {
@@ -81,6 +83,7 @@ static NSString * currentFileName = nil;
                       keychainItemName:kKeychainItemName
                       delegate:self
                       finishedSelector:@selector(viewController:finishedWithAuth:error:)];
+    
     return authController;
 }
 
@@ -92,8 +95,7 @@ static NSString * currentFileName = nil;
     if (error != nil) {
         [self showAlert:@"Authentication Error" message:error.localizedDescription];
         self.service.authorizer = nil;
-    }
-    else {
+    } else {
         self.service.authorizer = authResult;
         self.isAuthorized = YES;
         [self dismissViewControllerAnimated:YES completion:nil];
@@ -107,35 +109,33 @@ static NSString * currentFileName = nil;
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
 }
 
 #pragma mark - Table View
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     return self.driveFiles.count;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
     
     GTLDriveFile *file = [self.driveFiles objectAtIndex:indexPath.row];
     cell.textLabel.text = file.title;
+    
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath == nil)
+    if (indexPath == nil) {
         return;
+    }
     
     if ([self.driveFiles count] == 0) {
         // Do nothing, there are no items in the list. We don't want to download a file that doesn't exist (that'd cause a crash)
@@ -182,7 +182,9 @@ static NSString * currentFileName = nil;
     }];
     
     // Check if the file is a directory
-    if ([file.mimeType isEqualToString:@"application/vnd.google-apps.folder"]) return NO;
+    if ([file.mimeType isEqualToString:@"application/vnd.google-apps.folder"]) {
+        return NO;
+    }
     
     // Set download success
     BOOL downloadSuccess = NO;
@@ -247,11 +249,11 @@ static NSString * currentFileName = nil;
                                                                                message:[NSString stringWithFormat:@"%@ is not linked to your Dropbox. Would you like to login now and allow access?", [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString *)kCFBundleNameKey]]
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel",@"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction *_Nonnull action) {
                 
             }]];
             
-            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Overwrite",@"Dropbox alert view confirm button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Overwrite", @"Dropbox alert view confirm button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction *_Nonnull action) {
                  [self downloadFile:selectedFile replaceLocalVersion:YES];
             }]];
             
@@ -266,7 +268,8 @@ static NSString * currentFileName = nil;
                     [self.rootViewDelegate gdriveExplorer:self fileConflictWithLocalFile:fileUrl withGDriveFile:file withError:error];
                 }
                 
-            } else if (result == NSOrderedDescending) {
+            }
+            else if (result == NSOrderedDescending) {
                 // Dropbox file is newer than local file
                 alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. The file in Dropbox is newer than the local file.", file.title];
                 
@@ -276,7 +279,8 @@ static NSString * currentFileName = nil;
                 if ([self.rootViewDelegate respondsToSelector:@selector(gdriveExplorer:fileConflictWithLocalFile:withGDriveFile:withError:)]) {
                     [self.rootViewDelegate gdriveExplorer:self fileConflictWithLocalFile:fileUrl withGDriveFile:file withError:error];
                 }
-            } else if (result == NSOrderedSame) {
+            }
+            else if (result == NSOrderedSame) {
                 // Dropbox File and local file were both modified at the same time
                 alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. Both the local file and the Dropbox file were modified at the same time.", file.title];
                 
@@ -313,7 +317,7 @@ static NSString * currentFileName = nil;
                                                                        message:[NSString stringWithFormat:@"%@ was downloaded from Dropbox.", currentFileName]
                                                                 preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Dismiss the message alert view") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {}]];
+    [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Dismiss the message alert view") style:UIAlertActionStyleDefault handler:^(UIAlertAction *_Nonnull action) {}]];
     
     [self presentViewController:alertView animated:YES completion:nil];
     
@@ -324,19 +328,20 @@ static NSString * currentFileName = nil;
         localNotification.soundName = UILocalNotificationDefaultSoundName;
         [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
         
-        if ([[self rootViewDelegate] respondsToSelector:@selector(gdriveExplorer:deliveredFileDownloadNotification:)])
+        if ([[self rootViewDelegate] respondsToSelector:@selector(gdriveExplorer:deliveredFileDownloadNotification:)]) {
             [[self rootViewDelegate] gdriveExplorer:self deliveredFileDownloadNotification:localNotification];
+        }
     }
     
-    if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didDownloadFile:didOverwriteFile:)])
+    if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didDownloadFile:didOverwriteFile:)]) {
         [self.rootViewDelegate gdriveExplorer:self didDownloadFile:currentFileName didOverwriteFile:isLocalFileOverwritten];
+    }
     
     // End the background task
     [[UIApplication sharedApplication] endBackgroundTask:backgroundProcess];
     
     [self removeDropboxBrowser];
 }
-
 
 - (void)updateTableData {
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:YES];
@@ -354,13 +359,14 @@ static NSString * currentFileName = nil;
 
 - (void)removeDropboxBrowser {
     [self dismissViewControllerAnimated:YES completion:^{
-        if ([[self rootViewDelegate] respondsToSelector:@selector(gdriveExplorerDismissed:)])
+        if ([[self rootViewDelegate] respondsToSelector:@selector(gdriveExplorerDismissed:)]) {
             [[self rootViewDelegate] gdriveExplorerDismissed:self];
+        }
     }];
 }
 
 - (GTLServiceDrive *)driveService {
-    static GTLServiceDrive *service = nil;
+    static GTLServiceDrive * service = nil;
     
     if (!service) {
         service = [[GTLServiceDrive alloc] init];
@@ -373,6 +379,7 @@ static NSString * currentFileName = nil;
         // automatically.
         service.retryEnabled = YES;
     }
+    
     return service;
 }
 
@@ -384,9 +391,7 @@ static NSString * currentFileName = nil;
     GTLQueryDrive *query = [GTLQueryDrive queryForFilesList];
     query.q = [NSString stringWithFormat:@"'%@' in parents", currentPath];
     
-    [self.driveService executeQuery:query completionHandler:^(GTLServiceTicket *ticket,
-                                                              GTLDriveFileList *files,
-                                                              NSError *error) {
+    [self.driveService executeQuery:query completionHandler:^(GTLServiceTicket *ticket, GTLDriveFileList *files, NSError *error) {
         if (error == nil) {
             if (self.driveFiles == nil) {
                 self.driveFiles = [[NSMutableArray alloc] init];

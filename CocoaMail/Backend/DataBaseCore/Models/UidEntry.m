@@ -231,33 +231,52 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
         FMResultSet *results;
-        NSString* query = @"";
+        NSMutableString *query = [NSMutableString string];
+
         if(!kisActiveAccountAll) {
             NSNumber *folderAccount = @(folderNum+1000*kActiveAccountNum);
 
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
-                query = [NSString stringWithFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
+                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
                          "OR t.folder != %@ "
                          "AND t.son_msg_id IN (SELECT c.msg_id FROM uid_entry c WHERE c.folder = %@)"
                          "ORDER BY uid DESC LIMIT 100 OFFSET %@",folderAccount,folderAccount,folderAccount, offset];
             }
             else {
                 NSString* folder = [NSString stringWithFormat:@"'%ld___'",(long)kActiveAccountNum];
-                query = [NSString stringWithFormat:@"SELECT * FROM uid_entry t WHERE t.folder LIKE %@ "
+                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder LIKE %@ "
                          "ORDER BY uid DESC LIMIT 100 OFFSET %@",folder, offset];
             }
             
             results = [db executeQuery:query];
+            
+            while([results next])
+            {
+                [uids addObject:[UidEntry resToUidEntry:results]];
+                //NSAssert([(UidEntry*)[uids lastObject] folder] == folderNum, @"Email from folder:%i trying to be added to folder:%i using query:%@",[(UidEntry*)[uids lastObject] folder],folderNum,query);
+            }
+            
         }
         else {
-            query = [NSString stringWithFormat:@"SELECT * FROM uid_entry ORDER BY uid DESC LIMIT 100 OFFSET %@",offset];
+            
+            [query appendString:@"SELECT * FROM uid_entry WHERE "];
+            
+            for (Account* ac in [Accounts sharedInstance].getAllTheAccounts) {
+                NSNumber *folderAccount = @([AppSettings numFolderWithFolder:FolderTypeWith(folderNum, 0) forAccountIndex:ac.idx]+1000*[AppSettings numForData:ac.idx]);
+                [query appendFormat:@"folder = %@ OR ",folderAccount];
+            }
+            
+            query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-3)]];
+            
+            //[query appendFormat:@" ORDER BY uid DESC LIMIT 100 OFFSET %@",offset];
+            [query appendString:@" ORDER BY uid DESC LIMIT 100"];
             results = [db executeQuery:query];
-        }
-        
-        while([results next])
-        {
-            [uids addObject:[UidEntry resToUidEntry:results]];
-            //NSAssert([(UidEntry*)[uids lastObject] folder] == folderNum, @"Email from folder:%i trying to be added to folder:%i using query:%@",[(UidEntry*)[uids lastObject] folder],folderNum,query);
+            
+            while([results next])
+            {
+                [uids addObject:[UidEntry resToUidEntry:results]];
+                //NSAssert([(UidEntry*)[uids lastObject] folder] == folderNum, @"Email from folder:%i trying to be added to folder:%i using query:%@",[(UidEntry*)[uids lastObject] folder],folderNum,query);
+            }
         }
         
     }];
