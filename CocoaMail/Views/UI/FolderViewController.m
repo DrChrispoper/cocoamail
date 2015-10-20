@@ -63,7 +63,7 @@
     
     _cachedEmailIDs = [[NSMutableSet alloc] initWithCapacity:1];
     
-    [self addPullToRefreshWithDelta:30];
+    //[self addPullToRefreshWithDelta:30];
 }
 
 
@@ -72,11 +72,7 @@
     [super viewDidAppear:animated];
     [self.table reloadData];
     
-    [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
-    
-    if([Accounts sharedInstance].accountsCount ==  1){
-        [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-    }
+    //[[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
 }
 
 -(NSArray*) nextViewControllerInfos
@@ -131,15 +127,15 @@
         switch (indexPath.row) {
             case 0:
                 colorBubble = cac.userColor;
-                count = 0;//TODO:[cac unreadInInbox];
+                count = [cac unreadInInbox];
                 break;
             case 1:
                 colorBubble = [UIColor whiteColor];
-                count = 0;//TODO:[cac getConversationsForFolder:FolderTypeWith(1, 0)].count;
+                count = [cac getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
                 break;
             case 3:
                 colorBubble = [UIGlobal bubbleFolderGrey];
-                count = 0;//TODO:[cac getConversationsForFolder:FolderTypeWith(3, 0)].count;
+                count = [cac getConversationsForFolder:FolderTypeWith(FolderTypeDrafts, 0)].count;
                 break;
             default:
                 break;
@@ -187,8 +183,8 @@
         text = subfolder[0];
         
         if (indentation) {
-            NSRange rangeofSub = [text rangeOfString:@"]/"];
-            text = [text substringFromIndex:rangeofSub.location+2];
+            NSRange rangeofSub = [text rangeOfString:@"/"];
+            text = [text substringFromIndex:rangeofSub.location+1];
         }
         
         NSString* reuseID = @"kCellAccountPerso";

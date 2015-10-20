@@ -11,21 +11,23 @@
 
 @class RACSignal;
 
+
 @interface ImapSync : NSObject <MCOHTMLRendererIMAPDelegate>
 
-@property (nonatomic, strong) NSMutableArray *cachedData;
-@property (nonatomic, strong) NSMutableSet *emailIDs;
-@property (nonatomic, strong) MCOIMAPSession *imapSession;
+@property (nonatomic, strong) NSMutableArray* cachedData;
+@property (nonatomic, strong) NSMutableSet* emailIDs;
+@property (nonatomic, strong) MCOIMAPSession* imapSession;
 
-+ (ImapSync *)sharedServices;
-+ (ImapSync *)sharedServices:(NSInteger)accountNum;
-+ (NSArray *)allSharedServices:(MCOIMAPSession *)updated;
-+ (RACSignal *)doLogin:(NSInteger)account;
++(ImapSync*) sharedServices;
++(ImapSync*) sharedServices:(NSInteger)accountNum;
++(NSArray*) allSharedServices:(MCOIMAPSession*)updated;
++(RACSignal*) doLogin:(NSInteger)account;
 
-- (RACSignal *)runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart;
-- (RACSignal *)runSearchThing:(NSArray *)things;
-- (void)runUpToDateTest:(NSSet *)data completed:(void (^)(void))completedBlock;
-- (void)runUpToDateCachedTest:(NSArray *)data;
-- (void)saveCachedData;
+-(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;
+-(RACSignal*) runSearchThing:(NSArray*)things;
+-(void) runUpToDateTest:(NSArray*)data completed:(void (^)(void))completedBlock;
+-(void) runUpToDateCachedTest:(NSArray*)data;
+-(void) saveCachedData;
+
 
 @end

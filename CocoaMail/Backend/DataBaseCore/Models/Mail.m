@@ -15,8 +15,8 @@
 
 @implementation Mail
 
-static NSDateFormatter* s_df_day = nil;
-static NSDateFormatter* s_df_hour = nil;
+static NSDateFormatter * s_df_day = nil;
+static NSDateFormatter * s_df_hour = nil;
 
 
 + (void)initialize {
@@ -76,13 +76,14 @@ static NSDateFormatter* s_df_hour = nil;
     Mail *mail = [[Mail alloc]init];
     
     NSString *name = email.sender.displayName;
+    
     if (!name || [name isEqualToString:@""]) {
         name = email.sender.mailbox;
     }
     
     NSString *codeName = [name uppercaseString];
     codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
-    codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
+    codeName = [codeName substringToIndex:(codeName.length < 3) ? codeName.length : 3];
     
     mail.fromPersonID = [[Persons sharedInstance]indexForPerson:[Person createWithName:name email:email.sender.mailbox icon:nil codeName:codeName]];
     mail.date = email.datetime;
@@ -98,13 +99,14 @@ static NSDateFormatter* s_df_hour = nil;
     
     for (MCOAddress *address in tmp) {
         NSString *name = address.displayName;
+        
         if (!name || [name isEqualToString:@""]) {
             name = address.mailbox;
         }
         
         NSString *codeName = [name uppercaseString];
         codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
-        codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
+        codeName = [codeName substringToIndex:(codeName.length < 3) ? codeName.length : 3];
 
         
         [ids addObject:@([[Persons sharedInstance]indexForPerson:[Person createWithName:name email:address.mailbox icon:nil codeName:codeName]])];
@@ -121,7 +123,8 @@ static NSDateFormatter* s_df_hour = nil;
     return mail;
 }
 
-- (NSArray *)attachments {
+- (NSArray *)attachments
+{
     return self.email.attachments;
 }
 
@@ -130,40 +133,47 @@ static NSDateFormatter* s_df_hour = nil;
     self.email.attachments = attachments;
 }
 
-- (BOOL)haveAttachment {
+- (BOOL)haveAttachment
+{
     return [self.email hasAttachments];
 }
 
-- (BOOL)isFav {
+- (BOOL)isFav
+{
     return (self.email.flag & MCOMessageFlagFlagged);
 }
 
-- (BOOL)isRead {
+- (BOOL)isRead
+{
     return (self.email.flag & MCOMessageFlagSeen);
 }
 
-- (void)toggleFav {
+- (void)toggleFav
+{
     [self.email star];
 }
 
--(void) toggleRead
+- (void)toggleRead
 {
     [self.email read];
 }
 
-- (NSString *)mailID {
+- (NSString *)mailID
+{
     return self.email.msgId;
 }
 
 + (NSInteger)isTodayOrYesterday:(NSString *)dateString {
     NSDate *today = [NSDate date];
     NSString *todayS = [s_df_day stringFromDate:today];
+    
     if ([dateString isEqualToString:todayS]) {
         return 0;
     }
     
-    NSDate *yesterday = [today dateByAddingTimeInterval:-60*60*24];
+    NSDate *yesterday = [today dateByAddingTimeInterval:- 60 * 60 * 24];
     NSString *yesterdayS = [s_df_day stringFromDate:yesterday];
+    
     if ([dateString isEqualToString:yesterdayS]) {
         return -1;
     }
@@ -175,6 +185,7 @@ static NSDateFormatter* s_df_hour = nil;
     Mail *mail = [[Mail alloc] init];
     
     Accounts *allAccounts = [Accounts sharedInstance];
+    
     if (allAccounts.currentAccountIdx == allAccounts.accountsCount - 1) {
         mail.fromPersonID = - (1 + [Accounts sharedInstance].defaultAccountIdx);;
     } else {
@@ -229,12 +240,19 @@ static NSDateFormatter* s_df_hour = nil;
     return [self.mails firstObject];
 }
 
--(NSInteger)accountIdx {
+- (NSInteger)accountIdx {
     return [AppSettings indexForAccount:[self firstMail].email.accountNum];
 }
 
+- (void)toggleFav {
+    [[self firstMail] toggleFav];
+    
+    [[[Accounts sharedInstance] getAllTheAccounts][self.accountIdx] star:([[self firstMail] isFav]) conversation:self];
+    
+}
+
 - (void)addMail:(Mail *)mail {
-    for (UidEntry* uid in mail.email.uids) {
+    for (UidEntry *uid in mail.email.uids) {
         //if (uid.account != kActiveAccount) {
         //    CCMLog(@"WTF: %@",uid.msgId);
         //}
@@ -255,8 +273,19 @@ static NSDateFormatter* s_df_hour = nil;
 }
 
 - (BOOL)haveAttachment {
-    for (Mail* m in self.mails) {
+    for (Mail *m in self.mails) {
         if ([m.email hasAttachments]) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+- (BOOL)isFav
+{
+    for (Mail *m in self.mails) {
+        if ([m isFav]) {
             return true;
         }
     }
@@ -275,7 +304,7 @@ static NSDateFormatter* s_df_hour = nil;
         return NO;
     }
     
-    if (![[self.firstMail.email getSonID] isEqualToString:@"0"]) {
+    if ((![[self.firstMail.email getSonID] isEqualToString:@"0"]) & (![[self.firstMail.email getSonID] isEqualToString:@""])) {
         return [[self.firstMail.email getSonID] isEqualToString:[conv.firstMail.email getSonID]];
     }
     

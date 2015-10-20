@@ -36,6 +36,8 @@
         //[_webView setAutoresizingMask:(UIViewAutoresizingFlexibleHeight)];
         _webView.scalesPageToFit = true;
         _webView.scrollView.bounces = false;
+        _webView.dataDetectorTypes = UIDataDetectorTypeLink;
+
         [_webView setDelegate:self];
     
         _loadingView = [[UIView alloc]initWithFrame:[self bounds]];
@@ -239,12 +241,12 @@
     
    
     if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
-        NSURL *url = [request URL];
-        if ([[url absoluteString] rangeOfString:@"gmail"].location == NSNotFound) {
-            [self.delegate openWebURL:url];
-            //[[UIApplication sharedApplication] openURL:[request URL]];
+        //NSURL *url = [request URL];
+        //if ([[url absoluteString] rangeOfString:@"gmail"].location == NSNotFound) {
+            //[self.delegate openWebURL:url];
+            [[UIApplication sharedApplication] openURL:[request URL]];
             return NO;
-        }
+        //}
     }
     else if (navigationType == UIWebViewNavigationTypeOther) {
         NSURL *url = [request URL];

@@ -11,73 +11,89 @@
 #import "Persons.h"
 #import "Mail.h"
 #import "AppSettings.h"
+#import "MailListViewController.h"
 
 @class Conversation;
 @class Account;
 @class Mail;
+@protocol MailListDelegate;
+
 
 @interface Accounts : NSObject
 
-+ (Accounts *)sharedInstance;
++(Accounts*) sharedInstance;
 
-+ (NSArray *)systemFolderIcons;
-+ (NSString *)userFolderIcon;
++(NSArray*) systemFolderIcons;
++(NSString*) userFolderIcon;
 
-//@property (nonatomic, strong) NSArray* accountColors;
-@property (nonatomic) QuickSwipeType quickSwipeType;
 @property (nonatomic) BOOL navBarBlurred;
 
-- (NSInteger)defaultAccountIdx;
-- (void)setDefaultAccountIdx:(NSInteger)defaultAccountIdx;
+@property (nonatomic, readonly) QuickSwipeType quickSwipeType;
+@property (nonatomic, readonly) NSInteger defaultAccountIdx;
 
-@property (nonatomic) BOOL showBadgeCount;
-// TODO save these config values
+-(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx;
+-(void) setQuickSwipeType:(QuickSwipeType)quickSwipeType;
+
 @property (nonatomic) NSInteger currentAccountIdx;
 
-- (Account *)currentAccount;
-- (NSArray *)getAllTheAccounts;
-- (Account *)getAccount:(NSInteger)accountIndex;
-- (NSInteger)accountsCount;
-- (void)addAccount:(Account *)account;
-- (BOOL)deleteAccount:(Account *)account;
+-(Account*) currentAccount;
+-(NSArray*) getAllTheAccounts;
+-(Account*) getAccount:(NSInteger)accountIndex;
+-(NSInteger) accountsCount;
+-(void) addAccount:(Account*)account;
+-(BOOL) deleteAccount:(Account*)account;
+
 
 @end
+
 
 @interface Account : NSObject
 
 @property (nonatomic, getter=codeName, setter=setCodeName:) NSString * codeName;
-@property (nonatomic, strong) NSString *userMail;
-@property (nonatomic, strong) UIColor *userColor;
+@property (nonatomic, strong) NSString* userMail;
+@property (nonatomic, strong) UIColor* userColor;
 @property (nonatomic) NSInteger idx;
 
-@property (nonatomic, strong) NSArray *userFolders;
+@property (nonatomic, strong) NSArray* userFolders;
 @property (nonatomic) NSInteger currentFolderIdx;
-- (void)setCurrentFolder:(CCMFolderType)folder;
-@property (nonatomic, strong) Person *person;
+@property (nonatomic) CCMFolderType currentFolderType;
+-(void) setCurrentFolder:(CCMFolderType)folder;
+@property (nonatomic, strong) Person* person;
 
 @property (nonatomic) BOOL isAllAccounts;
 //
 @property (nonatomic) BOOL notificationEnabled;
 // TODO save it (config)
 
-+ (instancetype)emptyAccount;
+@property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
 
-- (void)initContent;
-- (void)connect;
-- (void)releaseContent;
++(instancetype) emptyAccount;
 
-- (void)insertRows:(Email *)email;
-- (void)addConversation:(Conversation *)conv;
-- (NSMutableArray *)getConversationsForFolder:(CCMFolderType)type;
-- (BOOL)moveConversation:(Conversation *)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
+-(void) initContent;
+-(void) connect;
+-(void) runTestData;
+-(void) releaseContent;
+
+-(NSInteger) favorisCount;
+-(NSInteger) draftCount;
+
+-(void) insertRows:(Email*)email;
+-(void) addConversation:(Conversation*)conv;
+-(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
+-(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
 // return NO if not removed from form folder, YES if really removed
+-(void) star:(BOOL)add conversation:(Conversation*)conversation;
 
-- (NSInteger)unreadInInbox;
+-(void) setName:(NSString*)name;
+-(NSInteger) unreadInInbox;
 
-- (void)sendMail:(Mail *)mail bcc:(BOOL)isBcc;
-- (void)saveDraft:(Mail *)mail;
-- (void)deleteDraft:(Mail *)mail;
+-(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc;
+-(void) saveDraft:(Conversation*)mail;
+-(void) deleteDraft:(Conversation*)mail;
 
-- (NSArray *)systemFolderNames;
+-(NSArray*) systemFolderNames;
+-(void) deliverUpdate:(NSArray<Email*>*)emails;
+-(void) deliverDelete:(NSArray<Email*>*)emails;
+
 
 @end

@@ -32,7 +32,7 @@
 + (UidEntry *)getUidEntryAtPk:(NSInteger)pk;
 + (NSMutableArray *)getUidEntries;
 + (NSMutableArray *)getUidEntriesFrom:(NSInteger)from withFolder:(NSInteger)folderNum;
-+ (UidEntry *) getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString *)msgId;
++ (UidEntry *)getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString *)msgId;
 + (NSMutableArray *)getUidEntriesWithMsgId:(NSString *)msgId;
 + (BOOL)hasUidEntrywithMsgId:(NSString *)md5hash withFolder:(NSInteger)folderNum;
 + (NSMutableArray *)getUidEntriesWithThread:(NSString *)son_msgId;

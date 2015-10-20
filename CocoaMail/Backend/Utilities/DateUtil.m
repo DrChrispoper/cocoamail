@@ -9,7 +9,7 @@
 #import "DateUtil.h"
 #define DATE_UTIL_SECS_PER_DAY 86400
 
-static DateUtil *singleton = nil;
+static DateUtil * singleton = nil;
 
 @implementation DateUtil
 
@@ -20,37 +20,35 @@ static DateUtil *singleton = nil;
 @synthesize yesterdayComponents;
 @synthesize dateFormatter;
 
-- (void)refreshData
-{
+- (void)refreshData {
 	NSCalendar *gregorian = [NSCalendar currentCalendar];
 	self.today = [NSDate date];
 	self.yesterday = [today dateByAddingTimeInterval:-DATE_UTIL_SECS_PER_DAY];
-	self.lastWeek = [today dateByAddingTimeInterval:-6*DATE_UTIL_SECS_PER_DAY];
+	self.lastWeek = [today dateByAddingTimeInterval:- 6 * DATE_UTIL_SECS_PER_DAY];
 	self.todayComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:today];
 	self.yesterdayComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:yesterday];
 	self.dateFormatter = [[NSDateFormatter alloc] init];
 }
 
-- (id)init
-{
+- (id)init {
 	if (self = [super init]) {	
 		[self refreshData];
 	}
+    
 	return self;
 }
 
-+ (id)getSingleton
-{
++ (id)getSingleton {
 	@synchronized(self) {
 		if (singleton == nil) {
 			singleton = [[self alloc] init];
 		}
 	}
+    
 	return singleton;
 }
 
-- (NSString *)humanDate:(NSDate *)date
-{
+- (NSString *)humanDate:(NSDate *)date {
 	/*NSCalendar *gregorian = [NSCalendar currentCalendar];
 	
 	NSDateComponents *dateComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:date];
@@ -79,15 +77,13 @@ static DateUtil *singleton = nil;
 	return [dateFormatter stringFromDate:date];
 }
 
-- (NSString *)time:(NSDate *)date
-{
+- (NSString *)time:(NSDate *)date {
     [dateFormatter setDateFormat:@"HH:mm"];
     
     return [dateFormatter stringFromDate:date];
 }
 
-+ (NSDate *)datetimeInLocal:(NSDate *)utcDate
-{
++ (NSDate *)datetimeInLocal:(NSDate *)utcDate {
 	NSTimeZone *utc = [NSTimeZone timeZoneWithName:@"UTC"];
 	
 	NSTimeZone *local = [NSTimeZone localTimeZone];
@@ -97,6 +93,7 @@ static DateUtil *singleton = nil;
 	
 	NSTimeInterval interval =  destinationSeconds - sourceSeconds;
 	NSDate *res = [[NSDate alloc] initWithTimeInterval:interval sinceDate:utcDate];
+    
 	return res;
 }
 

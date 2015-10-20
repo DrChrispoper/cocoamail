@@ -16,7 +16,7 @@
 #import "StringUtil.h"
 #import <QuickLook/QuickLook.h>
 
-@interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, CCMAttachmentViewDelegate>{
+@interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, CCMAttachmentViewDelegate, UIDocumentInteractionControllerDelegate>{
     NSArray *_activityItems;
 }
 
@@ -284,12 +284,15 @@
     //    [self setNeedsStatusBarAppearanceUpdate];
 }
 
-- (void)openAttachment:(Attachment*)att
+- (void)shareAttachment:(Attachment*)att
 {
     NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
     [att.data writeToFile:filePath atomically:YES];
     NSURL *URL = [NSURL fileURLWithPath:filePath];
-    [self openURL:URL];
+    
+    UIDocumentInteractionController *documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
+    documentInteractionController.delegate = self;
+    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0 ,0 , 0, 0) inView:self.view animated:YES];
 }
 
 @end

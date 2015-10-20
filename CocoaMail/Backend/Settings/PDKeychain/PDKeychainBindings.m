@@ -11,34 +11,33 @@
 
 @implementation PDKeychainBindings
 
-+ (PDKeychainBindings *)sharedKeychainBindings
-{
++ (PDKeychainBindings *)sharedKeychainBindings {
     return [[PDKeychainBindingsController sharedKeychainBindingsController] keychainBindings];
 }
 
 - (id)objectForKey:(NSString *)defaultName {
     //return [[[PDKeychainBindingsController sharedKeychainBindingsController] valueBuffer] objectForKey:defaultName];
-    return [[PDKeychainBindingsController sharedKeychainBindingsController] valueForKeyPath:[NSString stringWithFormat:@"values.%@",defaultName]];
+    return [[PDKeychainBindingsController sharedKeychainBindingsController] valueForKeyPath:[NSString stringWithFormat:@"values.%@", defaultName]];
 }
 
 - (void)setObject:(NSString *)value forKey:(NSString *)defaultName {
-    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName]];
+    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@", defaultName]];
 }
 
 - (void)setObject:(NSString *)value forKey:(NSString *)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute {
-    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName] accessibleAttribute:accessibleAttribute];
+    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@", defaultName] accessibleAttribute:accessibleAttribute];
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)defaultName {
-    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName]];
+    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@", defaultName]];
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute {
-    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName] accessibleAttribute:accessibleAttribute];
+    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:value forKeyPath:[NSString stringWithFormat:@"values.%@", defaultName] accessibleAttribute:accessibleAttribute];
 }
 
 - (void)removeObjectForKey:(NSString *)defaultName {
-    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:nil forKeyPath:[NSString stringWithFormat:@"values.%@",defaultName]];
+    [[PDKeychainBindingsController sharedKeychainBindingsController] setValue:nil forKeyPath:[NSString stringWithFormat:@"values.%@", defaultName]];
 }
 
 - (NSString *)stringForKey:(NSString *)defaultName {

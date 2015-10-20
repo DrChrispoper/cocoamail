@@ -110,7 +110,7 @@
     return attachments;
 }
 
-+ (NSMutableArray *)getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline {
++ (NSMutableArray *)getAttachmentsWithMsgId:(NSString *)msgId isInline:(BOOL)isInline {
     NSMutableArray *attachments = [[NSMutableArray alloc] init];
     
     AttachmentDBAccessor *databaseManager = [AttachmentDBAccessor sharedManager];

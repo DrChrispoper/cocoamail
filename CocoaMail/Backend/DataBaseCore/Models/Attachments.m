@@ -227,12 +227,14 @@
     }
 }
 
-- (void)addActionTarget:(id)target selector:(SEL)selector andTag:(NSInteger)tag {
+- (void)addActionTarget:(id)target selector:(SEL)selector andTag:(NSInteger)tag
+{
     self.btn.tag = tag;
     [self.btn addTarget:target action:selector forControlEvents:UIControlEventTouchUpInside];
 }
 
-- (void)fillWith:(Attachment *)at {
+- (void)fillWith:(Attachment *)at
+{
     self.att = at;
     self.name.text = at.fileName;
     self.size.text = [at stringSize];
@@ -252,11 +254,15 @@
         
         [self.btn setImage:[UIImage imageNamed:@"download_export_off"] forState:UIControlStateNormal];
         [self.btn setImage:[UIImage imageNamed:@"download_export_on"] forState:UIControlStateHighlighted];
+        [self.btn addTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
         self.internalState = 2;
+    } else {
+        [self buttonActionType:AttachmentViewActionDonwload];
     }
 }
 
-- (void)_timerCercle:(NSTimer *)t {
+- (void)_timerCercle:(NSTimer *)t
+{
     if (self.internalState!=1) {
         [t invalidate];
     }
@@ -271,7 +277,8 @@
     
 }
 
-- (void)beginActionDownload:(Attachment *)att {
+- (void)beginActionDownload:(Attachment *)att
+{
     if (self.internalState == 0) {
         [self _applyButtonDownload:self.btn];
         [self fetchAttachment:att];
@@ -281,7 +288,8 @@
     }
 }
 
-- (void)doneDownloading {
+- (void)doneDownloading
+{
         if (self.fakeIgnoreNextEnd) {
             self.fakeIgnoreNextEnd = NO;
             return;
@@ -312,6 +320,7 @@
         
         NSTimer *t = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(_timerCercle:) userInfo:nil repeats:YES];
         [self _timerCercle:t];
+        [self fetchAttachment:self.att];
     }
     else if (self.internalState==1) {
         self.internalState = 0;
@@ -327,7 +336,7 @@
         
     } else {
         // internalState == 2
-        [self.delegate openAttachment:self.att];
+        [self.delegate shareAttachment:self.att];
     }
 }
 

@@ -1,4 +1,4 @@
-//
+ //
 //  ConversationViewController.m
 //  Cocoamail
 //
@@ -14,20 +14,24 @@
 #import "AppSettings.h"
 #import "UserFolderViewController.h"
 #import "EmailProcessor.h"
+#import <QuickLook/QuickLook.h>
+#import "StringUtil.h"
 
 @class SingleMailView;
 
 @protocol SingleMailViewDelegate <NSObject>
 
--(Mail*) mailDisplayed:(SingleMailView*)mailView;
--(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
--(void) makeConversationFav:(BOOL)isFav;
+- (Mail*)mailDisplayed:(SingleMailView*)mailView;
+- (void)mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
+- (void)makeConversationFav:(BOOL)isFav;
+- (void)openURL:(NSURL *)url;
+- (void)shareAttachment:(Attachment*)att;
 
 @end
 
-
-
-@interface ConversationViewController () <UIScrollViewDelegate, SingleMailViewDelegate, UserFolderViewControllerDelegate>
+@interface ConversationViewController () <UIScrollViewDelegate, SingleMailViewDelegate, UserFolderViewControllerDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, UIDocumentInteractionControllerDelegate> {
+    NSArray *_activityItems;
+}
 
 @property (nonatomic, weak) UIView* contentView;
 @property (nonatomic, weak) UIScrollView* scrollView;
@@ -40,9 +44,7 @@
 
 @end
 
-
-
-@interface SingleMailView : UIView <MCOMessageViewDelegate>
+@interface SingleMailView : UIView <MCOMessageViewDelegate, CCMAttachmentViewDelegate>
 
 -(void) setupWithText:(NSString*)texte extended:(BOOL)extended;
 
@@ -62,10 +64,6 @@
 -(void) updateFavUI:(BOOL)isFav;
 
 @end
-
-
-
-
 
 @implementation ConversationViewController
 
@@ -256,7 +254,46 @@
     self.scrollView.contentSize = self.contentView.frame.size;
 }
 
+- (void)openURL:(NSURL *)url
+{
+    QLPreviewController *previewController = [[QLPreviewController alloc]init];
+    previewController.delegate = self;
+    previewController.dataSource = self;
+    previewController.currentPreviewItemIndex = 0;
+    
+    _activityItems = @[url];
+    
+    [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
+}
 
+#pragma mark - QLPreviewControllerDataSource
+- (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)previewController
+{
+    return _activityItems.count;
+}
+
+- (id)previewController:(QLPreviewController *)previewController previewItemAtIndex:(NSInteger)index
+{
+    return _activityItems[index];
+}
+
+- (void)previewControllerWillDismiss:(QLPreviewController *)controller
+{
+    //    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    //    [self setNeedsStatusBarAppearanceUpdate];
+}
+
+- (void)shareAttachment:(Attachment*)att
+{
+    NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+    [att.data writeToFile:filePath atomically:YES];
+    NSURL *URL = [NSURL fileURLWithPath:filePath];
+    
+    UIDocumentInteractionController *documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
+    documentInteractionController.delegate = self;
+    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0 ,0 , 0, 0) inView:self.view animated:YES];
+     
+}
 
 -(CGFloat) _addMail:(NSString*)mail withIndex:(NSInteger)idx extended:(BOOL)extended atYPos:(CGFloat)posY inView:(UIView*)v
 {
@@ -700,7 +737,7 @@
 
 -(UIView*) _createAttachments:(NSArray*)attachs
 {
-    if (attachs.count==0) {
+    if (attachs.count == 0) {
         return nil;
     }
     
@@ -716,12 +753,12 @@
     for (Attachment* a in attachs) {
         
         AttachmentView* av = [[AttachmentView alloc] initWithWidth:WIDTH-32 leftMarg:0];
+        av.delegate = self;
         CGRect f = av.frame;
         f.origin.y = posY;
         av.frame = f;
         
         [av fillWith:a];
-        [av buttonActionType:AttachmentViewActionDonwload];
         [v addSubview:av];
         
         UIView* line = [[UIView alloc] initWithFrame:CGRectMake(0, posY, WIDTH - 32, 0.5)];
@@ -861,12 +898,22 @@
     [self.delegate mailView:self changeHeight:diff];
 }
 
+- (void)openURL:(NSURL *)url
+{
+    [self.delegate openURL:url];
+}
+
+- (void)shareAttachment:(Attachment*)att
+{
+    [self.delegate shareAttachment:att];
+}
+
 - (MCOAttachment *)partForUniqueID:(NSString *)partID
 {
     for (Mail* mail in ((ConversationViewController*)self.delegate).conversation.mails) {
-        for (Attachment* att in mail.email.attachments) {
+        for (Attachment* att in mail.attachments) {
         
-            if (att.isInline && [att.fileName isEqualToString:partID]) {
+            if (att.isInline && [att.contentID isEqualToString:partID]) {
             /*if(!att.data){
              
              MCOIMAPFetchContentOperation * op = [[ImapSync sharedServices].imapSession fetchMessageAttachmentOperationWithFolder:[AppSettings folderName:[AppSettings activeFolder]]

@@ -383,7 +383,11 @@
                 // tav fav
                 if (self.favori.tag == tagFavSelected) {
                     
-                    [[self.conversation firstMail] toggleFav];
+                    /*if (self.favori.isHighlighted) {
+                        [[Accounts sharedInstance].getAllTheAccounts[self.conversation.accountIdx] moveConversation:self.conversation from:decodeFolderTypeWith([[self.conversation.foldersType anyObject] integerValue]) to:FolderTypeWith(FolderTypeFavoris, 0)];
+                    }*/
+                    
+                    [self.conversation toggleFav];
 
                     self.favori.tag = 0;
                     back = true;
@@ -413,7 +417,7 @@
                             }
                             
                             // tap cell
-                            if (!self.mail.isRead) {
+                            if (![self.delegate isPresentingDrafts] && !self.mail.isRead) {
                                 [self.mail toggleRead];
                             }
                             
@@ -544,7 +548,7 @@
     self.time.text = mail.hour;
     self.attachment.hidden = ![conv haveAttachment];
     
-    self.favori.highlighted = mail.isFav;
+    self.favori.highlighted = conv.isFav;
     
     QuickSwipeType idxQuickSwipe = [self quickSwipeType];
     if (idxQuickSwipe == QuickSwipeReply) {

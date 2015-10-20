@@ -13,17 +13,14 @@
 
 @interface PullToRefresh ()
 
-@property (nonatomic, weak) UIActivityIndicatorView* pullToRefresh;
-@property (nonatomic, weak) UIView* pullToRefreshSupport;
+@property (nonatomic, weak) UIActivityIndicatorView *pullToRefresh;
+@property (nonatomic, weak) UIView *pullToRefreshSupport;
 
 @end
 
-
 @implementation PullToRefresh
 
-
--(void) scrollViewDidScroll:(UIScrollView *)scrollView
-{
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     if (self.pullToRefresh.isAnimating) {
         return;
     }
@@ -49,7 +46,7 @@
             
             self.pullToRefreshSupport = support;
              */
-            UIActivityIndicatorView* av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+            UIActivityIndicatorView *av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
             [av stopAnimating];
             av.center = CGPointMake(scrollView.frame.size.width / 2, -35 + self.delta);
             [scrollView addSubview:av];
@@ -63,22 +60,18 @@
         CGFloat limite = -scrollView.contentInset.top - 60;
         CGFloat pourc = scrollView.contentOffset.y / limite;
         
-        if (pourc>1){
+        if (pourc>1) {
             pourc = 1.f;
         }
         
         pourc = pourc * pourc;
         self.pullToRefresh.transform = CGAffineTransformScale(CGAffineTransformMakeRotation(M_PI_2), pourc, pourc);
-    }
-    else{
+    } else {
         self.pullToRefresh.hidden = YES;
     }
-    
 }
 
-
--(void) scrollViewDidEndDragging:(UIScrollView *)scrollView
-{
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView {
     if (scrollView.contentOffset.y < (-scrollView.contentInset.top-60)) {
         
         [self.pullToRefresh startAnimating];
@@ -105,7 +98,5 @@
         // TODO true one
     }
 }
-
-
 
 @end

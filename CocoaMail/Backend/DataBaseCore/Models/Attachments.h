@@ -11,14 +11,16 @@
 
 @protocol CCMAttachmentViewDelegate;
 
+
 @interface Attachment : CCMAttachment
 
-@property (nonatomic, strong) NSString *imageName;
-- (NSString *)stringSize;
-@property (nonatomic, strong) UIImage *image;
+@property (nonatomic, strong) NSString* imageName;
+-(NSString*) stringSize;
+@property (nonatomic, strong) UIImage* image;
 
-- (UIImage *)miniature;
-- (void)loadLocalFile;
+-(UIImage*) miniature;
+-(void) loadLocalFile;
+
 
 @end
 
@@ -29,24 +31,27 @@ typedef enum : NSUInteger {
     AttachmentViewActionGlobalTap
 } AttachmentViewAction;
 
+
 @interface AttachmentView : UIView
 
-- (instancetype)initWithWidth:(CGFloat)width leftMarg:(CGFloat)margin;
+-(instancetype) initWithWidth:(CGFloat)width leftMarg:(CGFloat)margin;
 
-- (void)fillWith:(Attachment *)attach;
-- (void)addActionTarget:(id)target selector:(SEL)selector andTag:(NSInteger)tag;
+-(void) fillWith:(Attachment*)attach;
+-(void) addActionTarget:(id)target selector:(SEL)selector andTag:(NSInteger)tag;
 
-- (void)buttonActionType:(AttachmentViewAction)type;
+-(void) buttonActionType:(AttachmentViewAction)type;
 
-- (void)beginActionDownload:(Attachment *)att;
-- (void)doneDownloading;
+-(void) beginActionDownload:(Attachment*)att;
+-(void) doneDownloading;
 
 @property (nonatomic, weak) id <CCMAttachmentViewDelegate> delegate;
+
 
 @end
 
 @protocol CCMAttachmentViewDelegate <NSObject>
 
-- (void)openAttachment:(Attachment *)att;
+-(void) shareAttachment:(Attachment*)att;
+
 
 @end

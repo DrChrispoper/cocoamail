@@ -142,6 +142,9 @@
             [self presentViewController:alertView
                                animated:YES
                              completion:nil];
+            
+            [self.mainButton setSelected:NO];
+            [self.mainImage setHighlighted:NO];
         }
     }
     else if([self.cloudServiceName isEqualToString:@"Google Drive"]){

@@ -34,14 +34,14 @@ typedef enum : NSUInteger {
 -(void) removePersonAtIndex:(NSInteger)idx;
 -(void) closeOthersBadge:(ExpendableBadge*)badge;
 
-@end
 
+@end
 
 
 @interface EditMailViewController () <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, ExpendableBadgeDelegate,
 UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate>
 
-@property (nonatomic, readwrite, strong) UINavigationController *navControllerForBrowseSDK;
+@property (nonatomic, readwrite, strong) UINavigationController* navControllerForBrowseSDK;
 
 @property (nonatomic, weak) UIView* contentView;
 @property (nonatomic, weak) UIScrollView* scrollView;
@@ -68,10 +68,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
 
-
 @end
-
-
 
 @interface ExpendableBadge : UIView
 
@@ -83,12 +80,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 @end
 
-
-
-
 @implementation EditMailViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad {
     [super viewDidLoad];
 
     if (self.mail == nil) {
@@ -153,7 +147,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         support.layer.borderWidth = 0.5;
         support.userInteractionEnabled = NO;
         support.backgroundColor = [UIColor clearColor];
-        support.layer.cornerRadius = 33./2.;
+        support.layer.cornerRadius = 33. / 2.;
         
         support.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         
@@ -191,13 +185,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
 }
 
--(void)viewWillAppear:(BOOL)animated
+-(void) viewWillAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
     
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
-
 
 -(BOOL) haveCocoaButton
 {
@@ -273,8 +266,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         // auto-save
         self.mail.title = self.subjectTextView.text;
         self.mail.content = self.bodyTextView.text;
+        self.mail.email = [[Email alloc]init];
+        self.mail.email.datetime = [NSDate date];
+        NSString* FakemsgID = [NSString stringWithFormat:@"%i", -[AppSettings draftCount]];
+        self.mail.email.msgId = FakemsgID;
         
-        [self.selectedAccount saveDraft:self.mail];
+        Conversation* c = [[Conversation alloc] init];
+        [c addMail:self.mail];
+        
+        [self.selectedAccount saveDraft:c];
         [self _reallyGoBack];
         
         /*
@@ -509,10 +509,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     // Body
 
-    UIView* bdView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 34 + 8 + 19*3 + 20)];
+    UIView* bdView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 34 + 8 + 19 * 3 + 20)];
     bdView.backgroundColor = [UIColor whiteColor];
 
-    UITextView* tv = [[UITextView alloc] initWithFrame:CGRectMake(3, 4, WIDTH-6, 34 + 19*3 - 3)];
+    UITextView* tv = [[UITextView alloc] initWithFrame:CGRectMake(3, 4, WIDTH - 6, 34 + 19 * 3 - 3)];
     tv.textColor = [UIColor blackColor];
     tv.backgroundColor = [UIColor whiteColor];
     tv.font = [UIFont systemFontOfSize:15];
@@ -520,7 +520,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [bdView addSubview:tv];
     tv.text = @"\n\n\n";
     
-    NSRange start = {0,0};
+    NSRange start = {0, 0};
     tv.selectedRange = start;
     
     self.bodyTextView = tv;
@@ -697,10 +697,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [self.attachButton setImage:on forState:UIControlStateNormal];
         [self.attachButton setImage:more forState:UIControlStateHighlighted];
     }
-
-    
 }
-
 
 -(UIView*) _createAttachmentsView
 {
@@ -946,7 +943,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 #pragma mark - TextView Delegate
 
--(void) textViewDidChange:(UITextView *)textView
+-(void) textViewDidChange:(UITextView*)textView
 {
     const CGFloat currentHeight = textView.frame.size.height;
     const CGFloat next = textView.contentSize.height;
@@ -1017,7 +1014,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     */
 }
 
--(BOOL) textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
+-(BOOL) textView:(UITextView*)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString*)text
 {
     if (textView == self.subjectTextView) {
         if ([text rangeOfString:@"\n"].location!=NSNotFound) {
@@ -1109,7 +1106,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 }
 
 
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     Person* p = self.currentSearchPersonList[indexPath.row];
     
@@ -1127,18 +1124,18 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return cell;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;    
 }
 
 
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     Person* p = self.currentSearchPersonList[indexPath.row];
     
@@ -1164,12 +1161,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return self.currentSearchPersonList.count;
 }
 
--(void) textViewDidBeginEditing:(UITextView *)textView
+-(void) textViewDidBeginEditing:(UITextView*)textView
 {
     [self _closeBadge];
 }
@@ -1178,7 +1175,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 #pragma mark - TextField Delegate
 
--(BOOL) textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+-(BOOL) textField:(UITextField*)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString*)string
 {
     if ([string rangeOfString:@" "].location!=NSNotFound) {
         [self textFieldShouldReturn:textField];
@@ -1228,7 +1225,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return YES;
 }
 
--(void) textFieldDidBeginEditing:(UITextField *)textField
+-(void) textFieldDidBeginEditing:(UITextField*)textField
 {
     [self _closeBadge];
     
@@ -1240,12 +1237,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
      */
 }
 
--(void) textFieldDidEndEditing:(UITextField *)textField
+-(void) textFieldDidEndEditing:(UITextField*)textField
 {
     [self _removeSearchUI];
 }
 
--(BOOL) textFieldShouldReturn:(UITextField *)textField
+-(BOOL) textFieldShouldReturn:(UITextField*)textField
 {
     //[textField resignFirstResponder];
 
@@ -1298,14 +1295,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 - (void)_openPhotoPicker:(UIImagePickerControllerSourceType)sourceType
 {
     if ([UIImagePickerController isSourceTypeAvailable:sourceType]) {
-        UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
+        UIImagePickerController* imagePickerController = [[UIImagePickerController alloc] init];
         imagePickerController.sourceType = sourceType;
         imagePickerController.delegate = self;
         [[ViewController mainVC] presentViewController:imagePickerController animated:YES completion:nil];
     }
 }
 
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+- (void)imagePickerController:(UIImagePickerController*)picker didFinishPickingMediaWithInfo:(NSDictionary*)info
 {
     UIImage* img = info[UIImagePickerControllerEditedImage];
     if (img==nil) {
@@ -1339,7 +1336,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 //------------------------------------------------------------------------------------------------------------//
 #pragma mark - Dropbox
 
-- (void)gdriveExplorer:(GoogleDriveExplorer *)explorer didDownloadFile:(NSString *)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+- (void)gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
         CCMLog(@"Downloaded %@ by overwriting local file", fileName);
@@ -1347,7 +1344,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         CCMLog(@"Downloaded %@ without overwriting", fileName);
     }
     
-    Attachment *attach = [[Attachment alloc]init];
+    Attachment* attach = [[Attachment alloc]init];
     attach.fileName = fileName;
     
     [attach loadLocalFile];
@@ -1363,12 +1360,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _updateAttachView];
 }
 
-- (void)gdriveExplorer:(GoogleDriveExplorer *)explorer fileConflictWithLocalFile:(NSURL *)localFileURL withGDriveFile:(GTLDriveFile *)gdriveFile withError:(NSError *)error
+- (void)gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
 {
     
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didDownloadFile:(NSString *)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+- (void)dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
         CCMLog(@"Downloaded %@ by overwriting local file", fileName);
@@ -1376,7 +1373,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         CCMLog(@"Downloaded %@ without overwriting", fileName);
     }
     
-    Attachment *attach = [[Attachment alloc]init];
+    Attachment* attach = [[Attachment alloc]init];
     attach.fileName = fileName;
     
     [attach loadLocalFile];
@@ -1393,26 +1390,26 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didFailToDownloadFile:(NSString *)fileName
+- (void)dropboxBrowser:(DropboxBrowserViewController*)browser didFailToDownloadFile:(NSString*)fileName
 {
     CCMLog(@"Failed to download %@", fileName);
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser fileConflictWithLocalFile:(NSURL *)localFileURL withDropboxFile:(DBMetadata *)dropboxFile withError:(NSError *)error
+- (void)dropboxBrowser:(DropboxBrowserViewController*)browser fileConflictWithLocalFile:(NSURL*)localFileURL withDropboxFile:(DBMetadata*)dropboxFile withError:(NSError*)error
 {
     CCMLog(@"File conflict between %@ and %@\n%@ last modified on %@\nError: %@", localFileURL.lastPathComponent, dropboxFile.filename, dropboxFile.filename, dropboxFile.lastModifiedDate, error);
 }
 
-- (void)dropboxBrowserDismissed:(DropboxBrowserViewController *)browser
+- (void)dropboxBrowserDismissed:(DropboxBrowserViewController*)browser
 {
     // This method is called after Dropbox Browser is dismissed. Do NOT dismiss DropboxBrowser from this method
     // Perform any UI updates here to display any new data from Dropbox Browser
     // ex. Update a UITableView that shows downloaded files or get the name of the most recently selected file:
-    //     NSString *fileName = [DropboxBrowserViewController fileName];
+    //     NSString* fileName = [DropboxBrowserViewController fileName];
     //[self.attachmentCollectionView reloadData];
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser deliveredFileDownloadNotification:(UILocalNotification *)notification {}
+- (void)dropboxBrowser:(DropboxBrowserViewController*)browser deliveredFileDownloadNotification:(UILocalNotification*)notification {}
 
 #pragma mark - BOXFolderViewControllerDelegate
 
@@ -1420,45 +1417,45 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 // These are all optional and will allow you to customize behavior for your app.
 ////////////////////////////////////////////////////////////////////////////////////////
 
-- (BOOL)itemsViewControllerShouldShowCloseButton:(BOXItemsViewController *)itemsViewController
+- (BOOL)itemsViewControllerShouldShowCloseButton:(BOXItemsViewController*)itemsViewController
 {
     return NO;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController shouldShowItem:(BOXItem *)item
+- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController shouldShowItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController shouldEnableItem:(BOXItem *)item
+- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController shouldEnableItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController *)itemsViewController willNavigateToFolder:(BOXFolder *)folder
+- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController willNavigateToFolder:(BOXFolder*)folder
 {
     return YES;
 }
 
-- (void)itemsViewController:(BOXItemsViewController *)itemsViewController didTapFolder:(BOXFolder *)folder inItems:(NSArray *)items
+- (void)itemsViewController:(BOXItemsViewController*)itemsViewController didTapFolder:(BOXFolder*)folder inItems:(NSArray*)items
 {
     NSLog(@"Did tap folder: %@", folder.name);
 }
 
-- (void)itemsViewController:(BOXItemsViewController *)itemsViewController didTapFile:(BOXFile *)file inItems:(NSArray *)items
+- (void)itemsViewController:(BOXItemsViewController*)itemsViewController didTapFile:(BOXFile*)file inItems:(NSArray*)items
 {
     NSLog(@"Did tap file: %@", file.name);
     
-    BOXContentClient *contentClient = [BOXContentClient defaultClient];
-    NSString *localFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.name];
-    BOXFileDownloadRequest *boxRequest = [contentClient fileDownloadRequestWithID:file.modelID toLocalFilePath:localFilePath];
+    BOXContentClient* contentClient = [BOXContentClient defaultClient];
+    NSString* localFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.name];
+    BOXFileDownloadRequest* boxRequest = [contentClient fileDownloadRequestWithID:file.modelID toLocalFilePath:localFilePath];
     
     [boxRequest performRequestWithProgress:^(long long totalBytesTransferred, long long totalBytesExpectedToTransfer) {
         // Update a progress bar, etc.
-    } completion:^(NSError *error) {
+    } completion:^(NSError* error) {
         // Download has completed. If it failed, error will contain reason (e.g. network connection)
         if (error == nil) {
-            Attachment *attach = [[Attachment alloc]init];
+            Attachment* attach = [[Attachment alloc]init];
             attach.fileName = file.name;
             
             [attach loadLocalFile];
@@ -1479,7 +1476,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }];
 }
 
-- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController *)itemsViewController
+- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController*)itemsViewController
 {
     // If you don't implement this, the navigation controller will be dismissed for you.
     // Only implement if you need to customize behavior.
@@ -1493,41 +1490,41 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 // - Sort by name ascending
 // You can implement your own sort order by implementing this delegate method.
 //
-//- (NSComparisonResult)itemsViewController:(BOXItemsViewController *)itemsViewController compareForSortingItem:(BOXItem *)itemA toItem:(BOXItem *)itemB
+//- (NSComparisonResult)itemsViewController:(BOXItemsViewController*)itemsViewController compareForSortingItem:(BOXItem*)itemA toItem:(BOXItem*)itemB
 //{
 //}
 
-- (BOOL)folderViewControllerShouldShowChooseFolderButton:(BOXFolderViewController *)folderViewController
+- (BOOL)folderViewControllerShouldShowChooseFolderButton:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController *)folderViewController didChooseFolder:(BOXFolder *)folder
+- (void)folderViewController:(BOXFolderViewController*)folderViewController didChooseFolder:(BOXFolder*)folder
 {
     NSLog(@"Did choose folder: %@", folder.name);
 }
 
-- (BOOL)folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController *)folderViewController
+- (BOOL)folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController *)folderViewController didCreateNewFolder:(BOXFolder *)folder
+- (void)folderViewController:(BOXFolderViewController*)folderViewController didCreateNewFolder:(BOXFolder*)folder
 {
     NSLog(@"Did create new folder: %@", folder.name);
 }
 
-- (BOOL)folderViewController:(BOXFolderViewController *)folderViewController shouldShowDeleteButtonForItem:(BOXItem *)item
+- (BOOL)folderViewController:(BOXFolderViewController*)folderViewController shouldShowDeleteButtonForItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController *)folderViewController didDeleteItem:(BOXItem *)item
+- (void)folderViewController:(BOXFolderViewController*)folderViewController didDeleteItem:(BOXItem*)item
 {
     NSLog(@"Did delete item: %@", item.name);
 }
 
-- (BOOL)folderViewControllerShouldShowSearchBar:(BOXFolderViewController *)folderViewController
+- (BOOL)folderViewControllerShouldShowSearchBar:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
@@ -1563,7 +1560,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         // Pass any objects to the view controller here, like...
-                                        DropboxBrowserViewController *dropboxBrowser = [[DropboxBrowserViewController alloc]init];
+                                        DropboxBrowserViewController* dropboxBrowser = [[DropboxBrowserViewController alloc]init];
                                         
                                         // dropboxBrowser.allowedFileTypes = @[@"doc", @"pdf"]; // Uncomment to filter file types. Create an array of allowed types. To allow all file types simply don't set the property
                                         // dropboxBrowser.tableCellID = @"DropboxBrowserCell"; // Uncomment to use a custom UITableViewCell ID. This property is not required
@@ -1592,7 +1589,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         // Pass any objects to the view controller here, like...
-                                        GoogleDriveExplorer *gdriveBrowser = [[GoogleDriveExplorer alloc]init];
+                                        GoogleDriveExplorer* gdriveBrowser = [[GoogleDriveExplorer alloc]init];
                                         
                                         // dropboxBrowser.allowedFileTypes = @[@"doc", @"pdf"]; // Uncomment to filter file types. Create an array of allowed types. To allow all file types simply don't set the property
                                         // dropboxBrowser.tableCellID = @"DropboxBrowserCelltwitter"; // Uncomment to use a custom UITableViewCell ID. This property is not required
@@ -1615,7 +1612,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];
-                                        BOXFolderViewController *folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
+                                        BOXFolderViewController* folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
                                         folderViewController.delegate = self;
                                         
                                         // You must load it in a UINavigationController.
@@ -1724,7 +1721,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 #pragma mark - Scroll View Delegate
 
--(void) scrollViewDidScroll:(UIScrollView *)scrollView
+-(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
     if (scrollView == self.scrollView) {
         [super scrollViewDidScroll:scrollView];

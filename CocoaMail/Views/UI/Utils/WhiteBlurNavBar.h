@@ -14,7 +14,7 @@
 + (UIButton *)navBarButtonWithImage:(NSString *)normal andHighlighted:(NSString *)high;
 + (CGFloat)navBarHeight;
 
-+ (UILabel *)titleViewForItemTitle:(NSString*)title;
++ (UILabel *)titleViewForItemTitle:(NSString *)title;
 
 // always call this two methods, the second one after that view is on the view hierarchy
 - (instancetype)initWithWidth:(CGFloat)width;

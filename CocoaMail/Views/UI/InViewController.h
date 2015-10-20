@@ -15,7 +15,7 @@
 
 @interface InViewController : UIViewController
 
-@property (nonatomic, weak) WhiteBlurNavBar * navBar;
+@property (nonatomic, weak) WhiteBlurNavBar *navBar;
 
 - (void)setupNavBarWith:(UINavigationItem *)item overMainScrollView:(UIScrollView *)mainScrollView;
 - (void)setupSimpleNavBarWith:(UINavigationItem *)item andWidth:(CGFloat)width;
@@ -26,7 +26,7 @@
 - (void)cleanBeforeGoingBack;
 - (BOOL)haveCocoaButton;
 
-- (NSArray*)nextViewControllerInfos;
+- (NSArray *)nextViewControllerInfos;
 
 // if the subclass use this methods, call super
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView;

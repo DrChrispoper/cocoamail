@@ -325,13 +325,14 @@
 
         //if ([Accounts sharedInstance].accounts.count==2) {
             // it's the first account
-            [Accounts sharedInstance].currentAccountIdx = self.account.idx;
-            [self.account initContent];
-            [ViewController refreshCocoaButton];
+        [Accounts sharedInstance].currentAccountIdx = self.account.idx;
         
-        [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        [self.account initContent];
         
-        [self loadFirstInboxEmails];
+        [ViewController refreshCocoaButton];
+        
+        [self.account connect];
+        [self.account setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
         
         /*}else if ([Accounts sharedInstance].accounts.count > 2) {
             [Accounts sharedInstance].currentAccountIdx = self.account.accountIdx;
@@ -452,6 +453,9 @@
     
     [MCOMailProvidersManager sharedManager];
     
+    [self.accountVal setImapEnabled:YES];
+    [self.accountVal setSmtpEnabled:YES];
+    
     [self.accountVal start:^() {
         AddAccountViewController *strongSelf = bself;
         
@@ -541,8 +545,6 @@
             if(newAccountIndex == 0){
                 [AppSettings setDefaultAccountIndex:newAccountIndex];
             }
-                
-            
             
             NSMutableArray *flagedFolders = [[NSMutableArray alloc] init];
             NSMutableArray *otherFolders = [[NSMutableArray alloc] init];
@@ -702,6 +704,7 @@
                                        @"fullsynced":@false,
                                        @"lastended":@0,
                                        @"flags":@(folder.flags),
+                                       @"emailCount":@(0),
                                        @"dbNums":@[]};
         
         [sm addFolderState:folderState accountIndex:newAccountIndex];
@@ -773,19 +776,6 @@
         self.googleBtn.hidden = YES;
     }
 }
-
-- (void)loadFirstInboxEmails
-{
-    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
-        [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES] deliverOn:[RACScheduler mainThreadScheduler]]
-         subscribeNext:^(Email *email) {}
-         error:^(NSError *error) {
-             CCMLog(@"Error: %@",error.localizedDescription);
-         }
-         completed:^{}];
-    }
-}
-
 
 @end
 

@@ -11,11 +11,23 @@
 #import "Persons.h"
 #import "Accounts.h"
 
+@protocol MailListDelegate;
+
 @interface MailListViewController : InViewController <CocoaButtonDatasource>
 
 - (instancetype)initWithFolder:(CCMFolderType)folder;
 - (instancetype)initWithPerson:(Person *)person;
 
 - (BOOL)istheSame:(MailListViewController *)other;
+- (void)insertConversation:(Conversation *)con;
+- (void)updatedConversationList:(NSMutableArray *)convs;
+
+@end
+
+@protocol MailListDelegate
+
+- (void)updatedConversationList:(NSMutableArray *)convs;
+- (void)insertConversation:(Conversation *)con;
+- (BOOL)isPresentingDrafts;
 
 @end
