@@ -47,10 +47,9 @@
 
 @end
 
-
 @implementation ConversationTableViewCell
 
-- (void)setupWithDelegate:(id<ConversationCellDelegate>)delegate
+-(void) setupWithDelegate:(id<ConversationCellDelegate>)delegate
 {
 
     self.backgroundColor = [UIColor clearColor];
@@ -111,7 +110,7 @@
         UIImageView* iv = [[UIImageView alloc] initWithImage:rBack];
         iv.frame = CGRectMake(8., 0, screenBounds.size.width - 9, 89);
         back = iv;
-        sepWidth = iv.bounds.size.width-7.f;
+        sepWidth = iv.bounds.size.width - 7.f;
         moreRightSpace = 7.f;
         
     }
@@ -194,11 +193,12 @@
     
 }
 
--(BOOL) gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+-(BOOL) gestureRecognizer:(UIGestureRecognizer*)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer*)otherGestureRecognizer
 {
     if ([self.delegate tableViewPanGesture] == otherGestureRecognizer) {
         return YES;
     }
+    
     return NO;
 }
 
@@ -211,7 +211,6 @@
 {
     return [self.conversation firstMail];
 }
-
 
 -(CGFloat) _limiteRightSwipe
 {
@@ -229,7 +228,6 @@
     [self.delegate cellIsUnselected:self];
 }
 
-
 -(void) _press:(UILongPressGestureRecognizer*)lpgr
 {
     const CGPoint pos = [lpgr locationInView:lpgr.view];
@@ -246,6 +244,7 @@
             
             // tap fav
             CGRect bigger = CGRectInset(self.favori.frame, -10, -10);
+            
             if (CGRectContainsPoint(bigger, pos)) {
                 self.favori.tag = tagFavSelected;
                 self.favori.highlighted = !self.favori.highlighted;
@@ -256,12 +255,12 @@
                 
                 if (![self.delegate isPresentingDrafts]) {
                     bigger = CGRectInset(self.attachment.frame, -10, -10);
+                    
                     if (CGRectContainsPoint(bigger, pos)) {
                         self.attachment.highlighted = true;
                     }
                 }
             }
-            
             break;
             
         case UIGestureRecognizerStateChanged:
@@ -302,11 +301,13 @@
             
             CGRect frame = self.baseView.frame;
             frame.size = self.panBaseSize;
+            
             if (delta>0) {
                 frame.origin.x = 8 + delta;
                 frame.size.width -= delta;
                 
-                CGFloat pourc = delta/44.f;
+                CGFloat pourc = delta / 44.f;
+                
                 if (pourc > 1.f) {
                     pourc = 1.f;
                 }
@@ -317,7 +318,7 @@
                     
                     if (pourc>0.85) {
                         self.leftAction.hidden = NO;
-                        self.leftAction.alpha = (pourc-0.85) / 0.15 /* pourc*pourc*/;
+                        self.leftAction.alpha = (pourc - 0.85) / 0.15 /* pourc*pourc*/;
                     }
                 }
                 else {
@@ -332,7 +333,8 @@
                 frame.origin.x = 8;
                 frame.size.width += delta;
 
-                CGFloat pourc = -(delta/40.f);
+                CGFloat pourc = -(delta / 40.f);
+                
                 if (pourc > 1.f) {
                     pourc = 1.f;
                 }
@@ -348,6 +350,7 @@
             if (self.attachment.highlighted || self.favori.tag == tagFavSelected) {
                 
                 BOOL noMore = YES;
+                
                 if ([self.panStartDate timeIntervalSinceNow]>-0.8) {
                     if (fabs(pos.x - self.panBasePos.x)<8) {
                         if (fabs(pos.y - self.panBasePos.y)<8) {
@@ -367,7 +370,6 @@
                     }
                 }
             }
-            
             break;
         }
         case UIGestureRecognizerStateEnded:
@@ -391,8 +393,7 @@
 
                     self.favori.tag = 0;
                     back = true;
-                }
-                // tap attachment
+                } // tap attachment
                 else if (self.attachment.highlighted) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
                                                                       userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
@@ -408,6 +409,7 @@
                             if (![self.delegate isPresentingDrafts]) {
                                 
                                 CGRect bigger = CGRectInset(self.badge.frame, -10, -10);
+                                
                                 if (CGRectContainsPoint(bigger, pos)) {
                                     
                                     Person* person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
@@ -521,18 +523,18 @@
     
 }
 
-
 -(QuickSwipeType) quickSwipeType
 {
     QuickSwipeType idxQuickSwipe = [Accounts sharedInstance].quickSwipeType;
+    
     if ([self.delegate isPresentingDrafts]) {
         return QuickSwipeDelete;
     }
+    
     return idxQuickSwipe;
 }
 
-
-- (void)fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected
+-(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected
 {
     self.conversation = conv;
     Mail* mail = [self mail];
@@ -551,6 +553,7 @@
     self.favori.highlighted = conv.isFav;
     
     QuickSwipeType idxQuickSwipe = [self quickSwipeType];
+    
     if (idxQuickSwipe == QuickSwipeReply) {
         BOOL toMany = mail.toPersonID.count>1;
         self.leftAction.highlighted = toMany;
@@ -576,6 +579,7 @@
     else {
         [self.readMask removeFromSuperview];
         self.readMask = nil;
+        
         if (idxQuickSwipe == QuickSwipeMark) {
             self.leftAction.highlighted = NO;
         }
@@ -586,7 +590,6 @@
     self.currentSwipedPosition = (selected) ? -[self _limiteRightSwipe] : 0.f;
     [self _applyStableFrame];
 }
-
 
 -(void) _applyStableFrame
 {
@@ -600,7 +603,7 @@
     self.backViewL.alpha = 0.f;
 }
 
-- (void)animatedClose
+-(void) animatedClose
 {
     self.currentSwipedPosition = 0.f;
     [self.delegate cell:self isChangingDuring:0.25];
@@ -615,6 +618,5 @@
 {
     return self.leftAction.highlighted;
 }
-
 
 @end

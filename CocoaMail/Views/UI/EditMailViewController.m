@@ -68,7 +68,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
 
+
 @end
+
 
 @interface ExpendableBadge : UIView
 
@@ -78,11 +80,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) close;
 
+
 @end
 
 @implementation EditMailViewController
 
--(void) viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
 
     if (self.mail == nil) {
@@ -108,11 +112,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     Accounts* allAccounts = [Accounts sharedInstance];
     Account* ca = nil;
+    
     if (self.mail.fromPersonID < 0) {
-        ca = [allAccounts getAccount:-(1+self.mail.fromPersonID)];
+        ca = [allAccounts getAccount:-(1 + self.mail.fromPersonID)];
     }
     else {
         Account* ca = [allAccounts currentAccount];
+        
         if (ca.isAllAccounts) {
             ca = [allAccounts getAccount:allAccounts.defaultAccountIdx];
         }
@@ -216,7 +222,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }
 }
 
-
 -(void) _closeCurrentInteractingView
 {
     [self _closeBadge];
@@ -243,6 +248,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     if (![self.bodyTextView isFirstResponder]) {
         CGPoint pos = [tgr locationInView:self.view];
+        
         if (pos.y > self.scrollView.contentSize.height) {
             [self.bodyTextView becomeFirstResponder];
             return;
@@ -251,7 +257,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self _closeCurrentInteractingView];
 }
-
 
 #pragma mark - UI
 
@@ -316,7 +321,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
 }
-
 
 -(void) _send
 {
@@ -422,7 +426,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self.viewsWithAccountTintColor addObject:addButton];
     
-    UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(label.frame.size.width + 10, 1.5, WIDTH - 32 - (label.frame.size.width + 10), 43)];
+    UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(label.frame.size.width + 10, 1.5, WIDTH - 32 -(label.frame.size.width + 10), 43)];
     tf.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     tf.font = [UIFont systemFontOfSize:15.];
     tf.textColor = [UIColor blackColor];
@@ -486,7 +490,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     self.attachButton = addButton;
     
-    UITextView* tvS = [[UITextView alloc] initWithFrame:CGRectMake(label.frame.size.width + 10, 5.5, WIDTH - 42 - (label.frame.size.width + 10), 34)];
+    UITextView* tvS = [[UITextView alloc] initWithFrame:CGRectMake(label.frame.size.width + 10, 5.5, WIDTH - 42 -(label.frame.size.width + 10), 34)];
     tvS.font = [UIFont systemFontOfSize:15.];
     tvS.textColor = [UIColor blackColor];
     tvS.delegate = self;
@@ -609,7 +613,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _updateAttachView];
 }
 
-
 -(void) _fillTitle
 {
     CGFloat lastH = self.subjectTextView.frame.size.height;
@@ -657,9 +660,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [self _bodyChangeSize:delta];
     }
 }
-
-
-
 
 #pragma mark - attach
 
@@ -739,7 +739,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
 }
 
--(void)_delAttach:(UIButton*)b
+-(void) _delAttach:(UIButton*)b
 {
     NSMutableArray* attachs = [self.mail.attachments mutableCopy];
     [attachs removeObjectAtIndex:b.tag];
@@ -747,7 +747,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self _updateAttachView];
 }
-
 
 #pragma mark - cc view
 
@@ -762,6 +761,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if (self.mail.toPersonID.count > 0) {
         
         NSArray* alls = ccView.subviews;
+        
         for (UIView* v in alls) {
             [v removeFromSuperview];
         }
@@ -794,7 +794,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             NSInteger personID = [val integerValue];
             Person* p = [[Persons sharedInstance] getPersonID:personID];
             
-            if (nextPosX+33+8 >= self.view.frame.size.width) {
+            if (nextPosX + 33 + 8 >= self.view.frame.size.width) {
                 currentPosY+=45;
                 nextPosX = 8 + stepX;
             }
@@ -817,7 +817,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         f.size.height = 45;
         
         while (currentPosY>45) {
-            UIView* line = [[UIView alloc] initWithFrame:CGRectMake(8 + stepX, currentPosY-6.f, self.view.frame.size.width - (8+stepX), 0.5)];
+            UIView* line = [[UIView alloc] initWithFrame:CGRectMake(8 + stepX, currentPosY - 6.f, self.view.frame.size.width -(8 + stepX), 0.5)];
             line.backgroundColor = [UIGlobal standardTableLineColor];
             [ccView addSubview:line];
             
@@ -865,8 +865,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _createCCcontent];
 }
 
-
-
 #pragma mark - Change Sizes
 
 -(void) _fixContentSize
@@ -892,7 +890,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
 }
 
--(void) _ccChangeSize:(CGFloat) delta
+-(void) _ccChangeSize:(CGFloat)delta
 {
 
     UIView* subView = [self.contentView viewWithTag:ContentSubject];
@@ -905,7 +903,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
 }
 
--(void) _subjectChangeSize:(CGFloat) delta
+-(void) _subjectChangeSize:(CGFloat)delta
 {
     UIView* body = [self.contentView viewWithTag:ContentBody];
     
@@ -916,7 +914,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _bodyChangeSize:delta];
 }
 
--(void) _bodyChangeSize:(CGFloat) delta
+-(void) _bodyChangeSize:(CGFloat)delta
 {
     UIView* a = [self.contentView viewWithTag:ContentAttach];
     
@@ -927,7 +925,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _attachChangeSize:delta];
 }
 
--(void) _attachChangeSize:(CGFloat) delta
+-(void) _attachChangeSize:(CGFloat)delta
 {
     UIView* a = [self.contentView viewWithTag:ContentOld];
     
@@ -937,9 +935,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self _fixContentSize];
 }
-
-
-
 
 #pragma mark - TextView Delegate
 
@@ -983,6 +978,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
             // scroll to be on screen
             NSArray* arr = [textView selectionRectsForRange:textView.selectedTextRange];
+            
             if (arr.count>0) {
                 UITextSelectionRect* r = [arr firstObject];
 
@@ -991,12 +987,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                 const CGRect rt3 = [self.view convertRect:rt2 fromView:self.scrollView];
                 
                 CGFloat fixDelta = 0.f;
+                
                 if (rt3.origin.y >= self.scrollView.frame.size.height - 24) {
-                    fixDelta = rt3.origin.y - (self.scrollView.frame.size.height - 24);
+                    fixDelta = rt3.origin.y -(self.scrollView.frame.size.height - 24);
                     
                 }
                 else if (rt3.origin.y<[WhiteBlurNavBar navBarHeight] + 4) {
-                    fixDelta = rt3.origin.y - ([WhiteBlurNavBar navBarHeight] + 4);
+                    fixDelta = rt3.origin.y -([WhiteBlurNavBar navBarHeight] + 4);
                 }
                 
                 if (fixDelta != 0) {
@@ -1019,6 +1016,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if (textView == self.subjectTextView) {
         if ([text rangeOfString:@"\n"].location!=NSNotFound) {
             [textView resignFirstResponder];
+            
             return NO;
         }
     }
@@ -1026,7 +1024,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return YES;
 }
 
--(BOOL)prefersStatusBarHidden
+-(BOOL) prefersStatusBarHidden
 {
     return NO;
 }
@@ -1105,7 +1103,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _fixContentSize];
 }
 
-
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     Person* p = self.currentSearchPersonList[indexPath.row];
@@ -1134,7 +1131,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return CGFLOAT_MIN;    
 }
 
-
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     Person* p = self.currentSearchPersonList[indexPath.row];
@@ -1159,8 +1155,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return nil;
 }
 
-
-
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return self.currentSearchPersonList.count;
@@ -1171,8 +1165,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _closeBadge];
 }
 
-
-
 #pragma mark - TextField Delegate
 
 -(BOOL) textField:(UITextField*)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString*)string
@@ -1180,6 +1172,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if ([string rangeOfString:@" "].location!=NSNotFound) {
         [self textFieldShouldReturn:textField];
         [textField becomeFirstResponder];
+        
         return NO;
     }
     
@@ -1289,10 +1282,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     return NO;
 }
 
-
 #pragma mark - Interaction
 
-- (void)_openPhotoPicker:(UIImagePickerControllerSourceType)sourceType
+-(void) _openPhotoPicker:(UIImagePickerControllerSourceType)sourceType
 {
     if ([UIImagePickerController isSourceTypeAvailable:sourceType]) {
         UIImagePickerController* imagePickerController = [[UIImagePickerController alloc] init];
@@ -1302,9 +1294,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }
 }
 
-- (void)imagePickerController:(UIImagePickerController*)picker didFinishPickingMediaWithInfo:(NSDictionary*)info
+-(void) imagePickerController:(UIImagePickerController*)picker didFinishPickingMediaWithInfo:(NSDictionary*)info
 {
     UIImage* img = info[UIImagePickerControllerEditedImage];
+    
     if (img==nil) {
         img = info[UIImagePickerControllerOriginalImage];
     }
@@ -1313,7 +1306,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         Attachment* attach = [[Attachment alloc] init];
         attach.image = img;
         
-        attach.fileName = [NSString stringWithFormat:@"IMG_%lu.JPEG",(unsigned long)self.mail.attachments.count];
+        attach.fileName = [NSString stringWithFormat:@"IMG_%lu.JPEG", (unsigned long)self.mail.attachments.count];
         attach.data = UIImageJPEGRepresentation(img, 0);
         attach.size = [attach.data length];
         
@@ -1336,11 +1329,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 //------------------------------------------------------------------------------------------------------------//
 #pragma mark - Dropbox
 
-- (void)gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
         CCMLog(@"Downloaded %@ by overwriting local file", fileName);
-    } else {
+    }
+    else {
         CCMLog(@"Downloaded %@ without overwriting", fileName);
     }
     
@@ -1360,16 +1354,17 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _updateAttachView];
 }
 
-- (void)gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
+-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
 {
     
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
         CCMLog(@"Downloaded %@ by overwriting local file", fileName);
-    } else {
+    }
+    else {
         CCMLog(@"Downloaded %@ without overwriting", fileName);
     }
     
@@ -1387,20 +1382,19 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         self.mail.attachments = ma;
     }
     [self _updateAttachView];
-
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController*)browser didFailToDownloadFile:(NSString*)fileName
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToDownloadFile:(NSString*)fileName
 {
     CCMLog(@"Failed to download %@", fileName);
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController*)browser fileConflictWithLocalFile:(NSURL*)localFileURL withDropboxFile:(DBMetadata*)dropboxFile withError:(NSError*)error
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser fileConflictWithLocalFile:(NSURL*)localFileURL withDropboxFile:(DBMetadata*)dropboxFile withError:(NSError*)error
 {
     CCMLog(@"File conflict between %@ and %@\n%@ last modified on %@\nError: %@", localFileURL.lastPathComponent, dropboxFile.filename, dropboxFile.filename, dropboxFile.lastModifiedDate, error);
 }
 
-- (void)dropboxBrowserDismissed:(DropboxBrowserViewController*)browser
+-(void) dropboxBrowserDismissed:(DropboxBrowserViewController*)browser
 {
     // This method is called after Dropbox Browser is dismissed. Do NOT dismiss DropboxBrowser from this method
     // Perform any UI updates here to display any new data from Dropbox Browser
@@ -1409,7 +1403,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     //[self.attachmentCollectionView reloadData];
 }
 
-- (void)dropboxBrowser:(DropboxBrowserViewController*)browser deliveredFileDownloadNotification:(UILocalNotification*)notification {}
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser deliveredFileDownloadNotification:(UILocalNotification*)notification
+{}
 
 #pragma mark - BOXFolderViewControllerDelegate
 
@@ -1417,32 +1412,32 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 // These are all optional and will allow you to customize behavior for your app.
 ////////////////////////////////////////////////////////////////////////////////////////
 
-- (BOOL)itemsViewControllerShouldShowCloseButton:(BOXItemsViewController*)itemsViewController
+-(BOOL) itemsViewControllerShouldShowCloseButton:(BOXItemsViewController*)itemsViewController
 {
     return NO;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController shouldShowItem:(BOXItem*)item
+-(BOOL) itemsViewController:(BOXItemsViewController*)itemsViewController shouldShowItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController shouldEnableItem:(BOXItem*)item
+-(BOOL) itemsViewController:(BOXItemsViewController*)itemsViewController shouldEnableItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (BOOL)itemsViewController:(BOXItemsViewController*)itemsViewController willNavigateToFolder:(BOXFolder*)folder
+-(BOOL) itemsViewController:(BOXItemsViewController*)itemsViewController willNavigateToFolder:(BOXFolder*)folder
 {
     return YES;
 }
 
-- (void)itemsViewController:(BOXItemsViewController*)itemsViewController didTapFolder:(BOXFolder*)folder inItems:(NSArray*)items
+-(void) itemsViewController:(BOXItemsViewController*)itemsViewController didTapFolder:(BOXFolder*)folder inItems:(NSArray*)items
 {
     NSLog(@"Did tap folder: %@", folder.name);
 }
 
-- (void)itemsViewController:(BOXItemsViewController*)itemsViewController didTapFile:(BOXFile*)file inItems:(NSArray*)items
+-(void) itemsViewController:(BOXItemsViewController*)itemsViewController didTapFile:(BOXFile*)file inItems:(NSArray*)items
 {
     NSLog(@"Did tap file: %@", file.name);
     
@@ -1476,55 +1471,54 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }];
 }
 
-- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController*)itemsViewController
+-(void) itemsViewControllerDidTapCloseButtton:(BOXItemsViewController*)itemsViewController
 {
     // If you don't implement this, the navigation controller will be dismissed for you.
     // Only implement if you need to customize behavior.
     NSLog(@"Did tap close button");
     [self.navControllerForBrowseSDK popViewControllerAnimated:YES];
 }
-
 // By default the following sort order will be applied:
 // - Folders come before files
 // - Sort by modification date descending
 // - Sort by name ascending
 // You can implement your own sort order by implementing this delegate method.
 //
-//- (NSComparisonResult)itemsViewController:(BOXItemsViewController*)itemsViewController compareForSortingItem:(BOXItem*)itemA toItem:(BOXItem*)itemB
+//-(NSComparisonResult)itemsViewController:(BOXItemsViewController*)itemsViewController compareForSortingItem:(BOXItem*)itemA toItem:(BOXItem*)itemB
 //{
 //}
 
-- (BOOL)folderViewControllerShouldShowChooseFolderButton:(BOXFolderViewController*)folderViewController
+-(BOOL) folderViewControllerShouldShowChooseFolderButton:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController*)folderViewController didChooseFolder:(BOXFolder*)folder
+-(void) folderViewController:(BOXFolderViewController*)folderViewController didChooseFolder:(BOXFolder*)folder
 {
     NSLog(@"Did choose folder: %@", folder.name);
 }
 
-- (BOOL)folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController*)folderViewController
+-(BOOL) folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController*)folderViewController didCreateNewFolder:(BOXFolder*)folder
+-(void) folderViewController:(BOXFolderViewController*)folderViewController didCreateNewFolder:(BOXFolder*)folder
 {
     NSLog(@"Did create new folder: %@", folder.name);
 }
 
-- (BOOL)folderViewController:(BOXFolderViewController*)folderViewController shouldShowDeleteButtonForItem:(BOXItem*)item
+-(BOOL) folderViewController:(BOXFolderViewController*)folderViewController shouldShowDeleteButtonForItem:(BOXItem*)item
 {
     return YES;
 }
 
-- (void)folderViewController:(BOXFolderViewController*)folderViewController didDeleteItem:(BOXItem*)item
+-(void) folderViewController:(BOXFolderViewController*)folderViewController didDeleteItem:(BOXItem*)item
 {
     NSLog(@"Did delete item: %@", item.name);
 }
 
-- (BOOL)folderViewControllerShouldShowSearchBar:(BOXFolderViewController*)folderViewController
+-(BOOL) folderViewControllerShouldShowSearchBar:(BOXFolderViewController*)folderViewController
 {
     return YES;
 }
@@ -1688,7 +1682,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                   [lbl sizeToFit];
                                                                   self.selectedAccount = a;
                                                                   
-                                                                  self.mail.fromPersonID = -(1+idx);
+                                                                  self.mail.fromPersonID = -(1 + idx);
                                                                   
                                                                   for (UIView* v in self.viewsWithAccountTintColor) {
                                                                       v.tintColor = a.userColor;
@@ -1696,6 +1690,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                   
                                                                   [self.navBar setNeedsDisplay];
                                                               }];
+        
         if ([a.userMail isEqualToString:currentTitle]) {
             [defaultAction setValue:[UIImage imageNamed:@"swipe_select"] forKey:@"image"];
         }
@@ -1718,7 +1713,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
 }
 
-
 #pragma mark - Scroll View Delegate
 
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView
@@ -1739,9 +1733,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 @end
 
 
-
-
-
 @interface ExpendableBadge ()
 
 @property (nonatomic, strong) Person* person;
@@ -1755,8 +1746,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 @property (nonatomic) NSInteger idxInMailToList;
 @property (nonatomic, weak) id<ExpendableBadgeDelegate> delegate;
 
-@end
 
+@end
 
 @implementation ExpendableBadge
 
@@ -1796,7 +1787,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [back addSubview:remove];
     remove.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     
-    UIView* b =[p badgeView];
+    UIView* b = [p badgeView];
     [self addSubview:b];
     self.badge = b;
     
@@ -1826,9 +1817,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     self.voile = voile;
 }
 
-
-
--(void)_remove
+-(void) _remove
 {
     [self _closeAndThen:^{
         [self.delegate removePersonAtIndex:self.idxInMailToList];
@@ -1836,14 +1825,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
      
 }
 
-
 -(void) close
 {
     if (self.expanded) {
         [self _closeAndThen:nil];
     }
 }
-
 
 -(void) _closeAndThen:(void(^)())action
 {
@@ -1861,6 +1848,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                          //self.voile.hidden = NO;
                          self.backgroundView.alpha = 0.;
                          self.expanded = NO;
+                         
                          if (action != nil) {
                              action();
                          }
@@ -1876,7 +1864,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
      */
 }
 
--(void)_tap:(UITapGestureRecognizer*)tgr
+-(void) _tap:(UITapGestureRecognizer*)tgr
 {
     if (tgr.state != UIGestureRecognizerStateEnded || tgr.enabled==NO) {
         return;
@@ -1895,7 +1883,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     UIView* support = self.superview;
     
-    while (lastPosX+33+8 < support.frame.size.width) {
+    while (lastPosX + 33 + 8 < support.frame.size.width) {
         lastPosX += stepX;
     }
     

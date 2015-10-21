@@ -8,10 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
+
 @interface GlobalDBFunctions : NSObject
 
-+ (NSString *)dbFileNameForNum:(NSInteger)dbNum;
-+ (void)deleteAll;
-+ (void)tableCheck;
++(NSString*) dbFileNameForNum:(NSInteger)dbNum;
++(void) deleteAll;
++(void) tableCheck;
+
 
 @end

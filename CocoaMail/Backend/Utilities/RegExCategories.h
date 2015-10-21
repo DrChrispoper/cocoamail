@@ -118,7 +118,7 @@
  * var rx = NSRegularExpression(pattern:"\d+");
  */
 
-- (NSRegularExpression*) initWithPattern:(NSString*)pattern;
+-(NSRegularExpression*) initWithPattern:(NSString*)pattern;
 
 
 /**
@@ -131,7 +131,7 @@
  * var rx = NSRegularExpression.rx("\d+");
  */
 
-+ (NSRegularExpression*) rx:(NSString*)pattern;
++(NSRegularExpression*) rx:(NSString*)pattern;
 
 
 /**
@@ -145,7 +145,7 @@
  * var rx = NSRegularExpression.rx("\d+", ignoreCase: true);
  */
 
-+ (NSRegularExpression*) rx:(NSString*)pattern ignoreCase:(BOOL)ignoreCase;
++(NSRegularExpression*) rx:(NSString*)pattern ignoreCase:(BOOL)ignoreCase;
 
 
 /**
@@ -158,7 +158,7 @@
  * var rx = NSRegularExpression.rx("\d+", options: .CaseInsensitive);
  */
 
-+ (NSRegularExpression*) rx:(NSString*)pattern options:(NSRegularExpressionOptions)options;
++(NSRegularExpression*) rx:(NSString*)pattern options:(NSRegularExpressionOptions)options;
 
 
 /*******************************************************/
@@ -178,7 +178,7 @@
  * var isMatch = rx.isMatch("Dog #1"); // => true
  */
 
-- (BOOL) isMatch:(NSString*)matchee;
+-(BOOL) isMatch:(NSString*)matchee;
 
 
 /**
@@ -188,7 +188,7 @@
  * int i = [RX(@"\d+") indexOf:@"Buy 1 dog or buy 2?"]; // => 4
  */
 
-- (int) indexOf:(NSString*)str;
+-(int) indexOf:(NSString*)str;
 
 
 /**
@@ -200,7 +200,7 @@
  *  => @[@"A", @"dog", @"cat"]
  */
 
-- (NSArray*) split:(NSString*)str;
+-(NSArray*) split:(NSString*)str;
 
 
 /**
@@ -211,7 +211,7 @@
  *  => @"meow meow!"
  */
 
-- (NSString*) replace:(NSString*)string with:(NSString*)replacement;
+-(NSString*) replace:(NSString*)string with:(NSString*)replacement;
 
 
 /**
@@ -223,7 +223,7 @@
  *  => @"i love lamp"
  */
 
-- (NSString*) replace:(NSString*)string withBlock:(NSString*(^)(NSString* match))replacer;
+-(NSString*) replace:(NSString*)string withBlock:(NSString*(^)(NSString* match))replacer;
 
 
 /**
@@ -236,7 +236,7 @@
  *  => @"2 3"
  */
 
-- (NSString*) replace:(NSString *)string withDetailsBlock:(NSString*(^)(RxMatch* match))replacer;
+-(NSString*) replace:(NSString*)string withDetailsBlock:(NSString*(^)(RxMatch* match))replacer;
 
 
 /**
@@ -248,7 +248,7 @@
  *  => @[ @"me@example.com", @"you@example.com" ]
  */
 
-- (NSArray*) matches:(NSString*)str;
+-(NSArray*) matches:(NSString*)str;
 
 
 /**
@@ -260,7 +260,7 @@
  *  => @"me@example.com"
  */
 
-- (NSString*) firstMatch:(NSString*)str;
+-(NSString*) firstMatch:(NSString*)str;
 
 
 /**
@@ -272,7 +272,7 @@
  * NSArray* matches = [str matchesWithDetails:RX(@"\\w+[@]\\w+[.](\\w+)")];
  */
 
-- (NSArray*) matchesWithDetails:(NSString*)str;
+-(NSArray*) matchesWithDetails:(NSString*)str;
 
 
 /**
@@ -284,7 +284,7 @@
  * RxMatch* match = [rx firstMatchWithDetails:str];
  */
 
-- (RxMatch*) firstMatchWithDetails:(NSString*)str;
+-(RxMatch*) firstMatchWithDetails:(NSString*)str;
 
 @end
 
@@ -305,7 +305,7 @@
  * NSRegularExpression* rx = [@"\d+" toRx];
  */
 
-- (NSRegularExpression*) toRx;
+-(NSRegularExpression*) toRx;
 
 
 /**
@@ -317,7 +317,7 @@
  * NSRegularExpression* rx = [@"\d+" toRxIgnoreCase:YES];
  */
 
-- (NSRegularExpression*) toRxIgnoreCase:(BOOL)ignoreCase;
+-(NSRegularExpression*) toRxIgnoreCase:(BOOL)ignoreCase;
 
 
 /**
@@ -327,7 +327,7 @@
  * NSRegularExpression* rx = [@"\d+" toRxWithOptions:NSRegularExpressionCaseInsensitive];
  */
 
-- (NSRegularExpression*) toRxWithOptions:(NSRegularExpressionOptions)options;
+-(NSRegularExpression*) toRxWithOptions:(NSRegularExpressionOptions)options;
 
 
 /**
@@ -338,7 +338,7 @@
  * BOOL isMatch = [@"Dog #1" isMatch:RX(@"\d+")]; // => true
  */
 
-- (BOOL) isMatch:(NSRegularExpression*)rx;
+-(BOOL) isMatch:(NSRegularExpression*)rx;
 
 
 /**
@@ -349,7 +349,7 @@
  * int i = [@"Buy 1 dog or buy 2?" indexOf:RX(@"\d+")]; // => 4
  */
 
-- (int) indexOf:(NSRegularExpression*)rx;
+-(int) indexOf:(NSRegularExpression*)rx;
 
 
 /**
@@ -361,7 +361,7 @@
  *  => @[@"A", @"dog", @"cat"]
  */
 
-- (NSArray*) split:(NSRegularExpression*)rx;
+-(NSArray*) split:(NSRegularExpression*)rx;
 
 
 /**
@@ -372,7 +372,7 @@
  *  => @"meow meow!"
  */
 
-- (NSString*) replace:(NSRegularExpression*)rx with:(NSString*)replacement;
+-(NSString*) replace:(NSRegularExpression*)rx with:(NSString*)replacement;
 
 
 /**
@@ -384,7 +384,7 @@
  *  => @"i love lamp"
  */
 
-- (NSString*) replace:(NSRegularExpression *)rx withBlock:(NSString*(^)(NSString* match))replacer;
+-(NSString*) replace:(NSRegularExpression*)rx withBlock:(NSString*(^)(NSString* match))replacer;
 
 
 /**
@@ -397,7 +397,7 @@
  *  => @"2 3"
  */
 
-- (NSString*) replace:(NSRegularExpression *)rx withDetailsBlock:(NSString*(^)(RxMatch* match))replacer;
+-(NSString*) replace:(NSRegularExpression*)rx withDetailsBlock:(NSString*(^)(RxMatch* match))replacer;
 
 
 /**
@@ -409,7 +409,7 @@
  *  => @[ @"me@example.com", @"you@example.com" ]
  */
 
-- (NSArray*) matches:(NSRegularExpression*)rx;
+-(NSArray*) matches:(NSRegularExpression*)rx;
 
 
 /**
@@ -421,7 +421,7 @@
  *  => @"me@example.com"
  */
 
-- (NSString*) firstMatch:(NSRegularExpression*)rx;
+-(NSString*) firstMatch:(NSRegularExpression*)rx;
 
 
 /**
@@ -433,7 +433,7 @@
  * NSArray* matches = [str matchesWithDetails:RX(@"\\w+[@]\\w+[.](\\w+)")];
  */
 
-- (NSArray*) matchesWithDetails:(NSRegularExpression*)rx;
+-(NSArray*) matchesWithDetails:(NSRegularExpression*)rx;
 
 
 /**
@@ -444,7 +444,7 @@
  * RxMatch* match = [str firstMatchWithDetails:RX(@"\\w+[@]\\w+[.](\\w+)")];
  */
 
-- (RxMatch*) firstMatchWithDetails:(NSRegularExpression*)rx;
+-(RxMatch*) firstMatchWithDetails:(NSRegularExpression*)rx;
 
 @end
 

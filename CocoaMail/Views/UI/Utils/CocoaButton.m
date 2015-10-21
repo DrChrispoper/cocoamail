@@ -11,36 +11,41 @@
 #import "Accounts.h"
 #import "ViewController.h"
 
+
 @interface CocoaButton()
 
 @property (nonatomic) NSInteger openState;
 
-@property (nonatomic, weak) UIView *backView;
-@property (nonatomic, weak) UILabel *nameView;
+@property (nonatomic, weak) UIView* backView;
+@property (nonatomic, weak) UILabel* nameView;
 
-@property (nonatomic, strong) NSArray *subviewsWide;
-@property (nonatomic, strong) NSArray *subviewsHorizontal;
+@property (nonatomic, strong) NSArray* subviewsWide;
+@property (nonatomic, strong) NSArray* subviewsHorizontal;
 
-@property (nonatomic, weak) UIView *tempMainButton;
+@property (nonatomic, weak) UIView* tempMainButton;
 
-@property (nonatomic, strong) CADisplayLink *displayLink;
-@property (nonatomic, weak) UIView *backViewAnim;
+@property (nonatomic, strong) CADisplayLink* displayLink;
+@property (nonatomic, weak) UIView* backViewAnim;
 @property (nonatomic) double backViewAnimAngle;
+
 
 @end
 
+
 @interface AccountButton : UIView
 
-- (instancetype)initForButton:(UIButton *)b;
+-(instancetype) initForButton:(UIButton*)b;
 
-@property (nonatomic, weak) UIButton *realButton;
-@property (nonatomic, weak) CocoaButton *father;
+@property (nonatomic, weak) UIButton* realButton;
+@property (nonatomic, weak) CocoaButton* father;
+
 
 @end
 
 @implementation CocoaButton
 
-+ (instancetype)sharedButton {
++(instancetype) sharedButton
+{
     static dispatch_once_t once;
     static CocoaButton * sharedInstance;
     
@@ -51,21 +56,22 @@
     return sharedInstance;
 }
 
-+ (instancetype)fakeCocoaButtonForCredits {
-    CocoaButton *cb = [[CocoaButton alloc] init];
++(instancetype) fakeCocoaButtonForCredits
+{
+    CocoaButton* cb = [[CocoaButton alloc] init];
     
     cb.backView.backgroundColor = [UIColor colorWithRed:0.63 green:0.33 blue:0.18 alpha:0.9];
     
     cb.nameView.text = @"";
     
-    UIImageView *iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"credits_cocoabutton"]];
+    UIImageView* iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"credits_cocoabutton"]];
     iv.contentMode = UIViewContentModeCenter;
     iv.frame = cb.nameView.bounds;
     [cb.nameView addSubview:iv];
     
-    NSArray *alls = cb.gestureRecognizers;
+    NSArray* alls = cb.gestureRecognizers;
     
-    for (UIGestureRecognizer *gr in alls) {
+    for (UIGestureRecognizer* gr in alls) {
         if ([gr isKindOfClass:[UILongPressGestureRecognizer class]]) {
             [cb removeGestureRecognizer:gr];
         }
@@ -74,32 +80,33 @@
     return cb;
 }
 
-- (instancetype)init {
+-(instancetype) init
+{
     self = [super init];
     
     self.frame = CGRectMake(0, 0, 44, 44);
     
-    Account *cac = [[Accounts sharedInstance] currentAccount];
+    Account* cac = [[Accounts sharedInstance] currentAccount];
     
     self.backgroundColor = [UIColor clearColor];
     
-    UIView *background = [[UIView alloc] initWithFrame:self.bounds];
+    UIView* background = [[UIView alloc] initWithFrame:self.bounds];
     background.backgroundColor = cac.userColor;
     background.layer.cornerRadius = 22;
     background.layer.masksToBounds = YES;
     [self addSubview:background];
     self.backView = background;
     
-    UITapGestureRecognizer *tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tap:)];
+    UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tap:)];
     [self addGestureRecognizer:tgr];
     self.userInteractionEnabled = YES;
     
-    UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_lgpress:)];
+    UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_lgpress:)];
     lpgr.minimumPressDuration = .5;
     [self addGestureRecognizer:lpgr];
     
     
-    UILabel *l = [[UILabel alloc] initWithFrame:self.bounds];
+    UILabel* l = [[UILabel alloc] initWithFrame:self.bounds];
     l.backgroundColor = [UIColor clearColor];
     l.textColor = [UIColor whiteColor];
     l.textAlignment = NSTextAlignmentCenter;
@@ -111,24 +118,27 @@
     return self;
 }
 
-- (void)openWide {
+-(void) openWide
+{
     if (self.openState == 0) {
         [self _openWide];
     }
 }
 
-- (void)updateColor {
-    Account *cac = [[Accounts sharedInstance] currentAccount];
+-(void) updateColor
+{
+    Account* cac = [[Accounts sharedInstance] currentAccount];
     self.backView.backgroundColor = cac.userColor;
     self.nameView.text = cac.codeName;
     self.backViewAnim.backgroundColor = cac.userColor;
 }
 
-- (void)refreshAnimation:(BOOL)anim {
+-(void) refreshAnimation:(BOOL)anim
+{
     if (anim) {
         
         if (self.backViewAnim==nil) {
-            UIView *background = [[UIView alloc] initWithFrame:self.bounds];
+            UIView* background = [[UIView alloc] initWithFrame:self.bounds];
             background.backgroundColor = self.backView.backgroundColor;
             background.layer.cornerRadius = 22;
             background.layer.masksToBounds = YES;
@@ -144,13 +154,14 @@
                                  [self _displayLink:nil];
                              }
                              completion:^(BOOL fini){
-                                 CADisplayLink *dl = [CADisplayLink displayLinkWithTarget:self selector:@selector(_displayLink:)];
+                                 CADisplayLink* dl = [CADisplayLink displayLinkWithTarget:self selector:@selector(_displayLink:)];
                                  [dl addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
                                  self.displayLink = dl;
                              }];
         }
         
-    } else {
+    }
+    else {
         
         [UIView animateWithDuration:0.1
                          animations:^{
@@ -169,7 +180,8 @@
     
 }
 
-- (void)_displayLink:(CADisplayLink *)dl {
+-(void) _displayLink:(CADisplayLink*)dl
+{
     //    double value = [dl timestamp] * M_PI * 4;
     const double step = M_PI / 10.;
     
@@ -186,21 +198,24 @@
     self.backViewAnim.center = center;
 }
 
-- (void)_forceCloseButtonSkipDatasource {
+-(void) _forceCloseButtonSkipDatasource
+{
     [self replaceMainButton:nil];
     
     if (self.openState == 0) {
     }
     else if (self.openState == 2) {
         [self _closeHorizontal];
-    } else {
+    }
+    else {
         [self _closeWide];
     }
     
     self.openState = 0;
 }
 
-- (void)forceCloseButton {
+-(void) forceCloseButton
+{
     if ([self.datasource automaticCloseFor:self]==NO) {
         return;
     }
@@ -208,7 +223,8 @@
     [self _forceCloseButtonSkipDatasource];
 }
 
-- (void)forceCloseHorizontal {
+-(void) forceCloseHorizontal
+{
     if (self.openState == 2) {
         [self replaceMainButton:nil];
         [self _closeHorizontal];
@@ -216,21 +232,23 @@
     }
 }
 
-- (void)closeHorizontalButton:(UIButton *)button refreshCocoaButtonAndDo:(void (^)())action {
+-(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)())action
+{
     self.userInteractionEnabled = NO;
     
-    AccountButton *supportV = (AccountButton *)[button superview];
+    AccountButton* supportV = (AccountButton*)[button superview];
     [supportV.superview bringSubviewToFront:supportV];
     
     [UIView animateWithDuration:0.15
                           delay:0.
                         options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
-                         for (UIView *v in self.subviewsHorizontal) {
+                         for (UIView* v in self.subviewsHorizontal) {
                              if (v != supportV) {
                                  v.alpha = 0;
                                  v.transform = CGAffineTransformIdentity;
-                             } else {
+                             }
+                             else {
                                  v.transform = CGAffineTransformMakeScale(0.84f, 1.f);
                              }
                          }
@@ -238,7 +256,7 @@
                      completion:^(BOOL fini){
                          self.openState = 0;
                          
-                         for (UIView *v in self.subviewsHorizontal) {
+                         for (UIView* v in self.subviewsHorizontal) {
                              if (v != supportV) {
                                  [v removeFromSuperview];
                              }
@@ -261,8 +279,8 @@
                      }];
 }
 
-- (void)_makeAppearNewCocoaButtonFromView:(AccountButton *)button {
-    
+-(void) _makeAppearNewCocoaButtonFromView:(AccountButton*)button
+{
     [self _boingAnimationForView:button andThen:^{
         [ViewController refreshCocoaButton];
         self.backView.alpha = 1.0;
@@ -272,10 +290,11 @@
     }];
 }
 
-- (void)_boingAnimationForView:(UIView *)boing andThen:(void(^)())endAction {
+-(void) _boingAnimationForView:(UIView*)boing andThen:(void(^)())endAction
+{
     
     double longtime = 0.4;
-    NSArray *steps = @[ @(1.11f), @(0.89f), @(1.05f), @(0.95f), @(1.02f), @(0.98f), @(1.f)];
+    NSArray* steps = @[ @(1.11f), @(0.89f), @(1.05f), @(0.95f), @(1.02f), @(0.98f), @(1.f)];
     double smallTime =  1.0 / [steps count];
     
     [UIView animateKeyframesWithDuration:longtime
@@ -285,7 +304,7 @@
                                   
                                   NSInteger idx = 0;
                                   
-                                  for (NSNumber *n in steps) {
+                                  for (NSNumber* n in steps) {
                                       [UIView addKeyframeWithRelativeStartTime:smallTime * idx
                                                               relativeDuration:smallTime
                                                                     animations:^{
@@ -302,12 +321,13 @@
                               }];
 }
 
-- (void)_openHorizontal {
-    NSArray *realButtons = [self.datasource buttonsHorizontalFor:self];
-    NSMutableArray *buttons = [NSMutableArray arrayWithCapacity:realButtons.count];
+-(void) _openHorizontal
+{
+    NSArray* realButtons = [self.datasource buttonsHorizontalFor:self];
+    NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:realButtons.count];
     
-    for (UIButton *b in realButtons) {
-        AccountButton *ab = [[AccountButton alloc] initForButton:b];
+    for (UIButton* b in realButtons) {
+        AccountButton* ab = [[AccountButton alloc] initForButton:b];
         [buttons addObject:ab];
         
         [self insertSubview:ab belowSubview:self.backView];
@@ -326,11 +346,11 @@
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                          
-                         const CGFloat stepX = - (52.f + ([UIScreen mainScreen].bounds.size.width - 320.f) / 5.f);
+                         const CGFloat stepX = -(52.f + ([UIScreen mainScreen].bounds.size.width - 320.f) / 5.f);
                          
                          CGFloat nextPosX = 0.f;
                          
-                         for (UIButton *b in buttons) {
+                         for (UIButton* b in buttons) {
                              nextPosX += stepX;
                              b.alpha = 1;
                              b.transform = CGAffineTransformMakeTranslation(nextPosX, 0);
@@ -344,21 +364,22 @@
     
 }
 
-- (void)_closeHorizontal {
+-(void) _closeHorizontal
+{
     self.userInteractionEnabled = NO;
     
     [UIView animateWithDuration:0.15
                           delay:0.
                         options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
-                         for (UIView *v in self.subviewsHorizontal) {
+                         for (UIView* v in self.subviewsHorizontal) {
                              v.alpha = 0;
                              v.transform = CGAffineTransformIdentity;
                          }
                          
                      }
                      completion:^(BOOL fini){
-                         for (UIView *v in self.subviewsHorizontal) {
+                         for (UIView* v in self.subviewsHorizontal) {
                              [v removeFromSuperview];
                          }
                          self.subviewsHorizontal = nil;
@@ -379,13 +400,15 @@
     
 }
 
-- (void)openHorizontal {
+-(void) openHorizontal
+{
     if (self.openState==0) {
         [self _openHorizontal];
     }
 }
 
-- (void)forceOpenHorizontal {
+-(void) forceOpenHorizontal
+{
     if (self.openState==0) {
         [self _openHorizontal];
     }
@@ -400,19 +423,19 @@
     }
     else if (self.openState == 2) {
         
-        for (UIView *v in self.subviewsHorizontal) {
+        for (UIView* v in self.subviewsHorizontal) {
             [v removeFromSuperview];
         }
         self.subviewsHorizontal = nil;
         
-        NSArray *realButtons = [self.datasource buttonsHorizontalFor:self];
-        NSMutableArray *buttons = [NSMutableArray arrayWithCapacity:realButtons.count];
+        NSArray* realButtons = [self.datasource buttonsHorizontalFor:self];
+        NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:realButtons.count];
         
-        const CGFloat stepX = - (52.f + ([UIScreen mainScreen].bounds.size.width - 320.f) / 5.f);
+        const CGFloat stepX = -(52.f + ([UIScreen mainScreen].bounds.size.width - 320.f) / 5.f);
         CGFloat nextPosX = 0.f;
         
-        for (UIButton *b in realButtons) {
-            AccountButton *ab = [[AccountButton alloc] initForButton:b];
+        for (UIButton* b in realButtons) {
+            AccountButton* ab = [[AccountButton alloc] initForButton:b];
             [buttons addObject:ab];
             
             [self insertSubview:ab belowSubview:self.backView];
@@ -427,12 +450,13 @@
     }
 }
 
-- (void)_openWide {
-    NSArray *buttons = [self.datasource buttonsWideFor:self];
+-(void) _openWide
+{
+    NSArray* buttons = [self.datasource buttonsWideFor:self];
     
     self.subviewsWide = buttons;
     
-    for (UIButton *b in buttons) {
+    for (UIButton* b in buttons) {
         [self addSubview:b];
         b.userInteractionEnabled = YES;
         
@@ -440,7 +464,7 @@
         b.alpha = 0;
     }
     
-    NSArray *steps = nil;
+    NSArray* steps = nil;
     
     const CGFloat base = 110.f;
     
@@ -461,7 +485,8 @@
                   [NSValue valueWithCGAffineTransform:CGAffineTransformMakeTranslation(-mid2, -mid1)],
                   [NSValue valueWithCGAffineTransform:CGAffineTransformMakeTranslation(-base, 0)]
                   ];
-    } else {
+    }
+    else {
         NSLog(@"COCOABUTTON : 3 ou 4 buttons only !!!");
         return;
     }
@@ -477,7 +502,7 @@
                          
                          NSInteger idx = 0;
                          
-                         for (UIButton *b in buttons) {
+                         for (UIButton* b in buttons) {
                              b.alpha = 1;
                              b.transform = [steps[idx] CGAffineTransformValue];
                              idx++;
@@ -488,7 +513,8 @@
                      }];
 }
 
-- (void)_closeWide {
+-(void) _closeWide
+{
     self.userInteractionEnabled = NO;
     
     [UIView animateWithDuration:0.3
@@ -499,7 +525,7 @@
                      animations:^{
                          self.backView.transform = CGAffineTransformIdentity;
                          
-                         for (UIView *v in self.subviewsWide) {
+                         for (UIView* v in self.subviewsWide) {
                              v.alpha = 0;
                              v.transform = CGAffineTransformIdentity;
                          }
@@ -509,14 +535,15 @@
                          self.userInteractionEnabled = YES;
                          self.openState = 0;
                          
-                         for (UIView *v in self.subviewsWide) {
+                         for (UIView* v in self.subviewsWide) {
                              [v removeFromSuperview];
                          }
                          self.subviewsWide = nil;
                      }];
 }
 
-- (void)_lgpress:(UILongPressGestureRecognizer *)lpgr {
+-(void) _lgpress:(UILongPressGestureRecognizer*)lpgr
+{
     if (lpgr.enabled==NO || self.openState != 0) {
         return;
     }
@@ -532,7 +559,8 @@
     }
 }
 
-- (void)_tap:(UITapGestureRecognizer *)tgr {
+-(void) _tap:(UITapGestureRecognizer*)tgr
+{
     if (tgr.enabled==NO || tgr.state!=UIGestureRecognizerStateEnded) {
         return;
     }
@@ -543,7 +571,8 @@
             [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil];
             [self _closeWide];
             return;
-        } else {
+        }
+        else {
             [self _openWide];
         }
     }
@@ -572,15 +601,17 @@
     
 }
 
-- (void)replaceMainButton:(UIButton *)button {
+-(void) replaceMainButton:(UIButton*)button
+{
     [self.tempMainButton removeFromSuperview];
     [self addSubview:button];
     self.tempMainButton = button;
 }
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+-(UIView*) hitTest:(CGPoint)point withEvent:(UIEvent*)event
+{
     
-    for (UIView *v in self.subviewsWide) {
+    for (UIView* v in self.subviewsWide) {
         CGRect bigger = CGRectInset(v.frame, -10, -10);
         
         if (CGRectContainsPoint(bigger, point)) {
@@ -588,7 +619,7 @@
         }
     }
     
-    for (AccountButton *v in self.subviewsHorizontal) {
+    for (AccountButton* v in self.subviewsHorizontal) {
         CGRect bigger = CGRectInset(v.frame, -10, -10);
         
         if (CGRectContainsPoint(bigger, point)) {
@@ -617,7 +648,8 @@
     return nil;
 }
 
-+ (void)animateHorizontalButtonCancelTouch:(UIButton *)button {
++(void) animateHorizontalButtonCancelTouch:(UIButton*)button
+{
     [UIView animateWithDuration:0.15
                           delay:0.
          usingSpringWithDamping:0.5
@@ -631,12 +663,13 @@
                      }];
 }
 
+
 @end
 
 @implementation AccountButton
 
-- (instancetype)initForButton:(UIButton *)b {
-    
+-(instancetype) initForButton:(UIButton*)b
+{
     self = [super init];
     
     self.backgroundColor = [UIColor clearColor];
@@ -659,7 +692,8 @@
     return self;
 }
 
-- (void)_touchButton:(UIButton *)button {
+-(void) _touchButton:(UIButton*)button
+{
     [UIView animateWithDuration:0.15
                           delay:0.
          usingSpringWithDamping:0.5
@@ -672,7 +706,8 @@
                      }];
 }
 
-- (void)_cancelTouchButton:(UIButton *)button {
+-(void) _cancelTouchButton:(UIButton*)button
+{
     [CocoaButton animateHorizontalButtonCancelTouch:button];
     /*
      [UIView animateWithDuration:0.15
@@ -687,7 +722,7 @@
      completion:^(BOOL fini){
      }];
      */
-    
 }
+
 
 @end

@@ -8,17 +8,19 @@
 
 #import "FMDB.h"
 
+
 @interface EmailDBAccessor : NSObject {
 @private
-    NSString *_databaseFilepath;
+    NSString* _databaseFilepath;
 }
 
-@property (nonatomic, strong) FMDatabaseQueue *databaseQueue;
+@property (nonatomic, strong) FMDatabaseQueue* databaseQueue;
 
-+ (id)sharedManager;
++(id) sharedManager;
 
-- (NSString *)databaseFilepath;
-- (void)setDatabaseFilepath:(NSString *)databaseFilepath;
-- (void)deleteDatabase;
+-(NSString*) databaseFilepath;
+-(void) setDatabaseFilepath:(NSString*)databaseFilepath;
+-(void) deleteDatabase;
+
 
 @end

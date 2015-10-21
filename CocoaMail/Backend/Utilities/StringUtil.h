@@ -8,10 +8,11 @@
 
 @interface StringUtil : NSObject
 
-+ (NSArray *)split:(NSString *)s atString:(NSString *)y;
-+ (NSString *)trim:(NSString *)s;
-+ (NSString *)filePathInDocumentsDirectoryForFileName:(NSString *)filename;
-+ (NSString *)filePathInDocumentsDirectoryForAttachmentFileName:(NSString *)filename;
-+ (NSString *)initialStringForPersonString:(NSString *)personString;
++(NSArray*) split:(NSString*)s atString:(NSString*)y;
++(NSString*) trim:(NSString*)s;
++(NSString*) filePathInDocumentsDirectoryForFileName:(NSString*)filename;
++(NSString*) filePathInDocumentsDirectoryForAttachmentFileName:(NSString*)filename;
++(NSString*) initialStringForPersonString:(NSString*)personString;
+
 
 @end

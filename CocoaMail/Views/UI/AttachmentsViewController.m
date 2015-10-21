@@ -16,28 +16,29 @@
 #import "StringUtil.h"
 #import <QuickLook/QuickLook.h>
 
+
 @interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, CCMAttachmentViewDelegate, UIDocumentInteractionControllerDelegate>{
-    NSArray *_activityItems;
+    NSArray* _activityItems;
 }
 
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSArray* mailsWithAttachment;
 
-@end
 
+@end
 
 
 @interface AttachmentsCell : UITableViewCell
 
 @property (nonatomic, weak) AttachmentView* attachView;
 
+
 @end
-
-
 
 @implementation AttachmentsViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
 
     
@@ -77,7 +78,7 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
@@ -95,7 +96,6 @@
     self.table = table;    
 }
 
-
 -(void) _setupData
 {
     NSMutableArray* res = [NSMutableArray arrayWithCapacity:self.conversation.mails.count];
@@ -111,31 +111,28 @@
     
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     self.table.delegate = nil;
     self.table.dataSource = nil;    
 }
 
-
 #pragma mark - Table Datasource
 
-
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     return self.mailsWithAttachment.count;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     
     Mail* m = self.mailsWithAttachment[section];
+ 
     return m.attachments.count;
 }
 
-
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
     Mail* m = self.mailsWithAttachment[indexPath.section];
@@ -156,26 +153,24 @@
     return cell;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return (indexPath.row==0) ? 73.f : 72.5f;
 }
 
-
 #pragma mark Table Delegate
 
-
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 44.f;
 }
 
--(UIView*) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+-(UIView*) tableView:(UITableView*)tableView viewForHeaderInSection:(NSInteger)section
 {
     
     UIView* support = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
@@ -229,35 +224,32 @@
     [support addSubview:h];
     h.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
-    
     return support;
 }
 
-
-
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    AttachmentsCell * cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
+    AttachmentsCell*  cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
     
     Mail* m = self.mailsWithAttachment[indexPath.section];
     Attachment* att = m.attachments[indexPath.row];
     
-    if(!att.data) {
+    if (!att.data) {
         [cell.attachView beginActionDownload:att];
     }
     else {
-        NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+        NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
         [att.data writeToFile:filePath atomically:YES];
-        NSURL *URL = [NSURL fileURLWithPath:filePath];
+        NSURL* URL = [NSURL fileURLWithPath:filePath];
         [self openURL:URL];
     }
     
     return nil;
 }
 
-- (void)openURL:(NSURL *)url
+-(void) openURL:(NSURL*)url
 {
-    QLPreviewController *previewController = [[QLPreviewController alloc]init];
+    QLPreviewController* previewController = [[QLPreviewController alloc]init];
     previewController.delegate = self;
     previewController.dataSource = self;
     previewController.currentPreviewItemIndex = 0;
@@ -268,41 +260,40 @@
 }
 
 #pragma mark - QLPreviewControllerDataSource
-- (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)previewController
+
+-(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
 {
     return _activityItems.count;
 }
 
-- (id)previewController:(QLPreviewController *)previewController previewItemAtIndex:(NSInteger)index
+-(id) previewController:(QLPreviewController*)previewController previewItemAtIndex:(NSInteger)index
 {
     return _activityItems[index];
 }
 
-- (void)previewControllerWillDismiss:(QLPreviewController *)controller
+-(void) previewControllerWillDismiss:(QLPreviewController*)controller
 {
     //    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     //    [self setNeedsStatusBarAppearanceUpdate];
 }
 
-- (void)shareAttachment:(Attachment*)att
+-(void) shareAttachment:(Attachment*)att
 {
-    NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+    NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
     [att.data writeToFile:filePath atomically:YES];
-    NSURL *URL = [NSURL fileURLWithPath:filePath];
+    NSURL* URL = [NSURL fileURLWithPath:filePath];
     
-    UIDocumentInteractionController *documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
+    UIDocumentInteractionController* documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
     documentInteractionController.delegate = self;
-    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0 ,0 , 0, 0) inView:self.view animated:YES];
+    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0, 0, 0, 0) inView:self.view animated:YES];
 }
+
 
 @end
 
-
-
-
 @implementation AttachmentsCell
 
--(instancetype) initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+-(instancetype) initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString*)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     

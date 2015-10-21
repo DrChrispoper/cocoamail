@@ -8,26 +8,28 @@
 
 #import "UidEntry.h"
 
+
 @interface CachedAction : NSObject{
     NSInteger pk;
-    UidEntry *uid;
+    UidEntry* uid;
     NSInteger actionIndex;
     NSInteger toFolder;
 }
 
 @property (assign) NSInteger pk;
-@property (nonatomic, readwrite) UidEntry *uid;
+@property (nonatomic, readwrite) UidEntry* uid;
 /// Indexes are: 0 - Move  1 - Delete 2 - Star 3 - Unstar
 @property (nonatomic, readwrite) NSInteger actionIndex;
 @property (nonatomic, readwrite) NSInteger toFolder;
 
-+ (void)tableCheck;
-+ (BOOL)addAction:(CachedAction *)action;
-+ (BOOL)addActionWithUid:(UidEntry *)uidEntry actionIndex:(NSInteger)actionIndex toFolder:(NSInteger)folder;
-+ (BOOL)removeAction:(CachedAction *)action;
-+ (NSMutableArray *)getActions;
-+ (NSMutableArray *)getActionsForAccount:(NSInteger)account;
++(void) tableCheck;
++(BOOL) addAction:(CachedAction*)action;
++(BOOL) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)actionIndex toFolder:(NSInteger)folder;
++(BOOL) removeAction:(CachedAction*)action;
++(NSMutableArray*) getActions;
++(NSMutableArray*) getActionsForAccount:(NSInteger)account;
 
-- (BOOL)doAction;
+-(BOOL) doAction;
+
 
 @end

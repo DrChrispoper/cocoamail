@@ -23,7 +23,8 @@
 
 @implementation AppDelegate
 
-- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+-(BOOL) application:(UIApplication*)application willFinishLaunchingWithOptions:(NSDictionary*)launchOptions
+{
     
     if ([AppSettings reset]) {
         [self resetApp];
@@ -36,22 +37,22 @@
                captureSource:IBGCaptureSourceUIKit
              invocationEvent:IBGInvocationEventScreenshot];
     
-    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
+    UIUserNotificationSettings* settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
     [application registerUserNotificationSettings:settings];
     [application registerForRemoteNotifications];
     
     [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
     
-    DBSession *dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
+    DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
     [[Accounts sharedInstance] setCurrentAccountIdx:[AppSettings defaultAccountIndex]];
     
-    NSString *driveScope = @"https://mail.google.com/";
-    NSArray *currentScopes = [GIDSignIn sharedInstance].scopes;
+    NSString* driveScope = @"https://mail.google.com/";
+    NSArray* currentScopes = [GIDSignIn sharedInstance].scopes;
     [GIDSignIn sharedInstance].scopes = [currentScopes arrayByAddingObject:driveScope];
     
-    NSError *configureError;
+    NSError* configureError;
     [[GGLContext sharedInstance] configureWithError:&configureError];
     NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
@@ -60,26 +61,30 @@
     return YES;
 }
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
+-(BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
+{
     [self.window makeKeyAndVisible];
     
     return YES;
 }
 
-- (void)applicationWillTerminate:(UIApplication *)application {
-    EmailProcessor *em = [EmailProcessor getSingleton];
+-(void) applicationWillTerminate:(UIApplication*)application
+{
+    EmailProcessor* em = [EmailProcessor getSingleton];
     em.shuttingDown = YES;
     
-    SearchRunner *sem = [SearchRunner getSingleton];
+    SearchRunner* sem = [SearchRunner getSingleton];
     [sem cancel];
     
     // write unwritten changes to user defaults to disk
     [NSUserDefaults resetStandardUserDefaults];
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application {}
+-(void) applicationWillResignActive:(UIApplication*)application
+{}
 
-- (void)applicationDidBecomeActive:(UIApplication *)application {
+-(void) applicationDidBecomeActive:(UIApplication*)application
+{
     
     if (([AppSettings numActiveAccounts])>0) {
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
@@ -95,13 +100,14 @@
     }
 }
 
-- (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+-(void) application:(UIApplication*)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
     
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable ) {
         completionHandler(UIBackgroundFetchResultNoData);
     }
     else if ([self.window.rootViewController isKindOfClass:[ViewController class]]) {
-        [(ViewController *)self.window.rootViewController refreshWithCompletionHandler:^(BOOL didReceiveNewPosts) {
+        [(ViewController*)self.window.rootViewController refreshWithCompletionHandler:^(BOOL didReceiveNewPosts) {
             if (didReceiveNewPosts) {
                 completionHandler(UIBackgroundFetchResultNewData);
             
@@ -117,13 +123,14 @@
     }
 }
 
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+-(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
+{
     if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
         return YES;
     }
     
     if ([[DBSession sharedSession] handleOpenURL:url]) {
-        NSDictionary *statusText = @{@"cloudServiceName":@"Dropbox"};
+        NSDictionary* statusText = @{@"cloudServiceName":@"Dropbox"};
         [[NSNotificationCenter defaultCenter]
          postNotificationName:@"AuthNotification"
          object:nil
@@ -136,15 +143,16 @@
     return NO;
 }
 
-- (void)signIn:(GIDSignIn *)signIn
-didSignInForUser:(GIDGoogleUser *)user
-     withError:(NSError *)error {
-    NSString *idToken = user.authentication.accessToken; // Safe to send to the server
-    NSString *name = user.profile.name;
-    NSString *email = user.profile.email;
+-(void) signIn:(GIDSignIn*)signIn
+didSignInForUser:(GIDGoogleUser*)user
+     withError:(NSError*)error
+{
+    NSString* idToken = user.authentication.accessToken; // Safe to send to the server
+    NSString* name = user.profile.name;
+    NSString* email = user.profile.email;
     
     // [START_EXCLUDE]
-    NSDictionary *statusText = @{@"accessToken":idToken, @"email":email, @"name":name};
+    NSDictionary* statusText = @{@"accessToken":idToken, @"email":email, @"name":name};
     [[NSNotificationCenter defaultCenter]
      postNotificationName:@"ToggleAuthUINotification"
      object:nil
@@ -162,11 +170,13 @@ didSignInForUser:(GIDGoogleUser *)user
 
 #pragma mark - Settings
 
-- (void)activatePurchasedFeatures {
+-(void) activatePurchasedFeatures
+{
     [AppSettings setFeaturePurchased:@"Premium"];
 }
 
-- (void)resetApp {
+-(void) resetApp
+{
     // reset - delete all data and settings
     [AppSettings setReset:NO];
     for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
@@ -186,5 +196,6 @@ didSignInForUser:(GIDGoogleUser *)user
     
     [GlobalDBFunctions deleteAll];
 }
+
 
 @end

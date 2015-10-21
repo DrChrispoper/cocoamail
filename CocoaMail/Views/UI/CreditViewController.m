@@ -23,7 +23,8 @@
 
 @implementation CreditViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     
@@ -40,7 +41,7 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
@@ -63,9 +64,7 @@
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;
-    
 }
-
 
 -(BOOL) haveCocoaButton
 {
@@ -77,7 +76,6 @@
     self.table.delegate = nil;
     self.table.dataSource = nil;
 }
-
 
 #define kTITLE @"t"
 #define kACTION @"a"
@@ -107,17 +105,17 @@
 
 #pragma mark - Table Datasource
 
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     return self.tableContent.count;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return [((NSDictionary*)self.tableContent[section]) count];
 }
 
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
     NSDictionary* infos = self.tableContent[indexPath.section][indexPath.row];
@@ -132,6 +130,7 @@
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
     NSString* sub = infos[kSUB];
+    
     if (sub.length>0) {
 
         UILabel* lbl = [[UILabel alloc] initWithFrame:CGRectMake(150 , 0.5, tableView.frame.size.width - 150 - 30, 50)];
@@ -146,25 +145,24 @@
     return cell;
 }
 
-
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return (indexPath.row==0) ? 52.5f : 52.0f;
 }
 
 #pragma mark - Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return (section==0) ? 160 : 10;
 }
 
--(UIView*) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+-(UIView*) tableView:(UITableView*)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (section==0) {
         
@@ -196,7 +194,7 @@
     return nil;
 }
 
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     NSDictionary* infos = self.tableContent[indexPath.section][indexPath.row];
 
@@ -218,14 +216,14 @@
     return nil;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark - CocoaButton
 
--(void) scrollViewDidScroll:(UIScrollView *)scrollView
+-(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
     [super scrollViewDidScroll:scrollView];
     
@@ -233,7 +231,6 @@
         [self.cocoaButton forceCloseButton];
     }
 }
-
 
 -(NSArray*) buttonsWideFor:(CocoaButton*)cocoabutton;
 {
@@ -266,6 +263,7 @@
             Mail* mail = [Mail newMailFormCurrentAccount];
             
             Persons* p = [Persons sharedInstance];
+            
             if (p.idxCocoaPerson == 0) {
                 Person* more = [Person createWithName:nil email:@"support@cocoamail.com" icon:[UIImage imageNamed:@"cocoamail"] codeName:nil];
                 p.idxCocoaPerson = [p addPerson:more];
@@ -288,8 +286,6 @@
     }
 }
 
-
-
 -(NSArray*) buttonsHorizontalFor:(CocoaButton*)cocoabutton
 {
     return nil;
@@ -304,7 +300,5 @@
 {
     return NO;
 }
-
-
 
 @end

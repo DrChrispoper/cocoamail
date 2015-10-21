@@ -8,13 +8,15 @@
 
 #import <UIKit/UIKit.h>
 
+
 @interface UIGlobal : NSObject
 
-+ (UIColor *)bubbleFolderGrey;
-+ (UIColor *)standardLightGrey;
-+ (UIColor *)noImageBadgeColor;
++(UIColor*) bubbleFolderGrey;
++(UIColor*) standardLightGrey;
++(UIColor*) noImageBadgeColor;
 
-+ (UIColor *)standardTableLineColor;
-+ (UIColor *)standardBlue;
++(UIColor*) standardTableLineColor;
++(UIColor*) standardBlue;
+
 
 @end

@@ -18,24 +18,27 @@
 
 #pragma	mark Add DB management
 
-+ (void)deleteAll {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains (NSDocumentDirectory, NSUserDomainMask, YES); 
-	NSString *documentsDirectory = paths[0];
++(void) deleteAll
+{
+	NSArray* paths = NSSearchPathForDirectoriesInDomains (NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString* documentsDirectory = paths[0];
 	
-	NSString *fileName;
-	NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:documentsDirectory];
+	NSString* fileName;
+	NSDirectoryEnumerator* dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:documentsDirectory];
     
 	while (fileName = [dirEnum nextObject]) {
-		NSString *filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
+		NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
 		[[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
 	}
 }
 
-+ (NSString *)dbFileNameForNum:(NSInteger)dbNum {
++(NSString*) dbFileNameForNum:(NSInteger)dbNum
+{
 	return [NSString stringWithFormat:@"email-%lu.edb", (long)dbNum];
 }
 
-+ (void)tableCheck {
++(void) tableCheck
+{
     // NOTE: need to change dbGlobalTableVersion every time we change the schema
     if ([AppSettings globalDBVersion] < 1) {
         [UidEntry tableCheck];
@@ -44,5 +47,6 @@
         [AppSettings setGlobalDBVersion:1];
     }	
 }
+
 
 @end

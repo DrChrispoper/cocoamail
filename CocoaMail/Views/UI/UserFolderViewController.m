@@ -17,7 +17,8 @@
 
 @implementation UserFolderViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
@@ -35,9 +36,9 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
-    table.contentInset = UIEdgeInsetsMake(44-30, 0, 60, 0);
+    table.contentInset = UIEdgeInsetsMake(44 - 30, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
     
     table.backgroundColor = [UIGlobal standardLightGrey];
@@ -49,38 +50,33 @@
     table.dataSource = self;
     table.delegate = self;
     self.table = table;
-    
 }
-
 
 -(void) _back
 {
     [self.delegate chooseUserFolderCancel];
 }
 
-
 #pragma mark - Table Datasource
 
-
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     return 1;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
     return ac.userFolders.count;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return (indexPath.row==0) ? 44.5f : 44.0f;
 }
 
-
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
     NSString* imageName = [Accounts userFolderIcon];
@@ -112,20 +108,19 @@
     return cell;
 }
 
-
 #pragma mark Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 50;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     CCMFolderType type = FolderTypeWith(FolderTypeUser, indexPath.row);
     [self.delegate chooseUserFolder:type];

@@ -12,35 +12,39 @@
 #import "Accounts.h"
 #import "UIGlobal.h"
 
+
 @interface WhiteBlurNavBar ()
 
-@property (nonatomic, weak) UIImageView *realBlurView;
-@property (nonatomic, weak) UIView *underView;
-@property (nonatomic, weak) UIView *whiteMask;
+@property (nonatomic, weak) UIImageView* realBlurView;
+@property (nonatomic, weak) UIView* underView;
+@property (nonatomic, weak) UIView* whiteMask;
 
 @property (nonatomic) CGFloat baseOffset;
 
 
-@property (nonatomic, strong) UIImage *lastBlurredImage;
+@property (nonatomic, strong) UIImage* lastBlurredImage;
 @property (nonatomic) CGFloat lastOffsetBlurred;
 @property (nonatomic) CGFloat lastOffsetWanted;
 
-@property (nonatomic, strong) CADisplayLink *displayLink;
-@property (nonatomic, strong) NSDate *displayLinkEndDate;
+@property (nonatomic, strong) CADisplayLink* displayLink;
+@property (nonatomic, strong) NSDate* displayLinkEndDate;
+
 
 @end
 
 @implementation WhiteBlurNavBar
 
-+ (CGFloat)navBarHeight {
++(CGFloat) navBarHeight
+{
     return 44.f;
 }
 
-+ (UIButton *)navBarButtonWithImage:(NSString *)normal andHighlighted:(NSString *)high {
-    UIImage *imgOff = [[UIImage imageNamed:normal] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    UIImage *imgOn = [[UIImage imageNamed:high] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
++(UIButton*) navBarButtonWithImage:(NSString*)normal andHighlighted:(NSString*)high
+{
+    UIImage* imgOff = [[UIImage imageNamed:normal] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage* imgOn = [[UIImage imageNamed:high] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     
-    UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
+    UIButton* btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [btn setImage:imgOff forState:UIControlStateNormal];
     [btn setImage:imgOn forState:UIControlStateHighlighted];
     [btn setImage:imgOn forState:UIControlStateSelected];
@@ -50,14 +54,16 @@
     return btn;
 }
 
-+ (UILabel *)titleViewForItemTitle:(NSString *)title {
-    UILabel *l = [[UILabel alloc] init];
++(UILabel*) titleViewForItemTitle:(NSString*)title
+{
+    UILabel* l = [[UILabel alloc] init];
     l.text = title;
     l.textColor = [UIColor blackColor];
     
     if ([Accounts sharedInstance].navBarBlurred) {
         l.backgroundColor = [UIColor clearColor];
-    } else {
+    }
+    else {
         l.backgroundColor = [UIColor whiteColor];
     }
     l.font = [UIFont boldSystemFontOfSize:16];
@@ -67,7 +73,8 @@
     return l;
 }
 
-- (instancetype)initWithWidth:(CGFloat)width {
+-(instancetype) initWithWidth:(CGFloat)width
+{
     self = [super initWithFrame:CGRectMake(0, 0, width, [WhiteBlurNavBar navBarHeight])];
     
     
@@ -78,12 +85,13 @@
         self.shadowImage = [UIImage imageNamed:@"emptyPixel"];
         self.translucent = YES;
         self.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.6];
-    } else {
+    }
+    else {
         self.opaque = true;
         self.translucent = NO;
         self.backgroundColor = [UIColor whiteColor];
         
-        UIView *border = [[UIView alloc] initWithFrame:CGRectMake(0, 43.5, width + 50, 0.5)];
+        UIView* border = [[UIView alloc] initWithFrame:CGRectMake(0, 43.5, width + 50, 0.5)];
         border.backgroundColor = [UIGlobal standardTableLineColor];
         [self addSubview:border];
     }
@@ -93,7 +101,8 @@
     return self;
 }
 
-- (void)createWhiteMaskOverView:(UIView *)view withOffset:(CGFloat)offset {
+-(void) createWhiteMaskOverView:(UIView*)view withOffset:(CGFloat)offset
+{
     if (![Accounts sharedInstance].navBarBlurred) {
         return;
     }
@@ -103,18 +112,18 @@
     
     // create views needed for fast-blur
     
-    UIView *support = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, [WhiteBlurNavBar navBarHeight])];
+    UIView* support = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, [WhiteBlurNavBar navBarHeight])];
     support.backgroundColor = [UIColor whiteColor];
     support.opaque = YES;
     support.clipsToBounds = YES;
     [self.underView.superview insertSubview:support aboveSubview:self.underView];
     
-    UIImageView *blurredIV = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, [WhiteBlurNavBar navBarHeight] * 3)];
+    UIImageView* blurredIV = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, [WhiteBlurNavBar navBarHeight] * 3)];
     blurredIV.backgroundColor = [UIColor whiteColor];
     [support addSubview:blurredIV];
     self.realBlurView = blurredIV;
     
-    UIView *mask = [[UIView alloc] initWithFrame:CGRectMake(-1, -1, support.bounds.size.width + 2, support.bounds.size.height + 1)];
+    UIView* mask = [[UIView alloc] initWithFrame:CGRectMake(-1, -1, support.bounds.size.width + 2, support.bounds.size.height + 1)];
     mask.backgroundColor = [UIColor whiteColor];
     [support addSubview:mask];
     mask.layer.borderWidth = 1.5f;
@@ -123,7 +132,8 @@
     mask.hidden = YES;
 }
 
-- (void)_displayLink:(CADisplayLink *)dl {
+-(void) _displayLink:(CADisplayLink*)dl
+{
     if ([self.displayLinkEndDate timeIntervalSinceNow]<=0) {
         [dl invalidate];
         self.displayLink = nil;
@@ -132,14 +142,15 @@
     [self computeBlurForceNew];
 }
 
-- (void)computeBlurForceNewDuring:(double)timeInterval {
+-(void) computeBlurForceNewDuring:(double)timeInterval
+{
     if (![Accounts sharedInstance].navBarBlurred) {
         return;
     }
     
     
     if (self.displayLink==nil) {
-        CADisplayLink *dl = [CADisplayLink displayLinkWithTarget:self selector:@selector(_displayLink:)];
+        CADisplayLink* dl = [CADisplayLink displayLinkWithTarget:self selector:@selector(_displayLink:)];
         [dl addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         self.displayLink = dl;
     }
@@ -147,12 +158,13 @@
     self.displayLinkEndDate = [NSDate dateWithTimeIntervalSinceNow:timeInterval];
 }
 
-- (void)computeBlurForceNew {
+-(void) computeBlurForceNew
+{
     if (![Accounts sharedInstance].navBarBlurred) {
         return;
     }
     
-    CGFloat currentOffset = [(UIScrollView *)self.underView contentOffset].y;
+    CGFloat currentOffset = [(UIScrollView*)self.underView contentOffset].y;
     self.lastOffsetWanted = currentOffset;
     self.lastOffsetBlurred = currentOffset;
     
@@ -167,7 +179,8 @@
     self.realBlurView.image = self.lastBlurredImage;
 }
 
-- (void)_reallyComputeBlur {
+-(void) _reallyComputeBlur
+{
     
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(self.frame.size.width, [WhiteBlurNavBar navBarHeight]*3), true, [UIScreen mainScreen].scale);
     
@@ -175,26 +188,28 @@
     CGContextSetFillColorWithColor(ctx, [UIColor whiteColor].CGColor);
     CGContextFillRect(ctx, CGRectMake(0, 0, self.frame.size.width, [WhiteBlurNavBar navBarHeight]));
     [self.underView drawViewHierarchyInRect:CGRectMake(0, 0, self.underView.frame.size.width, self.underView.frame.size.height) afterScreenUpdates:NO];
-    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIImage* img = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
-    UIImage *blurred = [img applyBlurWithRadius:3 tintColor:nil saturationDeltaFactor:0.8 maskImage:nil];
+    UIImage* blurred = [img applyBlurWithRadius:3 tintColor:nil saturationDeltaFactor:0.8 maskImage:nil];
     
     self.lastBlurredImage = blurred;
 }
 
-- (void)computeBlur {
+-(void) computeBlur
+{
     if (![Accounts sharedInstance].navBarBlurred) {
         return;
     }
     
-    const CGFloat currentOffset = [(UIScrollView *)self.underView contentOffset].y;
+    const CGFloat currentOffset = [(UIScrollView*)self.underView contentOffset].y;
 
     // to make the white navbar smoothly dissappear
     if (currentOffset>self.baseOffset && currentOffset<self.baseOffset + [WhiteBlurNavBar navBarHeight]) {
         self.whiteMask.transform = CGAffineTransformMakeTranslation(0, (self.baseOffset - currentOffset));
         self.whiteMask.hidden = NO;
-    } else {
+    }
+    else {
         self.whiteMask.hidden = YES;
     }
 
@@ -234,7 +249,8 @@
     else if (delta<0 && delta > -limiteTop) {
         //NSLog(@"REUSE ON TOP : %f  ||  %f", delta, deltaLast);
         justeMove = YES;
-    } else {
+    }
+    else {
         //NSLog(@"NEW FOR %f : %f", currentOffset, delta);
         
         self.lastOffsetBlurred = currentOffset;
@@ -254,5 +270,6 @@
         self.realBlurView.frame = f;
     }
 }
+
 
 @end

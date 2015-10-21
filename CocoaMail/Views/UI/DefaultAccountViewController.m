@@ -10,16 +10,17 @@
 
 #import "Accounts.h"
 
+
 @interface DefaultAccountViewController () <UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, weak) UITableView* table;
 
 @end
 
-
 @implementation DefaultAccountViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
 
     
@@ -35,7 +36,7 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 0, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
@@ -49,10 +50,7 @@
     table.dataSource = self;
     table.delegate = self;
     self.table = table;
-
 }
-
-
 
 -(void) cleanBeforeGoingBack
 {
@@ -65,27 +63,24 @@
     return NO;
 }
 
-
 #pragma mark - Table Datasource
 
-
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     return 1;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return [Accounts sharedInstance].accountsCount;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return (indexPath.row==0) ? 52.5f : 52.0f;
 }
 
-
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     Account* a = [[Accounts sharedInstance] getAccount:indexPath.row];
     
@@ -121,21 +116,19 @@
     return cell;
 }
 
-
 #pragma mark Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return 20;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 52;
 }
 
-
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [[Accounts sharedInstance] setDefaultAccountIdx:indexPath.row];
     [tableView reloadData];
@@ -143,11 +136,9 @@
     return nil;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
-
-
 
 @end

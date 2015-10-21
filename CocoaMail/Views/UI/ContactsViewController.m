@@ -17,11 +17,10 @@
 
 @end
 
-
-
 @implementation ContactsViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
@@ -35,7 +34,7 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
@@ -51,24 +50,20 @@
     self.table = table;
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     self.table.delegate = nil;
     self.table.dataSource = nil;    
 }
 
-
 #pragma mark - Table Datasource
 
-
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return self.mail.toPersonID.count;
 }
 
-
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
 
     Person* person = [[Persons sharedInstance] getPersonID:[self.mail.toPersonID[indexPath.row] integerValue]];
@@ -90,36 +85,29 @@
     return cell;
 }
 
-
-
 #pragma mark Table Delegate
 
-
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
-
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return indexPath;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     Person* person = [[Persons sharedInstance] getPersonID:[self.mail.toPersonID[indexPath.row] integerValue]];    
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
 }
-
-
-
 
 @end

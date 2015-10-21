@@ -11,15 +11,17 @@
 #import "Accounts.h"
 #import "AppSettings.h"
 
+
 @interface ChooseColorView : UIView
 
-- (instancetype)initWithFrame:(CGRect)frame forAccountColor:(UIColor *)color;
+-(instancetype) initWithFrame:(CGRect)frame forAccountColor:(UIColor*)color;
 
 @property (nonatomic, copy) void (^tapColor)(UIColor*);
 
-- (void)updateForAccount:(Account *)account;
+-(void) updateForAccount:(Account*)account;
 
 @end
+
 
 @interface EditCocoaButtonView () <UITextFieldDelegate>
 
@@ -30,7 +32,8 @@
 
 @implementation EditCocoaButtonView
 
-+ (instancetype)editCocoaButtonViewForAccount:(Account *)account {
++(instancetype) editCocoaButtonViewForAccount:(Account*)account
+{
     CGSize bounds = [UIScreen mainScreen].bounds.size;
     EditCocoaButtonView* v = [[EditCocoaButtonView alloc] initWithFrame:CGRectMake(0, 0, bounds.width, 131)];
     v.account = account;
@@ -39,7 +42,8 @@
     return v;
 }
 
-- (void)setup {
+-(void) setup
+{
     self.backgroundColor = [UIColor whiteColor];
     
     ChooseColorView* ccv = [[ChooseColorView alloc] initWithFrame:CGRectMake(0, 11.f, self.bounds.size.width, 52.f)
@@ -68,17 +72,20 @@
     self.codename = tf;
 }
 
-- (void)becomeFirstResponder {
+-(void) becomeFirstResponder
+{
     [self.codename becomeFirstResponder];
 }
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+-(BOOL) textFieldShouldReturn:(UITextField*)textField
+{
     [textField resignFirstResponder];
     
     return YES;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+-(BOOL) textField:(UITextField*)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString*)string
+{
     NSString* newText = [textField.text stringByReplacingCharactersInRange:range withString:string];
     
     if (newText.length<4) {
@@ -97,6 +104,7 @@
 
 @end
 
+
 @interface ChooseColorView ()
 
 @property (nonatomic, strong) NSArray* colors;
@@ -106,7 +114,8 @@
 
 @implementation ChooseColorView
 
-- (instancetype)initWithFrame:(CGRect)frame forAccountColor:(UIColor *)accColor {
+-(instancetype) initWithFrame:(CGRect)frame forAccountColor:(UIColor*)accColor
+{
     self = [super initWithFrame:frame];
     
     self.backgroundColor = [UIColor whiteColor];
@@ -116,7 +125,7 @@
     
     
     CGFloat posX = 8.f + halfBIG;
-    const CGFloat step = (frame.size.width - (2.f * posX)) / 6.f;
+    const CGFloat step = (frame.size.width -(2.f * posX)) / 6.f;
     
     NSArray* allColors = [AppSettings defaultColors];
     
@@ -124,9 +133,9 @@
     
     NSInteger wantedIdx = 0;
     
-    for (UIColor *color in allColors) {
+    for (UIColor* color in allColors) {
         
-        if (CGColorEqualToColor(color.CGColor,accColor.CGColor)) {
+        if (CGColorEqualToColor(color.CGColor, accColor.CGColor)) {
             wantedIdx = [allColors indexOfObject:color];
         }
         
@@ -143,7 +152,7 @@
     }
 
     
-    UILabel *l = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, BIG, BIG)];
+    UILabel* l = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, BIG, BIG)];
     l.textAlignment = NSTextAlignmentCenter;
     l.textColor = [UIColor whiteColor];
     l.backgroundColor = [UIColor clearColor];
@@ -167,28 +176,31 @@
     return self;
 }
 
-- (void)selectColorIdx:(NSInteger)idx {
+-(void) selectColorIdx:(NSInteger)idx
+{
     CGFloat scale = 26.f / 44.f;
     
-    UIView *selected = self.colors[idx];
+    UIView* selected = self.colors[idx];
     
     self.codenameLbl.alpha = 0.f;
     [UIView animateWithDuration:0.3
                      animations:^{
                          
-                         for (UIView *v in self.colors) {
+                         for (UIView* v in self.colors) {
                              if (v==selected) {
                                  v.transform = CGAffineTransformIdentity;
                                  [v addSubview:self.codenameLbl];
                                  self.codenameLbl.alpha = 1.f;
-                             } else {
+                             }
+                             else {
                                  v.transform = CGAffineTransformMakeScale(scale, scale);
                              }
                          }
                      }];
 }
 
-- (void)_tap:(UITapGestureRecognizer *)tgr {
+-(void) _tap:(UITapGestureRecognizer*)tgr
+{
     if (tgr.state != UIGestureRecognizerStateEnded || !tgr.enabled) {
         return;
     }
@@ -207,12 +219,13 @@
     }
     [self selectColorIdx:posX];
     
-    UIColor *c = [AppSettings defaultColors][posX];
+    UIColor* c = [AppSettings defaultColors][posX];
     self.tapColor(c);
     
 }
 
-- (void)updateForAccount:(Account *)account {
+-(void) updateForAccount:(Account*)account
+{
     self.codenameLbl.text = account.codeName;
 }
 

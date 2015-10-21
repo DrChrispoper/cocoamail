@@ -12,6 +12,7 @@
 #import "Persons.h"
 #import "ViewController.h"
 
+
 @interface SearchTableViewCell ()
 
 @property (nonatomic, weak) UIView* baseView;
@@ -28,11 +29,9 @@
 
 @end
 
-
 @implementation SearchTableViewCell
 
-
-static NSDateFormatter* s_df_date = nil;
+static NSDateFormatter * s_df_date = nil;
 
 +(void) initialize
 {
@@ -41,17 +40,15 @@ static NSDateFormatter* s_df_date = nil;
     s_df_date.timeStyle = NSDateFormatterNoStyle;
 }
 
-
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+-(void) setSelected:(BOOL)selected animated:(BOOL)animated
+{
     [super setSelected:selected animated:animated];
 
     // Configure the view for the selected state
 }
 
-
-- (void) setup
+-(void) setup
 {
-    
     self.backgroundColor = [UIColor clearColor];
     self.selectionStyle = UITableViewCellSelectionStyleGray;
     
@@ -138,6 +135,7 @@ static NSDateFormatter* s_df_date = nil;
     // tap attachment
     if (self.attachment.hidden == NO) {
         bigger = CGRectInset(self.attachment.frame, -10, -10);
+        
         if (CGRectContainsPoint(bigger, pos)) {
             
             [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
@@ -148,6 +146,7 @@ static NSDateFormatter* s_df_date = nil;
             
     
     bigger = CGRectInset(self.badge.frame, -10, -10);
+    
     if (CGRectContainsPoint(bigger, pos)) {
         Person* person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
@@ -180,11 +179,9 @@ static NSDateFormatter* s_df_date = nil;
                                                                                                 userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
                                           }];
                      }];
-
 }
 
-
-- (void)fillWithConversation:(Conversation*)conv subText:(NSString*)subtext highlightWord:(NSString*)word
+-(void) fillWithConversation:(Conversation*)conv subText:(NSString*)subtext highlightWord:(NSString*)word
 {
     
     if (self.baseView == nil) {
@@ -252,10 +249,6 @@ static NSDateFormatter* s_df_date = nil;
     
     [self.badge.subviews.firstObject removeFromSuperview];
     [self.badge addSubview:[p badgeView]];
-    
 }
-
-
-
 
 @end

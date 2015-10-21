@@ -10,27 +10,29 @@
 
 #import "Accounts.h"
 
+
 @interface NotificationViewController () <UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, weak) UITableView *table;
+@property (nonatomic, weak) UITableView* table;
 
 @end
 
 @implementation NotificationViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
-    UINavigationItem *item = [[UINavigationItem alloc] initWithTitle:@""];
+    UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString *title = NSLocalizedString(@"Notifications", @"Notifications");
+    NSString* title = NSLocalizedString(@"Notifications", @"Notifications");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
-    UITableView *table = [[UITableView alloc] initWithFrame:CGRectMake(0,
+    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
                                                                        screenBounds.size.height - 20)
@@ -49,42 +51,48 @@
     self.table = table;
 }
 
-- (void)cleanBeforeGoingBack {
+-(void) cleanBeforeGoingBack
+{
     self.table.delegate = nil;
     self.table.dataSource = nil;
 }
 
-- (BOOL)haveCocoaButton {
+-(BOOL) haveCocoaButton
+{
     return NO;
 }
 
 #pragma mark - Table Datasource
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
+{
     return 1;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
+{
     return [Accounts sharedInstance].accountsCount - 1;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
+{
     return (indexPath.row==0) ? 52.5f : 52.0f;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    Account *a = [[Accounts sharedInstance] getAccount:indexPath.row];
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
+{
+    Account* a = [[Accounts sharedInstance] getAccount:indexPath.row];
     
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
+    UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
     
     cell.textLabel.text = a.userMail;
     
     
-    UIView *v = [a.person badgeView];
+    UIView* v = [a.person badgeView];
     
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(33.f, 33.f), NO, [UIScreen mainScreen].scale);
-    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIImage* img = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
     cell.imageView.image = img;
@@ -94,7 +102,7 @@
     cell.textLabel.textAlignment = NSTextAlignmentNatural;
     cell.textLabel.textColor = [UIColor blackColor];
     
-    UISwitch *s = [[UISwitch alloc] init];
+    UISwitch* s = [[UISwitch alloc] init];
     s.onTintColor = [UIGlobal standardBlue];
     [s addTarget:self action:@selector(_switchBadge:) forControlEvents:UIControlEventValueChanged];
     cell.accessoryView = s;
@@ -106,25 +114,29 @@
     return cell;
 }
 
-- (void)_switchBadge:(UISwitch *)s {
-    Account *a = [[Accounts sharedInstance] getAccount:s.tag];
+-(void) _switchBadge:(UISwitch*)s
+{
+    Account* a = [[Accounts sharedInstance] getAccount:s.tag];
     a.notificationEnabled = s.isOn;
 }
 
 #pragma mark Table Delegate
 
-- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
+{
     return 20;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
+{
     return 52;
 }
 
-- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
+{
     
-    UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    UISwitch * s= (UISwitch *)cell.accessoryView;
+    UITableViewCell* cell = [tableView cellForRowAtIndexPath:indexPath];
+    UISwitch*  s = (UISwitch*)cell.accessoryView;
     
     [s setOn:!s.isOn animated:YES];
     [self _switchBadge:s];
@@ -132,7 +144,8 @@
     return nil;
 }
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
+{
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 

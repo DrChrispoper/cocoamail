@@ -13,10 +13,11 @@
 
 @synthesize pk, uid, actionIndex, toFolder;
 
-+ (void)tableCheck {
-    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
++(void) tableCheck
+{
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
         if (![db executeUpdate:@"CREATE TABLE cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
@@ -24,13 +25,14 @@
     }];
 }
 
-+ (BOOL)addAction:(CachedAction *)action {
++(BOOL) addAction:(CachedAction*)action
+{
     __block BOOL success = FALSE;
-    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        FMResultSet *result = [db executeQuery:@"SELECT * FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?",
+        FMResultSet* result = [db executeQuery:@"SELECT * FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?",
                                @(action.uid.uid),
                                @(action.uid.folder),
                                @(action.uid.account),
@@ -54,8 +56,9 @@
     return success;
 }
 
-+ (BOOL)addActionWithUid:(UidEntry *)uidEntry actionIndex:(NSInteger)pActionIndex toFolder:(NSInteger)folder {
-    CachedAction *cA = [[CachedAction alloc]init];
++(BOOL) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)pActionIndex toFolder:(NSInteger)folder
+{
+    CachedAction* cA = [[CachedAction alloc]init];
     cA.uid = uidEntry;
     cA.actionIndex = pActionIndex;
     cA.toFolder = folder;
@@ -63,11 +66,12 @@
     return [CachedAction addAction:cA];
 }
 
-+ (BOOL)removeAction:(CachedAction *)action {
++(BOOL) removeAction:(CachedAction*)action
+{
     __block BOOL success = FALSE;
-    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?;",
                     @(action.uid.uid),
                     @(action.uid.folder),
@@ -78,15 +82,16 @@
     return success;
 }
 
-+ (NSMutableArray *)getActions {
-    NSMutableArray *actions = [[NSMutableArray alloc] init];
-    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
++(NSMutableArray*) getActions
+{
+    NSMutableArray* actions = [[NSMutableArray alloc] init];
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM cached_actions"];
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM cached_actions"];
         
         while ([results next]) {
-            CachedAction *cachedA = [[CachedAction alloc]init];
+            CachedAction* cachedA = [[CachedAction alloc]init];
             
             cachedA.pk = [results intForColumn:@"pk"];
             cachedA.actionIndex = [[results objectForColumnName:@"action"] integerValue];
@@ -104,16 +109,17 @@
     return actions;
 }
 
-+ (NSMutableArray *)getActionsForAccount:(NSInteger)accountNum {
-    NSMutableArray *actions = [[NSMutableArray alloc] init];
-    CacheDBAccessor *databaseManager = [CacheDBAccessor sharedManager];
++(NSMutableArray*) getActionsForAccount:(NSInteger)accountNum
+{
+    NSMutableArray* actions = [[NSMutableArray alloc] init];
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase *db) {
-        FMResultSet *results = [db executeQuery:@"SELECT * FROM cached_actions WHERE account = ?",
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM cached_actions WHERE account = ?",
                                 @(accountNum)];
         
         while ([results next]) {
-            CachedAction *cachedA = [[CachedAction alloc]init];
+            CachedAction* cachedA = [[CachedAction alloc]init];
             
             cachedA.pk = [results intForColumn:@"pk"];
             cachedA.actionIndex = [[results objectForColumnName:@"action"] integerValue];
@@ -131,7 +137,8 @@
     return actions;
 }
 
-- (BOOL)doAction {
+-(BOOL) doAction
+{
     BOOL success = false;
     
     switch (self.actionIndex) {
@@ -159,5 +166,6 @@
     
     return success;
 }
+
 
 @end

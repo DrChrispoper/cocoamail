@@ -26,14 +26,14 @@
 @property (nonatomic, strong) NSArray* searchResult;
 @property (nonatomic) NSInteger lastSearchLength;
 
-@property (nonatomic, retain) NSOperationQueue *searchQueue;
+@property (nonatomic, retain) NSOperationQueue* searchQueue;
 
 @end
 
-
 @implementation SearchViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
@@ -48,7 +48,7 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44 + 46, 0, 0, 0);
@@ -106,10 +106,7 @@
     else {
         [[NSNotificationCenter defaultCenter] removeObserver:self.keyboardNotificationId];
     }
-    
 }
-
-
 
 -(void) viewDidAppear:(BOOL)animated
 {
@@ -127,7 +124,6 @@
     [self _keyboardNotification:NO];
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     [self _keyboardNotification:NO];
@@ -136,8 +132,7 @@
     self.table.dataSource = nil;
 }
 
-
--(void) scrollViewDidScroll:(UIScrollView *)scrollView
+-(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
     [super scrollViewDidScroll:scrollView];
     
@@ -151,12 +146,12 @@
 #define kCONTENT @"c"
 #define kSUBTEXT @"st"
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     return self.searchResult.count;
 }
 
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     NSString* reuseID = @"kSearchCellID";
     
@@ -176,20 +171,19 @@
     return cell;
 }
 
-
 #pragma mark - Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return (section == 0) ? 46 : CGFLOAT_MIN;
 }
 
--(UIView*) tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+-(UIView*) tableView:(UITableView*)tableView viewForHeaderInSection:(NSInteger)section
 {
     if (section==0) {
         
@@ -213,28 +207,28 @@
     return nil;
 }
 
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return nil;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-- (void)insertRows:(Email *)email
+-(void) insertRows:(Email*)email
 {
     Conversation* conv = [[Conversation alloc] init];
     [conv addMail:[Mail mail:email]];
     [[[Accounts sharedInstance] currentAccount] addConversation:conv];
 }
 
-- (void)fetchAll
+-(void) fetchAll
 {
     [self.searchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] activeFolderSearch:0]
-         subscribeNext:^(Email *email) {
+         subscribeNext:^(Email* email) {
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  [self insertRows:email];
              }];
@@ -246,7 +240,6 @@
 }
 
 #pragma mark - SearchBar Delegate
-
 
 -(void) _updateSearchResultWith:(NSString*)word
 {
@@ -288,6 +281,7 @@
         NSString* content = mail.content;
         
         NSMutableArray* attachs = [NSMutableArray arrayWithCapacity:mail.attachments.count];
+        
         for (Attachment* a in mail.attachments) {
             [attachs addObject:a.fileName];
         }
@@ -336,6 +330,7 @@
                 }
 
                 NSString* sub = [content substringWithRange:r];
+                
                 if (r.location!=0) {
                     sub = [NSString stringWithFormat:@"…%@", sub];
                 }
@@ -349,8 +344,7 @@
     self.searchResult = next;
 }
 
-
--(void) searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+-(void) searchBar:(UISearchBar*)searchBar textDidChange:(NSString*)searchText
 {
     [self _updateSearchResultWith:searchBar.text];
 
@@ -360,10 +354,9 @@
     
 }
 
--(void) searchBarSearchButtonClicked:(UISearchBar *)searchBar
+-(void) searchBarSearchButtonClicked:(UISearchBar*)searchBar
 {
     [searchBar resignFirstResponder];
 }
-
 
 @end

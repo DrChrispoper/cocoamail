@@ -4,27 +4,31 @@
 
 @implementation UIImage (ImageEffects)
 
-- (UIImage *)applyLightEffect {
-    UIColor *tintColor = [UIColor colorWithWhite:1.0 alpha:0.3];
+-(UIImage*) applyLightEffect
+{
+    UIColor* tintColor = [UIColor colorWithWhite:1.0 alpha:0.3];
     
     return [self applyBlurWithRadius:30 tintColor:tintColor saturationDeltaFactor:1.8 maskImage:nil];
 }
 
-- (UIImage *)applyExtraLightEffect {
-    UIColor *tintColor = [UIColor colorWithWhite:0.97 alpha:0.82];
+-(UIImage*) applyExtraLightEffect
+{
+    UIColor* tintColor = [UIColor colorWithWhite:0.97 alpha:0.82];
     
     return [self applyBlurWithRadius:20 tintColor:tintColor saturationDeltaFactor:1.8 maskImage:nil];
 }
 
-- (UIImage *)applyDarkEffect {
-    UIColor *tintColor = [UIColor colorWithWhite:0.11 alpha:0.73];
+-(UIImage*) applyDarkEffect
+{
+    UIColor* tintColor = [UIColor colorWithWhite:0.11 alpha:0.73];
     
     return [self applyBlurWithRadius:20 tintColor:tintColor saturationDeltaFactor:1.8 maskImage:nil];
 }
 
-- (UIImage *)applyTintEffectWithColor:(UIColor *)tintColor {
+-(UIImage*) applyTintEffectWithColor:(UIColor*)tintColor
+{
     const CGFloat EffectColorAlpha = 0.6;
-    UIColor *effectColor = tintColor;
+    UIColor* effectColor = tintColor;
     int componentCount = CGColorGetNumberOfComponents(tintColor.CGColor);
     
     if (componentCount == 2) {
@@ -44,7 +48,8 @@
     return [self applyBlurWithRadius:10 tintColor:effectColor saturationDeltaFactor:-1.0 maskImage:nil];
 }
 
-- (UIImage *)applyBlurWithRadius:(CGFloat)blurRadius tintColor:(UIColor *)tintColor saturationDeltaFactor:(CGFloat)saturationDeltaFactor maskImage:(UIImage *)maskImage {
+-(UIImage*) applyBlurWithRadius:(CGFloat)blurRadius tintColor:(UIColor*)tintColor saturationDeltaFactor:(CGFloat)saturationDeltaFactor maskImage:(UIImage*)maskImage
+{
     // Check pre-conditions.
     if (self.size.width < 1 || self.size.height < 1) {
         NSLog (@"*** error: invalid size: (%.2f x %.2f). Both dimensions must be >= 1: %@", self.size.width, self.size.height, self);
@@ -65,7 +70,7 @@
     }
     
     CGRect imageRect = { CGPointZero, self.size };
-    UIImage *effectImage = self;
+    UIImage* effectImage = self;
     
     BOOL hasBlur = blurRadius > __FLT_EPSILON__;
     BOOL hasSaturationChange = fabs(saturationDeltaFactor - 1.) > __FLT_EPSILON__;
@@ -134,7 +139,8 @@
             if (hasBlur) {
                 vImageMatrixMultiply_ARGB8888(&effectOutBuffer, &effectInBuffer, saturationMatrix, divisor, NULL, NULL, kvImageNoFlags);
                 effectImageBuffersAreSwapped = YES;
-            } else {
+            }
+            else {
                 vImageMatrixMultiply_ARGB8888(&effectInBuffer, &effectOutBuffer, saturationMatrix, divisor, NULL, NULL, kvImageNoFlags);
             }
         }
@@ -179,10 +185,11 @@
     }
     
     // Output image is ready.
-    UIImage *outputImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIImage* outputImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
     return outputImage;
 }
+
 
 @end

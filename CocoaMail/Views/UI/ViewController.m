@@ -25,22 +25,24 @@
 #import <Google/SignIn.h>
 #import "DropboxBrowserViewController.h"
 
+
 @interface ViewController () <CocoaButtonDatasource, GIDSignInUIDelegate>
 
-@property (weak, nonatomic) IBOutlet UIView *blackStatusBar;
-@property (weak, nonatomic) IBOutlet UIView *contentView;
+@property (weak, nonatomic) IBOutlet UIView* blackStatusBar;
+@property (weak, nonatomic) IBOutlet UIView* contentView;
 
-@property (nonatomic, strong) NSMutableArray *viewControllers;
+@property (nonatomic, strong) NSMutableArray* viewControllers;
 
-@property (nonatomic, strong) CocoaButton *cocoaButton;
+@property (nonatomic, strong) CocoaButton* cocoaButton;
 @property (nonatomic) BOOL askAccountsButton;
 
 
-@property (nonatomic, weak) UIView *animNextView;
-@property (nonatomic, weak) UIView *animCurrentView;
-@property (nonatomic, weak) UIView *animShadowView;
+@property (nonatomic, weak) UIView* animNextView;
+@property (nonatomic, weak) UIView* animCurrentView;
+@property (nonatomic, weak) UIView* animShadowView;
 
-@property (nonatomic, strong) InViewController *nextVC;
+@property (nonatomic, strong) InViewController* nextVC;
+
 
 @end
 
@@ -48,21 +50,24 @@
 
 static ViewController * s_self;
 
-+ (ViewController *)mainVC {
++(ViewController*) mainVC
+{
     return s_self;
 }
 
-+ (void)presentAlertWIP:(NSString *)message {
-    UIAlertController *ac = [UIAlertController alertControllerWithTitle:nil message:[NSString stringWithFormat:@"WIP : %@", message] preferredStyle:UIAlertControllerStyleAlert];
++(void) presentAlertWIP:(NSString*)message
+{
+    UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil message:[NSString stringWithFormat:@"WIP : %@", message] preferredStyle:UIAlertControllerStyleAlert];
     
-    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"I wait…" style:UIAlertActionStyleDefault
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"I wait…" style:UIAlertActionStyleDefault
                                                           handler:nil];
     [ac addAction:defaultAction];
     
     [s_self presentViewController:ac animated:YES completion:nil];
 }
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     s_self = self;
@@ -78,41 +83,47 @@ static ViewController * s_self;
     
     [self setup];
     
-    CocoaButton *cb = [CocoaButton sharedButton];
+    CocoaButton* cb = [CocoaButton sharedButton];
     cb.center = CGPointMake(self.view.frame.size.width - 30, self.view.frame.size.height - 30);
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;
 }
 
-- (void)didReceiveMemoryWarning {
+-(void) didReceiveMemoryWarning
+{
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
-+ (void)temporaryHideCocoaButton:(BOOL)hide {
++(void) temporaryHideCocoaButton:(BOOL)hide
+{
     [[self mainVC] _manageCocoaButton:!hide];
 }
 
-+ (void)refreshCocoaButton {
++(void) refreshCocoaButton
+{
     [[self mainVC].cocoaButton updateColor];
 }
 
-+ (void)animateCocoaButtonRefresh:(BOOL)anim {
++(void) animateCocoaButtonRefresh:(BOOL)anim
+{
     [[self mainVC].cocoaButton refreshAnimation:anim];
 }
 
-- (void)closeCocoaButtonIfNeeded {
+-(void) closeCocoaButtonIfNeeded
+{
     [self.cocoaButton forceCloseButton];
 }
 
-- (void)setup {
-    FolderViewController *f = [[FolderViewController alloc] init];
+-(void) setup
+{
+    FolderViewController* f = [[FolderViewController alloc] init];
 
     [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-    MailListViewController *inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+    MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
     inbox.view.frame = self.contentView.bounds;
-    UIView *nextView = inbox.view;
+    UIView* nextView = inbox.view;
     
     self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
     
@@ -123,29 +134,30 @@ static ViewController * s_self;
     [self setupNavigation];
     
     
-    UIView *border = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, self.view.frame.size.height)];
+    UIView* border = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, self.view.frame.size.height)];
     border.backgroundColor = [UIColor clearColor];
     border.userInteractionEnabled = YES;
     border.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     
-    UIPanGestureRecognizer *pgr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panBack:)];
+    UIPanGestureRecognizer* pgr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panBack:)];
     [border addGestureRecognizer:pgr];
     
     [self.view addSubview:border];
     
-    UIView *borderN = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width-5, 0, 5, self.view.frame.size.height)];
+    UIView* borderN = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width-5, 0, 5, self.view.frame.size.height)];
     borderN.backgroundColor = [UIColor clearColor];
     borderN.userInteractionEnabled = YES;
     borderN.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleLeftMargin;
     
-    UIPanGestureRecognizer *pgrN = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panNext:)];
+    UIPanGestureRecognizer* pgrN = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panNext:)];
     [borderN addGestureRecognizer:pgrN];
     
     [self.view addSubview:borderN];
 }
 
-- (void)_createShadowViewOverAnimCurrentView {
-    UIImageView *iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"trans_shadow"]];
+-(void) _createShadowViewOverAnimCurrentView
+{
+    UIImageView* iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"trans_shadow"]];
     
     iv.backgroundColor = [UIColor clearColor];
     iv.contentMode = UIViewContentModeScaleToFill;
@@ -156,7 +168,8 @@ static ViewController * s_self;
     self.animShadowView = iv;
 }
 
-- (void)_panBack:(UIPanGestureRecognizer *)pgr {
+-(void) _panBack:(UIPanGestureRecognizer*)pgr
+{
     if (pgr.enabled==NO) {
         return;
     }
@@ -169,10 +182,10 @@ static ViewController * s_self;
     switch (pgr.state) {
         case UIGestureRecognizerStateBegan:
         {
-            InViewController *vc = [self.viewControllers objectAtIndex:self.viewControllers.count - 2];
+            InViewController* vc = [self.viewControllers objectAtIndex:self.viewControllers.count - 2];
             self.animNextView = vc.view;
             
-            InViewController *f = [self.viewControllers lastObject];
+            InViewController* f = [self.viewControllers lastObject];
             self.animCurrentView = f.view;
             
             self.animNextView.userInteractionEnabled = NO;
@@ -195,7 +208,7 @@ static ViewController * s_self;
             CGFloat caped = MAX(0, p.x);
             caped = MIN(caped, self.view.frame.size.width);
             
-            const CGFloat invPourc = 1.f - (caped / self.view.frame.size.width);
+            const CGFloat invPourc = 1.f -(caped / self.view.frame.size.width);
             
             self.animCurrentView.transform = CGAffineTransformMakeTranslation(caped, 0);
             
@@ -214,7 +227,8 @@ static ViewController * s_self;
             
             if (v.x>0) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
-            } else {
+            }
+            else {
                 [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
                 
                 [UIView animateWithDuration:0.2
@@ -251,7 +265,8 @@ static ViewController * s_self;
      */
 }
 
-- (void)_panNext:(UIPanGestureRecognizer *)pgr {
+-(void) _panNext:(UIPanGestureRecognizer*)pgr
+{
     if (pgr.enabled==NO) {
         return;
     }
@@ -259,27 +274,28 @@ static ViewController * s_self;
     switch (pgr.state) {
         case UIGestureRecognizerStateBegan:
         {
-            InViewController *vc = [self.viewControllers lastObject];
+            InViewController* vc = [self.viewControllers lastObject];
             
-            NSArray *infos = [vc nextViewControllerInfos];
+            NSArray* infos = [vc nextViewControllerInfos];
             
             if (infos.count!=2) {
                 return;
             }
             
             
-            NSString *first = [infos firstObject];
+            NSString* first = [infos firstObject];
             
             if ([first isEqualToString:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION]) {
-                AttachmentsViewController *f = [[AttachmentsViewController alloc] init];
+                AttachmentsViewController* f = [[AttachmentsViewController alloc] init];
                 f.conversation = [infos lastObject];
                 
                 self.nextVC = f;
             }
             else if ([first isEqualToString:kPRESENT_SETTINGS_NOTIFICATION]) {
-                SettingsViewController *f = [[SettingsViewController alloc] init];
+                SettingsViewController* f = [[SettingsViewController alloc] init];
                 self.nextVC = f;
-            } else {
+            }
+            else {
                 // is there another case ?
                 return;
             }
@@ -313,7 +329,7 @@ static ViewController * s_self;
             CGFloat caped = MIN(0, p.x);
             caped = MAX(caped, -self.view.frame.size.width);
             
-            CGFloat invPourc = - (caped / self.view.frame.size.width);
+            CGFloat invPourc = -(caped / self.view.frame.size.width);
             
             self.animNextView.transform = CGAffineTransformMakeTranslation(self.view.frame.size.width + caped, 0);
             
@@ -357,7 +373,8 @@ static ViewController * s_self;
                                      [[UIApplication sharedApplication] endIgnoringInteractionEvents];
                                  }];
                 
-            } else {
+            }
+            else {
                 // validate
                 
                 [self _manageCocoaButton:[self.nextVC haveCocoaButton]];
@@ -398,7 +415,8 @@ static ViewController * s_self;
     }
 }
 
-- (BOOL)_checkInteractionAndBlock {
+-(BOOL) _checkInteractionAndBlock
+{
     BOOL already = [[UIApplication sharedApplication] isIgnoringInteractionEvents];
     
     if (already) {
@@ -410,10 +428,11 @@ static ViewController * s_self;
     return NO;
 }
 
-- (void)setupNavigation {
-    [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+-(void) setupNavigation
+{
+    [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
-        AddAccountViewController *f = [[AddAccountViewController alloc] init];
+        AddAccountViewController* f = [[AddAccountViewController alloc] init];
         f.firstRunMode = YES;
         
         if (self.viewControllers.count==1) {
@@ -441,7 +460,7 @@ static ViewController * s_self;
     }];
     
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_FOLDER_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_FOLDER_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -449,22 +468,23 @@ static ViewController * s_self;
         
         [[SearchRunner getSingleton] cancel];
 
-        MailListViewController *f = nil;
-        Person *person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
+        MailListViewController* f = nil;
+        Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
         
         if (person != nil) {
             f = [[MailListViewController alloc] initWithPerson:person];
-        } else {
-            NSNumber *codedType = [notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE];
+        }
+        else {
+            NSNumber* codedType = [notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE];
             f = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
         }
         
         // don't open the same view twice
         BOOL doNothing = NO;
-        InViewController *last = [self.viewControllers lastObject];
+        InViewController* last = [self.viewControllers lastObject];
         
         if ([last isKindOfClass:[MailListViewController class]]) {
-            MailListViewController *mlvc = (MailListViewController *)last;
+            MailListViewController* mlvc = (MailListViewController*)last;
             
             if ([f istheSame:mlvc]) {
                 doNothing = YES;
@@ -473,137 +493,138 @@ static ViewController * s_self;
         
         if (doNothing) {
             [[UIApplication sharedApplication] endIgnoringInteractionEvents];
-        } else {
+        }
+        else {
             [self _animatePushVC:f];
         }
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SETTINGS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SETTINGS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        SettingsViewController *f = [[SettingsViewController alloc] init];
+        SettingsViewController* f = [[SettingsViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        CreditViewController *f = [[CreditViewController alloc] init];
+        CreditViewController* f = [[CreditViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT2_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT2_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        CreditContentViewController *f = [[CreditContentViewController alloc] init];
+        CreditContentViewController* f = [[CreditContentViewController alloc] init];
         f.type = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CLOUD_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CLOUD_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        CloudViewController *f = [[CloudViewController alloc] init];
+        CloudViewController* f = [[CloudViewController alloc] init];
         f.cloudServiceName = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_MAIN_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_MAIN_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        DefaultAccountViewController *f = [[DefaultAccountViewController alloc] init];
+        DefaultAccountViewController* f = [[DefaultAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_SWIPE_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_SWIPE_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        QuickSwipeViewController *f = [[QuickSwipeViewController alloc] init];
+        QuickSwipeViewController* f = [[QuickSwipeViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_NOTIF_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_NOTIF_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        NotificationViewController *f = [[NotificationViewController alloc] init];
+        NotificationViewController* f = [[NotificationViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        AccountViewController *f = [[AccountViewController alloc] init];
+        AccountViewController* f = [[AccountViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ADD_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ADD_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        AddAccountViewController *f = [[AddAccountViewController alloc] init];
+        AddAccountViewController* f = [[AddAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        ConversationViewController *f = [[ConversationViewController alloc] init];
+        ConversationViewController* f = [[ConversationViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        AttachmentsViewController *f = [[AttachmentsViewController alloc] init];
+        AttachmentsViewController* f = [[AttachmentsViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONTACTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONTACTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        ContactsViewController *f = [[ContactsViewController alloc] init];
+        ContactsViewController* f = [[ContactsViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SEARCH_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SEARCH_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        SearchViewController *f = [[SearchViewController alloc] init];
+        SearchViewController* f = [[SearchViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_EDITMAIL_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_EDITMAIL_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        EditMailViewController *f = [[EditMailViewController alloc] init];
+        EditMailViewController* f = [[EditMailViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_DROPBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_DROPBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
         }
         
-        DropboxBrowserViewController *f = [[DropboxBrowserViewController alloc]init];
+        DropboxBrowserViewController* f = [[DropboxBrowserViewController alloc]init];
         f.rootViewDelegate = [notif.userInfo objectForKey:kPRESENT_DELEGATE_KEY];
         f.deliverDownloadNotifications = YES;
         f.shouldDisplaySearchBar = YES;
@@ -611,7 +632,7 @@ static ViewController * s_self;
         //[self _animatePushVC:f];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
         [[SearchRunner getSingleton] cancel];
         
@@ -623,7 +644,7 @@ static ViewController * s_self;
         }
         
         if (self.viewControllers.count>2) {
-            MailListViewController *f = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
+            MailListViewController* f = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
             [self.viewControllers replaceObjectAtIndex:1 withObject:f];
         }
         
@@ -631,7 +652,7 @@ static ViewController * s_self;
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         [[SearchRunner getSingleton] cancel];
 
         if (self.viewControllers.count == 1) {
@@ -642,23 +663,24 @@ static ViewController * s_self;
             return;
         }
         
-        InViewController *vc = [self.viewControllers lastObject];
+        InViewController* vc = [self.viewControllers lastObject];
         [vc cleanBeforeGoingBack];
-        UIView *lastView = vc.view;
+        UIView* lastView = vc.view;
         [self.viewControllers removeLastObject];
         
-        UIView *nextView = nil;
-        InViewController *f = [self.viewControllers lastObject];
+        UIView* nextView = nil;
+        InViewController* f = [self.viewControllers lastObject];
         
         // tweak to realod nav bar after settings view
         if ([vc isKindOfClass:[SettingsViewController class]] && [f isKindOfClass:[FolderViewController class]]) {
-            FolderViewController *f = [[FolderViewController alloc] init];
+            FolderViewController* f = [[FolderViewController alloc] init];
             f.view.frame = self.contentView.bounds;
             nextView = f.view;
             [self.contentView insertSubview:nextView belowSubview:lastView];
             
             self.viewControllers = [NSMutableArray arrayWithObject:f];
-        } else {
+        }
+        else {
             nextView = f.view;
             [self.contentView insertSubview:nextView belowSubview:lastView];
         }
@@ -704,23 +726,24 @@ static ViewController * s_self;
                          }];
     }];
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification *notif){
+    [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
         //[[Parser sharedParser] cleanConversations];
         
         BOOL inFolders = self.viewControllers.count == 1;
         
-        InViewController *vc = [self.viewControllers lastObject];
-        UIView *lastView = vc.view;
+        InViewController* vc = [self.viewControllers lastObject];
+        UIView* lastView = vc.view;
         
-        FolderViewController *f = [[FolderViewController alloc] init];
+        FolderViewController* f = [[FolderViewController alloc] init];
         
-        UIView *nextView = f.view;
+        UIView* nextView = f.view;
         
         if (inFolders) {
             self.viewControllers = [NSMutableArray arrayWithObject:f];
-        } else {
-            MailListViewController *inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
+        }
+        else {
+            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
             inbox.view.frame = self.contentView.bounds;
             nextView = inbox.view;
             
@@ -735,11 +758,12 @@ static ViewController * s_self;
     }];
 }
 
-- (void)_animatePushVC:(InViewController *)nextVC {
-    InViewController *currentVC = [self.viewControllers lastObject];
-    UIView *currentView = currentVC.view;
+-(void) _animatePushVC:(InViewController*)nextVC
+{
+    InViewController* currentVC = [self.viewControllers lastObject];
+    UIView* currentView = currentVC.view;
     
-    UIView *nextView = nextVC.view;
+    UIView* nextView = nextVC.view;
     CGRect frameForSpring = self.contentView.bounds;
     frameForSpring.size.width += 100;
     nextView.frame = frameForSpring;
@@ -780,7 +804,8 @@ static ViewController * s_self;
                      }];
 }
 
-- (void)_manageCocoaButton:(BOOL)appear {
+-(void) _manageCocoaButton:(BOOL)appear
+{
     if (appear) {
         if (self.cocoaButton.alpha == 0.) {
             [self.view addSubview:self.cocoaButton];
@@ -791,7 +816,8 @@ static ViewController * s_self;
                              completion:nil
              ];
         }
-    } else {
+    }
+    else {
         if (self.cocoaButton.alpha == 1.) {
             [UIView animateWithDuration:0.25
                              animations:^{
@@ -806,7 +832,8 @@ static ViewController * s_self;
 }
 // Cocoa button
 
-- (void)_openAccounts {
+-(void) _openAccounts
+{
     [UIView animateWithDuration:0.2 animations:^{
         [self.cocoaButton forceCloseButton];
     }
@@ -817,12 +844,14 @@ static ViewController * s_self;
     
 }
 
-- (void)_editMail {
+-(void) _editMail
+{
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil];
 }
 
-- (void)_search {
-    InViewController *ivc = [self.viewControllers lastObject];
+-(void) _search
+{
+    InViewController* ivc = [self.viewControllers lastObject];
     
     if ([ivc isKindOfClass:[SearchViewController class]]) {
         return;
@@ -831,12 +860,13 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_SEARCH_NOTIFICATION object:nil];
 }
 
-- (NSArray *)buttonsWideFor:(CocoaButton *)cocoabutton {
-    InViewController *currentVC = [self.viewControllers lastObject];
+-(NSArray*) buttonsWideFor:(CocoaButton*)cocoabutton
+{
+    InViewController* currentVC = [self.viewControllers lastObject];
     
     if ([currentVC conformsToProtocol:@protocol(CocoaButtonDatasource)]) {
         id<CocoaButtonDatasource> src = (id<CocoaButtonDatasource>)currentVC;
-        NSArray *res = [src buttonsWideFor:cocoabutton];
+        NSArray* res = [src buttonsWideFor:cocoabutton];
         
         if (res != nil) {
             return res;
@@ -844,41 +874,44 @@ static ViewController * s_self;
     }
     
     
-    UIButton *b1 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
+    UIButton* b1 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b1 setImage:[UIImage imageNamed:@"edit_off"] forState:UIControlStateNormal];
     [b1 setImage:[UIImage imageNamed:@"edit_on"] forState:UIControlStateHighlighted];
     [b1 addTarget:self action:@selector(_editMail) forControlEvents:UIControlEventTouchUpInside];
     
-    UIButton *b2 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
+    UIButton* b2 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b2 setImage:[UIImage imageNamed:@"search_off"] forState:UIControlStateNormal];
     [b2 setImage:[UIImage imageNamed:@"search_on"] forState:UIControlStateHighlighted];
     [b2 addTarget:self action:@selector(_search) forControlEvents:UIControlEventTouchUpInside];
     
-    UIButton *b3 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
+    UIButton* b3 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b3 setImage:[UIImage imageNamed:@"accounts_off"] forState:UIControlStateNormal];
     [b3 setImage:[UIImage imageNamed:@"accounts_on"] forState:UIControlStateHighlighted];
     [b3 addTarget:self action:@selector(_openAccounts) forControlEvents:UIControlEventTouchUpInside];
     
-    NSArray *buttons = @[b1, b2, b3];
+    NSArray* buttons = @[b1, b2, b3];
     
     return buttons;
 }
 
-- (void)_moreAccount {
+-(void) _moreAccount
+{
     [[NSNotificationCenter defaultCenter] postNotificationName:kSETTINGS_ADD_ACCOUNT_NOTIFICATION object:nil];
 }
 
-- (void)_applyAccountButton:(UIButton *)button {
+-(void) _applyAccountButton:(UIButton*)button
+{
     [self.cocoaButton closeHorizontalButton:button refreshCocoaButtonAndDo:^{
         
-        Accounts *A = [Accounts sharedInstance];
+        Accounts* A = [Accounts sharedInstance];
         CCMFolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccountIndex:[A currentAccountIdx]];
         [[A currentAccount] releaseContent];
         A.currentAccountIdx = button.tag;
         
         if (folder.type != FolderTypeUser) {
             [[A currentAccount] setCurrentFolder:folder];
-        } else {
+        }
+        else {
             [[A currentAccount] setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
         }
     
@@ -887,23 +920,24 @@ static ViewController * s_self;
     }];
 }
 
-- (NSArray *)_accountsButtons {
+-(NSArray*) _accountsButtons
+{
     const CGRect baseRect = self.cocoaButton.bounds;
     
-    NSArray *alls = [Accounts sharedInstance].getAllTheAccounts;
-    NSMutableArray *buttons = [NSMutableArray arrayWithCapacity:alls.count];
+    NSArray* alls = [Accounts sharedInstance].getAllTheAccounts;
+    NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:alls.count];
     NSInteger currentAIdx = [Accounts sharedInstance].currentAccountIdx;
     
     NSInteger idx = 0;
     
-    for (Account *a in alls) {
+    for (Account* a in alls) {
         
         if (idx == currentAIdx) {
             idx++;
             continue;
         }
         
-        UIButton *b = [[UIButton alloc] initWithFrame:baseRect];
+        UIButton* b = [[UIButton alloc] initWithFrame:baseRect];
         
         b.backgroundColor = a.userColor;
         [b setTitle:a.codeName forState:UIControlStateNormal];
@@ -921,7 +955,7 @@ static ViewController * s_self;
     
     // more btn
     if (buttons.count<5) {
-        UIButton *b = [[UIButton alloc] initWithFrame:baseRect];
+        UIButton* b = [[UIButton alloc] initWithFrame:baseRect];
         b.backgroundColor = [UIColor blackColor];
         [b setImage:[UIImage imageNamed:@"add_accounts"] forState:UIControlStateNormal];
         [b setImage:[UIImage imageNamed:@"add_accounts"] forState:UIControlStateHighlighted];
@@ -934,18 +968,19 @@ static ViewController * s_self;
     return buttons;
 }
 
-- (NSArray *)buttonsHorizontalFor:(CocoaButton *)cocoabutton {
+-(NSArray*) buttonsHorizontalFor:(CocoaButton*)cocoabutton
+{
     if (self.askAccountsButton) {
         self.askAccountsButton = NO;
         
         return [self _accountsButtons];
     }
     
-    InViewController *currentVC = [self.viewControllers lastObject];
+    InViewController* currentVC = [self.viewControllers lastObject];
     
     if ([currentVC conformsToProtocol:@protocol(CocoaButtonDatasource)]) {
         id<CocoaButtonDatasource> src = (id<CocoaButtonDatasource>)currentVC;
-        NSArray *res = [src buttonsHorizontalFor:cocoabutton];
+        NSArray* res = [src buttonsHorizontalFor:cocoabutton];
         
         if (res!=nil) {
             return res;
@@ -955,8 +990,9 @@ static ViewController * s_self;
     return [self _accountsButtons];
 }
 
-- (BOOL)cocoabuttonLongPress:(CocoaButton *)cocoabutton {
-    InViewController *currentVC = [self.viewControllers lastObject];
+-(BOOL) cocoabuttonLongPress:(CocoaButton*)cocoabutton
+{
+    InViewController* currentVC = [self.viewControllers lastObject];
     
     if ([currentVC conformsToProtocol:@protocol(CocoaButtonDatasource)]) {
         id<CocoaButtonDatasource> src = (id<CocoaButtonDatasource>)currentVC;
@@ -969,8 +1005,9 @@ static ViewController * s_self;
     return YES;
 }
 
-- (BOOL)automaticCloseFor:(CocoaButton *)cocoabutton {
-    InViewController *currentVC = [self.viewControllers lastObject];
+-(BOOL) automaticCloseFor:(CocoaButton*)cocoabutton
+{
+    InViewController* currentVC = [self.viewControllers lastObject];
     
     if ([currentVC conformsToProtocol:@protocol(CocoaButtonDatasource)]) {
         id<CocoaButtonDatasource> src = (id<CocoaButtonDatasource>)currentVC;
@@ -983,13 +1020,15 @@ static ViewController * s_self;
 
 #pragma mark - Background Sync
 
-- (void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler {
-    for (UIViewController *vc in self.viewControllers) {
+-(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler
+{
+    for (UIViewController* vc in self.viewControllers) {
         if ([vc isKindOfClass:[FolderViewController class]]) {
-            [((FolderViewController *)vc) refreshWithCompletionHandler:completionHandler];
+            [((FolderViewController*)vc) refreshWithCompletionHandler:completionHandler];
             break;
         }
     }
 }
+
 
 @end

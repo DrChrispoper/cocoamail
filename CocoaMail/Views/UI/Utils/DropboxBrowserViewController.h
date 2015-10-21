@@ -46,27 +46,28 @@ typedef enum kDBFileConflictError : NSInteger {
 @class DBMetadata;
 @protocol DropboxBrowserDelegate;
 
+
 @interface DropboxBrowserViewController : UITableViewController <UISearchBarDelegate, UISearchDisplayDelegate, UIAlertViewDelegate> {
-    DBRestClient *restClient;
+    DBRestClient* restClient;
 }
 
 /// Dropbox Delegate Property
 @property (nonatomic, weak) id <DropboxBrowserDelegate> rootViewDelegate;
 
 /// The file path that the current DropboxBrowserViewController is at
-@property (nonatomic, copy) NSString *currentPath;
+@property (nonatomic, copy) NSString* currentPath;
 
 /// The list of files currently being displayed in the DropboxBrowserViewController
-@property (nonatomic, strong, readwrite) NSMutableArray *fileList;
+@property (nonatomic, strong, readwrite) NSMutableArray* fileList;
 
 /// Set allowed file types (like a filter). Just create an array of allowed file extensions. Do not set to allow all files
-@property (nonatomic, copy) NSArray *allowedFileTypes;
+@property (nonatomic, copy) NSArray* allowedFileTypes;
 
 /// Set the tableview cell ID for dequeueing
-@property (nonatomic, copy) NSString *tableCellID;
+@property (nonatomic, copy) NSString* tableCellID;
 
 /// Download indicator in UINavigationBar to indicate progress of file download
-@property (strong, nonatomic) UIProgressView *downloadProgressView;
+@property (strong, nonatomic) UIProgressView* downloadProgressView;
 
 /// Set whether or not DBBrowser should deliver notifications to the user about file downloads
 @property BOOL deliverDownloadNotifications;
@@ -75,19 +76,20 @@ typedef enum kDBFileConflictError : NSInteger {
 @property BOOL shouldDisplaySearchBar;
 
 /// Get the currently (or most recently selected) file name
-+ (NSString *)fileName;
++(NSString*) fileName;
 
 /// Check if app is linked to dropbox
-- (BOOL)isDropboxLinked;
+-(BOOL) isDropboxLinked;
 
 /// Download a file from DropboxBrowser and specify whether or not it should be overwritten
-- (BOOL)downloadFile:(DBMetadata *)file replaceLocalVersion:(BOOL)replaceLocalVersion;
+-(BOOL) downloadFile:(DBMetadata*)file replaceLocalVersion:(BOOL)replaceLocalVersion;
 
 /// Create a share link for a specifc file
-- (void)loadShareLinkForFile:(DBMetadata *)file;
+-(void) loadShareLinkForFile:(DBMetadata*)file;
 
 /// Remove DropboxBrowser from the view hierarchy - dismiss DropboxBrowserViewController
-- (void)removeDropboxBrowser;
+-(void) removeDropboxBrowser;
+
 
 @end
 
@@ -101,27 +103,28 @@ typedef enum kDBFileConflictError : NSInteger {
 //----------------------------------------------------------------------------------------//
 
 /// Sent to the delegate when there is a successful file download
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didDownloadFile:(NSString *)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten;
 
 /// Sent to the delegate if DropboxBrowser failed to download file from Dropbox
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didFailToDownloadFile:(NSString *)fileName;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToDownloadFile:(NSString*)fileName;
 
 /// Sent to the delegate if the selected file already exists locally
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser fileConflictWithLocalFile:(NSURL *)localFileURL withDropboxFile:(DBMetadata *)dropboxFile withError:(NSError *)error;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser fileConflictWithLocalFile:(NSURL*)localFileURL withDropboxFile:(DBMetadata*)dropboxFile withError:(NSError*)error;
 
 /// Sent to the delegate when the user selects a file. Implementing this method will require you to download or manage the selection on your own. Otherwise, automatically downloads file if not implemented.
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didSelectFile:(DBMetadata *)file;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didSelectFile:(DBMetadata*)file;
 
 /// Sent to the delegate if the share link is successfully loaded
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didLoadShareLink:(NSString *)link;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didLoadShareLink:(NSString*)link;
 
 /// Sent to the delegate if there was an error creating or loading share link
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser didFailToLoadShareLinkWithError:(NSError *)error;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToLoadShareLinkWithError:(NSError*)error;
 
 /// Sent to the delegate when a file download notification is delivered to the user. You can use this method to record the notification ID so you can clear the notification if ncessary.
-- (void)dropboxBrowser:(DropboxBrowserViewController *)browser deliveredFileDownloadNotification:(UILocalNotification *)notification;
+-(void) dropboxBrowser:(DropboxBrowserViewController*)browser deliveredFileDownloadNotification:(UILocalNotification*)notification;
 
 /// Sent to the delegate after the DropboxBrowserViewController is dismissed by the user - Do \b NOT use this method to dismiss the DropboxBrowser
-- (void)dropboxBrowserDismissed:(DropboxBrowserViewController *)browser;
+-(void) dropboxBrowserDismissed:(DropboxBrowserViewController*)browser;
+
 
 @end

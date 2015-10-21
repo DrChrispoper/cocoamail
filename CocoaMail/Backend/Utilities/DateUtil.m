@@ -20,8 +20,9 @@ static DateUtil * singleton = nil;
 @synthesize yesterdayComponents;
 @synthesize dateFormatter;
 
-- (void)refreshData {
-	NSCalendar *gregorian = [NSCalendar currentCalendar];
+-(void) refreshData
+{
+	NSCalendar* gregorian = [NSCalendar currentCalendar];
 	self.today = [NSDate date];
 	self.yesterday = [today dateByAddingTimeInterval:-DATE_UTIL_SECS_PER_DAY];
 	self.lastWeek = [today dateByAddingTimeInterval:- 6 * DATE_UTIL_SECS_PER_DAY];
@@ -30,7 +31,8 @@ static DateUtil * singleton = nil;
 	self.dateFormatter = [[NSDateFormatter alloc] init];
 }
 
-- (id)init {
+-(id) init
+{
 	if (self = [super init]) {	
 		[self refreshData];
 	}
@@ -38,7 +40,8 @@ static DateUtil * singleton = nil;
 	return self;
 }
 
-+ (id)getSingleton {
++(id) getSingleton
+{
 	@synchronized(self) {
 		if (singleton == nil) {
 			singleton = [[self alloc] init];
@@ -48,10 +51,11 @@ static DateUtil * singleton = nil;
 	return singleton;
 }
 
-- (NSString *)humanDate:(NSDate *)date {
-	/*NSCalendar *gregorian = [NSCalendar currentCalendar];
+-(NSString*) humanDate:(NSDate*)date
+{
+	/*NSCalendar* gregorian = [NSCalendar currentCalendar];
 	
-	NSDateComponents *dateComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:date];
+	NSDateComponents* dateComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:date];
 	
 	if([dateComponents day] == [todayComponents day] &&
 	   [dateComponents month] == [todayComponents month] && 
@@ -77,24 +81,27 @@ static DateUtil * singleton = nil;
 	return [dateFormatter stringFromDate:date];
 }
 
-- (NSString *)time:(NSDate *)date {
+-(NSString*) time:(NSDate*)date
+{
     [dateFormatter setDateFormat:@"HH:mm"];
     
     return [dateFormatter stringFromDate:date];
 }
 
-+ (NSDate *)datetimeInLocal:(NSDate *)utcDate {
-	NSTimeZone *utc = [NSTimeZone timeZoneWithName:@"UTC"];
++(NSDate*) datetimeInLocal:(NSDate*)utcDate
+{
+	NSTimeZone* utc = [NSTimeZone timeZoneWithName:@"UTC"];
 	
-	NSTimeZone *local = [NSTimeZone localTimeZone];
+	NSTimeZone* local = [NSTimeZone localTimeZone];
 	
 	NSInteger sourceSeconds = [utc secondsFromGMTForDate:utcDate];
 	NSInteger destinationSeconds = [local secondsFromGMTForDate:utcDate];
 	
 	NSTimeInterval interval =  destinationSeconds - sourceSeconds;
-	NSDate *res = [[NSDate alloc] initWithTimeInterval:interval sinceDate:utcDate];
+	NSDate* res = [[NSDate alloc] initWithTimeInterval:interval sinceDate:utcDate];
     
 	return res;
 }
+
 
 @end

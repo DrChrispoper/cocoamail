@@ -9,21 +9,23 @@
 #import <Foundation/Foundation.h>
 #import "PDKeychainBindings.h"
 
+
 @interface PDKeychainBindingsController : NSObject {
     
 @private
-    PDKeychainBindings *_keychainBindings;
-    NSMutableDictionary *_valueBuffer;
+    PDKeychainBindings* _keychainBindings;
+    NSMutableDictionary* _valueBuffer;
 }
 
-+ (PDKeychainBindingsController *)sharedKeychainBindingsController;
-- (PDKeychainBindings *)keychainBindings;
++(PDKeychainBindingsController*) sharedKeychainBindingsController;
+-(PDKeychainBindings*) keychainBindings;
 
-- (id)values;    // accessor object for PDKeychainBindings values. This property is observable using key-value observing.
+-(id) values;    // accessor object for PDKeychainBindings values. This property is observable using key-value observing.
 
-- (NSString *)stringForKey:(NSString *)key;
-- (BOOL)storeString:(NSString *)string forKey:(NSString *)key;
-- (BOOL)storeString:(NSString *)string forKey:(NSString *)key accessibleAttribute:(CFTypeRef)accessibleAttribute;
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath accessibleAttribute:(CFTypeRef)accessibleAttribute;
+-(NSString*) stringForKey:(NSString*)key;
+-(BOOL) storeString:(NSString*)string forKey:(NSString*)key;
+-(BOOL) storeString:(NSString*)string forKey:(NSString*)key accessibleAttribute:(CFTypeRef)accessibleAttribute;
+-(void) setValue:(id)value forKeyPath:(NSString*)keyPath accessibleAttribute:(CFTypeRef)accessibleAttribute;
+
 
 @end

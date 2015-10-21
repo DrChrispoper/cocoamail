@@ -21,16 +21,17 @@
 
 @protocol SingleMailViewDelegate <NSObject>
 
-- (Mail*)mailDisplayed:(SingleMailView*)mailView;
-- (void)mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
-- (void)makeConversationFav:(BOOL)isFav;
-- (void)openURL:(NSURL *)url;
-- (void)shareAttachment:(Attachment*)att;
+-(Mail*) mailDisplayed:(SingleMailView*)mailView;
+-(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
+-(void) makeConversationFav:(BOOL)isFav;
+-(void) openURL:(NSURL*)url;
+-(void) shareAttachment:(Attachment*)att;
 
 @end
 
+
 @interface ConversationViewController () <UIScrollViewDelegate, SingleMailViewDelegate, UserFolderViewControllerDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, UIDocumentInteractionControllerDelegate> {
-    NSArray *_activityItems;
+    NSArray* _activityItems;
 }
 
 @property (nonatomic, weak) UIView* contentView;
@@ -43,6 +44,7 @@
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 
 @end
+
 
 @interface SingleMailView : UIView <MCOMessageViewDelegate, CCMAttachmentViewDelegate>
 
@@ -67,12 +69,14 @@
 
 @implementation ConversationViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
     //
     Persons* p = [Persons sharedInstance];
+    
     if (p.idxMorePerson == 0) {
         Person* more = [Person createWithName:nil email:nil icon:[UIImage imageNamed:@"recipients_off"] codeName:nil];
         p.idxMorePerson = [p addPerson:more];
@@ -103,12 +107,10 @@
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     self.scrollView.delegate = nil;    
 }
-
 
 -(void) _attach
 {
@@ -147,13 +149,13 @@
     [lbl sizeToFit];
     
     CGRect tf = lbl.frame;
-    tf.size = CGSizeMake(self.view.bounds.size.width-16, tf.size.height+36);
+    tf.size = CGSizeMake(self.view.bounds.size.width - 16, tf.size.height + 36);
     tf.origin = CGPointMake(8, -tf.size.height + 30);
     lbl.frame = tf;
     
     UIView* supportTitle = [[UIView alloc] initWithFrame:tf];
     
-    supportTitle.backgroundColor = [UIColor colorWithWhite:180./255. alpha:1.0];
+    supportTitle.backgroundColor = [UIColor colorWithWhite:180. / 255. alpha:1.0];
     supportTitle.layer.cornerRadius = 20;
     supportTitle.layer.masksToBounds = YES;
     
@@ -171,6 +173,7 @@
     self.allMailViews = [NSMutableArray arrayWithCapacity:self.conversation.mails.count];
     
     NSInteger idx = 0;
+    
     for (Mail* m in self.conversation.mails) {
     
         NSString* day = m.day;
@@ -207,7 +210,6 @@
     self.scrollView = sv;
 }
 
-
 -(Mail*) mailDisplayed:(SingleMailView*)mailView;
 {
     return self.conversation.mails[mailView.idxInConversation];
@@ -222,7 +224,6 @@
         [smv updateFavUI:isFav];
     }
 }
-
 
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight
 {
@@ -254,9 +255,9 @@
     self.scrollView.contentSize = self.contentView.frame.size;
 }
 
-- (void)openURL:(NSURL *)url
+-(void) openURL:(NSURL*)url
 {
-    QLPreviewController *previewController = [[QLPreviewController alloc]init];
+    QLPreviewController* previewController = [[QLPreviewController alloc]init];
     previewController.delegate = self;
     previewController.dataSource = self;
     previewController.currentPreviewItemIndex = 0;
@@ -267,31 +268,32 @@
 }
 
 #pragma mark - QLPreviewControllerDataSource
-- (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)previewController
+
+-(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
 {
     return _activityItems.count;
 }
 
-- (id)previewController:(QLPreviewController *)previewController previewItemAtIndex:(NSInteger)index
+-(id) previewController:(QLPreviewController*)previewController previewItemAtIndex:(NSInteger)index
 {
     return _activityItems[index];
 }
 
-- (void)previewControllerWillDismiss:(QLPreviewController *)controller
+-(void) previewControllerWillDismiss:(QLPreviewController*)controller
 {
     //    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     //    [self setNeedsStatusBarAppearanceUpdate];
 }
 
-- (void)shareAttachment:(Attachment*)att
+-(void) shareAttachment:(Attachment*)att
 {
-    NSString *filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+    NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
     [att.data writeToFile:filePath atomically:YES];
-    NSURL *URL = [NSURL fileURLWithPath:filePath];
+    NSURL* URL = [NSURL fileURLWithPath:filePath];
     
-    UIDocumentInteractionController *documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
+    UIDocumentInteractionController* documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
     documentInteractionController.delegate = self;
-    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0 ,0 , 0, 0) inView:self.view animated:YES];
+    [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0, 0, 0, 0) inView:self.view animated:YES];
      
 }
 
@@ -313,8 +315,6 @@
     
     return posY + height + 2;
 }
-
-
 
 -(CGFloat) _addHeaderDay:(NSString*)day hour:(NSString*)hour atYPos:(CGFloat)posY inView:(UIView*)v
 {
@@ -341,14 +341,13 @@
     [support addSubview:lblH];
     
     if (posY>50.f) {
-        UIView* line = [[UIView alloc] initWithFrame:CGRectMake(WIDTH/2.f - 1.f, -2.f, 2.f, 21.f)];
+        UIView* line = [[UIView alloc] initWithFrame:CGRectMake(WIDTH / 2.f - 1.f, -2.f, 2.f, 21.f)];
         line.backgroundColor = [UIColor whiteColor];
         [support addSubview:line];
     }
     
     return posY + 19.f;
 }
-
 
 -(NSArray*) buttonsWideFor:(CocoaButton*)cocoabutton
 {
@@ -399,7 +398,8 @@
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
     SEL selector = NSSelectorFromString(@"deleteRow:");
-    if([EmailProcessor getSingleton].updateSubscriber != nil && [[EmailProcessor getSingleton].updateSubscriber respondsToSelector:selector]) {
+    
+    if ([EmailProcessor getSingleton].updateSubscriber != nil && [[EmailProcessor getSingleton].updateSubscriber respondsToSelector:selector]) {
         ((void (*)(id, SEL, Conversation*))[[EmailProcessor getSingleton].updateSubscriber methodForSelector:selector])([EmailProcessor getSingleton].updateSubscriber, selector,self.conversation);
     }
 
@@ -409,9 +409,6 @@
     
     [[CocoaButton sharedButton] forceCloseButton];
 }
-
-
-
 
 -(void) _chooseAction:(UIButton*)button
 {
@@ -490,25 +487,19 @@
     return nil;
 }
 
--(BOOL) automaticCloseFor:(CocoaButton *)cocoabutton
+-(BOOL) automaticCloseFor:(CocoaButton*)cocoabutton
 {
     return YES;
 }
 
--(BOOL) cocoabuttonLongPress:(CocoaButton *)cocoabutton
+-(BOOL) cocoabuttonLongPress:(CocoaButton*)cocoabutton
 {
     return NO;
 }
 
 @end
 
-
-
-
-
-
 @implementation SingleMailView
-
 
 -(void) setupWithText:(NSString*)texte extended:(BOOL)extended;
 {
@@ -548,6 +539,7 @@
     if (extended) {
         
         NSArray* subarray = mail.toPersonID;
+        
         if (mail.toPersonID.count>3) {
             NSRange r;
             r.length = 2;
@@ -602,7 +594,7 @@
         //UIFont* textFont = [UIFont systemFontOfSize:16];
         
         //CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
-        CGSize size = CGSizeMake(WIDTH - 30,  ([UIScreen mainScreen].bounds.size.height/2));
+        CGSize size = CGSizeMake(WIDTH - 30,  ([UIScreen mainScreen].bounds.size.height / 2));
 
         size.width = ceilf(size.width);
         size.height = ceilf(size.height);
@@ -621,8 +613,8 @@
         }
         else {*/
             if (!self.htmlView) {
-                self.height = size.height = ([UIScreen mainScreen].bounds.size.height/2);
-                MCOMessageView *view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
+                self.height = size.height = ([UIScreen mainScreen].bounds.size.height / 2);
+                MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
                 [view setHtml:mail.email.htmlBody];
                 view.delegate = self;
                 self.htmlView = view;
@@ -649,6 +641,7 @@
         n.frame = f;
 
         UIView* av = [self _createAttachments:mail.attachments];
+        
         if (av != nil) {
             
             CGRect f = inIV.frame;
@@ -683,11 +676,12 @@
 
     
     self.favoriBtn = nil;
+    
     if (extended) {
         NSArray* btns = @[@"unread_o", @"forward_o", @"reply_o", @"replyall_o", @"cell_favoris_o"];
         
         
-        CGRect baseFrame = CGRectMake(5.5f, height-33.f-5.5f, 33.f, 33.f);
+        CGRect baseFrame = CGRectMake(5.5f, height - 33.f - 5.5f, 33.f, 33.f);
         
         CGFloat stepX = ((inIV.frame.size.width - 33.f - 5.5f) - baseFrame.origin.x ) / 4.f;
         
@@ -734,7 +728,6 @@
     self.favori.highlighted = isFav;
 }
 
-
 -(UIView*) _createAttachments:(NSArray*)attachs
 {
     if (attachs.count == 0) {
@@ -750,6 +743,7 @@
     CGFloat posY = 0.f;
     
     NSInteger idx = 0;
+    
     for (Attachment* a in attachs) {
         
         AttachmentView* av = [[AttachmentView alloc] initWithWidth:WIDTH-32 leftMarg:0];
@@ -773,12 +767,10 @@
     line.backgroundColor = [UIGlobal standardLightGrey];
     [v addSubview:line];
     
-    
     return v;
 }
 
-
--(void)_openEdit:(UIButton*)button
+-(void) _openEdit:(UIButton*)button
 {
     Mail* m = [self.delegate mailDisplayed:self];
     
@@ -810,8 +802,6 @@
     [mail toggleFav];
     [self.delegate makeConversationFav:!mail.isFav];
 }
-
-
 
 -(void) _extend:(UITapGestureRecognizer*)tgr
 {
@@ -871,24 +861,24 @@
     
 }
 
-- (void)webViewLoaded:(UIWebView*)webView
+-(void) webViewLoaded:(UIWebView*)webView
 {
     self.height = webView.frame.size.height;
     
     CGFloat oldFrame = self.frame.size.height;
 
-    CCMLog(@"Height:%f",self.height);
+    CCMLog(@"Height:%f", self.height);
     
     [self setupWithText:nil extended:YES];
     
     CGFloat nextHeight = self.bounds.size.height;
     
-    CCMLog(@"BoundsHeight:%f",nextHeight);
-    CCMLog(@"FrameHeight:%f",oldFrame);
+    CCMLog(@"BoundsHeight:%f", nextHeight);
+    CCMLog(@"FrameHeight:%f", oldFrame);
     
     CGFloat diff = nextHeight - oldFrame;
     
-    CCMLog(@"DiffHeight:%f",diff);
+    CCMLog(@"DiffHeight:%f", diff);
 
     
     CGRect f = self.frame;
@@ -898,17 +888,17 @@
     [self.delegate mailView:self changeHeight:diff];
 }
 
-- (void)openURL:(NSURL *)url
+-(void) openURL:(NSURL*)url
 {
     [self.delegate openURL:url];
 }
 
-- (void)shareAttachment:(Attachment*)att
+-(void) shareAttachment:(Attachment*)att
 {
     [self.delegate shareAttachment:att];
 }
 
-- (MCOAttachment *)partForUniqueID:(NSString *)partID
+-(MCOAttachment*) partForUniqueID:(NSString*)partID
 {
     for (Mail* mail in ((ConversationViewController*)self.delegate).conversation.mails) {
         for (Attachment* att in mail.attachments) {
@@ -916,7 +906,7 @@
             if (att.isInline && [att.contentID isEqualToString:partID]) {
             /*if(!att.data){
              
-             MCOIMAPFetchContentOperation * op = [[ImapSync sharedServices].imapSession fetchMessageAttachmentOperationWithFolder:[AppSettings folderName:[AppSettings activeFolder]]
+             MCOIMAPFetchContentOperation*  op = [[ImapSync sharedServices].imapSession fetchMessageAttachmentOperationWithFolder:[AppSettings folderName:[AppSettings activeFolder]]
              uid:[UidEntry getUidEntryWithFolder:[AppSettings activeFolder] msgId:att.msgId].uid
              partID:att.partID
              encoding:MCOEncodingBase64];
@@ -924,7 +914,7 @@
              CCMLog(@"%u, %u", current,maximum);
              };
              
-             [op start:^(NSError * error, NSData * partData) {
+             [op start:^(NSError*  error, NSData*  partData) {
              if(error){
              CCMLog(@"%@",error);
              return;
@@ -938,10 +928,12 @@
             
                 MCOAttachment* attM = [[MCOAttachment alloc]init];
                 attM.data = att.data;
+                
                 return attM;
             }
         }
     }
+    
     return nil;
 }
 

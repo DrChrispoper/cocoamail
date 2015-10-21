@@ -16,38 +16,42 @@ static PDKeychainBindingsController * sharedInstance = nil;
 #pragma mark -
 #pragma mark Keychain Access
 
-- (NSString *)serviceName {
+-(NSString*) serviceName
+{
     return [[NSBundle mainBundle] bundleIdentifier];
 }
 
-- (NSString *)stringForKey:(NSString *)key {
+-(NSString*) stringForKey:(NSString*)key
+{
     OSStatus status;
-    NSDictionary *query = @{(__bridge id)kSecReturnData:(NSNumber *)kCFBooleanTrue,
+    NSDictionary* query = @{(__bridge id)kSecReturnData:(NSNumber*)kCFBooleanTrue,
                             (__bridge id)kSecClass:(__bridge id)kSecClassGenericPassword,
                             (__bridge id)kSecAttrAccount:key,
                             (__bridge id)kSecAttrService:[self serviceName]};
     
     CFDataRef stringData = NULL;
-    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&stringData);
+    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef*)&stringData);
 
     if (status) {
         return nil;
     }
     
-    NSString *string = [[NSString alloc] initWithData:(__bridge id)stringData encoding:NSUTF8StringEncoding];
+    NSString* string = [[NSString alloc] initWithData:(__bridge id)stringData encoding:NSUTF8StringEncoding];
     CFRelease(stringData);
 
     return string;
 }
 
-- (BOOL)storeString:(NSString *)string forKey:(NSString *)key {
+-(BOOL) storeString:(NSString*)string forKey:(NSString*)key
+{
     return [self storeString:string forKey:key accessibleAttribute:kSecAttrAccessibleWhenUnlocked];
 }
 
-- (BOOL)storeString:(NSString *)string forKey:(NSString *)key accessibleAttribute:(CFTypeRef)accessibleAttribute {
+-(BOOL) storeString:(NSString*)string forKey:(NSString*)key accessibleAttribute:(CFTypeRef)accessibleAttribute
+{
     if (!string)  {
         //Need to delete the Key
-        NSDictionary *spec = @{(__bridge id)kSecClass:(__bridge id)kSecClassGenericPassword,
+        NSDictionary* spec = @{(__bridge id)kSecClass:(__bridge id)kSecClassGenericPassword,
                                (__bridge id)kSecAttrAccount:key,
                                (__bridge id)kSecAttrService:[self serviceName]};
         
@@ -58,9 +62,10 @@ static PDKeychainBindingsController * sharedInstance = nil;
         }
         
         return !result;
-    } else {
-        NSData *stringData = [string dataUsingEncoding:NSUTF8StringEncoding];
-        NSDictionary *spec = @{(__bridge id)kSecClass:(__bridge id)kSecClassGenericPassword,
+    }
+    else {
+        NSData* stringData = [string dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary* spec = @{(__bridge id)kSecClass:(__bridge id)kSecClassGenericPassword,
                                (__bridge id)kSecAttrAccount:key,
                                (__bridge id)kSecAttrService:[self serviceName]};
         
@@ -74,7 +79,7 @@ static PDKeychainBindingsController * sharedInstance = nil;
             return !result;
         }
         else if ([self stringForKey:key]) {
-            NSDictionary *update = @{
+            NSDictionary* update = @{
                                      (__bridge id)kSecAttrAccessible:(__bridge id)accessibleAttribute,
                                      (__bridge id)kSecValueData:stringData
                                      };
@@ -86,8 +91,9 @@ static PDKeychainBindingsController * sharedInstance = nil;
             }
             
             return !result;
-        } else {
-            NSMutableDictionary *data = [NSMutableDictionary dictionaryWithDictionary:spec];
+        }
+        else {
+            NSMutableDictionary* data = [NSMutableDictionary dictionaryWithDictionary:spec];
             data[(__bridge id)kSecValueData] = stringData;
             data[(__bridge id)kSecAttrAccessible] = (__bridge id)accessibleAttribute;
             OSStatus result = SecItemAdd((__bridge CFDictionaryRef)data, NULL);
@@ -104,7 +110,8 @@ static PDKeychainBindingsController * sharedInstance = nil;
 #pragma mark -
 #pragma mark Singleton Stuff
 
-+ (PDKeychainBindingsController *)sharedKeychainBindingsController {
++(PDKeychainBindingsController*) sharedKeychainBindingsController
+{
     static dispatch_once_t onceQueue;
     
     dispatch_once(&onceQueue, ^{
@@ -117,7 +124,8 @@ static PDKeychainBindingsController * sharedInstance = nil;
 #pragma mark -
 #pragma mark Business Logic
 
-- (PDKeychainBindings *)keychainBindings {
+-(PDKeychainBindings*) keychainBindings
+{
     if (_keychainBindings == nil) {
         _keychainBindings = [[PDKeychainBindings alloc] init];
     }
@@ -129,7 +137,8 @@ static PDKeychainBindingsController * sharedInstance = nil;
     return _keychainBindings;
 }
 
-- (id)values {
+-(id) values
+{
     if (_valueBuffer==nil) {
         _valueBuffer = [[NSMutableDictionary alloc] init];
     }
@@ -137,13 +146,14 @@ static PDKeychainBindingsController * sharedInstance = nil;
     return _valueBuffer;
 }
 
-- (id)valueForKeyPath:(NSString *)keyPath {
+-(id) valueForKeyPath:(NSString*)keyPath
+{
     NSRange firstSeven = NSMakeRange(0, 7);
     
     if (NSEqualRanges([keyPath rangeOfString:@"values."], firstSeven)) {
         //This is a values keyPath, so we need to check the keychain
-        NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
-        NSString *retrievedString = [self stringForKey:subKeyPath];
+        NSString* subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
+        NSString* retrievedString = [self stringForKey:subKeyPath];
         
         if (retrievedString) {
             if (!_valueBuffer[subKeyPath] || ![_valueBuffer[subKeyPath] isEqualToString:retrievedString]) {
@@ -156,17 +166,19 @@ static PDKeychainBindingsController * sharedInstance = nil;
     return [super valueForKeyPath:keyPath];
 }
 
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath {
+-(void) setValue:(id)value forKeyPath:(NSString*)keyPath
+{
     [self setValue:value forKeyPath:keyPath accessibleAttribute:kSecAttrAccessibleWhenUnlocked];
 }
 
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath accessibleAttribute:(CFTypeRef)accessibleAttribute {
+-(void) setValue:(id)value forKeyPath:(NSString*)keyPath accessibleAttribute:(CFTypeRef)accessibleAttribute
+{
     NSRange firstSeven = NSMakeRange(0, 7);
     
     if (NSEqualRanges([keyPath rangeOfString:@"values."], firstSeven)) {
         //This is a values keyPath, so we need to check the keychain
-        NSString *subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
-        NSString *retrievedString = [self stringForKey:subKeyPath];
+        NSString* subKeyPath = [keyPath stringByReplacingCharactersInRange:firstSeven withString:@""];
+        NSString* retrievedString = [self stringForKey:subKeyPath];
         
         if (retrievedString) {
             if (![value isEqualToString:retrievedString]) {
@@ -185,5 +197,6 @@ static PDKeychainBindingsController * sharedInstance = nil;
     } 
     [super setValue:value forKeyPath:keyPath];
 }
+
 
 @end

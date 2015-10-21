@@ -35,7 +35,8 @@ static EmailProcessor * singleton = nil;
 BOOL firstOne = YES; // caused effect: Don't endTransaction when we're just starting
 BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, don't wrap the first ADDS_PER_TRANSACTION calls into a transaction
 
-+ (EmailProcessor *)getSingleton {
++(EmailProcessor*) getSingleton
+{
 	@synchronized(self) {
 		if (singleton == nil) {
 			singleton = [[self alloc] init];
@@ -45,19 +46,20 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	return singleton;
 }
 
-- (id)init {
+-(id) init
+{
 	self = [super init];
 	
 	if (self) {
 		self.shuttingDown = NO;
 		
-		NSOperationQueue *ops = [[NSOperationQueue alloc] init];
+		NSOperationQueue* ops = [[NSOperationQueue alloc] init];
 		[ops setMaxConcurrentOperationCount:1]; // note that this makes it a simple, single queue
 		self.operationQueue = ops;
 		
-        NSLocale *enUSPOSIXLocale;
+        NSLocale* enUSPOSIXLocale;
         enUSPOSIXLocale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-		NSDateFormatter *df = [[NSDateFormatter alloc] init];
+		NSDateFormatter* df = [[NSDateFormatter alloc] init];
         [df setLocale:enUSPOSIXLocale];
 		[df setDateFormat:@"yyyy-MM-dd HH:mm:ss.SSSS"];
 		self.dbDateFormatter = df;
@@ -72,12 +74,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 #pragma mark AddEmailDB Management stuff
 
-- (void)rolloverAddEmailDBTo:(NSInteger)dbNum {
-	[[(EmailDBAccessor *)[EmailDBAccessor sharedManager] databaseQueue] close];
+-(void) rolloverAddEmailDBTo:(NSInteger)dbNum
+{
+	[[(EmailDBAccessor*)[EmailDBAccessor sharedManager] databaseQueue] close];
 	
 	// create new, empty db file
-	NSString *fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
-	NSString *dbPath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
+	NSString* fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
+	NSString* dbPath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
     
 	if (![[NSFileManager defaultManager] fileExistsAtPath:dbPath]) {
         [[NSFileManager defaultManager] createFileAtPath:dbPath contents:nil attributes:@{NSFileProtectionKey: NSFileProtectionNone}];
@@ -88,11 +91,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     [Email tableCheck];
 }
 
-+ (NSInteger)folderCountLimit {
++(NSInteger) folderCountLimit
+{
 	return FOLDER_COUNT_LIMIT;
 }
 
-+ (NSInteger)dbNumForDate:(NSDate *)date {
++(NSInteger) dbNumForDate:(NSDate*)date
+{
 	double timeSince1970 = [date timeIntervalSince1970];
 	
 	NSInteger dbNum = (NSInteger)(floor(timeSince1970 / SECONDS_PER_DAY / 3.0)) * 100; // The *100 is to avoid overlap with date files from the past
@@ -102,7 +107,8 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	return dbNum;
 }
 
-- (void)switchToDBNum:(NSInteger)dbNum {
+-(void) switchToDBNum:(NSInteger)dbNum
+{
     if (self.shuttingDown) {
         return;
     }
@@ -123,7 +129,8 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 		addsSinceTransaction = 0;
 		currentDBNum = dbNum;
 		firstOne = NO;
-	} else {
+	}
+    else {
 		// have we exceeded the number of adds between transactions?
 		addsSinceTransaction += 1;
 		BOOL nextTransaction = (addsSinceTransaction >= ADDS_PER_TRANSACTION);
@@ -141,16 +148,18 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	}
 }
 
-- (void)addToFolderWrapper:(UidEntry *)data {
+-(void) addToFolderWrapper:(UidEntry*)data
+{
 	[UidEntry addUid:data];
 }
 
-- (void)updateFlag:(NSMutableArray *)datas {
+-(void) updateFlag:(NSMutableArray*)datas
+{
     if (self.shuttingDown) {
         return;
     }
     
-    for (Email *email in datas) {
+    for (Email* email in datas) {
         [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
         [Email updateEmailFlag:email];
     }
@@ -158,17 +167,18 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     SEL selector = NSSelectorFromString(@"deliverUpdate:");
     
     if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
-        ((void ( *)(id, SEL, NSArray *))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
+        ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
         //[self.updateSubscriber performSelector:selector withObject:datas];
 	}
 }
 
-- (void)removeFromFolderWrapper:(NSArray *)datas {
+-(void) removeFromFolderWrapper:(NSArray*)datas
+{
     if (self.shuttingDown) {
         return;
     }
     
-	for (Email *email in datas) {
+	for (Email* email in datas) {
         [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
         [UidEntry removeFromFolderUid:[email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]];
     }
@@ -176,19 +186,21 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     SEL selector = NSSelectorFromString(@"deliverDelete:");
     
     if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
-        ((void ( *)(id, SEL, NSArray *))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
+        ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
 		//[self.updateSubscriber performSelector:selector withObject:datas];
 	}
 }
 
-- (void)addEmailWrapper:(Email *)email {
+-(void) addEmailWrapper:(Email*)email
+{
 	// Note that there should be no parallel accesses to addEmailWrapper
     [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
 	[self addEmail:email];
     [self addAttachments:email.attachments];
 }
 
-- (void)addEmail:(Email *)email {
+-(void) addEmail:(Email*)email
+{
     if (self.shuttingDown) {
         return;
     }
@@ -196,8 +208,10 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	[UidEntry addUid:email.uids[0]];
 }
 
-- (void)addAttachments:(NSArray *)atts {
+-(void) addAttachments:(NSArray*)atts
+{
     [CCMAttachment addAttachments:atts];
 }
+
 
 @end

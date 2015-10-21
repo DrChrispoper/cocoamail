@@ -14,10 +14,11 @@
 #import "SyncManager.h"
 #import "Mail.h"
 
+
 @interface FolderViewController () <UITableViewDataSource, UITableViewDelegate>
 {
     CRefreshCompletionHandler _completionHandler;
-    NSMutableSet *_cachedEmailIDs;
+    NSMutableSet* _cachedEmailIDs;
 }
 
 @property (nonatomic, weak) UITableView* table;
@@ -26,7 +27,8 @@
 
 @implementation FolderViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
@@ -46,9 +48,9 @@
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
-                                                                       screenBounds.size.height-20)
+                                                                       screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
-    table.contentInset = UIEdgeInsetsMake(44-30, 0, 60, 0);
+    table.contentInset = UIEdgeInsetsMake(44 - 30, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
     
     table.backgroundColor = [UIGlobal standardLightGrey];
@@ -65,7 +67,6 @@
     
     //[self addPullToRefreshWithDelta:30];
 }
-
 
 -(void) viewDidAppear:(BOOL)animated
 {
@@ -87,27 +88,26 @@
 
 #pragma mark - Table Datasource
 
-
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
     return (ac.userFolders.count>0) ? 2 : 1;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
     return (section==0) ? [[Accounts sharedInstance].currentAccount systemFolderNames].count : ac.userFolders.count;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     return (indexPath.row==0) ? 44.5f : 44.0f;
 }
 
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     UITableViewCell* cell;
     
@@ -145,7 +145,7 @@
         
         if (colorBubble != nil && count>0) {
             
-            UILabel* counter = [[UILabel alloc] initWithFrame:CGRectMake(100, (cell.frame.size.height-23)/2, 200, 23)];
+            UILabel* counter = [[UILabel alloc] initWithFrame:CGRectMake(100, (cell.frame.size.height - 23) / 2, 200, 23)];
             counter.backgroundColor = colorBubble;
             counter.text = [NSString stringWithFormat:@"%lu", (unsigned long)count];
             
@@ -184,7 +184,7 @@
         
         if (indentation) {
             NSRange rangeofSub = [text rangeOfString:@"/"];
-            text = [text substringFromIndex:rangeofSub.location+1];
+            text = [text substringFromIndex:rangeofSub.location + 1];
         }
         
         NSString* reuseID = @"kCellAccountPerso";
@@ -208,27 +208,27 @@
     return cell;
 }
 
--(NSString*)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+-(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
     return (section==0) ? nil : @"My Folders";
 }
 
-
 #pragma mark Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 30;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     CCMFolderType type;
+    
     if (indexPath.section == 0) {
         type.type = indexPath.row;
         type.idx = 0;
@@ -246,17 +246,16 @@
 
 #pragma mark - Background SyncWupsWup
 
-- (void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler
+-(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler
 {
     _completionHandler = completionHandler;
     
     BOOL __block hasNewEmail = NO;
     [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email *email) {
-        if (![_cachedEmailIDs containsObject:email.msgId])
-        {
+     subscribeNext:^(Email* email) {
+        if (![_cachedEmailIDs containsObject:email.msgId]) {
             hasNewEmail = YES;
-            CCMLog(@"Adding emails in cache: %@",email.subject);
+            CCMLog(@"Adding emails in cache: %@", email.subject);
 
             [_cachedEmailIDs addObject:email.msgId];
             
@@ -264,7 +263,7 @@
             [conv addMail:[Mail mail:email]];
             [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
         }
-    } error:^(NSError *error) {
+    } error:^(NSError* error) {
         _completionHandler(hasNewEmail);
     } completed:^{
         _completionHandler(hasNewEmail);

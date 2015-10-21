@@ -10,14 +10,16 @@
 
 @class Account;
 
+
 @interface EditCocoaButtonView : UIView
 
-@property (nonatomic, strong) Account *account;
+@property (nonatomic, strong) Account* account;
 
-+ (instancetype)editCocoaButtonViewForAccount:(Account *)account;
++(instancetype) editCocoaButtonViewForAccount:(Account*)account;
 
-- (void)becomeFirstResponder;
+-(void) becomeFirstResponder;
 
 @property (nonatomic, copy) void (^cocobuttonUpdated)(void);
+
 
 @end

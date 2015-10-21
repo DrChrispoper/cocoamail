@@ -8,6 +8,7 @@
 
 #import "CreditContentViewController.h"
 
+
 @interface CreditContentViewController () <UIScrollViewDelegate>
 
 @property (nonatomic, weak) UIView* contentView;
@@ -19,11 +20,10 @@
 
 @end
 
-
-
 @implementation CreditContentViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
@@ -38,7 +38,6 @@
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     self.scrollView.delegate = nil;
@@ -48,7 +47,6 @@
 {
     return NO;
 }
-
 
 -(void) _setup
 {
@@ -120,7 +118,7 @@
         
         UIImageView* iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:image]];
         
-        CGPoint c = CGPointMake(WIDTH/2, 60);
+        CGPoint c = CGPointMake(WIDTH / 2, 60);
         iv.center = c;
         [bigOne addSubview:iv];
         
@@ -207,6 +205,7 @@
         
         CGFloat stepX = WIDTH / (btns.count + 1);
         CGFloat posX = 0;
+        
         for (UIButton* b in btns) {
             posX += stepX;
             b.center = CGPointMake(posX, height - 40);
@@ -244,6 +243,5 @@
 {
     [ViewController presentAlertWIP:@"manage actions here…"];
 }
-
 
 @end

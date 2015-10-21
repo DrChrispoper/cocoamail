@@ -21,10 +21,12 @@
 #import "ImapSync.h"
 #import "CocoaMail-Swift.h"
 
+
 @interface AddAccountViewController ()
 
 @property (nonatomic, strong) Account* account;
-@property (nonatomic, strong) MCOAccountValidator *accountVal;
+@property (nonatomic, strong) MCOAccountValidator* accountVal;
+
 
 @end
 
@@ -43,13 +45,13 @@
 
 @property (nonatomic, weak) UIButton* googleBtn;
 
+
 @end
-
-
 
 @implementation AddAccountViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
@@ -97,7 +99,7 @@
     
     UIImageView* cocoa = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"cocoamail"]];
     
-    CGFloat posYbutton = screenBounds.size.height - 20 - (70+45);
+    CGFloat posYbutton = screenBounds.size.height - 20 - (70 + 45);
     cocoa.frame = CGRectMake(0, 242, screenBounds.size.width, posYbutton + 35 - 242);
     cocoa.contentMode = UIViewContentModeCenter;
     
@@ -107,7 +109,7 @@
     [cocoa addGestureRecognizer:tgr];
     cocoa.userInteractionEnabled = YES;
     
-    UIButton* google = [[UIButton alloc] initWithFrame:CGRectMake(0, posYbutton, screenBounds.size.width, 70+45)];
+    UIButton* google = [[UIButton alloc] initWithFrame:CGRectMake(0, posYbutton, screenBounds.size.width, 70 + 45)];
     [google setImage:[UIImage imageNamed:@"signGoogle_on"] forState:UIControlStateNormal];
     [google setImage:[UIImage imageNamed:@"signGoogle_off"] forState:UIControlStateHighlighted];
     [google addTarget:self action:@selector(_google:) forControlEvents:UIControlEventTouchUpInside];
@@ -116,23 +118,23 @@
     self.googleBtn = google;
 }
 
-- (void)viewWillAppear:(BOOL)animated
+-(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
-- (void)viewDidAppear:(BOOL)animated
+-(void) viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
 
-    NSThread *driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
+    NSThread* driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
     [driverThread start];
     return;
 }
 
-- (void)loadIt
+-(void) loadIt
 {
     [GlobalDBFunctions tableCheck];
 }
@@ -161,14 +163,13 @@
     [self.table endEditing:YES];
 }
 
-
 #define TITLE @"title"
 #define CONTENT @"content"
 
 #define TEXT @"t"
 #define DACTION @"da"
 
--(void)_prepareTable
+-(void) _prepareTable
 {
     
     NSArray* infos = @[
@@ -186,7 +187,6 @@
     
 }
 
-
 -(void) cleanBeforeGoingBack
 {
     [self _hideKeyboard];
@@ -194,16 +194,14 @@
     self.table.dataSource = nil;
 }
 
-
 #pragma mark - Table Datasource
 
-
--(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
     return self.settings.count;
 }
 
--(NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
     NSDictionary* sectionInfos = self.settings[section];
     NSArray* content = sectionInfos[CONTENT];
@@ -211,7 +209,7 @@
     return content.count;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+-(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
     CGFloat base = 44.f;
@@ -228,9 +226,7 @@
     return base;
 }
 
-
-
--(UITableViewCell*) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
     NSDictionary* sectionInfos = self.settings[indexPath.section];
@@ -291,25 +287,24 @@
     return cell;
 }
 
--(NSString*)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+-(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
     NSDictionary* sectionInfos = self.settings[section];
+    
     return sectionInfos[TITLE];
 }
 
-
 #pragma mark Table Delegate
 
--(CGFloat) tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
 {
     return CGFLOAT_MIN;
 }
 
--(CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+-(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 10;
 }
-
 
 -(void) _nextStep
 {
@@ -346,8 +341,7 @@
     
 }
 
-
--(NSIndexPath*) tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     if (indexPath.section == 0) {
         UITableViewCell* cell = [tableView cellForRowAtIndexPath:indexPath];
@@ -368,38 +362,40 @@
     return nil;
 }
 
--(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+-(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark - TextField delegate
 
--(BOOL) textFieldShouldReturn:(UITextField *)textField
+-(BOOL) textFieldShouldReturn:(UITextField*)textField
 {
     [textField resignFirstResponder];
+    
     return YES;
 }
 
-
-
-- (BOOL)isEmailRegExp:(NSString *)text
+-(BOOL) isEmailRegExp:(NSString*)text
 {
-    NSError *error = NULL;
-    NSString *pattern = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
-    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
+    NSError* error = NULL;
+    NSString* pattern = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+    NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
+    
     if (error) {
-        CCMLog(@"%@",error.description);
+        CCMLog(@"%@", error.description);
     }
+    
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
 }
 
-- (void) receiveToggleAuthUINotification:(NSNotification *) notification {
+-(void) receiveToggleAuthUINotification:(NSNotification*)notification
+{
     if ([[notification name] isEqualToString:@"ToggleAuthUINotification"]) {
 
-        NSString *accessToken = [notification userInfo][@"accessToken"];;
-        NSString *email = [notification userInfo][@"email"];
-        NSString *name = [notification userInfo][@"name"];
+        NSString* accessToken = [notification userInfo][@"accessToken"];;
+        NSString* email = [notification userInfo][@"email"];
+        NSString* name = [notification userInfo][@"name"];
     
         self.email.text = email;
         self.username.text = name;
@@ -414,7 +410,7 @@
     }
 }
 
-- (void)loadWithEmail:(NSString *)username pwd:(NSString*)password
+-(void) loadWithEmail:(NSString*)username pwd:(NSString*)password
 {
     self.accountVal = [[MCOAccountValidator alloc]init];
     self.accountVal.username = username;
@@ -422,12 +418,11 @@
     [self load];
 }
 
-- (void)load
+-(void) load
 {
-    
-    if(!self.accountVal.OAuth2Token){
-        NSString *email = self.email.text;
-        NSString *password = self.password.text;
+    if (!self.accountVal.OAuth2Token) {
+        NSString* email = self.email.text;
+        NSString* password = self.password.text;
     
         if (!email.length || !password.length) {
             return;
@@ -439,8 +434,9 @@
         }
     }
     
-    Reachability *networkReachability = [Reachability reachabilityForInternetConnection];
+    Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
+    
     if (networkStatus == NotReachable) {
         [ViewController presentAlertWIP:@"Not connected to Internet"];
     }
@@ -457,13 +453,15 @@
     [self.accountVal setSmtpEnabled:YES];
     
     [self.accountVal start:^() {
-        AddAccountViewController *strongSelf = bself;
+        AddAccountViewController* strongSelf = bself;
         
         if (!strongSelf.accountVal.imapError && !strongSelf.accountVal.smtpError) {
             [strongSelf saveSettings];
-        } else {
+        }
+        else {
             CCMLog(@"error loading imap account: %@", strongSelf.accountVal.imapError);
             CCMLog(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
+            
             if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication) {
                 [[PKHUD sharedHUD] hideWithAnimated:YES];
                 [ViewController presentAlertWIP:@"Wrong credentials"];
@@ -482,52 +480,55 @@
     }];
 }
 
-- (void)saveSettings
+-(void) saveSettings
 {
     CCMLog(@"2 - Start saving settings");
     
-    NSInteger newAccountIndex = [Accounts sharedInstance].accountsCount-1;
+    NSInteger newAccountIndex = [Accounts sharedInstance].accountsCount - 1;
     
     CCMLog(@"3 - Start setting Folders");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Account Configuration..."];
     [[PKHUD sharedHUD] show];
     
-    MCOIMAPSession *imapSession = [[MCOIMAPSession alloc] init];
+    MCOIMAPSession* imapSession = [[MCOIMAPSession alloc] init];
     
     imapSession.hostname = self.accountVal.imapServer.hostname;
     imapSession.port = self.accountVal.imapServer.port;
     imapSession.username = self.accountVal.username ;
     imapSession.password = self.accountVal.password;
+    
     if (self.accountVal.OAuth2Token) {
         imapSession.OAuth2Token = self.accountVal.OAuth2Token;
         imapSession.authType = MCOAuthTypeXOAuth2;
     }
     imapSession.connectionType = self.accountVal.imapServer.connectionType;
 
-    MCOIMAPFetchNamespaceOperation *namespaceOp = [imapSession fetchNamespaceOperation];
-    [namespaceOp start:^(NSError *error, NSDictionary *namespaces) {
+    MCOIMAPFetchNamespaceOperation* namespaceOp = [imapSession fetchNamespaceOperation];
+    [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
         if (error) {
-            CCMLog(@"%@",error.description);
+            CCMLog(@"%@", error.description);
             [[PKHUD sharedHUD] hideWithAnimated:YES];
+            
             return ;
         }
         
-        MCOIMAPNamespace * nameSpace = namespaces[MCOIMAPNamespacePersonal];
-        MCOIMAPFetchFoldersOperation * op = [imapSession fetchAllFoldersOperation];
+        MCOIMAPNamespace*  nameSpace = namespaces[MCOIMAPNamespacePersonal];
+        MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
         [imapSession setDefaultNamespace:nameSpace];
         
-        [op start:^(NSError * error, NSArray *folders) {
+        [op start:^(NSError*  error, NSArray* folders) {
             if (error) {
-                CCMLog(@"%@",error.description);
+                CCMLog(@"%@", error.description);
                 [[PKHUD sharedHUD] hideWithAnimated:YES];
+                
                 return ;
             }
     
             [[SyncManager getSingleton] addAccountState];
             
             [AppSettings setSettingsWithAccountVal:self.accountVal accountIndex:newAccountIndex];
-            MCOMailProvider *accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
+            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
 
             [ImapSync allSharedServices:imapSession];
 
@@ -542,74 +543,68 @@
             [[Accounts sharedInstance] setCurrentAccountIdx:newAccountIndex];
                 //[AppSettings setActiveAccount:newAccountIndex];
             
-            if(newAccountIndex == 0){
+            if (newAccountIndex == 0) {
                 [AppSettings setDefaultAccountIndex:newAccountIndex];
             }
             
-            NSMutableArray *flagedFolders = [[NSMutableArray alloc] init];
-            NSMutableArray *otherFolders = [[NSMutableArray alloc] init];
-            MCOIMAPFolder * __block inboxfolder;
-            MCOIMAPFolder * __block allMailFolder;
+            NSMutableArray* flagedFolders = [[NSMutableArray alloc] init];
+            NSMutableArray* otherFolders = [[NSMutableArray alloc] init];
+            MCOIMAPFolder*  __block inboxfolder;
+            MCOIMAPFolder*  __block allMailFolder;
             
-            for (MCOIMAPFolder *folder in folders) {
+            for (MCOIMAPFolder* folder in folders) {
 
-                if(folder.flags & MCOIMAPFolderFlagNoSelect)
+                if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     continue;
+                }
                 
                 if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
-                    CCMLog(@"Inbox:%@",folder.path);
+                    CCMLog(@"Inbox:%@", folder.path);
                     inboxfolder = folder;
                 }
-                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] ||
-                         folder.flags & MCOIMAPFolderFlagAll ||
-                         folder.flags & MCOIMAPFolderFlagAllMail ||
-                         [@"Archive" isEqualToString:folder.path])
-                {
-                    CCMLog(@"All:%@",folder.path);
+                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folder.path]) {
+                    CCMLog(@"All:%@", folder.path);
                     allMailFolder = folder;
                 }
                 else if (![@(folder.flags) isEqualToNumber:@0]) {
-                    CCMLog(@"Flagged:%@",folder.path);
+                    CCMLog(@"Flagged:%@", folder.path);
                     [flagedFolders addObject:folder];
                 }
-                else{
-                    CCMLog(@"other:%@",folder.path);
+                else {
+                    CCMLog(@"other:%@", folder.path);
                     [otherFolders addObject:folder];
                 }
             }
             
-            NSString * __block newAllMail = @"Archive";
+            NSString*  __block newAllMail = @"Archive";
             
             if (!allMailFolder) {
                 //Create folder
-                MCOIMAPOperation * op = [imapSession createFolderOperation:newAllMail];
-                [op start:^(NSError * error) {
+                MCOIMAPOperation*  op = [imapSession createFolderOperation:newAllMail];
+                [op start:^(NSError*  error) {
                     if (!error) {
                         
-                        MCOIMAPFetchFoldersOperation * op = [imapSession fetchAllFoldersOperation];
+                        MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
                         [imapSession setDefaultNamespace:nameSpace];
                         
-                        [op start:^(NSError * error, NSArray *folders) {
+                        [op start:^(NSError*  error, NSArray* folders) {
                             
-                            for (MCOIMAPFolder *folder in folders) {
+                            for (MCOIMAPFolder* folder in folders) {
                                 
-                                if(folder.flags & MCOIMAPFolderFlagNoSelect)
+                                if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                                     continue;
+                                }
                                 
                                 if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
                                     inboxfolder = folder;
                                 }
-                                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] ||
-                                         folder.flags & MCOIMAPFolderFlagAll ||
-                                         folder.flags & MCOIMAPFolderFlagAllMail ||
-                                         [newAllMail isEqualToString:folder.path])
-                                {
+                                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folder.path]) {
                                     allMailFolder = folder;
                                 }
                                 else if (![@(folder.flags) isEqualToNumber:@0]) {
                                     [flagedFolders addObject:folder];
                                 }
-                                else{
+                                else {
                                     [otherFolders addObject:folder];
                                 }
                             }
@@ -630,16 +625,16 @@
     }];
 }
 
-- (void)finishFoldersFlaged:(NSMutableArray *)flagedFolders others:(NSMutableArray *)otherFolders inbox:(MCOIMAPFolder *)inboxfolder all:(MCOIMAPFolder *)allMailFolder imapSession:(MCOIMAPSession *)imapSession newAccountIndex:(NSInteger)newAccountIndex
+-(void) finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession newAccountIndex:(NSInteger)newAccountIndex
 {
     CCMLog(@"4 - Finish Folders");
     
-    SyncManager *sm = [SyncManager getSingleton];
+    SyncManager* sm = [SyncManager getSingleton];
     
-    MCOMailProvider *accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
+    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
     
-    NSSortDescriptor *pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
-    NSMutableArray *sortedFolders = [[NSMutableArray alloc] init];
+    NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
+    NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
     [sortedFolders addObject:inboxfolder];
     [sortedFolders addObjectsFromArray:[flagedFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
     [sortedFolders addObjectsFromArray:[otherFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
@@ -647,7 +642,7 @@
     
     int indexPath = 0;
     
-    NSMutableArray *dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
+    NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
     [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox forAccountIndex:newAccountIndex];
     [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
@@ -657,40 +652,28 @@
     [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted forAccountIndex:newAccountIndex];
     [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam forAccountIndex:newAccountIndex];
     
-    for(MCOIMAPFolder* folder in sortedFolders) {
+    for (MCOIMAPFolder* folder in sortedFolders) {
 
         //Inbox
         if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox forAccountIndex:newAccountIndex];
-        }
-        //Starred
-        else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))
-        {
+        } //Starred
+        else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
-        }
-        //Sent
-        else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))
-        {
+        } //Sent
+        else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent forAccountIndex:newAccountIndex];
-        }
-        //Draft
-        else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))
-        {
+        } //Draft
+        else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts forAccountIndex:newAccountIndex];
-        }
-        //Archive
-        else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path])
-        {
+        } //Archive
+        else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path]) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll forAccountIndex:newAccountIndex];
-        }
-        //Trash
-        else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))
-        {
+        } //Trash
+        else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash)) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted forAccountIndex:newAccountIndex];
-        }
-        //Spam
-        else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))
-        {
+        } //Spam
+        else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam)) {
             [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam forAccountIndex:newAccountIndex];
         }
         
@@ -712,7 +695,7 @@
         indexPath++;
     }
     
-    if([AppSettings importantFolderNumforAccountIndex:newAccountIndex forBaseFolder:FolderTypeFavoris] == -1){
+    if ([AppSettings importantFolderNumforAccountIndex:newAccountIndex forBaseFolder:FolderTypeFavoris] == -1) {
         [AppSettings setImportantFolderNum:[AppSettings importantFolderNumforAccountIndex:newAccountIndex forBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
     }
     
@@ -756,8 +739,9 @@
         self.step = 1;
         NSArray* tmpFolders = [AppSettings allNonImportantFoldersNameforAccountIndex:newAccountIndex];
         NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
+        
         for (NSString* folderNames in tmpFolders) {
-            [foldersNIndent addObject:@[folderNames,@([folderNames containsString:@"]/"])]];
+            [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"]/"])]];
         }
         
         ac.userFolders = foldersNIndent;
@@ -776,6 +760,7 @@
         self.googleBtn.hidden = YES;
     }
 }
+
 
 @end
 

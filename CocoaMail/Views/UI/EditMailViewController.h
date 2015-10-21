@@ -9,8 +9,10 @@
 #import "ViewController.h"
 #import "Mail.h"
 
+
 @interface EditMailViewController : InViewController
 
-@property (nonatomic, strong) Mail *mail;
+@property (nonatomic, strong) Mail* mail;
+
 
 @end

@@ -16,33 +16,36 @@
 
 @protocol ConversationCellDelegate;
 
+
 @interface ConversationTableViewCell : UITableViewCell
 
-- (void)setupWithDelegate:(id<ConversationCellDelegate>)delegate;
-- (void)fillWithConversation:(Conversation *)conv isSelected:(BOOL)selected;
+-(void) setupWithDelegate:(id<ConversationCellDelegate>)delegate;
+-(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected;
 
-- (NSString *)currentID;
+-(NSString*) currentID;
 
-- (void)animatedClose;
+-(void) animatedClose;
 
-- (BOOL)isReplyAll;
+-(BOOL) isReplyAll;
+
 
 @end
 
 @protocol ConversationCellDelegate
 
-- (void)leftActionDoneForCell:(ConversationTableViewCell *)cell;
-- (void)cell:(ConversationTableViewCell *)cell isChangingDuring:(double)timeInterval;
+-(void) leftActionDoneForCell:(ConversationTableViewCell*)cell;
+-(void) cell:(ConversationTableViewCell*)cell isChangingDuring:(double)timeInterval;
 
-- (void)cellIsSelected:(ConversationTableViewCell *)cell;
-- (void)cellIsUnselected:(ConversationTableViewCell *)cell;
+-(void) cellIsSelected:(ConversationTableViewCell*)cell;
+-(void) cellIsUnselected:(ConversationTableViewCell*)cell;
 
-- (void)unselectAll;
+-(void) unselectAll;
 
 // datasource
-- (UIPanGestureRecognizer *)tableViewPanGesture;
-- (UIImageView *)imageViewForQuickSwipeAction;
-- (BOOL)isPresentingDrafts;
+-(UIPanGestureRecognizer*) tableViewPanGesture;
+-(UIImageView*) imageViewForQuickSwipeAction;
+-(BOOL) isPresentingDrafts;
+
 
 @end
 

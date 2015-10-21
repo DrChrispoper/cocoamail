@@ -53,21 +53,23 @@
 
 typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 
+
 @interface ViewController : UIViewController
 
-+ (ViewController *)mainVC;
++(ViewController*) mainVC;
 
-+ (void)refreshCocoaButton;
++(void) refreshCocoaButton;
 
-+ (void)presentAlertWIP:(NSString *)message;
++(void) presentAlertWIP:(NSString*)message;
 
-- (void)closeCocoaButtonIfNeeded;
+-(void) closeCocoaButtonIfNeeded;
 
-+ (void)animateCocoaButtonRefresh:(BOOL)anim;
++(void) animateCocoaButtonRefresh:(BOOL)anim;
 
-+ (void)temporaryHideCocoaButton:(BOOL)hide;
++(void) temporaryHideCocoaButton:(BOOL)hide;
 
-- (void)refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
+-(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
+
 
 @end
 

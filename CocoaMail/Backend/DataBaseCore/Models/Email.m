@@ -26,13 +26,13 @@
 @synthesize attachments;
 @synthesize uids = _uids;
 
--(void)loadData
+-(void) loadData
 {
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     [databaseManager.databaseQueue close];
     [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
     
-	[databaseManager.databaseQueue inDatabase:^(FMDatabase*db) {
+	[databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT * FROM email, search_email WHERE email.pk = search_email.rowid AND email.pk = ? LIMIT 1;", @(self.pk)];
         
         if ([results next]) {
@@ -59,7 +59,7 @@
 {
     _uids = pUids;
 }
-/*- (NSInteger)account
+/*-(NSInteger)account
 {
     if ([self getFirstUIDE]) {
         return [[self getFirstUIDE] account];
@@ -147,7 +147,7 @@
     
     return NO;
 }
-/*- (void)forActiveAccount
+/*-(void)forActiveAccount
 {
     if (!self.uids) {
         self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
@@ -168,8 +168,8 @@
 {
     Email* emailTwo = [self copy];
     
-    NSMutableArray <UidEntry*>* uidsOne = [[NSMutableArray alloc]init];
-    NSMutableArray <UidEntry*>* uidsTwo = [[NSMutableArray alloc]init];
+    NSMutableArray<UidEntry* >* uidsOne = [[NSMutableArray alloc]init];
+    NSMutableArray<UidEntry* >* uidsTwo = [[NSMutableArray alloc]init];
     
     for (UidEntry* e in self.uids) {
         if (e.account == self.accountNum) {
@@ -260,7 +260,7 @@
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     __block sqlite_int64 success = -1 ;
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase*db) {
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
                 
         [db executeUpdate:@"INSERT INTO email (datetime,sender,tos,ccs,bccs,msg_id,html_body,flag) VALUES (?,?,?,?,?,?,?,?);",
          email.datetime,
@@ -285,7 +285,8 @@
     return (int)success;
 }
 
-+(NSInteger) insertEmailUnsafe:(Email*)email {
++(NSInteger) insertEmailUnsafe:(Email*)email
+{
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     sqlite_int64 success = -1 ;
     
@@ -346,7 +347,7 @@
     
     [[EmailProcessor getSingleton] switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
 
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase*db) {
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;",
                     msgIdDel];
     }];

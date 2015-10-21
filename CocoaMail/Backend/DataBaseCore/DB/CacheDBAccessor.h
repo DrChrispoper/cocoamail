@@ -8,13 +8,15 @@
 
 #import "FMDB.h"
 
+
 @interface CacheDBAccessor : NSObject
 
-@property (nonatomic, strong) FMDatabaseQueue *databaseQueue;
+@property (nonatomic, strong) FMDatabaseQueue* databaseQueue;
 
-+ (id)sharedManager;
++(id) sharedManager;
 
-- (NSString *)databaseFilepath;
-- (void)deleteDatabase;
+-(NSString*) databaseFilepath;
+-(void) deleteDatabase;
+
 
 @end

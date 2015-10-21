@@ -13,9 +13,10 @@
 #import "DropboxBrowserViewController.h"
 #import "CocoaMail-Swift.h"
 
-@interface CloudViewController () <BOXFolderViewControllerDelegate,GIDSignInUIDelegate>
 
-@property (nonatomic, readwrite, strong) UINavigationController *navControllerForBrowseSDK;
+@interface CloudViewController () <BOXFolderViewControllerDelegate, GIDSignInUIDelegate>
+
+@property (nonatomic, readwrite, strong) UINavigationController* navControllerForBrowseSDK;
 
 @property (nonatomic, weak) UIImageView* mainImage;
 @property (nonatomic, weak) UIButton* mainButton;
@@ -24,7 +25,8 @@
 
 @implementation CloudViewController
 
-- (void)viewDidLoad {
+-(void) viewDidLoad
+{
     [super viewDidLoad];
 
     
@@ -34,7 +36,7 @@
     
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle: self.cloudServiceName];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:self.cloudServiceName];
     
     [[NSNotificationCenter defaultCenter]
      addObserver:self
@@ -90,14 +92,15 @@
     }
 }
 
-- (void)viewWillAppear:(BOOL)animated
+-(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
--(void)receiveAuthNotification:(NSNotification *) notification {
+-(void) receiveAuthNotification:(NSNotification*)notification
+{
     if ([[notification name] isEqualToString:@"AuthNotification"]) {
         [[PKHUD sharedHUD] hideWithAnimated:YES];
         
@@ -120,19 +123,19 @@
     }
 }
 
-
 -(void) _tap
 {
     //self.mainButton.selected = !self.mainButton.selected;
    // self.mainImage.highlighted = !self.mainImage.highlighted;
     
-    if([self.cloudServiceName isEqualToString:@"Dropbox"]){
+    if ([self.cloudServiceName isEqualToString:@"Dropbox"]) {
         if (![[DBSession sharedSession] isLinked]) {
             [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
             [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Linking Dropbox..."];
             [[PKHUD sharedHUD] show];
             [[DBSession sharedSession] linkFromController:self];
-        } else {
+        }
+        else {
             [[DBSession sharedSession] unlinkAll];
             UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Account Unlinked!", @"Title of alert view when unlinking Dropbox")
                                                                                message:NSLocalizedString(@"Your dropbox account has been unlinked", @"Message of alert view when unlinking Dropbox")
@@ -147,14 +150,14 @@
             [self.mainImage setHighlighted:NO];
         }
     }
-    else if([self.cloudServiceName isEqualToString:@"Google Drive"]){
+    else if ([self.cloudServiceName isEqualToString:@"Google Drive"]) {
         if (![[GIDSignIn sharedInstance] hasAuthInKeychain]) {
             [[GIDSignIn sharedInstance] signIn];
         }
     }
-    else if([self.cloudServiceName isEqualToString:@"Box"]){
+    else if ([self.cloudServiceName isEqualToString:@"Box"]) {
         [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];
-        BOXFolderViewController *folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
+        BOXFolderViewController* folderViewController = [[BOXFolderViewController alloc] initWithContentClient:[BOXContentClient defaultClient]];
         folderViewController.delegate = self;
         
         // You must load it in a UINavigationController.
@@ -171,7 +174,7 @@
     return NO;
 }
 
-- (void)itemsViewControllerDidTapCloseButtton:(BOXItemsViewController *)itemsViewController
+-(void) itemsViewControllerDidTapCloseButtton:(BOXItemsViewController*)itemsViewController
 {
     // If you don't implement this, the navigation controller will be dismissed for you.
     // Only implement if you need to customize behavior.

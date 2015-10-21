@@ -8,8 +8,10 @@
 
 #import "InViewController.h"
 
+
 @interface CloudViewController : InViewController
 
-@property (nonatomic, strong) NSString *cloudServiceName;
+@property (nonatomic, strong) NSString* cloudServiceName;
+
 
 @end

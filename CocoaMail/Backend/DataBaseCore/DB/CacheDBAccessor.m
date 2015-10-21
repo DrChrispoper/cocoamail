@@ -15,7 +15,8 @@
 
 #pragma mark Singleton Methods
 
-+ (id)sharedManager {
++(id) sharedManager
+{
     static id sharedMyManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -27,7 +28,8 @@
 
 #pragma mark Public Instance Methods
 
-- (id)init {
+-(id) init
+{
     self = [super init];
     
     if (self) {
@@ -37,20 +39,24 @@
     return self;
 }
 
-- (void)close {
+-(void) close
+{
     // close DB
     if (_databaseQueue != NULL) {
         [_databaseQueue close];
     }
 }
 
-- (void)deleteDatabase {
+-(void) deleteDatabase
+{
     [[NSFileManager defaultManager] removeItemAtPath:[self databaseFilepath] error:nil];
     _databaseQueue = NULL;
 }
 
-- (NSString *)databaseFilepath {
+-(NSString*) databaseFilepath
+{
     return [StringUtil filePathInDocumentsDirectoryForFileName:CACHE_DB_NAME];
 }
+
 
 @end

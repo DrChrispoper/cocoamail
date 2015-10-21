@@ -12,17 +12,18 @@
     
 }
 
-+ (PDKeychainBindings *)sharedKeychainBindings;
++(PDKeychainBindings*) sharedKeychainBindings;
 
-- (id)objectForKey:(NSString *)defaultName;
-- (void)setObject:(NSString *)value forKey:(NSString *)defaultName;
-- (void)setObject:(NSString *)value forKey:(NSString *)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute;
+-(id) objectForKey:(NSString*)defaultName;
+-(void) setObject:(NSString*)value forKey:(NSString*)defaultName;
+-(void) setObject:(NSString*)value forKey:(NSString*)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute;
 
-- (void)setString:(NSString *)value forKey:(NSString *)defaultName;
-- (void)setString:(NSString *)value forKey:(NSString *)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute;
+-(void) setString:(NSString*)value forKey:(NSString*)defaultName;
+-(void) setString:(NSString*)value forKey:(NSString*)defaultName accessibleAttribute:(CFTypeRef)accessibleAttribute;
 
-- (void)removeObjectForKey:(NSString *)defaultName;
+-(void) removeObjectForKey:(NSString*)defaultName;
 
-- (NSString *)stringForKey:(NSString *)defaultName;
+-(NSString*) stringForKey:(NSString*)defaultName;
+
 
 @end

@@ -16,37 +16,39 @@
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "Email.h"
 
+
 @interface SyncManager : NSObject {    
 	// sync-related stuff
-	NSMutableArray *syncStates;
+	NSMutableArray* syncStates;
 	BOOL syncInProgress;
 }
 
 @property (nonatomic, weak) id aNewEmailDelegate;
-@property (nonatomic, strong) NSMutableArray *syncStates;
+@property (nonatomic, strong) NSMutableArray* syncStates;
 @property (assign) BOOL syncInProgress;
 @property (assign) BOOL isFromStart;
 
-+ (SyncManager *)getSingleton;
++(SyncManager*) getSingleton;
 
-//-(RACSignal *) refreshActiveFolder;
-- (RACSignal *)syncActiveFolderFromStart:(BOOL)isFromStart;
-- (RACSignal *)refreshInbox;
-- (RACSignal *)syncFolders;
-- (RACSignal *)refreshImportantFolder:(NSInteger)folder;
-- (RACSignal *)syncInboxFoldersBackground;
+//-(RACSignal*) refreshActiveFolder;
+-(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart;
+-(RACSignal*) refreshInbox;
+-(RACSignal*) syncFolders;
+-(RACSignal*) refreshImportantFolder:(NSInteger)folder;
+-(RACSignal*) syncInboxFoldersBackground;
 
-- (RACSignal *)searchThings:(NSArray *)things;
+-(RACSignal*) searchThings:(NSArray*)things;
 
 //Update recorded state
-- (NSInteger)folderCount:(NSInteger)accountIndex;
-- (void)addAccountState;
-- (void)addFolderState:(NSDictionary *)data accountIndex:(NSInteger)accountIndex;
-- (BOOL)isFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
-- (void)markFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
-- (void)persistState:(NSMutableDictionary *)data forFolderNum:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
-- (NSMutableDictionary *)retrieveState:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
-- (NSSet *)retrieveAllDBNums:(NSInteger)accountIndex;
+-(NSInteger) folderCount:(NSInteger)accountIndex;
+-(void) addAccountState;
+-(void) addFolderState:(NSDictionary*)data accountIndex:(NSInteger)accountIndex;
+-(BOOL) isFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
+-(void) markFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
+-(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
+-(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
+-(NSSet*) retrieveAllDBNums:(NSInteger)accountIndex;
+
 
 @end
 
