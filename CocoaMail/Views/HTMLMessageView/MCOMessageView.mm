@@ -34,7 +34,7 @@
     if(self) {
         _webView = [[UIWebView alloc] initWithFrame:[self bounds]];
         //[_webView setAutoresizingMask:(UIViewAutoresizingFlexibleHeight)];
-        _webView.scalesPageToFit = true;
+        _webView.scalesPageToFit = NO;
         _webView.scrollView.bounces = false;
         _webView.dataDetectorTypes = UIDataDetectorTypeLink;
 
@@ -252,27 +252,9 @@
         NSURL* url = [request URL];
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
-            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
 
-            if(contentHeight == ([UIScreen mainScreen].bounds.size.height/2)){
+            if (contentHeight < _webView.scrollView.contentSize.height) {
                 contentHeight = _webView.scrollView.contentSize.height;
-            }
-
-            //float height = [[[url host] componentsSeparatedByString:@","][2] integerValue];
-            //float width = [[[url host] componentsSeparatedByString:@","][3] integerValue];
-
-            if(contentWidth != [UIScreen mainScreen].bounds.size.width-30) {
-                
-                //CGSize viewSize = webView.bounds.size;
-                
-                //float rw = viewSize.width / contentWidth;
-                float rw2 = 1;//(([UIScreen mainScreen].bounds.size.width-30) / viewSize.width);
-
-                _webView.scrollView.minimumZoomScale = rw2;
-                _webView.scrollView.maximumZoomScale = rw2;
-                _webView.scrollView.zoomScale = rw2;
-                contentHeight = _webView.scrollView.contentSize.height;
-                //contentWidth = [UIScreen mainScreen].bounds.size.width-30;
             }
             
             CGRect fr = _webView.frame;
@@ -280,9 +262,7 @@
             _webView.frame = fr;
             
             [_loadingView setHidden:YES];
-            
             [self.delegate webViewLoaded:_webView];
-            
             return NO;
         }
     }
