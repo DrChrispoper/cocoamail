@@ -168,11 +168,10 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     
     if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
         ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
-        //[self.updateSubscriber performSelector:selector withObject:datas];
 	}
 }
 
--(void) removeFromFolderWrapper:(NSArray*)datas
+-(void) removeFromFolderWrapper:(NSArray*)datas folderIndex:(NSInteger)folderIdx
 {
     if (self.shuttingDown) {
         return;
@@ -180,14 +179,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     
 	for (Email* email in datas) {
         [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
-        [UidEntry removeFromFolderUid:[email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]];
+        [UidEntry removeFromFolderUid:[email uidEWithFolder:folderIdx]];
     }
     
     SEL selector = NSSelectorFromString(@"deliverDelete:");
     
     if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
         ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
-		//[self.updateSubscriber performSelector:selector withObject:datas];
 	}
 }
 

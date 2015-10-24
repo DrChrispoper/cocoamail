@@ -838,38 +838,33 @@
                 
             }
         }
-        [ep removeFromFolderWrapper:delDatas];
+        [ep removeFromFolderWrapper:delDatas folderIndex:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
         [ep updateFlag:upDatas];
     }];
     return;
 }
 
--(void) runUpToDateTest:(NSArray*)convs completed:(void (^)(void))completedBlock
+-(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(void))completedBlock
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
-    NSString* path = [AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:self.currentAccountIndex];
-   //NSInteger activeA = self.currentAccount;
+    //NSString* path = [AppSettings folderName:[[[Accounts sharedInstance] getAccount:((Conversation*)convs[0]).accountIdx] currentFolderIdx] forAccountIndex:self.currentAccountIndex];
+    NSString* path = [AppSettings folderName:folderIdx forAccountIndex:self.currentAccountIndex];
     
-    NSMutableArray* emails = [NSMutableArray arrayWithCapacity:100];
+    NSMutableArray* emails = [NSMutableArray arrayWithCapacity:convs.count];
     
-    //for (int i = 0; i < emails.count; i++) {
     for (Conversation* conv in convs) {
         for (Mail* mail in conv.mails) {
-            if ([mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]]) {
-                if (!kisActiveAccountAll) {
-                    [uidsIS addIndex:[mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
-                    [emails addObject:mail.email];
-                }
-                else if([mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].account == [AppSettings numForData:self.currentAccountIndex]) {
-                    [uidsIS addIndex:[mail.email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]].uid];
-                    [emails addObject:mail.email];
-                }
+            if ([mail.email uidEWithFolder:folderIdx]) {
+                [uidsIS addIndex:[mail.email uidEWithFolder:folderIdx].uid];
+                [emails addObject:mail.email];
             }
         }
     }
     
-    [[ImapSync doLogin:self.currentAccountIndex] subscribeCompleted:^{
-        
+    [[ImapSync doLogin:self.currentAccountIndex]
+     subscribeError:^(NSError *error) {
+        completedBlock();
+    } completed:^{
         MCOIMAPFetchMessagesOperation* op = [self.imapSession  fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindFlags uids:uidsIS];
         
         [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
@@ -892,7 +887,7 @@
             NSMutableArray* upDatas = [[NSMutableArray alloc]init];
             
             for (Email* email in emails) {
-                UidEntry* uid_entry = [email uidEWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+                UidEntry* uid_entry = [email uidEWithFolder:folderIdx];
                 
                 if ([uidsIS containsIndex:uid_entry.uid]) {
                     //Remove email from local folder
@@ -900,10 +895,7 @@
                 }
                 else {
                     for (MCOIMAPMessage* msg in messages) {
-                        if (msg.uid == uid_entry.uid && !(msg.flags & email.flag)) {
-                            if (msg.flags == MCOMessageFlagNone && email.flag == MCOMessageFlagNone) {
-                                continue;
-                            }
+                        if (msg.uid == uid_entry.uid && msg.flags != email.flag) {
                             email.flag = msg.flags;
                             [upDatas addObject:email];
                         }
@@ -914,7 +906,7 @@
             
             if (delDatas.count > 0) {
                 CCMLog(@"Delete %lu emails", (unsigned long)delDatas.count);
-                [ep removeFromFolderWrapper:delDatas];
+                [ep removeFromFolderWrapper:delDatas folderIndex:folderIdx];
             }
             
             if (upDatas.count > 0) {

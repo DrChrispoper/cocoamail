@@ -20,15 +20,15 @@
 -(instancetype) initWithPerson:(Person*)person;
 
 -(BOOL) istheSame:(MailListViewController*)other;
--(void) insertConversation:(Conversation*)con;
--(void) updatedConversationList:(NSMutableArray*)convs;
+-(void) insertConversation:(ConversationIndex*)con;
+-(void) removeConversationList:(NSArray*)convs;
 
 @end
 
 @protocol MailListDelegate
 
--(void) updatedConversationList:(NSMutableArray*)convs;
--(void) insertConversation:(Conversation*)con;
+-(void) removeConversationList:(NSArray*)convs;
+-(void) insertConversation:(ConversationIndex*)con;
 -(BOOL) isPresentingDrafts;
 
 @end

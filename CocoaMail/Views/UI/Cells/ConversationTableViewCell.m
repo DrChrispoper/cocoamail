@@ -386,7 +386,7 @@
                 if (self.favori.tag == tagFavSelected) {
                     
                     /*if (self.favori.isHighlighted) {
-                        [[Accounts sharedInstance].getAllTheAccounts[self.conversation.accountIdx] moveConversation:self.conversation from:decodeFolderTypeWith([[self.conversation.foldersType anyObject] integerValue]) to:FolderTypeWith(FolderTypeFavoris, 0)];
+                        [[Accounts sharedInstance].accounts[self.conversation.accountIdx] moveConversation:self.conversation from:decodeFolderTypeWith([[self.conversation.foldersType anyObject] integerValue]) to:FolderTypeWith(FolderTypeFavoris, 0)];
                     }*/
                     
                     [self.conversation toggleFav];

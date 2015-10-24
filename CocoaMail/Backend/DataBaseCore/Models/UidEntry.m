@@ -269,7 +269,7 @@
         else {
             [query appendString:@"SELECT * FROM uid_entry WHERE "];
             
-            for (Account* ac in [Accounts sharedInstance].getAllTheAccounts) {
+            for (Account* ac in [Accounts sharedInstance].accounts) {
                 NSNumber* folderAccount = @([AppSettings numFolderWithFolder:FolderTypeWith(folderNum, 0) forAccountIndex:ac.idx] + 1000 * [AppSettings numForData:ac.idx]);
                 [query appendFormat:@"folder = %@ OR ", folderAccount];
             }
@@ -396,8 +396,9 @@
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession copyMessagesOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]]
-                                                                                                                               uids:[MCOIndexSet        indexSetWithIndex:uidE.uid]
+        NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
+        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
+                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                          destFolder:folderName];
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error) {
@@ -440,7 +441,8 @@
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]]
+        NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
+        MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
                                                                                                            flags:MCOMessageFlagDeleted];
@@ -452,14 +454,14 @@
                 CCMLog(@"Error updating flags:%@", error);
             }
             
-            MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession expungeOperation:[AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]]];
+            MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:accountIndex].imapSession expungeOperation:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]];
             [deleteOp start:^(NSError* error) {
                 if (error) {
                     CCMLog(@"Error expunging folder:%@", error);
                 }
                 else {
                     success = true;
-                    CCMLog(@"Successfully expunged folder:%@", [AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]]);
+                    CCMLog(@"Successfully expunged folder:%@", [AppSettings folderName:uidE.folder forAccountIndex:accountIndex]);
                     [self removeFromFolderUid:uidE ];
                 }
             }];

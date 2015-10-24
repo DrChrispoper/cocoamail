@@ -12,6 +12,7 @@
 #import "Persons.h"
 #import "Accounts.h"
 #import "AppSettings.h"
+#import "DateUtil.h"
 
 @implementation Mail
 
@@ -38,18 +39,25 @@ static NSDateFormatter * s_df_hour = nil;
     
     mail.title = self.title;
     
+    NSInteger currentAccountIndex = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
+
     if (replyAll) {
         
         NSMutableArray* currents = [self.toPersonID mutableCopy];
         
-        [currents addObject:@(self.fromPersonID)];
-        [currents removeObject:@(mail.fromPersonID)];
+        if (currentAccountIndex != self.fromPersonID) {
+            [currents addObject:@(self.fromPersonID)];
+        }
+        
+        [currents removeObject:@(currentAccountIndex)];
         
         mail.toPersonID = currents;
         
     }
     else {
-        mail.toPersonID = @[@(self.fromPersonID)];
+        if (currentAccountIndex != self.fromPersonID) {
+            mail.toPersonID = @[@(self.fromPersonID)];
+        }
     }
     
     mail.content = @"";
@@ -74,6 +82,48 @@ static NSDateFormatter * s_df_hour = nil;
     mail.fromMail = nil;
     
     return mail;
+}
+
+-(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc
+{
+    MCOMessageBuilder* builder = [[MCOMessageBuilder alloc] init];
+    [[builder header] setFrom:[MCOAddress addressWithDisplayName:[AppSettings name:idx] mailbox:[AppSettings username:idx]]];
+    
+    NSMutableArray* to = [[NSMutableArray alloc] init];
+    
+    for (NSNumber* personID in self.toPersonID) {
+        Person* p = [[Persons sharedInstance] getPersonID:[personID intValue]];
+        MCOAddress* newAddress = [MCOAddress addressWithMailbox:p.email];
+        [to addObject:newAddress];
+    }
+    
+    if (!isBcc) {
+        [[builder header] setTo:to];
+    }
+    else {
+        [[builder header] setBcc:to];
+    }
+    
+    /*if (mail.email && !self.fwd) {
+     if (mail.email.getSonID)
+     [[builder header] setReferences:@[mail.email.getSonID]];
+     [[builder header] setInReplyTo: @[mail.email.msgId]];
+     }*/
+    
+    [[builder header] setSubject:self.title];
+    
+    [builder setTextBody:self.content];
+    
+    //NSString* documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+    //NSString* filesSubdirectory = [NSTemporaryDirectory()  stringByAppendingPathComponent:@""];
+    //NSString* localFilePath = [stringByAppendingPathComponent:file.name];
+    
+    for (Attachment* att in [self attachments]) {
+        [builder addAttachment:[MCOAttachment attachmentWithData:att.data filename:att.fileName]];
+    }
+    
+    
+    return [builder data];
 }
 
 +(Mail*) mail:(Email*)email
@@ -263,7 +313,7 @@ static NSDateFormatter * s_df_hour = nil;
 {
     [[self firstMail] toggleFav];
     
-    [[[Accounts sharedInstance] getAllTheAccounts][self.accountIdx] star:([[self firstMail] isFav]) conversation:self];
+    [[[Accounts sharedInstance] accounts][self.accountIdx] star:([[self firstMail] isFav]) conversation:self];
     
 }
 
@@ -344,6 +394,41 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToConversation:(Conversation*)object];
 }
 
+@end
+
+@implementation ConversationIndex
+
+-(instancetype) init
+{
+    self = [super init];
+    
+    if (self) {
+        _index = 0;
+        _account = 0;
+    }
+    
+    return self;
+}
+
++(ConversationIndex*) initWithIndex:(NSInteger)index Account:(NSInteger)account
+{
+    ConversationIndex* cI = [[ConversationIndex alloc]init];
+    cI.index = index;
+    cI.account = account;
+    
+    return cI;
+}
+
+-(NSDate*) date
+{
+    NSDateFormatter* dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"d MMM yy";
+    
+    Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
+    NSString* stringDate = [[DateUtil getSingleton] humanDate:[conversation firstMail].email.datetime];
+    
+    return [dateFormatter dateFromString:stringDate];
+}
 
 @end
 

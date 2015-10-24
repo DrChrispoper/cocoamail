@@ -31,6 +31,7 @@
 -(Mail*) replyMail:(BOOL)replyAll;
 -(Mail*) transfertMail;
 +(Mail*) mail:(Email*)email;
+-(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc;
 
 -(NSArray*) attachments;
 -(void) setAttachments:(NSArray*)attachments;
@@ -69,3 +70,12 @@
 
 @end
 
+@interface ConversationIndex : NSObject
+
+@property (nonatomic) NSInteger index;
+@property (nonatomic) NSInteger account;
+
++(ConversationIndex*) initWithIndex:(NSInteger)index Account:(NSInteger)account;
+-(NSDate*) date;
+
+@end

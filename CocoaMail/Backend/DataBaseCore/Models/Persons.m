@@ -178,13 +178,13 @@
 
 -(NSInteger) indexForPerson:(Person*)p
 {
-    NSInteger idx = [self.alls indexOfObject:p];
+    NSInteger idx = [self.allsNeg indexOfObject:p];
     
     if (idx == NSNotFound) {
-        idx = -[self.allsNeg indexOfObject:p];
+        return [self.alls indexOfObject:p];
     }
     
-    return idx;
+    return -idx;
 }
 
 

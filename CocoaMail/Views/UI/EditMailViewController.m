@@ -15,6 +15,7 @@
 #import <BoxBrowseSDK/BoxBrowseSDK.h>
 #import "DropboxBrowserViewController.h"
 #import "GoogleDriveExplorer.h"
+#import "ImapSync.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -117,7 +118,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         ca = [allAccounts getAccount:-(1 + self.mail.fromPersonID)];
     }
     else {
-        Account* ca = [allAccounts currentAccount];
+        ca = [allAccounts currentAccount];
         
         if (ca.isAllAccounts) {
             ca = [allAccounts getAccount:allAccounts.defaultAccountIdx];
@@ -264,22 +265,38 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     BOOL haveSomething = self.subjectTextView.text.length > 0
     || [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0
-    || self.mail.attachments.count>0 ;
+    || [self.mail.attachments count] > 0 ;
+    
+    if (self.mail.fromMail) {
+        haveSomething = [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0 ;
+    }
     
     if (haveSomething) {
         
         // auto-save
         self.mail.title = self.subjectTextView.text;
         self.mail.content = self.bodyTextView.text;
-        self.mail.email = [[Email alloc]init];
-        self.mail.email.datetime = [NSDate date];
-        NSString* FakemsgID = [NSString stringWithFormat:@"%i", -[AppSettings draftCount]];
-        self.mail.email.msgId = FakemsgID;
         
-        Conversation* c = [[Conversation alloc] init];
-        [c addMail:self.mail];
+        //If draft exists delete and create new
+        if (self.mail.email.msgId) {
+            NSInteger acIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
+            
+            Conversation* c = [[Conversation alloc]init];
+            [c addMail:self.mail];
+            
+            [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
+        }
         
-        [self.selectedAccount saveDraft:c];
+        //[self.selectedAccount saveDraft:self.mail];
+        NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
+        NSString* draftPath = [AppSettings folderName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
+        MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
+        [addOp start:^(NSError * error, uint32_t createdUID) {
+            if (error == nil) {
+                [self.selectedAccount refreshCurrentFolder];
+            }
+        }];
+        
         [self _reallyGoBack];
         
         /*
@@ -1662,7 +1679,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSInteger idx = -1;
     
-    for (Account* a in [[Accounts sharedInstance] getAllTheAccounts]) {
+    for (Account* a in [Accounts sharedInstance].accounts) {
         idx++;
         
         if (a.isAllAccounts) {
@@ -1673,7 +1690,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                               handler:^(UIAlertAction* aa) {
                                                                   
                                                                   // remove from last account if already saved here
-                                                                  [self.selectedAccount deleteDraft:self.mail];
+                                                                  //[self.selectedAccount deleteDraft:self.mail];
                                                                   
                                                                   UINavigationItem* ni = self.navBar.items.firstObject;
                                                                   

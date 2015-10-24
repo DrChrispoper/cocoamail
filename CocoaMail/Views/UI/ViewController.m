@@ -924,7 +924,7 @@ static ViewController * s_self;
 {
     const CGRect baseRect = self.cocoaButton.bounds;
     
-    NSArray* alls = [Accounts sharedInstance].getAllTheAccounts;
+    NSArray* alls = [Accounts sharedInstance].accounts;
     NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:alls.count];
     NSInteger currentAIdx = [Accounts sharedInstance].currentAccountIdx;
     
