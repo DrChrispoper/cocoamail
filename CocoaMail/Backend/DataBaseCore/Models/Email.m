@@ -334,6 +334,20 @@
     }];
 }
 
++(void) updateEmailBody:(Email*)email;
+{
+    email.pk = [Email getEmailWithMsgId:email.msgId].pk;
+    
+    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    [databaseManager.databaseQueue close];
+    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:email.datetime]]]];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE email SET html_body = ? WHERE pk = ?;", email.htmlBody, @(email.pk)];
+        [db executeUpdate:@"UPDATE search_email SET body = ? WHERE rowid = ?;", email.body, @(email.pk)];
+    }];
+}
+
 +(BOOL) removeEmail:(NSString*)msgIdDel
 {
     __block BOOL success = FALSE;

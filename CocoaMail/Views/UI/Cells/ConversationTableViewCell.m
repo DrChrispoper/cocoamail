@@ -406,7 +406,7 @@
                         if (fabs(pos.y - self.panBasePos.y)<8) {
                             
                             // tap user badge
-                            if (![self.delegate isPresentingDrafts]) {
+                           // if (![self.delegate isPresentingDrafts]) {
                                 
                                 CGRect bigger = CGRectInset(self.badge.frame, -10, -10);
                                 
@@ -416,7 +416,7 @@
                                     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
                                     return;
                                 }
-                            }
+                            //}
                             
                             // tap cell
                             if (![self.delegate isPresentingDrafts] && !self.mail.isRead) {
@@ -541,9 +541,19 @@
     
     self.title.text = mail.title;
     
-    Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
-    self.name.text = p.name;
+    Person* p = nil;
     
+    //If it is a reply show the first receipient
+    if ([[Accounts sharedInstance] getPersonID:conv.accountIdx] == mail.fromPersonID) {
+        p = [[Persons sharedInstance] getPersonID:[[mail.toPersonID firstObject] integerValue]];
+        self.name.text = [NSString stringWithFormat:@"↩︎%@",p.name];
+    }
+    else {
+        p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+        self.name.text = p.name;
+    }
+
+         
     [self.badge.subviews.firstObject removeFromSuperview];
     [self.badge addSubview:[p badgeView]];
     

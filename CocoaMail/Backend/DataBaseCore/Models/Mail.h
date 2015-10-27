@@ -77,5 +77,6 @@
 
 +(ConversationIndex*) initWithIndex:(NSInteger)index Account:(NSInteger)account;
 -(NSDate*) date;
+-(NSDate*) day;
 
 @end

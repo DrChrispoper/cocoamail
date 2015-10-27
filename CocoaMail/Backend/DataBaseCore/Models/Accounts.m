@@ -12,7 +12,7 @@
 #import "SearchRunner.h"
 #import "ImapSync.h"
 #import "EmailProcessor.h"
-
+#import "CCMStatus.h"
 
 @interface Accounts()
 
@@ -206,6 +206,12 @@
     NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
     
     return nil;
+}
+
+-(NSInteger) getPersonID:(NSInteger)accountIndex
+{
+    Account* ac = self.accounts[accountIndex];
+    return [[Persons sharedInstance] indexForPerson:ac.person];
 }
 
 -(NSInteger) accountsCount
@@ -708,6 +714,30 @@
     }
 }
 
+-(void) showProgress
+{
+    NSInteger syncCount = 0;
+    NSInteger emailCount = 0;
+    
+    for (int i = 0; i < [AppSettings allFoldersNameforAccountIndex:self.idx].count; i++) {
+        // used by fetchFrom to write the finished state for this round of syncing to disk
+        NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:i accountIndex:self.idx];
+        NSInteger lastEnded = [syncState[@"lastended"] integerValue];
+        NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
+        
+        if (lastEnded == 0) {
+            lastEnded = tmpEmailCount;
+        }
+        
+        emailCount += tmpEmailCount;
+        syncCount += tmpEmailCount - lastEnded;
+    }
+    
+    CCMLog(@"syncCount:%i emailCount:%i Percentage:%i", syncCount, emailCount, (syncCount * 100) / emailCount);
+
+    [CCMStatus showStatus:[NSString stringWithFormat:@"%@ %i%% synced", self.person.codeName, (syncCount * 100) / emailCount]];
+}
+
 -(void) insertRows:(Email*)email
 {
     if ((![[email getSonID] isEqualToString:@""] & ![[email getSonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email getSonID]]) {
@@ -762,7 +792,7 @@
 
 -(void) doLoadServer
 {
-    [[[[SyncManager getSingleton] syncFolders] deliverOn:[RACScheduler mainThreadScheduler]]
+    [[[[SyncManager getSingleton] syncFolders] deliverOn:[RACScheduler scheduler]]
      subscribeNext:^(Email* email) {
          [self insertRows:email];
      }

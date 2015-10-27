@@ -189,6 +189,16 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	}
 }
 
+-(void) updateEmailWrapper:(Email*)email
+{
+    // Note that there should be no parallel accesses to addEmailWrapper
+    [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
+    if (self.shuttingDown) {
+        return;
+    }
+    [Email updateEmailBody:email];
+}
+
 -(void) addEmailWrapper:(Email*)email
 {
 	// Note that there should be no parallel accesses to addEmailWrapper

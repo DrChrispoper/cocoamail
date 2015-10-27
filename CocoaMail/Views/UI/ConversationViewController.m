@@ -16,6 +16,7 @@
 #import "EmailProcessor.h"
 #import <QuickLook/QuickLook.h>
 #import "StringUtil.h"
+#import "ImapSync.h"
 
 @class SingleMailView;
 

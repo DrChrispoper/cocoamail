@@ -60,6 +60,7 @@
 +(NSInteger) insertEmail:(Email*)email;
 +(NSInteger) insertEmailUnsafe:(Email*)email;
 +(void) updateEmailFlag:(Email*)email;
++(void) updateEmailBody:(Email*)email;
 +(BOOL) removeEmail:(NSString*)msgId;
 +(NSMutableArray*) getEmails;
 +(Email*) resToEmail:(FMResultSet*)result;

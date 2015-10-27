@@ -104,11 +104,10 @@ static NSDateFormatter * s_df_hour = nil;
         [[builder header] setBcc:to];
     }
     
-    /*if (mail.email && !self.fwd) {
-     if (mail.email.getSonID)
-     [[builder header] setReferences:@[mail.email.getSonID]];
-     [[builder header] setInReplyTo: @[mail.email.msgId]];
-     }*/
+    if (self.fromMail) {
+     [[builder header] setReferences:@[self.fromMail.email.getSonID]];
+     [[builder header] setInReplyTo: @[self.fromMail.email.msgId]];
+    }
     
     [[builder header] setSubject:self.title];
     
@@ -420,6 +419,12 @@ static NSDateFormatter * s_df_hour = nil;
 }
 
 -(NSDate*) date
+{
+    Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
+    return [conversation firstMail].email.datetime;
+}
+
+-(NSDate*) day
 {
     NSDateFormatter* dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateFormat = @"d MMM yy";

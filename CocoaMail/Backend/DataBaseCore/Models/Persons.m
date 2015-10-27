@@ -54,20 +54,20 @@
     
     CNContactStore* store = [[CNContactStore alloc] init];
 
-        if ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts] == CNAuthorizationStatusNotDetermined) {
-            
-            [store requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError* _Nullable error) {
-                                                         if (granted) {
-                                                             if (error) {
-                                                                 CCMLog(@"Error reading Address Book: %@", error.description);
-                                                             }
-                                                             [self loadContacts:store];
-                                                         }
-                                                    }];
-        } else if ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts] == CNAuthorizationStatusAuthorized) {
-            [self loadContacts:store];
-        }
-    
+    if ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts] == CNAuthorizationStatusAuthorized) {
+        [self loadContacts:store];
+    }
+    else if ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts] == CNAuthorizationStatusNotDetermined) {
+        [store requestAccessForEntityType:CNEntityTypeContacts
+                        completionHandler:^(BOOL granted, NSError* _Nullable error) {
+                            if (granted) {
+                                if (error) {
+                                    CCMLog(@"Error reading Address Book: %@", error.description);
+                                }
+                                [self loadContacts:store];
+                            }
+                        }];
+    }
 
     self.allsNeg = [NSMutableArray arrayWithCapacity:6];
     [self.allsNeg addObject:[[Person alloc] init]];
@@ -78,14 +78,12 @@
 -(void) loadContacts:(CNContactStore*)store
 {
     if (store != nil) {
-        NSArray* allContacts = [store unifiedContactsMatchingPredicate:[CNContact predicateForContactsMatchingName:@""] keysToFetch:@[CNContactGivenNameKey, CNContactFamilyNameKey, CNContactEmailAddressesKey,CNContactImageDataKey] error:nil];
-        
-        NSMutableSet* allEmails = [[NSMutableSet alloc]initWithCapacity:[allContacts count]];
-        self.alls = [[NSMutableArray alloc]initWithCapacity:[allContacts count]];
-        
-        for (NSUInteger i = 0; i < [allContacts count]; i++) {
-            CNContact* contactPerson = allContacts[i];
-            NSArray* emails = contactPerson.emailAddresses;
+        self.alls = [[NSMutableArray alloc]init];
+        NSMutableSet* allEmails = [[NSMutableSet alloc]init];
+
+        [store enumerateContactsWithFetchRequest:[[CNContactFetchRequest alloc] initWithKeysToFetch:@[CNContactGivenNameKey, CNContactFamilyNameKey, CNContactEmailAddressesKey,CNContactImageDataKey]] error:nil usingBlock:^(CNContact * _Nonnull contact, BOOL * _Nonnull stop) {
+            
+            NSArray* emails = contact.emailAddresses;
             
             for (NSUInteger j = 0; j < emails.count; j++) {
                 CNLabeledValue* emailLV = emails[j];
@@ -99,19 +97,19 @@
                 
                 Person* person = [[Person alloc] init];
                 
-                if (contactPerson.imageData) {
-                    person.image = [UIImage imageWithData:contactPerson.imageData];
+                if (contact.imageData) {
+                    person.image = [UIImage imageWithData:contact.imageData];
                 }
                 
-                NSString* firstName = contactPerson.givenName;
-                NSString* lastName =  contactPerson.familyName;
+                NSString* firstName = contact.givenName;
+                NSString* lastName =  contact.familyName;
                 
                 NSString* fullName = [NSString stringWithFormat:@"%@ %@", firstName, lastName];
                 
                 if ([fullName isEqualToString:@" "]) {
                     fullName = email;
                 }
-
+                
                 person.name = fullName;
                 
                 NSString* codeName = [fullName uppercaseString];
@@ -123,7 +121,8 @@
                 
                 [self.alls addObject:person];
             }
-        }
+
+        }];
     } else {
         CCMLog(@"Error reading Address Book");
     }

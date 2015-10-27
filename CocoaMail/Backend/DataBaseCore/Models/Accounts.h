@@ -43,6 +43,7 @@
 -(void) addAccount:(Account*)account;
 -(BOOL) deleteAccount:(Account*)account;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
+-(NSInteger) getPersonID:(NSInteger)accountIndex;
 
 @end
 
@@ -99,5 +100,7 @@
 
 -(void) doLoadServer:(BOOL)refresh;
 -(void) doPersonSearch:(NSArray*)addressess;
+
+-(void) showProgress;
 
 @end

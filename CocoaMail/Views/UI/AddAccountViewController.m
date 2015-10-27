@@ -692,6 +692,15 @@
         
         [sm addFolderState:folderState accountIndex:newAccountIndex];
         
+        MCOIMAPFolderInfoOperation* folderOp = [imapSession folderInfoOperation:folder.path];
+        [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
+            if (!error) {
+                NSMutableDictionary* syncState = [sm retrieveState:indexPath accountIndex:newAccountIndex];
+                syncState[@"emailCount"] = @([info messageCount]);
+                [sm persistState:syncState forFolderNum:indexPath accountIndex:newAccountIndex];
+            }
+        }];
+        
         indexPath++;
     }
     

@@ -35,6 +35,7 @@
 -(void) removeFromFolderWrapper:(NSArray*)datas folderIndex:(NSInteger)folderIdx;
 -(void) addEmailWrapper:(Email*)email;
 -(void) addEmail:(Email*)email;
+-(void) updateEmailWrapper:(Email*)email;
 
 
 @end
