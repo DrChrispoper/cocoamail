@@ -56,6 +56,7 @@
 		2777380B1B8B03830030F299 /* Accounts.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380A1B8B03830030F299 /* Accounts.m */; };
 		2777380E1B8B03A40030F299 /* MailListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380D1B8B03A40030F299 /* MailListViewController.m */; };
 		27781AFE1B8DC55D00BDE682 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27781AFD1B8DC55D00BDE682 /* Images.xcassets */; };
+		2778A1A41BE11C38006FB71D /* SignatureViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2778A1A31BE11C38006FB71D /* SignatureViewController.m */; };
 		277D89021BB14B1B00FAFED5 /* DropboxBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */; };
 		277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89041BB14BA200FAFED5 /* GoogleDriveExplorer.m */; };
 		277D895C1BB183B300FAFED5 /* folder.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D89081BB183B300FAFED5 /* folder.png */; };
@@ -332,6 +333,8 @@
 		2777380C1B8B03A40030F299 /* MailListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MailListViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		2777380D1B8B03A40030F299 /* MailListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = MailListViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		27781AFD1B8DC55D00BDE682 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		2778A1A21BE11C38006FB71D /* SignatureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SignatureViewController.h; sourceTree = "<group>"; };
+		2778A1A31BE11C38006FB71D /* SignatureViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SignatureViewController.m; sourceTree = "<group>"; };
 		277D89001BB14B1B00FAFED5 /* DropboxBrowserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DropboxBrowserViewController.h; sourceTree = "<group>"; };
 		277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DropboxBrowserViewController.m; sourceTree = "<group>"; };
 		277D89031BB14BA200FAFED5 /* GoogleDriveExplorer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GoogleDriveExplorer.h; sourceTree = "<group>"; };
@@ -781,6 +784,8 @@
 				27818C3A1BABF22500D26D1A /* QuickSwipeViewController.m */,
 				27818C3D1BABF22500D26D1A /* SettingsViewController.h */,
 				27818C3E1BABF22500D26D1A /* SettingsViewController.m */,
+				2778A1A21BE11C38006FB71D /* SignatureViewController.h */,
+				2778A1A31BE11C38006FB71D /* SignatureViewController.m */,
 			);
 			name = Settings;
 			sourceTree = "<group>";
@@ -1394,6 +1399,7 @@
 				271D4D901B84758E00D19373 /* AttachmentDBAccessor.m in Sources */,
 				271D4D941B84758E00D19373 /* UidDBAccessor.m in Sources */,
 				27818C6C1BABF28D00D26D1A /* Mail.m in Sources */,
+				2778A1A41BE11C38006FB71D /* SignatureViewController.m in Sources */,
 				273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */,
 				27818C4C1BABF22500D26D1A /* AttachmentsViewController.m in Sources */,
 				2777380B1B8B03830030F299 /* Accounts.m in Sources */,

@@ -125,6 +125,8 @@
 //+(void)setActiveAccount:(NSInteger)account;
 +(NSInteger) defaultAccountIndex;
 +(void) setDefaultAccountIndex:(NSInteger)accountIndex;
++(NSInteger) lastAccountIndex;
++(void) setLastAccountIndex:(NSInteger)accountIndex;
 
 // in-store sales
 +(BOOL) featurePurchased:(NSString*)productIdentifier;

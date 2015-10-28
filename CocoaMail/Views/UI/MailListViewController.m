@@ -360,19 +360,45 @@
         [self removeConversations:convs];
     }
     
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+    /*[[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [self.table reloadData];
-    }];
+    }];*/
 }
 
 -(void) removeConversations:(NSArray*)convs
 {
-    for (ConversationIndex* conversationIndex in convs) {
-        for (int i = 0 ; i < self.convByDay.count ; i++) {
-            NSMutableArray* list = self.convByDay[i][@"list"];
-            [list removeObject:conversationIndex];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.table beginUpdates];
+        for (ConversationIndex* conversationIndex in convs) {
+            for (int i = 0 ; i < self.convByDay.count ; i++) {
+                NSMutableArray* list = self.convByDay[i][@"list"];
+                
+                BOOL deleted = NO;
+                NSInteger index = 0;
+                
+                for (ConversationIndex* tmpConvIndex in list) {
+                    
+                    if (tmpConvIndex.index == conversationIndex.index) {
+                        [list removeObjectAtIndex:index];
+                        [self.table deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:i]] withRowAnimation:UITableViewRowAnimationNone];
+
+                        if (list.count == 0) {
+                            [self.convByDay removeObjectAtIndex:i];
+                            [self.table deleteSections:[NSIndexSet indexSetWithIndex:i] withRowAnimation:UITableViewRowAnimationNone];
+                        }
+                        deleted = YES;
+                        break;
+                    }
+                    index++;
+                }
+                
+                if (deleted) {
+                    break;
+                }
+            }
         }
-    }
+        [self.table endUpdates];
+    });
 }
 
 -(void) insertConversations:(NSArray*)pConvs

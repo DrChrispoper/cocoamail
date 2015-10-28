@@ -553,7 +553,6 @@
         self.name.text = p.name;
     }
 
-         
     [self.badge.subviews.firstObject removeFromSuperview];
     [self.badge addSubview:[p badgeView]];
     

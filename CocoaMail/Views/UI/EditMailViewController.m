@@ -1418,6 +1418,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     // ex. Update a UITableView that shows downloaded files or get the name of the most recently selected file:
     //     NSString* fileName = [DropboxBrowserViewController fileName];
     //[self.attachmentCollectionView reloadData];
+    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser deliveredFileDownloadNotification:(UILocalNotification*)notification

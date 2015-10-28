@@ -108,6 +108,15 @@
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView
+{
+    if (scrollView == self.scrollView) {
+        return YES;
+    }
+    
+    return NO;
+}
+
 -(void) cleanBeforeGoingBack
 {
     self.scrollView.delegate = nil;    
@@ -208,6 +217,7 @@
     [self.view addSubview:sv];
     sv.delegate = self;
     sv.alwaysBounceVertical = YES;
+    sv.scrollsToTop = YES;
     self.scrollView = sv;
 }
 

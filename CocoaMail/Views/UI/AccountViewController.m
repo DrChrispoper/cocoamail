@@ -114,7 +114,7 @@
                        @{TEXT: @"Name", TEXT_2 : self.account.person.name, DACTION : @"EDIT_NAME"},
                        @{TEXT: @"Address", TEXT_2 : self.account.userMail},
                        @{TEXT: @"Password", TEXT_2 : @"password", DACTION : @"EDIT_PASS"},
-                       @{TEXT: @"Signature", ACTION : @"OPEN_SIGN"},
+                       @{TEXT: @"Signature", ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION},
                        @{TEXT: @"Server settings", ACTION : @"OPEN_SERVER"}
                         ];
     
@@ -265,7 +265,6 @@
             cell.textLabel.textAlignment = NSTextAlignmentCenter;
             cell.textLabel.textColor = [UIColor colorWithRed:1. green:0.07 blue:0.0 alpha:1.0];
         }
-        
     }
     else if (infoCell[ACTION]!=nil) {
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;

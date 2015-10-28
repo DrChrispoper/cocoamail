@@ -46,7 +46,7 @@
     DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
-    [[Accounts sharedInstance] setCurrentAccountIdx:[AppSettings defaultAccountIndex]];
+    [[Accounts sharedInstance] setCurrentAccountIdx:[AppSettings lastAccountIndex]];
     
     NSString* driveScope = @"https://mail.google.com/";
     NSArray* currentScopes = [GIDSignIn sharedInstance].scopes;

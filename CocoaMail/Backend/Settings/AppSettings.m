@@ -734,6 +734,28 @@
     [defaults synchronize];
 }
 
++(NSInteger) lastAccountIndex
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"lastAccount"]];
+    NSInteger index = [activeAcctPreference integerValue];
+    
+    if (index != 999) {
+        return [AppSettings indexForAccount:index];
+    }
+    else {
+        return [AppSettings numActiveAccounts];
+    }
+}
+
++(void) setLastAccountIndex:(NSInteger)accountIndex
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"lastAccount"]];
+    [defaults synchronize];
+}
+
+
 +(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex
 {
     [AppSettings setUsername:accountVal.username accountIndex:accountIndex];

@@ -244,6 +244,7 @@
 -(void) setCurrentAccountIdx:(NSInteger)currentAccountIdx
 {
     _currentAccountIdx = currentAccountIdx;
+    [AppSettings setLastAccountIndex:currentAccountIdx];
 }
 
 -(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx
@@ -733,9 +734,10 @@
         syncCount += tmpEmailCount - lastEnded;
     }
     
-    CCMLog(@"syncCount:%i emailCount:%i Percentage:%i", syncCount, emailCount, (syncCount * 100) / emailCount);
+    //CCMLog(@"syncCount:%i emailCount:%i Percentage:%i", syncCount, emailCount, (syncCount * 100) / emailCount);
 
     [CCMStatus showStatus:[NSString stringWithFormat:@"%@ %i%% synced", self.person.codeName, (syncCount * 100) / emailCount]];
+    [CCMStatus dismissAfter:1.0];
 }
 
 -(void) insertRows:(Email*)email
