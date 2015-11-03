@@ -163,7 +163,7 @@
     
     NSDictionary* dic = self.searchResult[indexPath.row];
     
-    Conversation* c = dic[kCONTENT];
+    Conversation* c = [[Accounts sharedInstance] conversationForCI:dic[kCONTENT]];
     NSString* st = dic[kSUBTEXT];
     
     [cell fillWithConversation:c subText:st highlightWord:self.searchBar.text];
@@ -270,9 +270,9 @@
     
     NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
     
-    for (Conversation* c in current) {
+    for (ConversationIndex* c in current) {
         
-        Mail* mail = [c firstMail];
+        Mail* mail = [[[Accounts sharedInstance] conversationForCI:c] firstMail];
         
         Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
         

@@ -16,6 +16,7 @@
 #import "SettingsViewController.h"
 #import "EditMailViewController.h"
 #import "SearchViewController.h"
+#import "SignatureViewController.h"
 
 #import "Accounts.h"
 #import "CocoaButton.h"
@@ -120,12 +121,24 @@ static ViewController * s_self;
 {
     FolderViewController* f = [[FolderViewController alloc] init];
 
-    [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-    MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
-    inbox.view.frame = self.contentView.bounds;
-    UIView* nextView = inbox.view;
+    UIView* nextView;
     
-    self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
+    if ([Accounts sharedInstance].accountsCount !=  1) {
+        [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        inbox.view.frame = self.contentView.bounds;
+        nextView = inbox.view;
+    
+        self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
+    }
+    else {
+        /*AddAccountViewController* addView = [[AddAccountViewController alloc] init];
+        addView.firstRunMode = YES;*/
+        f.view.frame = self.contentView.bounds;
+        nextView = f.view;
+        
+        self.viewControllers = [NSMutableArray arrayWithObjects:f, nil];
+    }
     
     [self _manageCocoaButton:[f haveCocoaButton]];
     
@@ -445,7 +458,6 @@ static ViewController * s_self;
             return;
         }
         
-        
         if (self.viewControllers.count>2) {
             NSRange toRemove;
             toRemove.location = 1;
@@ -562,6 +574,15 @@ static ViewController * s_self;
             return;
         }
         AccountViewController* f = [[AccountViewController alloc] init];
+        f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
+        [self _animatePushVC:f];
+    }];
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ACCOUNT_SIGN_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
+        if ([self _checkInteractionAndBlock]) {
+            return;
+        }
+        SignatureViewController* f = [[SignatureViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];

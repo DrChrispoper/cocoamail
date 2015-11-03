@@ -99,6 +99,7 @@
             [self.pullToRefresh stopAnimating];
             scrollView.contentInset = lastInset;
             [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
+            [[Accounts sharedInstance].currentAccount showProgress];
             
         });
         // TODO true one

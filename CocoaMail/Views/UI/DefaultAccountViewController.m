@@ -27,9 +27,7 @@
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
-    
     item.leftBarButtonItem = [self backButtonInNavBar];
-    
     NSString* title = NSLocalizedString(@"Default account", @"Default account");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     

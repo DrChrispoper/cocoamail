@@ -34,5 +34,6 @@
 -(NSUInteger) hash;
 -(BOOL) isInline;
 
++(void) clearAttachments;
 
 @end

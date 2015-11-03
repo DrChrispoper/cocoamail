@@ -107,6 +107,7 @@
 #define TEXT_2 @"dt"
 #define ACTION @"a"
 #define DACTION @"da"
+#define OBJECT @"o"
 
 -(void) _prepareTable
 {
@@ -114,7 +115,7 @@
                        @{TEXT: @"Name", TEXT_2 : self.account.person.name, DACTION : @"EDIT_NAME"},
                        @{TEXT: @"Address", TEXT_2 : self.account.userMail},
                        @{TEXT: @"Password", TEXT_2 : @"password", DACTION : @"EDIT_PASS"},
-                       @{TEXT: @"Signature", ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION},
+                       @{TEXT: @"Signature", ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION, OBJECT:self.account},
                        @{TEXT: @"Server settings", ACTION : @"OPEN_SERVER"}
                         ];
     
@@ -223,7 +224,6 @@
     
     if (infoCell[TEXT_2] != nil) {
         
-        
         UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(100, 0, bounds.width - 110, bounds.height)];
         tf.text = infoCell[TEXT_2];
         tf.delegate = self;
@@ -268,6 +268,9 @@
     }
     else if (infoCell[ACTION]!=nil) {
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        if ([infoCell[ACTION] isEqualToString:@"OPEN_SERVER"]) {
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }
     }
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
@@ -336,7 +339,14 @@
     NSString* action = infoCell[ACTION];
     
     if (action.length>0) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:action object:nil];
+        
+        id object = infoCell[OBJECT];
+        
+        if (object != nil) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:action object:nil userInfo:@{kSETTINGS_KEY:object}];
+        } else {
+            [[NSNotificationCenter defaultCenter] postNotificationName:action object:nil userInfo:nil];
+        }
         
         return nil;
     }

@@ -195,17 +195,9 @@
     UIView* headerView = [[UIView alloc] init];
     headerView.backgroundColor = self.table.backgroundColor;
     
-    UIButton* button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [button addTarget:self
-               action:@selector(loadMoreServer)
-     forControlEvents:UIControlEventTouchDown];
-    
-    
-    [button setEnabled:NO];
-    [button setTitle:@"Loading..." forState:UIControlStateNormal];
-    
-    
+    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
     button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
+    [button startAnimating];
     
     [headerView addSubview:button];
     
@@ -213,12 +205,13 @@
     
     if (!self.onlyPerson) {
         [self addPullToRefreshWithDelta:0];
+    }
         //[self.localFetchQueue addOperationWithBlock:^{
         if (self.convByDay.count == 0) {
             [self setupData];
         }
         //}];
-    }
+    
 }
 
 -(Conversation*) _createAttachs
@@ -305,20 +298,19 @@
 -(void) viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    
-    [[Accounts sharedInstance].currentAccount showProgress];
 
-    if ([Accounts sharedInstance].accountsCount ==  1) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-    }
-    else {
-        
+    //if ([Accounts sharedInstance].accountsCount ==  1) {
+    //    [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
+    //}
+    //else {
+        [[Accounts sharedInstance].currentAccount showProgress];
+
         [ViewController animateCocoaButtonRefresh:YES];
         
         if (self.onlyPerson) {
             [[Accounts sharedInstance].currentAccount doPersonSearch:@[self.onlyPerson]];
         }
-    }
+    //}
 }
 
 -(void) viewWillDisappear:(BOOL)animated
@@ -370,10 +362,11 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.table beginUpdates];
         for (ConversationIndex* conversationIndex in convs) {
+            BOOL deleted = NO;
+
             for (int i = 0 ; i < self.convByDay.count ; i++) {
                 NSMutableArray* list = self.convByDay[i][@"list"];
                 
-                BOOL deleted = NO;
                 NSInteger index = 0;
                 
                 for (ConversationIndex* tmpConvIndex in list) {
@@ -386,6 +379,7 @@
                             [self.convByDay removeObjectAtIndex:i];
                             [self.table deleteSections:[NSIndexSet indexSetWithIndex:i] withRowAnimation:UITableViewRowAnimationNone];
                         }
+                        CCMLog(@"Deleted in MailView");
                         deleted = YES;
                         break;
                     }
@@ -396,6 +390,10 @@
                     break;
                 }
             }
+            
+            if (!deleted) {
+                CCMLog(@"Could not find email to delete");
+            }
         }
         [self.table endUpdates];
     });
@@ -403,6 +401,10 @@
 
 -(void) insertConversations:(NSArray*)pConvs
 {
+    if (self.onlyPerson) {
+        pConvs = [self _filterResultsForPerson:pConvs];
+    }
+    
     NSMutableArray* convs = [NSMutableArray arrayWithArray:pConvs];
     
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
@@ -477,6 +479,44 @@
         });
     }
 }
+
+-(NSMutableArray*) _filterResultsForPerson:(NSArray*)convs
+{
+    NSMutableArray* current = [convs mutableCopy];
+    
+    NSInteger personID = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
+    
+    NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
+    
+    for (ConversationIndex* c in current) {
+        
+        for (Mail* mail in [[[Accounts sharedInstance] conversationForCI:c] mails]) {
+            BOOL found = false;
+            
+            if (mail.fromPersonID == personID) {
+                [next addObject:c];
+                found = true;
+            }
+            else {
+                for (NSNumber* toPersonID in mail.toPersonID) {
+                    if ([toPersonID integerValue] == personID) {
+                        [next addObject:c];
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (found) {
+                break;
+            }
+        }
+    }
+    
+    
+    return next;
+}
+
 
 #pragma mark - Cell Delegate
 

@@ -9,6 +9,7 @@
 #import "SettingsViewController.h"
 
 #import "Accounts.h"
+#import "CCMAttachment.h"
 
 
 @interface SettingsViewController () <UITableViewDataSource, UITableViewDelegate>
@@ -312,7 +313,15 @@
             reload = @[indexPath, [NSIndexPath indexPathForRow:indexPath.row - 1 inSection:indexPath.section]];
         }
         else if ([directAction isEqualToString:@"CLEAR"]) {
-            [ViewController presentAlertWIP:@"clear attachments…"];
+            [CCMAttachment clearAttachments];
+            
+            UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil message:@"Attachments cache cleared." preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                                                  handler:nil];
+            [ac addAction:defaultAction];
+            
+            [self presentViewController:ac animated:YES completion:nil];
         }
         
         if (reload.count > 0) {

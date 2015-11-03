@@ -412,7 +412,15 @@
                                 
                                 if (CGRectContainsPoint(bigger, pos)) {
                                     
-                                    Person* person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
+                                    Person* person;
+                                    
+                                    if ([[Accounts sharedInstance] getPersonID:[self conversation].accountIdx] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
+                                        person = [[Persons sharedInstance] getPersonID:[[[self mail].toPersonID firstObject] integerValue]];
+                                    }
+                                    else {
+                                        person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
+                                    }
+                                    
                                     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
                                     return;
                                 }
@@ -545,8 +553,14 @@
     
     //If it is a reply show the first receipient
     if ([[Accounts sharedInstance] getPersonID:conv.accountIdx] == mail.fromPersonID) {
-        p = [[Persons sharedInstance] getPersonID:[[mail.toPersonID firstObject] integerValue]];
-        self.name.text = [NSString stringWithFormat:@"↩︎%@",p.name];
+        if (!mail.toPersonID || mail.toPersonID.count == 0) {
+            p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+            self.name.text = @"Draft";
+        }
+        else {
+            p = [[Persons sharedInstance] getPersonID:[[mail.toPersonID firstObject] integerValue]];
+            self.name.text = [NSString stringWithFormat:@"↩︎%@",p.name];
+        }
     }
     else {
         p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];

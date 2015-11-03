@@ -7,12 +7,12 @@
     {
       "idiom" : "universal",
       "scale" : "2x",
-      "filename" : "markAsRead_off@2x.png"
+      "filename" : "markAsRead_on@2x.png"
     },
     {
       "idiom" : "universal",
       "scale" : "3x",
-      "filename" : "markAsRead_off@3x.png"
+      "filename" : "markAsRead_on@3x.png"
     }
   ],
   "info" : {

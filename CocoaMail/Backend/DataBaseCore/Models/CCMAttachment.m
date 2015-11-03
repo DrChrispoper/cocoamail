@@ -19,13 +19,17 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         for (CCMAttachment* at in atts) {
-            if (!at.data) {
-                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
-                at.fileName, @(at.size), at.mimeType, at.msgId, at.partID, at.contentID];
-            }
-            else {
-                [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
-                at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
+            FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? AND file_name = ?", at.msgId, at.fileName];
+
+            if (!results.next) {
+                if (!at.data) {
+                    [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
+                     at.fileName, @(at.size), at.mimeType, at.msgId, at.partID, at.contentID];
+                }
+                else {
+                    [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
+                     at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
+                }
             }
         }
     }];
@@ -175,6 +179,14 @@
     AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?", attachment.data, attachment.msgId, attachment.partID];
+    }];
+}
+
++(void) clearAttachments
+{
+    AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE attachments set data = ? ", nil];
     }];
 }
 

@@ -23,8 +23,7 @@ static NSDateFormatter * s_df_hour = nil;
 +(void) initialize
 {
     s_df_day = [[NSDateFormatter alloc] init];
-    s_df_day.dateStyle = NSDateFormatterMediumStyle;
-    s_df_day.timeStyle = NSDateFormatterNoStyle;
+    s_df_day.dateFormat = @"d MMM yy";
     
     s_df_hour = [[NSDateFormatter alloc] init];
     s_df_hour.dateStyle = NSDateFormatterNoStyle;
@@ -426,13 +425,10 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(NSDate*) day
 {
-    NSDateFormatter* dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"d MMM yy";
-    
     Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
     NSString* stringDate = [[DateUtil getSingleton] humanDate:[conversation firstMail].email.datetime];
     
-    return [dateFormatter dateFromString:stringDate];
+    return [s_df_day dateFromString:stringDate];
 }
 
 @end

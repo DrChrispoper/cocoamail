@@ -705,7 +705,7 @@
                                         
                                         if (isInInbox & isUnread) {
                                             if (![self.emailIDs containsObject:email.msgId]) {
-                                                CCMLog(@"Had Cached Email: %li", (unsigned long)self.emailIDs.count);
+                                                CCMLog(@"Had Cached %li Emails", (unsigned long)self.emailIDs.count);
                                                 CCMLog(@"Notifying Email: %@", email.subject);
                                                 [self.cachedData addObject:email];
                                                 [self.emailIDs addObject:email.msgId];

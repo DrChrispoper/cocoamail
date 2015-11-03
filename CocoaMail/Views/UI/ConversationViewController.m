@@ -108,15 +108,6 @@
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
-- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView
-{
-    if (scrollView == self.scrollView) {
-        return YES;
-    }
-    
-    return NO;
-}
-
 -(void) cleanBeforeGoingBack
 {
     self.scrollView.delegate = nil;    
@@ -880,7 +871,7 @@
 
     CCMLog(@"Height:%f", self.height);
     
-    [self setupWithText:nil extended:YES];
+    [self setupWithText:self.textContent extended:YES];
     
     CGFloat nextHeight = self.bounds.size.height;
     
