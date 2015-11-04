@@ -7,7 +7,7 @@
 
 #import "MCOMessageView.h"
 
-@interface MCOMessageView () <MCOHTMLRendererIMAPDelegate>
+@interface MCOMessageView () <MCOHTMLRendererIMAPDelegate, UIScrollViewDelegate>
 
 @end
 
@@ -32,6 +32,7 @@
         _webView.dataDetectorTypes = UIDataDetectorTypeLink;
 
         _webView.scrollView.scrollsToTop = NO;
+        _webView.scrollView.delegate = self;
         
         [_webView setDelegate:self];
     
@@ -160,12 +161,13 @@
 	return jsonString;
 }
 
--(MCOAttachment*)partForContentID:(NSString*)partUniqueID{
+-(MCOAttachment*)partForContentID:(NSString*)partUniqueID
+{
     return [self.delegate partForUniqueID:partUniqueID];
 }
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-    
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{    
     if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
         [[UIApplication sharedApplication] openURL:[request URL]];
         return NO;
@@ -174,7 +176,8 @@
         NSURL *url = [request URL];
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
-            
+            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
+
             if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
                 if (contentHeight < _webView.scrollView.contentSize.height) {
                     contentHeight = _webView.scrollView.contentSize.height;
@@ -228,5 +231,16 @@
     
     //_webView.frame = CGRectMake(0, 0, webView.frame.size.width, webView.scrollView.contentSize.height);
 }*/
+
+- (void) scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    if (scrollView.contentSize.height > _webView.frame.size.height) {
+        CGRect fr = _webView.frame;
+        fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height);
+        _webView.frame = fr;
+        
+        [self.delegate webViewLoaded:_webView];
+    }
+}
 
 @end

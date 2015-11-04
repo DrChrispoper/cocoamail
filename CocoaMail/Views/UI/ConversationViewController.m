@@ -615,7 +615,7 @@
         }
         else {*/
             if (!self.htmlView) {
-                self.height = size.height = ([UIScreen mainScreen].bounds.size.height / 2);
+                self.height = size.height = 100;
                 MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
                 [view setHtml:mail.email.htmlBody];
                 view.delegate = self;
