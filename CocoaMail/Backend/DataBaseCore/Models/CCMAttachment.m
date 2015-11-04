@@ -22,6 +22,7 @@
             FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? AND file_name = ?", at.msgId, at.fileName];
 
             if (!results.next) {
+                [results close];
                 if (!at.data) {
                     [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
                      at.fileName, @(at.size), at.mimeType, at.msgId, at.partID, at.contentID];
@@ -78,6 +79,9 @@
             
             attachment.pk = [results intForColumn:@"pk"];
             attachment.fileName = [results stringForColumn:@"file_name"];
+            if (!attachment.fileName) {
+                attachment.fileName = @"";
+            }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
             attachment.msgId = [results stringForColumn:@"msg_id"];
@@ -107,6 +111,9 @@
             
             attachment.pk = [results intForColumn:@"pk"];
             attachment.fileName = [results stringForColumn:@"file_name"];
+            if (!attachment.fileName) {
+                attachment.fileName = @"";
+            }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
             attachment.msgId = [results stringForColumn:@"msg_id"];
@@ -142,6 +149,9 @@
             
             attachment.pk = [results intForColumn:@"pk"];
             attachment.fileName = [results stringForColumn:@"file_name"];
+            if (!attachment.fileName) {
+                attachment.fileName = @"";
+            }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
             attachment.msgId = [results stringForColumn:@"msg_id"];

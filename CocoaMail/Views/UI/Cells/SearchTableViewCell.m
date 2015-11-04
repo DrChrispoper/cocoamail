@@ -205,7 +205,7 @@ static NSDateFormatter * s_df_date = nil;
         
         NSMutableAttributedString* res = [[NSMutableAttributedString alloc] initWithString:mailFromName
                                                                                 attributes:@{ NSFontAttributeName : self.name.font,
-                                                                                              NSForegroundColorAttributeName : self.name.textColor,
+                                                                                              NSForegroundColorAttributeName : [UIColor colorWithWhite:0.47 alpha:1.0],
                                                                                               NSBackgroundColorAttributeName : [UIColor whiteColor]
                                                                                               }];
         
@@ -238,7 +238,7 @@ static NSDateFormatter * s_df_date = nil;
                               NSForegroundColorAttributeName : [UIColor whiteColor],
                               NSBackgroundColorAttributeName : [UIGlobal standardBlue]}
                      range:rST];
-        
+        self.title.numberOfLines = 1;
         self.title.attributedText = res;
     }
     else {
