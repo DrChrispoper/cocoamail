@@ -229,7 +229,6 @@
 
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight
 {
-    
     CGFloat limite = mailView.frame.origin.y;
     
     for (UIView* v in self.contentView.subviews) {

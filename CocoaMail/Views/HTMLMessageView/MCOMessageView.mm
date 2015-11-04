@@ -16,6 +16,7 @@
     NSString*  _html;
     __weak id <MCOMessageViewDelegate> _delegate;
     UIView* _loadingView;
+    BOOL _hasResized;
 }
 
 @synthesize delegate = _delegate;
@@ -25,6 +26,7 @@
     self = [super initWithFrame:frame];
     
     if(self) {
+        _hasResized = NO;
         _webView = [[UIWebView alloc] initWithFrame:[self bounds]];
         //[_webView setAutoresizingMask:(UIViewAutoresizingFlexibleHeight)];
         _webView.scalesPageToFit = NO;
@@ -169,12 +171,11 @@
         NSURL *url = [request URL];
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
-            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
 
             if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
-                if (contentHeight < _webView.scrollView.contentSize.height) {
+                //if (contentHeight < _webView.scrollView.contentSize.height) {
                     contentHeight = _webView.scrollView.contentSize.height;
-                }
+                //}
             }
             else {
                 if (contentHeight > _webView.scrollView.contentSize.height) {
@@ -214,38 +215,35 @@
 
 - (void) scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-        if (scrollView.contentSize.height > _webView.frame.size.height) {
-            CGRect fr = _webView.frame;
-            fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height);
-            _webView.frame = fr;
+    //CGFloat docHeight = [[_webView stringByEvaluatingJavaScriptFromString:@"document.height"] floatValue];
+    CGFloat scrollHeight = scrollView.contentSize.height;
+    
+    if (!_hasResized && scrollHeight > _webView.frame.size.height) {
+        CGRect fr = _webView.frame;
+        fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight);
+        _webView.frame = fr;
         
-            [self.delegate webViewLoaded:_webView];
-        }
+        [self.delegate webViewLoaded:_webView];
+        _hasResized = YES;
+    }
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(nullable UIView *)view atScale:(CGFloat)scale
 {
-    CCMLog(@"Scale:%f",scale);
+    //CGFloat height = [[_webView stringByEvaluatingJavaScriptFromString:@"document.height"] floatValue];
+    CGFloat scrollHeight = scrollView.contentSize.height;
+
     if (scale < 1) {
         //CCMLog(@"Content Height:%f",scrollView.contentSize.height);
         CGRect fr = _webView.frame;
-        fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height * scale);
+        fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight * scale);
         _webView.frame = fr;
         
         [self.delegate webViewLoaded:_webView];
+    }
+    if (scale > 1) {
+        _hasResized = NO;
     }
 }
-
-/*- (void)scrollViewDidZoom:(UIScrollView *)scrollView
-{
-    if (scrollView.contentSize.height < _webView.frame.size.height) {
-        CGRect fr = _webView.frame;
-        fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height);
-        _webView.frame = fr;
-        
-        [self.delegate webViewLoaded:_webView];
-    }
-}*/
-
 
 @end
