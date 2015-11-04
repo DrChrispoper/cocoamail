@@ -422,6 +422,7 @@
         
         dispatch_async(dispatch_get_main_queue(), ^{
             BOOL added = NO;
+            [UIView setAnimationsEnabled:NO];
             [self.table beginUpdates];
 
             for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
@@ -476,6 +477,7 @@
                 [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:self.convByDay.count-1]] withRowAnimation:UITableViewRowAnimationNone];
             }
             [self.table endUpdates];
+            [UIView setAnimationsEnabled:YES];
         });
     }
 }
