@@ -47,7 +47,7 @@
     dispatch_once(&once, ^{
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = [AppSettings quickSwipe];
-        sharedInstance.currentAccountIdx = 0;
+        sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];
         sharedInstance.localFetchQueue = [NSOperationQueue new];
         [sharedInstance.localFetchQueue setMaxConcurrentOperationCount:1];
         
@@ -386,7 +386,7 @@
                  [CCMStatus showStatus:@"No new emails"];
              }
              else {
-                 [CCMStatus showStatus:[NSString stringWithFormat:@"%li new emails",new]];
+                 [CCMStatus showStatus:[NSString stringWithFormat:@"%li new emails",(long)new]];
              }
              
              [CCMStatus dismissAfter:2];
@@ -404,7 +404,7 @@
                  [CCMStatus showStatus:@"No new emails"];
              }
              else {
-                 [CCMStatus showStatus:[NSString stringWithFormat:@"%li new emails",new]];
+                 [CCMStatus showStatus:[NSString stringWithFormat:@"%li new emails",(long)new]];
              }
              
              [CCMStatus dismissAfter:2];
@@ -549,7 +549,7 @@
     smtpSession.connectionType = service.connectionType;
     
     CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
-    
+    [CCMStatus showStatus:@"Sending email..."];
     NSData* rfc822Data = [mail rfc822DataWithAccountIdx:self.idx isBcc:isBcc];
     
     MCOSMTPSendOperation* sendOperation = [smtpSession sendOperationWithData:rfc822Data];
@@ -557,9 +557,11 @@
         
         if (error) {
             CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
+            [CCMStatus showStatus:@"Error: Email not sent."];
         }
         else {
             CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
+            [CCMStatus showStatus:@"Email sent."];
         }
     }];
     

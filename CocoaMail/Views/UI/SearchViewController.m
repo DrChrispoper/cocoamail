@@ -68,8 +68,6 @@
     table.dataSource = self;
     table.delegate = self;
     self.table = table;
-
-    [self fetchAll];
 }
 
 -(void) _hideKeyboard
@@ -217,28 +215,6 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
--(void) insertRows:(Email*)email
-{
-    Conversation* conv = [[Conversation alloc] init];
-    [conv addMail:[Mail mail:email]];
-    [[[Accounts sharedInstance] currentAccount] addConversation:conv];
-}
-
--(void) fetchAll
-{
-    [self.searchQueue addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] activeFolderSearch:0]
-         subscribeNext:^(Email* email) {
-             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                 [self insertRows:email];
-             }];
-         }
-         completed:^{
-             [[NSOperationQueue mainQueue] addOperationWithBlock:^{}];
-         }];
-    }];
-}
-
 #pragma mark - SearchBar Delegate
 
 -(void) _updateSearchResultWith:(NSString*)word
@@ -280,10 +256,14 @@
         NSString* title = mail.title;
         NSString* content = mail.content;
         
+        content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        
         NSMutableArray* attachs = [NSMutableArray arrayWithCapacity:mail.attachments.count];
         
         for (Attachment* a in mail.attachments) {
-            [attachs addObject:a.fileName];
+            if (a.fileName) {
+                [attachs addObject:a.fileName];
+            }
         }
         
 
