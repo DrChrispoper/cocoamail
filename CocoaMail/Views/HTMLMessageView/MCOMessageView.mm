@@ -87,8 +87,6 @@
     
     NSString* quoteStyle = @"<style> blockquote { margin:0 } body { font-family: HelveticaNeue, Verdana; )</style>";
     
-    CCMLog(@"Proccess");
-    
     BOOL haveStyle = ([content rangeOfString:@"<style"].location != NSNotFound);
     BOOL haveQuote = ([content rangeOfString:@"<blockquote"].location != NSNotFound);
     BOOL haveMeta = ([content rangeOfString:@"<meta"].location != NSNotFound);
@@ -101,8 +99,6 @@
         _webView.scalesPageToFit = (haveMeta || haveStyle || haveTable);
     }
     
-    CCMLog(@"Proccessed");
-
     [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script>%@</head><body>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>", [jsURL absoluteString],quoteStyle, content];
     
     NSData *data = [html dataUsingEncoding:NSUTF8StringEncoding];
@@ -121,7 +117,6 @@
 
 -(void) _loadImages
 {
-    CCMLog(@"Load images");
 	NSString* result = [_webView stringByEvaluatingJavaScriptFromString:@"findCIDImageURL()"];
 	NSData* data = [result dataUsingEncoding:NSUTF8StringEncoding];
 
@@ -150,8 +145,6 @@
         NSString*  replaceScript = [NSString stringWithFormat:@"replaceImageSrc(%@)", jsonString];
         [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
 	}
-    CCMLog(@"Loaded images");
-
 }
 
 -(NSString*) _jsonEscapedStringFromDictionary:(NSDictionary*)dictionary
@@ -195,6 +188,7 @@
             
             [_loadingView setHidden:YES];
             [self.delegate webViewLoaded:_webView];
+
             return NO;
         }
     }
@@ -218,29 +212,40 @@
 	return request;
 }
 
-
-/*-(void)webViewDidFinishLoad:(UIWebView*)webView {
-    CGSize contentSize = webView.scrollView.contentSize;
-    CGSize viewSize = webView.bounds.size;
-    
-    float rw = viewSize.width / contentSize.width;
-    
-    webView.scrollView.minimumZoomScale = rw;
-    webView.scrollView.maximumZoomScale = rw;
-    webView.scrollView.zoomScale = rw;
-    
-    //_webView.frame = CGRectMake(0, 0, webView.frame.size.width, webView.scrollView.contentSize.height);
-}*/
-
-- (void) scrollViewWillBeginDragging:(UIScrollView *)scrollView
+- (void) scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    if (scrollView.contentSize.height > _webView.frame.size.height) {
+        if (scrollView.contentSize.height > _webView.frame.size.height) {
+            CGRect fr = _webView.frame;
+            fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height);
+            _webView.frame = fr;
+        
+            [self.delegate webViewLoaded:_webView];
+        }
+}
+
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(nullable UIView *)view atScale:(CGFloat)scale
+{
+    CCMLog(@"Scale:%f",scale);
+    if (scale < 1) {
+        //CCMLog(@"Content Height:%f",scrollView.contentSize.height);
+        CGRect fr = _webView.frame;
+        fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height * scale);
+        _webView.frame = fr;
+        
+        [self.delegate webViewLoaded:_webView];
+    }
+}
+
+/*- (void)scrollViewDidZoom:(UIScrollView *)scrollView
+{
+    if (scrollView.contentSize.height < _webView.frame.size.height) {
         CGRect fr = _webView.frame;
         fr.size = CGSizeMake(_webView.frame.size.width, scrollView.contentSize.height);
         _webView.frame = fr;
         
         [self.delegate webViewLoaded:_webView];
     }
-}
+}*/
+
 
 @end

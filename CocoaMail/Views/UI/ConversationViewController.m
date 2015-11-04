@@ -868,20 +868,11 @@
     self.height = webView.frame.size.height;
     
     CGFloat oldFrame = self.frame.size.height;
-
-    CCMLog(@"Height:%f", self.height);
     
     [self setupWithText:self.textContent extended:YES];
     
     CGFloat nextHeight = self.bounds.size.height;
-    
-    CCMLog(@"BoundsHeight:%f", nextHeight);
-    CCMLog(@"FrameHeight:%f", oldFrame);
-    
     CGFloat diff = nextHeight - oldFrame;
-    
-    CCMLog(@"DiffHeight:%f", diff);
-
     
     CGRect f = self.frame;
     f.size.height = nextHeight;
