@@ -6,6 +6,10 @@
 //
 
 #import "MCOMessageView.h"
+#import "Mail.h"
+#import "AppSettings.h"
+#import "ImapSync.h"
+#import "EmailProcessor.h"
 
 @interface MCOMessageView () <MCOHTMLRendererIMAPDelegate, UIScrollViewDelegate>
 
@@ -28,7 +32,6 @@
     if(self) {
         _hasResized = NO;
         _webView = [[UIWebView alloc] initWithFrame:[self bounds]];
-        //[_webView setAutoresizingMask:(UIViewAutoresizingFlexibleHeight)];
         _webView.scalesPageToFit = NO;
         _webView.scrollView.bounces = false;
         _webView.dataDetectorTypes = UIDataDetectorTypeLink;
@@ -66,6 +69,37 @@
     
     [_webView stopLoading];
     [self _refresh];
+}
+
+-(void) setMail:(Mail *)mail
+{
+    if (!mail.email.htmlBody || [mail.email.htmlBody isEqualToString:@""]) {
+        
+        UidEntry* uidE = [mail.email getUids][0];
+        MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
+        [uidsIS addIndex:uidE.uid];
+        
+        NSInteger accountIdx = [AppSettings indexForAccount:mail.email.accountNum];
+        
+        NSString* folderPath = [AppSettings folderName:uidE.folder forAccountIndex:accountIdx];
+        
+        [[[ImapSync sharedServices].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS]
+         start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
+             if (messages.count > 0) {
+                 [[[ImapSync sharedServices:accountIdx].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                     mail.email.htmlBody = htmlString;
+                     
+                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail.email];
+                     [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                     
+                    [self setHtml:mail.email.htmlBody];
+                 }];
+             }
+         }];
+    }
+    else {
+        [self setHtml:mail.email.htmlBody];
+    }
 }
 
 -(void) _refresh

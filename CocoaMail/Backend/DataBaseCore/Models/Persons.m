@@ -180,7 +180,7 @@
     NSInteger idx = [self.allsNeg indexOfObject:p];
     
     if (idx == NSNotFound) {
-        return [self.alls indexOfObject:p];
+        return [[self.alls copy] indexOfObject:p];
     }
     
     return -idx;

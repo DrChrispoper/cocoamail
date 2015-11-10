@@ -70,7 +70,7 @@
     
     [GIDSignIn sharedInstance].uiDelegate = self;
     
-    NSString* title = NSLocalizedString(@"Add account", @"Add account");
+    NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -173,14 +173,14 @@
 {
     
     NSArray* infos = @[
-                       @{TEXT: @"Username", DACTION : @"EDIT_NAME"},
-                       @{TEXT: @"Email", DACTION : @"EDIT_MAIL"},
-                       @{TEXT: @"Password", DACTION : @"EDIT_PASS"}
+                       @{TEXT: NSLocalizedString(@"add-account-view.username", @"Label: Username"), DACTION : @"EDIT_NAME"},
+                       @{TEXT: NSLocalizedString(@"add-account-view.email", @"Label: Email"), DACTION : @"EDIT_MAIL"},
+                       @{TEXT: NSLocalizedString(@"add-account-view.password", @"Label: Password"), DACTION : @"EDIT_PASS"}
                        ];
     
     NSDictionary* Paccounts = @{TITLE:@"", CONTENT:infos};
     
-    NSString* tDelete = NSLocalizedString(@"OK", @"OK");
+    NSString* tDelete = NSLocalizedString(@"add-account-view.ok", @"Button: OK");
     NSDictionary* PDelete = @{TITLE:@"", CONTENT:@[@{TEXT:tDelete, DACTION : @"VALIDATE"}]};
     
     self.settings = @[Paccounts, PDelete];
@@ -268,17 +268,14 @@
         if ([action isEqualToString:@"EDIT_PASS"]) {
             tf.secureTextEntry = YES;
             self.password = tf;
-            //self.password.text = @"Qserghuilm7";
         }
         else if ([action isEqualToString:@"EDIT_MAIL"]) {
             tf.keyboardType = UIKeyboardTypeEmailAddress;
             self.email = tf;
-            //self.email.text = @"105942@supinfo.com";
         }
         else {
             tf.autocapitalizationType = UITextAutocapitalizationTypeWords;
             self.username = tf;
-            //self.username.text = @"Supinfo Chris";
         }
     }
     
@@ -429,7 +426,7 @@
         }
     
         if (![self isEmailRegExp:email]) {
-            [ViewController presentAlertWIP:@"Invalid Email"];
+            [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.invalid-email", @"Alert message: Invalid Email")];
             return;
         }
     }
@@ -438,13 +435,13 @@
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
     if (networkStatus == NotReachable) {
-        [ViewController presentAlertWIP:@"Not connected to Internet"];
+        [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.no-internet", @"Alert message: Not connected to Internet")];
     }
     
     AddAccountViewController* __weak bself = self;
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
-    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Fetching settings..."];
+    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-settings", @"HUD Message: Fetching settings...")];
     [[PKHUD sharedHUD] show];
     
     [MCOMailProvidersManager sharedManager];
@@ -462,20 +459,18 @@
             CCMLog(@"error loading imap account: %@", strongSelf.accountVal.imapError);
             CCMLog(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
             
+            [[PKHUD sharedHUD] hideWithAnimated:YES];
+
             if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication) {
-                [[PKHUD sharedHUD] hideWithAnimated:YES];
-                [ViewController presentAlertWIP:@"Wrong credentials"];
+                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
-            else if(strongSelf.accountVal.imapError.code == MCOErrorNoValidServerFound)  {
-                [[PKHUD sharedHUD] hideWithAnimated:YES];
-                [ViewController presentAlertWIP:@"Unknown Server Settings"];
-            }
+            /*else if(strongSelf.accountVal.imapError.code == MCOErrorNoValidServerFound)  {
+                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
+            }*/
             else {
-                [[PKHUD sharedHUD] hideWithAnimated:YES];
-                [ViewController presentAlertWIP:@"This email provider is not supported"];
+                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
             }
-            //[[PKHUD sharedHUD] hideWithAnimated:YES];
         }
     }];
 }
@@ -488,7 +483,7 @@
     
     CCMLog(@"3 - Start setting Folders");
     
-    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Account Configuration..."];
+    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.account-in-config", @"HUD Message: Account Configuration...")];
     [[PKHUD sharedHUD] show];
     
     MCOIMAPSession* imapSession = [[MCOIMAPSession alloc] init];
@@ -535,7 +530,7 @@
             [AppSettings setName:self.username.text accountIndex:newAccountIndex];
                 
                 //[AppSettings setFirstSync:YES];
-            [AppSettings setSignature:@"Sweet love sent from the Cocoamail app!" accountIndex:newAccountIndex];
+            [AppSettings setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature") accountIndex:newAccountIndex];
                 
             [AppSettings setBadgeCount:0];
             [AppSettings setNotifications:YES];
@@ -614,7 +609,7 @@
                     else {
                         //Account not supported
                         [[PKHUD sharedHUD] hideWithAnimated:YES];
-                        [ViewController presentAlertWIP:@"This email provider is not supported"];
+                        [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert Message: This email provider is not supported")];
                     }
                 }];
             }
@@ -762,7 +757,7 @@
         [ecbv becomeFirstResponder];
         
         UINavigationItem* item = [self.navBar.items firstObject];
-        NSString* title = NSLocalizedString(@"Your Cocoa button", @"Your Cocoa button");
+        NSString* title = NSLocalizedString(@"add-account-view.title-for-cocoa-button", @"Title: Your Cocoa button");
         item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
         [self.navBar setNeedsDisplay];
         

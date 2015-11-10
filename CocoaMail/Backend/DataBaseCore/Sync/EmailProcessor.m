@@ -171,7 +171,12 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	}
 }
 
--(void) removeFromFolderWrapper:(NSArray*)datas folderIndex:(NSInteger)folderIdx
+-(void) removeFromFolderWrapper:(NSDictionary*)data
+{
+    [self removeFromFolder:data[@"datas"] folderIndex:[data[@"folderIdx"] integerValue]];
+}
+
+-(void) removeFromFolder:(NSArray*)datas folderIndex:(NSInteger)folderIdx
 {
     if (self.shuttingDown) {
         return;
@@ -212,8 +217,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     if (self.shuttingDown) {
         return;
     }
-	[Email insertEmail:email];
-	[UidEntry addUid:email.uids[0]];
+    
+    if ([Email insertEmail:email] != -1) {
+        [UidEntry addUid:email.uids[0]];
+    }
+    else {
+        CCMLog(@"Trying to add Duplicate");
+    }
 }
 
 -(void) addAttachments:(NSArray*)atts

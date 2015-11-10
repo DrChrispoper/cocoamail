@@ -32,7 +32,7 @@
 -(void) switchToDBNum:(NSInteger)dbNum;
 -(void) updateFlag:(NSMutableArray*)datas;
 -(void) addToFolderWrapper:(UidEntry*)data;
--(void) removeFromFolderWrapper:(NSArray*)datas folderIndex:(NSInteger)folderIdx;
+-(void) removeFromFolderWrapper:(NSDictionary*)data;
 -(void) addEmailWrapper:(Email*)email;
 -(void) addEmail:(Email*)email;
 -(void) updateEmailWrapper:(Email*)email;

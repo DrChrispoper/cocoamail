@@ -34,7 +34,7 @@
     
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle: NSLocalizedString(@"CocoaMail 1.0", @"CocoaMail 1.0")];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle: NSLocalizedString(@"credits-view.title", @"CocoaMail 1.0")];
     
     [self setupSimpleNavBarWith:item andWidth:screenBounds.size.width];
     
@@ -98,8 +98,8 @@
                             @{kTITLE : @"Christophe Branche", kSUB : @"UI/UX Design", kACTION : @"open CB"},
                             @{kTITLE : @"Pascal Costa-Cunha", kSUB : @"Helping hand", kACTION : @"open PCC"}
                             ],
-                          @[@{kTITLE : @"Thanks", kACTION : @"open T"}],
-                          @[@{kTITLE : @"Write a review in the iTunes Store", kACTION : @"itunes"}]
+                          @[@{kTITLE : NSLocalizedString(@"credits-view.section.thanks", @"Thanks"), kACTION : @"open T"}],
+                          @[@{kTITLE : NSLocalizedString(@"credits-view.section.review", @"Write a review in the iTunes Store"), kACTION : @"itunes"}]
                           ];
 }
 

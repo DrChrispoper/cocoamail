@@ -29,7 +29,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString* title = NSLocalizedString(@"Signature", @"Signature");
+    NSString* title = NSLocalizedString(@"signature-view.title", @"Signature");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITextView* tf = [[UITextView alloc] initWithFrame:CGRectMake(0, 44.f, screenBounds.size.width, screenBounds.size.height-44)];

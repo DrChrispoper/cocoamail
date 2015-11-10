@@ -91,8 +91,8 @@
 -(NSInteger) unreadInInbox;
 
 -(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc;
-//-(void) saveDraft:(Mail*)mail;
-//-(void) deleteDraft:(Conversation*)conversation;
+-(void) saveDraft:(Mail*)mail;
+-(void) deleteDraft:(Mail*)mail;
 
 -(NSArray*) systemFolderNames;
 -(void) deliverUpdate:(NSArray<Email*>*)emails;
@@ -100,6 +100,8 @@
 
 -(void) doLoadServer:(BOOL)refresh;
 -(void) doPersonSearch:(NSArray*)addressess;
+
+-(void) localFetchAfter:(Conversation*)conversation;
 
 -(void) showProgress;
 

@@ -68,8 +68,8 @@
     action.backgroundColor = [UIColor whiteColor];
     action.tintColor = [UIGlobal standardBlue];
     
-    NSString* link = NSLocalizedString(@"Link account", @"Link account");
-    NSString* unlink = NSLocalizedString(@"Unlink account", @"Link account");
+    NSString* link = NSLocalizedString(@"cloud-services-view.link-account", @"Link account");
+    NSString* unlink = NSLocalizedString(@"cloud-services-view.unlink-account", @"Unlink account");
     
     [action setTitle:link forState:UIControlStateNormal];
     [action setTitle:unlink forState:UIControlStateSelected];
@@ -95,12 +95,13 @@
 -(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
 -(void) receiveAuthNotification:(NSNotification*)notification
 {
+    NSString* alertViewString = NSLocalizedString(@"cloud-services-view.alert-view.message.not-linked", @"Alert message: An error occured, your %@ account has not been linked");
+
     if ([[notification name] isEqualToString:@"AuthNotification"]) {
         [[PKHUD sharedHUD] hideWithAnimated:YES];
         
@@ -110,10 +111,10 @@
             [self.mainImage setHighlighted:YES];
             }
             else {
-                UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Account not linked.", @"Title of alert view when error of linking Dropbox")
-                                                                                   message:NSLocalizedString(@"An error occured, your dropbox account has not been linked", @"Message of alert view when error of linking Dropbox")
+                UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"cloud-services-view.alert-view.title.not-linked", @"Account not linked.")
+                                                                                   message:[NSString localizedStringWithFormat:alertViewString,self.cloudServiceName]
                                                                             preferredStyle:UIAlertControllerStyleAlert];
-                [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Confirmation of alert view when unlinking Dropbox") style:UIAlertActionStyleDefault handler:nil]];
+                [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"cloud-services-view.alert-view.dismiss-button", @"Ok") style:UIAlertActionStyleDefault handler:nil]];
                 
                 [self presentViewController:alertView
                                    animated:YES
@@ -128,19 +129,22 @@
     //self.mainButton.selected = !self.mainButton.selected;
    // self.mainImage.highlighted = !self.mainImage.highlighted;
     
+    NSString* loadingHUDString = NSLocalizedString(@"cloud-services-view.loading-hud.linking", @"Linking %@...");
+    NSString* alertViewString = NSLocalizedString(@"cloud-services-view.alert-view.message.unlinked", @"Your %@ account has been unlinked");
+
     if ([self.cloudServiceName isEqualToString:@"Dropbox"]) {
         if (![[DBSession sharedSession] isLinked]) {
             [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
-            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:@"Linking Dropbox..."];
-            [[PKHUD sharedHUD] show];
+            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString localizedStringWithFormat:loadingHUDString,self.cloudServiceName]];
+            //[[PKHUD sharedHUD] show];
             [[DBSession sharedSession] linkFromController:self];
         }
         else {
             [[DBSession sharedSession] unlinkAll];
-            UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Account Unlinked!", @"Title of alert view when unlinking Dropbox")
-                                                                               message:NSLocalizedString(@"Your dropbox account has been unlinked", @"Message of alert view when unlinking Dropbox")
+            UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"cloud-services-view.alert-view.title.unlinked", @"Account Unlinked!")
+                                                                               message:[NSString localizedStringWithFormat:alertViewString,self.cloudServiceName]
                                                                         preferredStyle:UIAlertControllerStyleAlert];
-            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Ok", @"Confirmation of alert view when unlinking Dropbox") style:UIAlertActionStyleDefault handler:nil]];
+            [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"cloud-services-view.alert-view.dismiss-button", @"Ok") style:UIAlertActionStyleDefault handler:nil]];
             
             [self presentViewController:alertView
                                animated:YES
@@ -165,7 +169,7 @@
         [self presentViewController:self.navControllerForBrowseSDK animated:YES completion:nil];
     }
     else {
-        [ViewController presentAlertWIP:@"do the link…"];
+        [ViewController presentAlertWIP:NSLocalizedString(@"cloud-services-view.error.not-supported", @"Service coming soon!")];
     }
 }
 

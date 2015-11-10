@@ -74,7 +74,7 @@ static NSDateFormatter * s_df_hour = nil;
     mail.attachments = self.attachments;
     
     Person* from = [[Persons sharedInstance] getPersonID:self.fromPersonID];
-    NSString* wrote = NSLocalizedString(@"wrote", @"wrote");
+    NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
     NSString* oldcontent = [NSString stringWithFormat:@"\n\n%@ %@ :\n\n%@\n", from.name, wrote, self.content];
     mail.content = oldcontent;
     

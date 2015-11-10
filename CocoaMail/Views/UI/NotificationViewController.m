@@ -29,7 +29,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString* title = NSLocalizedString(@"Notifications", @"Notifications");
+    NSString* title = NSLocalizedString(@"notifications-view.title", @"Notifications");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,

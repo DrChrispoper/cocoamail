@@ -26,6 +26,10 @@
 
 @property (nonatomic, strong) NSMutableArray* convByDay;
 @property (nonatomic, strong) NSMutableIndexSet* indexSet;
+
+@property (nonatomic) NSInteger pageIndex;
+@property (nonatomic) NSInteger countBeforeLoadMore;
+
 @property (nonatomic, weak) UITableView* table;
 
 @property (nonatomic, strong) NSString* folderName;
@@ -48,13 +52,16 @@
 
 @implementation MailListViewController
 
+static NSInteger pageCount = 15;
+
 -(instancetype) initWithName:(NSString*)name
 {
     self = [super init];
     self.folderName = name;
     
     self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
-    
+    self.pageIndex = 1;
+    self.countBeforeLoadMore = 0;
     return self;
 }
 
@@ -206,12 +213,10 @@
     if (!self.onlyPerson) {
         [self addPullToRefreshWithDelta:0];
     }
-        //[self.localFetchQueue addOperationWithBlock:^{
-        if (self.convByDay.count == 0) {
-            [self setupData];
-        }
-        //}];
     
+    if (self.convByDay.count == 0) {
+        [self setupData];
+    }
 }
 
 -(Conversation*) _createAttachs
@@ -299,10 +304,6 @@
 {
     [super viewDidAppear:animated];
 
-    //if ([Accounts sharedInstance].accountsCount ==  1) {
-    //    [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-    //}
-    //else {
         [[Accounts sharedInstance].currentAccount showProgress];
 
         [ViewController animateCocoaButtonRefresh:YES];
@@ -310,13 +311,15 @@
         if (self.onlyPerson) {
             [[Accounts sharedInstance].currentAccount doPersonSearch:@[self.onlyPerson]];
         }
-    //}
 }
 
 -(void) viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
     [ViewController animateCocoaButtonRefresh:NO];
+    
+    self.pageIndex = 1;
+    self.countBeforeLoadMore = 0;
 }
 
 -(void) setupData
@@ -324,79 +327,82 @@
     if (kisActiveAccountAll) {
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] getAccount:idx];
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                [self insertConversations:[a getConversationsForFolder:self.folder]];
-                a.mailListSubscriber = self;
-            }];
+            a.mailListSubscriber = self;
+            [self insertConversations:[a getConversationsForFolder:self.folder]];
+
         }
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            [self insertConversations:[a getConversationsForFolder:self.folder]];
-            a.mailListSubscriber = self;
-        }];
+        a.mailListSubscriber = self;
+        [self insertConversations:[[Accounts sharedInstance].currentAccount getConversationsForFolder:self.folder]];
     }
-}
-
--(void) insertConversation:(ConversationIndex*)conversationIndex
-{
-    [self insertConversations:@[conversationIndex]];
 }
 
 -(void) removeConversationList:(NSArray*)convs
 {
-    [ViewController animateCocoaButtonRefresh:NO];
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+
+        [ViewController animateCocoaButtonRefresh:NO];
     
-    if (convs) {
-        [self removeConversations:convs];
-    }
+        if (convs) {
+            [self removeConversations:convs];
+        }
     
-    /*[[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [self.table reloadData];
-    }];*/
+    }];
+
 }
 
--(void) removeConversations:(NSArray*)convs
+-(void) removeConversations:(NSArray*)pConvs
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.table beginUpdates];
-        for (ConversationIndex* conversationIndex in convs) {
-            BOOL deleted = NO;
+    NSMutableArray* resIP = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
+    
+    for (ConversationIndex* pConversationIndex in pConvs) {
+        BOOL found = NO;
 
-            for (int i = 0 ; i < self.convByDay.count ; i++) {
-                NSMutableArray* list = self.convByDay[i][@"list"];
-                
-                NSInteger index = 0;
-                
-                for (ConversationIndex* tmpConvIndex in list) {
-                    
-                    if (tmpConvIndex.index == conversationIndex.index) {
-                        [list removeObjectAtIndex:index];
-                        [self.table deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:i]] withRowAnimation:UITableViewRowAnimationNone];
+        NSInteger section = 0;
 
-                        if (list.count == 0) {
-                            [self.convByDay removeObjectAtIndex:i];
-                            [self.table deleteSections:[NSIndexSet indexSetWithIndex:i] withRowAnimation:UITableViewRowAnimationNone];
-                        }
-                        CCMLog(@"Deleted in MailView");
-                        deleted = YES;
-                        break;
-                    }
-                    index++;
-                }
-                
-                if (deleted) {
+        for (NSDictionary* mailsDay in self.convByDay) {
+            NSArray* convs = mailsDay[@"list"];
+            NSInteger row = 0;
+        
+            for (ConversationIndex* conversationIndex in convs) {
+            
+                if (conversationIndex.index == pConversationIndex.index) {
+                    [resIP addObject:[NSIndexPath indexPathForRow:row inSection:section]];
+                    found = YES;
                     break;
                 }
-            }
             
-            if (!deleted) {
-                CCMLog(@"Could not find email to delete");
+                row++;
+            }
+        
+            if (found) {
+                break;
+            }
+            section++;
+        }
+        
+        if (!found) {
+            CCMLog(@"Could not find email to delete");
+        }
+    }
+
+    [self.table beginUpdates];
+    
+    NSArray* cells = self.table.indexPathsForVisibleRows;
+
+    for (NSIndexPath* ip in [resIP reverseObjectEnumerator]) {
+        [self _commonRemoveCell:ip];
+        for (NSIndexPath* iPVisivle in cells) {
+            if (iPVisivle.section == ip.section && ip.row == iPVisivle.row) {
+                [self cell:[self.table cellForRowAtIndexPath:iPVisivle] isChangingDuring:0.3];
             }
         }
-        [self.table endUpdates];
-    });
+    }
+
+    [self.table endUpdates];
 }
 
 -(void) insertConversations:(NSArray*)pConvs
@@ -420,10 +426,10 @@
         
         NSDate* convDay = conversationIndex.day;
         
-        dispatch_async(dispatch_get_main_queue(), ^{
+        //dispatch_async(dispatch_get_main_queue(), ^{
             BOOL added = NO;
-            [UIView setAnimationsEnabled:NO];
-            [self.table beginUpdates];
+            //[UIView setAnimationsEnabled:NO];
+            //[self.table beginUpdates];
 
             for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
                 
@@ -435,8 +441,8 @@
                     
                     NSDictionary* earlier = @{@"list": [NSMutableArray arrayWithObject:conversationIndex], @"day":convDay};
                     [self.convByDay insertObject:earlier atIndex:dayIndex];
-                    [self.table insertSections:[NSIndexSet indexSetWithIndex:dayIndex] withRowAnimation:UITableViewRowAnimationNone];
-                    [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
+                    //[self.table insertSections:[NSIndexSet indexSetWithIndex:dayIndex] withRowAnimation:UITableViewRowAnimationNone];
+                    //[self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
                     
                     added = YES;
                     break;
@@ -453,7 +459,7 @@
                         
                         if (result == NSOrderedDescending) {
                             [list insertObject:conversationIndex atIndex:j];
-                            [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:j inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
+                            //[self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:j inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
                             added = YES;
                             break;
                         }
@@ -461,7 +467,7 @@
                     
                     if (!added) {
                         [list addObject:conversationIndex];
-                        [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:list.count-1 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
+                        //[self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:list.count-1 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationNone];
                         added = YES;
                     }
                     
@@ -473,13 +479,15 @@
                 //Date section not existing //Add new date //Add email to new date
                 NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:conversationIndex], @"day":convDay};
                 [self.convByDay addObject:later];
-                [self.table insertSections:[NSIndexSet indexSetWithIndex:self.convByDay.count-1] withRowAnimation:UITableViewRowAnimationNone];
-                [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:self.convByDay.count-1]] withRowAnimation:UITableViewRowAnimationNone];
+      //          [self.table insertSections:[NSIndexSet indexSetWithIndex:self.convByDay.count-1] withRowAnimation:UITableViewRowAnimationNone];
+      //          [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:self.convByDay.count-1]] withRowAnimation:UITableViewRowAnimationNone];
             }
-            [self.table endUpdates];
-            [UIView setAnimationsEnabled:YES];
-        });
+        //    [self.table endUpdates];
+        //    [UIView setAnimationsEnabled:YES];
+        //});
     }
+    
+    [self.table reloadData];
 }
 
 -(NSMutableArray*) _filterResultsForPerson:(NSArray*)convs
@@ -677,7 +685,7 @@
         }
         
         UILabel* l = [[UILabel alloc] init];
-        NSString* formatString = NSLocalizedString(@"%d Selected", @"%d Selected");
+        NSString* formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
         l.text = [NSString stringWithFormat:formatString, nbSelected];
         l.textColor = [[Accounts sharedInstance] currentAccount].userColor;
         [l sizeToFit];
@@ -710,7 +718,7 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    return self.convByDay.count;
+    return MIN(self.convByDay.count, pageCount * self.pageIndex);
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
@@ -726,9 +734,18 @@
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
     
+    if (self.indexSet.count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+        CCMLog(@"Loading more");
+        [self reFetch];
+    }
+    
     //Conversation* conv = convs[indexPath.row];
     ConversationIndex* conversationIndex = convs[indexPath.row];
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
+    
+    if (self.indexSet.count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+        [[Accounts sharedInstance].currentAccount localFetchAfter:conv];
+    }
     
     NSString* idToUse = (conv.mails.count > 1) ? kCONVERSATION_CELL_ID : kMAIL_CELL_ID;
     
@@ -753,10 +770,10 @@
     NSInteger idx = [Mail isTodayOrYesterday:dateS];
     
     if (idx == 0) {
-        return NSLocalizedString(@"Today", @"Today");
+        return NSLocalizedString(@"mail-list-view.date-header.today", @"Today");
     }
     else if (idx == -1) {
-        return NSLocalizedString(@"Yesterday", @"Yesterday");
+        return NSLocalizedString(@"mail-list-view.date-header.yesterday", @"Yesterday");
     }
     
     return dateS;
@@ -898,7 +915,7 @@
     }
     
     NSMutableArray* res = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
-    NSMutableArray* resIP = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
+    //NSMutableArray* resIP = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
     
     NSInteger section = 0;
     
@@ -913,7 +930,7 @@
             
             if ([self.selectedCells containsObject:mailID]) {
                 [res addObject:conversationIndex];
-                [resIP addObject:[NSIndexPath indexPathForRow:row inSection:section]];
+                //[resIP addObject:[NSIndexPath indexPathForRow:row inSection:section]];
             }
             
             row++;
@@ -935,11 +952,12 @@
             animDissapear = YES;
         }
     }
-    
+    /*
     if (animDissapear) {
         
         [self.table beginUpdates];
         
+
         for (NSIndexPath* ip in [resIP reverseObjectEnumerator]) {
             [self _commonRemoveCell:ip];
         }
@@ -957,10 +975,10 @@
         UINavigationItem* item = self.navBar.items.lastObject;
         [self _applyTrueTitleViewTo:item];
         
-    }
-    else {
+    }*/
+    //else {
         [self unselectAll];
-    }
+    //}
     
     
     [self.selectedCells removeAllObjects];
@@ -1032,7 +1050,7 @@
              [ac addAction:defaultAction];
              }
              
-             UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIAlertActionStyleCancel
+             UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel
              handler:nil];
              [ac addAction:defaultAction];
              
@@ -1099,6 +1117,26 @@
 -(void) loadMoreServer
 {
     [[Accounts sharedInstance].currentAccount doLoadServer:NO];
+}
+
+- (void)reFetch
+{
+    self.countBeforeLoadMore = self.indexSet.count;
+    
+    if (kisActiveAccountAll) {
+        for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+            Account* a = [[Accounts sharedInstance] getAccount:idx];
+            [self insertConversations:[a getConversationsForFolder:self.folder]];
+            
+        }
+    }
+    else {
+        Account* a = [[Accounts sharedInstance] currentAccount];
+        [self insertConversations:[a getConversationsForFolder:self.folder]];
+    }
+    
+    self.pageIndex++;
+    [self.table reloadData];
 }
 
 @end

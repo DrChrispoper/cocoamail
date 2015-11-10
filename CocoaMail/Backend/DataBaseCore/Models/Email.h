@@ -51,6 +51,7 @@
 -(BOOL) haveSonInFolder:(NSInteger)folderIdx;
 -(NSArray*) getSons;
 -(void) fetchAllAttachments;
+-(void) loadBody;
 -(BOOL) isInMultipleAccounts;
 //-(void) forActiveAccount;
 -(Email*) secondAccountDuplicate;

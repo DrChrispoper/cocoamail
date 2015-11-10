@@ -17,6 +17,7 @@
 @property (nonatomic, strong) NSMutableArray* cachedData;
 @property (nonatomic, strong) NSMutableSet* emailIDs;
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
+@property (nonatomic) BOOL connected;
 
 +(ImapSync*) sharedServices;
 +(ImapSync*) sharedServices:(NSInteger)accountNum;
@@ -28,6 +29,6 @@
 -(void) runUpToDateTest:(NSArray*)data folderIndex:(NSInteger)folderIdx completed:(void (^)(void))completedBlock;
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
-
++(void) deleted;
 
 @end

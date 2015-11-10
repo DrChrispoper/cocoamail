@@ -14,6 +14,7 @@
 #import "EmailProcessor.h"
 #import "SearchRunner.h"
 #import "ImapSync.h"
+#import "DateUtil.h"
 
 #import "GlobalDBFunctions.h"
 
@@ -147,23 +148,29 @@
 didSignInForUser:(GIDGoogleUser*)user
      withError:(NSError*)error
 {
-    NSString* idToken = user.authentication.accessToken; // Safe to send to the server
+    NSString* accessToken = user.authentication.accessToken; // Safe to send to the server
     NSString* name = user.profile.name;
     NSString* email = user.profile.email;
     
+    CCMLog(@"Token expires: %@",[[DateUtil getSingleton] humanDate:user.authentication.accessTokenExpirationDate]);
+    
     // [START_EXCLUDE]
-    NSDictionary* statusText = @{@"accessToken":idToken, @"email":email, @"name":name};
+    NSDictionary* statusText = @{@"accessToken":accessToken, @"email":email, @"name":name};
     [[NSNotificationCenter defaultCenter]
      postNotificationName:@"ToggleAuthUINotification"
      object:nil
      userInfo:statusText];
     // [END_EXCLUDE]
     
-    if (!error && idToken) {
+    if (!error && accessToken) {
         NSInteger accountIndex = [AppSettings accountIndexForEmail:email];
         
         if (accountIndex != -1) {
-            [AppSettings setOAuth:idToken accountIndex:accountIndex];
+            CCMLog(@"Old token:%@", [AppSettings oAuth:accountIndex]);
+            CCMLog(@"New token:%@", accessToken);
+            if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
+                [AppSettings setOAuth:accessToken accountIndex:accountIndex];
+            }
         }
     }
 }

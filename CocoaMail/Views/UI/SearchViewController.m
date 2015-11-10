@@ -43,7 +43,7 @@
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"Search", @"Search")];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"search-view.title", @"Search")];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,

@@ -8,6 +8,7 @@
 
 #import <MailCore/MailCore.h>
 
+@class Conversation;
 
 @interface UidEntry : NSObject <NSCopying>{
     NSInteger pk;
@@ -32,7 +33,8 @@
 +(BOOL) removeFromAllFoldersUid:(UidEntry*)uid_entry;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
-+(NSMutableArray*) getUidEntriesFrom:(NSInteger)from withFolder:(NSInteger)folderNum;
++(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum;
++(NSMutableArray*) getUidEntriesFrom:(Conversation*)conversation withFolder:(NSInteger)folderNum;
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString*)msgId;
 +(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgId;
 +(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;

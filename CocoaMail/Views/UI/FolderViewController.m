@@ -214,7 +214,7 @@
 
 -(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
-    return (section==0) ? nil : @"My Folders";
+    return (section==0) ? nil : NSLocalizedString(@"folder-view.header.user-folders", @"My Folders");
 }
 
 #pragma mark Table Delegate

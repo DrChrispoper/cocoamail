@@ -29,7 +29,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:@"Contacts"];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"contacts-view.title", @"Contacts")];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,

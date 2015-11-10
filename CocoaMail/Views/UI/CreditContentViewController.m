@@ -59,7 +59,7 @@
     
     if ([self.type isEqualToString:@"RF"]) {
         image = @"cocoamail";
-        text = @"";
+        text = NSLocalizedString(@"credits.bio.reinald",@"");
         name = @"Reinald Freling";
         self.barTitle = @"Product Design";
         self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN", @"FACEBOOK"];
@@ -67,7 +67,7 @@
     }
     else if ([self.type isEqualToString:@"CH"]) {
         image = @"cocoamail";
-        text = @"";
+        text = NSLocalizedString(@"credits.bio.christopher",@"");
         name = @"Christopher Hockley";
         self.barTitle = @"Development";
         self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN"];
@@ -75,7 +75,7 @@
     }
     else if ([self.type isEqualToString:@"CB"]) {
         image = @"cocoamail";
-        text = @"";
+        text = NSLocalizedString(@"credits.bio.christophe",@"");
         name = @"Christophe Branche";
         self.barTitle = @"UI/UX Design";
         self.btnActions = @[@"MAIL", @"LINKEDIN"];
@@ -83,7 +83,7 @@
     }
     else if ([self.type isEqualToString:@"PCC"]) {
         image = @"cocoamail";
-        text = @"";
+        text = NSLocalizedString(@"credits.bio.pascal",@"");
         name = @"Pascal Costa-Cunha";
         self.barTitle = @"Helping hand";
         self.btnActions = @[@"LINKEDIN"];
@@ -91,12 +91,10 @@
     }
     else if ([self.type isEqualToString:@"T"]) {
         image = nil;
-        text = @"";
+        text = NSLocalizedString(@"credits.bio.thanks",@"");
         name = nil;
         self.barTitle = @"Thanks";
     }
-    
-    text = @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vel tempor ligula, et convallis ante. Integer finibus odio laoreet dignissim vestibulum. Morbi facilisis hendrerit libero vel aliquam. Donec ligula lectus, pharetra sed mi nec, rutrum sodales leo. Etiam volutpat, enim ac aliquet eleifend, lectus nisl ultricies ipsum, sed auctor nisl est non quam. Maecenas vel dolor vel quam tincidunt condimentum. Quisque faucibus nisl eget erat convallis, in aliquet ipsum efficitur. Donec mollis nisi eu luctus semper. Nam aliquam ex ex, vel ornare lacus facilisis nec. Integer dignissim libero eu congue bibendum. Vivamus malesuada quam erat, eu suscipit enim facilisis nec.\n\nQuisque eget quam mauris. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc a urna augue. Sed consequat ut mauris in tincidunt. Duis vel erat mi. Quisque commodo id mauris id blandit. Nulla ut tellus quis metus venenatis rutrum eu ac ex. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris laoreet ipsum euismod lacus convallis, sed pharetra nisi ullamcorper.\n\nIn at porttitor magna. Aliquam tincidunt lectus sed nisi finibus malesuada. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Proin scelerisque leo quis dui placerat, quis bibendum lacus semper. Nunc vitae nulla eget sem porta ultricies. Donec vel suscipit nulla. Sed nec metus quis massa venenatis viverra.\n\nIn ac congue libero, quis tristique neque. Cras faucibus quis lectus vitae tristique. Integer congue tempor leo ut semper. Ut lacinia, lacus sit amet condimentum luctus, lorem magna laoreet augue, vitae posuere arcu nibh quis orci. Pellentesque tempor diam metus, ac posuere eros condimentum nec. Donec massa turpis, bibendum non eros non, suscipit ornare leo. Nam rutrum, magna at vehicula tincidunt, dolor ex bibendum risus, eget iaculis lorem neque vel risus. Curabitur placerat, tellus ac rutrum eleifend, ipsum urna sodales massa, vitae consectetur orci nunc quis augue. Duis id orci eget nisl lobortis consectetur eu et dui. Suspendisse at tincidunt ex. Sed fermentum euismod nulla, at mattis metus. Maecenas ac varius nibh, a sodales mauris.\n\nQuisque vitae erat scelerisque ante faucibus feugiat. Curabitur urna neque, bibendum ut venenatis at, tincidunt at nunc. Phasellus sagittis eu tellus nec tempor. Donec sodales sollicitudin rutrum. Donec ac leo a orci pretium volutpat at ac nisi. Sed pellentesque arcu neque, quis vestibulum orci pulvinar eget. Phasellus vehicula felis a efficitur pellentesque. Donec imperdiet nulla accumsan purus mattis consequat. Quisque malesuada est sed justo pharetra hendrerit. Sed pretium feugiat sapien, quis viverra eros feugiat vitae. Cras tincidunt orci quis fringilla pharetra.";
     
     if (limite>0) {
         text = [text substringToIndex:limite];

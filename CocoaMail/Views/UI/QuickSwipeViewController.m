@@ -30,7 +30,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString* title = NSLocalizedString(@"Quick swipe", @"Quick swipe");
+    NSString* title = NSLocalizedString(@"quick-swipe.title", @"Quick swipe");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -86,10 +86,10 @@
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
     
-    NSArray* names = @[NSLocalizedString(@"Archive", @"Archive"),
-                       NSLocalizedString(@"Delete", @"Delete"),
-                       NSLocalizedString(@"Reply", @"Reply"),
-                       NSLocalizedString(@"Mark as read/unread", @"Mark as read/unread")];
+    NSArray* names = @[NSLocalizedString(@"quick-swipe.archive", @"Archive"),
+                       NSLocalizedString(@"quick-swipe.delete", @"Delete"),
+                       NSLocalizedString(@"quick-swipe.reply", @"Reply"),
+                       NSLocalizedString(@"quick-swipe.mark-as-read-unread", @"Mark as read/unread")];
     
     NSArray* imgNames = @[@"swipe_archive", @"swipe_delete", @"swipe_reply_single",@"swipe_read"];
     

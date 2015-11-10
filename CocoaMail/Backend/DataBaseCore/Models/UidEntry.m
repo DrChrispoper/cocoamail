@@ -232,30 +232,32 @@
     return uids;
 }
 
-+(NSMutableArray*) getUidEntriesFrom:(NSInteger)from withFolder:(NSInteger)folderNum
++(NSMutableArray*) getUidEntriesFrom:(Conversation*)conversation withFolder:(NSInteger)folderNum
 {
     NSMutableArray* uids = [[NSMutableArray alloc] init];
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
-    NSNumber* offset = @(from);
+    
+    UidEntry* uidE = [[conversation firstMail].email uidEWithFolder:folderNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;
+        
         NSMutableString* query = [NSMutableString string];
 
         if (!kisActiveAccountAll) {
             NSNumber* folderAccount = @(folderNum + 1000 * kActiveAccountNum);
 
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
-                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
+                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.pk < %i AND t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
                          "OR t.folder != %@ "
                          "AND t.son_msg_id IN (SELECT c.msg_id FROM uid_entry c WHERE c.folder = %@)"
-                         "ORDER BY uid DESC LIMIT 100 OFFSET %@", folderAccount, folderAccount, folderAccount, offset];
+                         "ORDER BY uid DESC LIMIT 50", uidE.pk, folderAccount, folderAccount, folderAccount];
             }
             else {
                 NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)kActiveAccountNum];
-                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder LIKE %@ "
-                         "ORDER BY uid DESC LIMIT 100 OFFSET %@", folder, offset];
+                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.pk < %i AND t.folder LIKE %@ "
+                 "ORDER BY uid DESC LIMIT 50", uidE.pk, folder];
             }
             
             results = [db executeQuery:query];
@@ -267,7 +269,7 @@
             
         }
         else {
-            [query appendString:@"SELECT * FROM uid_entry WHERE "];
+            [query appendFormat:@"SELECT * FROM uid_entry WHERE t.pk < %i AND", uidE.pk];
             
             for (Account* ac in [Accounts sharedInstance].accounts) {
                 NSNumber* folderAccount = @([AppSettings numFolderWithFolder:FolderTypeWith(folderNum, 0) forAccountIndex:ac.idx] + 1000 * [AppSettings numForData:ac.idx]);
@@ -277,7 +279,7 @@
             query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length - 3)]];
             
             //[query appendFormat:@" ORDER BY uid DESC LIMIT 100 OFFSET %@",offset];
-            [query appendString:@" ORDER BY uid DESC LIMIT 100"];
+            [query appendString:@" ORDER BY uid DESC LIMIT 50"];
             results = [db executeQuery:query];
             
             while ([results next]) {

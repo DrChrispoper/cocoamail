@@ -120,6 +120,14 @@
     return sons;
 }
 
+-(void) loadBody
+{
+    Email* e = [Email getEmailWithMsgId:self.msgId];
+    self.pk = e.pk;
+    self.body = e.body;
+    self.htmlBody = e.htmlBody;
+}
+
 -(void) fetchAllAttachments
 {
     self.attachments = [CCMAttachment getAttachmentsWithMsgId:self.msgId];
@@ -261,25 +269,33 @@
     __block sqlite_int64 success = -1 ;
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-                
-        [db executeUpdate:@"INSERT INTO email (datetime,sender,tos,ccs,bccs,msg_id,html_body,flag) VALUES (?,?,?,?,?,?,?,?);",
-         email.datetime,
-         email.sender.nonEncodedRFC822String,
-         email.tos.mco_nonEncodedRFC822StringForAddresses,
-         email.ccs.mco_nonEncodedRFC822StringForAddresses,
-         email.bccs.mco_nonEncodedRFC822StringForAddresses,
-         email.msgId,
-         email.htmlBody,
-         @(email.flag)];
-        success = [db lastInsertRowId];
         
-        [db executeUpdate:@"INSERT INTO search_email (subject,body,sender,tos,ccs,people,msg_id) VALUES (?,?,?,?,?,?,?);",
-         email.subject,
-         email.body,
-         email.sender.nonEncodedRFC822String,
-         email.tos.mco_nonEncodedRFC822StringForAddresses,
-         email.ccs.mco_nonEncodedRFC822StringForAddresses,
-         [NSString stringWithFormat:@"%@, %@, %@, %@", email.sender.nonEncodedRFC822String, email.tos.mco_nonEncodedRFC822StringForAddresses, email.ccs.mco_nonEncodedRFC822StringForAddresses, email.bccs.mco_nonEncodedRFC822StringForAddresses], email.msgId];
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM email WHERE email.msg_id = ?", email.msgId];
+        
+        if (![results next]) {
+            [results close];
+            [db executeUpdate:@"INSERT INTO email (datetime,sender,tos,ccs,bccs,msg_id,html_body,flag) VALUES (?,?,?,?,?,?,?,?);",
+             email.datetime,
+             email.sender.nonEncodedRFC822String,
+             email.tos.mco_nonEncodedRFC822StringForAddresses,
+             email.ccs.mco_nonEncodedRFC822StringForAddresses,
+             email.bccs.mco_nonEncodedRFC822StringForAddresses,
+             email.msgId,
+             email.htmlBody,
+             @(email.flag)];
+            success = [db lastInsertRowId];
+            
+            [db executeUpdate:@"INSERT INTO search_email (subject,body,sender,tos,ccs,people,msg_id) VALUES (?,?,?,?,?,?,?);",
+             email.subject,
+             email.body,
+             email.sender.nonEncodedRFC822String,
+             email.tos.mco_nonEncodedRFC822StringForAddresses,
+             email.ccs.mco_nonEncodedRFC822StringForAddresses,
+             [NSString stringWithFormat:@"%@, %@, %@, %@", email.sender.nonEncodedRFC822String, email.tos.mco_nonEncodedRFC822StringForAddresses, email.ccs.mco_nonEncodedRFC822StringForAddresses, email.bccs.mco_nonEncodedRFC822StringForAddresses], email.msgId];
+        }
+        else {
+            [results close];
+        }
     }];
     
     return (int)success;
@@ -475,8 +491,10 @@
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
+    if ([self uidEWithFolder:fromFolderIdx]) {
         [UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx];
         [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+    }
 }
 
 -(void) trash

@@ -20,7 +20,7 @@
 -(instancetype) initWithPerson:(Person*)person;
 
 -(BOOL) istheSame:(MailListViewController*)other;
--(void) insertConversation:(ConversationIndex*)con;
+-(void) reFetch;
 -(void) removeConversationList:(NSArray*)convs;
 
 @end
@@ -28,7 +28,7 @@
 @protocol MailListDelegate
 
 -(void) removeConversationList:(NSArray*)convs;
--(void) insertConversation:(ConversationIndex*)con;
+-(void) reFetch;
 -(BOOL) isPresentingDrafts;
 
 @end

@@ -53,29 +53,6 @@ static DateUtil * singleton = nil;
 
 -(NSString*) humanDate:(NSDate*)date
 {
-	/*NSCalendar* gregorian = [NSCalendar currentCalendar];
-	
-	NSDateComponents* dateComponents = [gregorian components:(NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay) fromDate:date];
-	
-	if([dateComponents day] == [todayComponents day] &&
-	   [dateComponents month] == [todayComponents month] && 
-	   [dateComponents year] == [todayComponents year]) {
-		[dateFormatter setDateStyle:NSDateFormatterNoStyle];
-		[dateFormatter setTimeStyle:NSDateFormatterShortStyle];
-		
-        return NSLocalizedString(@"today", @"Email received today");
-	}
-	if([dateComponents day] == [yesterdayComponents day] && 
-	   [dateComponents month] == [yesterdayComponents month] && 
-	   [dateComponents year] == [yesterdayComponents year]) {
-		return NSLocalizedString(@"yesterday", @"Email sent yesterday");
-	}
-	if([date laterDate:lastWeek] == date) {
-        
-		[dateFormatter setDateFormat:@"EEEE"];
-		return [[dateFormatter stringFromDate:date] capitalizedString];
-	}*/
-    
     [dateFormatter setDateFormat:@"d MMM yy"];
 	
 	return [dateFormatter stringFromDate:date];

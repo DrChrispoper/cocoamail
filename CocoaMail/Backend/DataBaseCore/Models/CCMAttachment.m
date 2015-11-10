@@ -10,6 +10,7 @@
 #import "AttachmentDBAccessor.h"
 #import "FMDatabase.h"
 #import "Attachments.h"
+#import "StringUtil.h"
 
 @implementation CCMAttachment
 
@@ -31,6 +32,9 @@
                     [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
                      at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
                 }
+            }
+            else {
+                [results close];
             }
         }
     }];
@@ -198,6 +202,19 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         [db executeUpdate:@"UPDATE attachments set data = ? ", nil];
     }];
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray* paths = NSSearchPathForDirectoriesInDomains (NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString* documentsDirectory = paths[0];
+    documentsDirectory = [documentsDirectory stringByAppendingPathComponent:@"AttachmentsCache"];
+    
+    NSError *error = nil;
+    for (NSString *file in [fm contentsOfDirectoryAtPath:documentsDirectory error:&error]) {
+        BOOL success = [fm removeItemAtPath:[NSString stringWithFormat:@"%@%@", documentsDirectory, file] error:&error];
+        if (!success || error) {
+            // it failed.
+        }
+    }
 }
 
 +(void) tableCheck

@@ -22,11 +22,12 @@
 
 @property (nonatomic) NSInteger currentAccountIndex;
 @property (nonatomic, strong) MCOIMAPOperation* imapCheckOp;
-@property (nonatomic) BOOL connected;
 @property (nonatomic) BOOL isConnecting;
 
 
 @end
+
+static NSArray * sharedServices = nil;
 
 @implementation ImapSync
 
@@ -44,8 +45,6 @@
 
 +(NSArray*) allSharedServices:(MCOIMAPSession*)updated
 {
-    static NSArray * sharedServices = nil;
-    
     if (updated) {
         sharedServices = nil;
     }
@@ -87,6 +86,12 @@
     }
 }
 
++(void) deleted
+{
+    sharedServices = nil;
+}
+
+
 +(RACSignal*) doLogin:(NSInteger)accountIndex
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
@@ -94,13 +99,13 @@
         
         //[sharedService.imapSession setConnectionLogger:^(void*  connectionID, MCOConnectionLogType type, NSData*  data) {
             //if(type != MCOConnectionLogTypeReceived && type != MCOConnectionLogTypeSent){
-               //. CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+            //CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
             //}
         //}];
         
         if (!sharedService.connected && !sharedService.isConnecting) {
-           // Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
-           // NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
+            // Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
+            // NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
             
             if ([ImapSync isNetworkAvailable]) {
                 sharedService.isConnecting = YES;
@@ -109,24 +114,36 @@
                     
                     sharedService.imapSession.OAuth2Token = [AppSettings oAuth:sharedService.currentAccountIndex];
                     sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
-                    
+
                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
                     [sharedService.imapCheckOp start:^(NSError* error) {
-                        sharedService.isConnecting = NO;
-                        
-                        if (error) {
-                            sharedService.connected = NO;
-                            CCMLog(@"error:%@ loading account:%li %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
-                            //NSAssert(!error, @"Connection error?");
-                            [[GIDSignIn sharedInstance] signInSilently];
-                        }
-                        else {
-                            CCMLog(@"Account:%li check OK", (long)sharedService.currentAccountIndex);
-                            sharedService.connected = YES;
-                            [sharedService checkForCachedActions];
-                        }
-                        [subscriber sendCompleted];
-                    }];
+                            sharedService.isConnecting = NO;
+                            
+                            if (error) {
+                                sharedService.connected = NO;
+                                CCMLog(@"error:%@ loading oauth account:%li %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
+                                [[GIDSignIn sharedInstance] signInSilently];
+                                [[sharedService.imapSession disconnectOperation] start:^(NSError * _Nullable errore) {
+                                    CCMLog(@"error:%@ disconnecting oauth account:%li %@", errore,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
+                                }];
+                                sharedService.imapSession = nil;
+                                
+                                sharedService.imapSession = [[MCOIMAPSession alloc] init];
+                                sharedService.imapSession.hostname = [AppSettings imapServer:accountIndex];
+                                sharedService.imapSession.port = [AppSettings imapPort:accountIndex];
+                                sharedService.imapSession.username = [AppSettings username:accountIndex];
+                                sharedService.imapSession.password = [AppSettings password:accountIndex];
+                                sharedService.imapSession.connectionType = [AppSettings imapEnc:accountIndex];
+                                sharedService.imapSession.maximumConnections = 6;
+                                sharedService.connected = NO;
+                            }
+                            else {
+                                CCMLog(@"Account:%li check OK", (long)sharedService.currentAccountIndex);
+                                sharedService.connected = YES;
+                                [sharedService checkForCachedActions];
+                            }
+                            [subscriber sendCompleted];
+                        }];
                 } else {
                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
                     [sharedService.imapCheckOp start:^(NSError* error) {
@@ -144,7 +161,7 @@
                         [subscriber sendCompleted];
                     }];
                 }
-            } else {
+            } else if(!sharedService.isConnecting) {
                 [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
             }
         } else {
@@ -291,7 +308,7 @@
                         email.ccs = [[NSArray alloc]init];
                     }
                     email.bccs = msg.header.bcc;
-                
+                    
                     if (!email.bccs) {
                         email.bccs = [[NSArray alloc]init];
                     }
@@ -454,280 +471,199 @@
             [subscriber sendCompleted];
         }
         else {
-        [[ImapSync doLogin:self.currentAccountIndex] subscribeCompleted:^{
-            
-            MCOIMAPFetchFoldersOperation* fio = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchAllFoldersOperation];
-            [fio start:^(NSError* error, NSArray* folders) {
-                if (error) {
-                    [subscriber sendError:error];
-                    
-                    return;
-                }
-                else if (folders.count == 0) {
-                    [subscriber sendCompleted];
-                    
-                    return;
-                }//Fetch folder issue
-                SyncManager* sm = [SyncManager getSingleton];
-                EmailProcessor* emailProcessor = [EmailProcessor getSingleton];
-                // mark folders that were deleted on the server as deleted on the client
-                int i = 0;
+            [[ImapSync doLogin:self.currentAccountIndex] subscribeCompleted:^{
                 
-                while (i < [sm folderCount:self.currentAccountIndex]) {
-                    NSDictionary* folderState = [sm retrieveState:i accountIndex:self.currentAccountIndex];
-                    NSString* folderPath = folderState[@"folderPath"];
-                    
-                    if ([sm isFolderDeleted:i accountIndex:self.currentAccountIndex]) {
-                        CCMLog(@"Folder is deleted: %i %li", i, (long)self.currentAccountIndex);
-                    }
-                    
-                    if (![sm isFolderDeleted:i accountIndex:self.currentAccountIndex] && ![[folders valueForKey:@"path"] containsObject:folderPath]) {
-                        CCMLog(@"Folder %@ has been deleted - deleting FolderState", folderPath);
-                        [sm markFolderDeleted:i accountIndex:self.currentAccountIndex];
-                        i = 0;
-                    }
-                    i++;
-                }
-                
-                NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountIndex:self.currentAccountIndex];
-                NSString* folderPath = folderState[@"folderPath"];
-                
-                MCOIMAPFolderInfoOperation* folder = [[ImapSync sharedServices:self.currentAccountIndex].imapSession folderInfoOperation:folderPath];
-                NSInteger lastEnded = [folderState[@"lastended"] integerValue];
-                
-                [folder start:^(NSError* error, MCOIMAPFolderInfo* info) {
+                MCOIMAPFetchFoldersOperation* fio = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchAllFoldersOperation];
+                [fio start:^(NSError* error, NSArray* folders) {
                     if (error) {
                         [subscriber sendError:error];
+                        
                         return;
                     }
-                    
-                    int batchsize = 20;
-                    
-                    if (!isFromStart) {
-                        batchsize = 150;
-                    }
-                    
-                    [self writeFinishedFolderState:sm emailCount:[info messageCount] withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                    
-                    if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
-                        NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
-                        [self writeFinishedFolderState:sm lastEnded:lE withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                    else if (folders.count == 0) {
+                        [subscriber sendCompleted];
                         
-                        if (currentFolder == [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex  forBaseFolder:FolderTypeAll]) {
-                            //NSDictionary* userInfo = @{NSLocalizedDescriptionKey: NSLocalizedString(@"Full Sync done.", nil)};
-                            //NSError* er = [NSError errorWithDomain:@"CocoaErrorDomain" code:-57 userInfo:userInfo];
-                            //[AppSettings firstFullSyncDone];
-                            [subscriber sendCompleted];
-                            return;
+                        return;
+                    }//Fetch folder issue
+                    SyncManager* sm = [SyncManager getSingleton];
+                    EmailProcessor* emailProcessor = [EmailProcessor getSingleton];
+                    // mark folders that were deleted on the server as deleted on the client
+                    int i = 0;
+                    
+                    while (i < [sm folderCount:self.currentAccountIndex]) {
+                        NSDictionary* folderState = [sm retrieveState:i accountIndex:self.currentAccountIndex];
+                        NSString* folderPath = folderState[@"folderPath"];
+                        
+                        if ([sm isFolderDeleted:i accountIndex:self.currentAccountIndex]) {
+                            CCMLog(@"Folder is deleted: %i %li", i, (long)self.currentAccountIndex);
                         }
                         
-                        [subscriber sendCompleted];
-                        return;
+                        if (![sm isFolderDeleted:i accountIndex:self.currentAccountIndex] && ![[folders valueForKey:@"path"] containsObject:folderPath]) {
+                            CCMLog(@"Folder %@ has been deleted - deleting FolderState", folderPath);
+                            [sm markFolderDeleted:i accountIndex:self.currentAccountIndex];
+                            i = 0;
+                        }
+                        i++;
                     }
                     
-                    NSInteger from = [info messageCount];
+                    NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountIndex:self.currentAccountIndex];
+                    NSString* folderPath = folderState[@"folderPath"];
                     
-                    if (!(isFromStart || isInBackground) && lastEnded != 0) {
-                        from = lastEnded-1;
-                    }
+                    MCOIMAPFolderInfoOperation* folder = [[ImapSync sharedServices:self.currentAccountIndex].imapSession folderInfoOperation:folderPath];
+                    NSInteger lastEnded = [folderState[@"lastended"] integerValue];
                     
-                    uint64_t batch = MIN(batchsize, [info messageCount]);
-                    
-                    batch--;
-                    
-                    if (from > batch) {
-                        from -= batch;
-                    }
-                    else {
-                        from = 1;
-                    }
-                    
-                    //CCMLog(@"Checking account:%li folder:%@ from:%li batch:%llu",(long)self.currentAccount, folderPath,(long)from,batch);
-                    if (!isFromStart) {
-                        
-                        CCMLog(@"Account:%ld Folder:%@ %li%% complete fetching %ld to %llu of %u", (long)self.currentAccountIndex, folderPath,(long)(100 - ((from - 1)*  100) / [info messageCount]), (long)(from), (from + batch), [info messageCount]);
-                    }
-                    
-                    MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
-                    MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchMessagesByNumberOperationWithFolder:folderPath requestKind:requestKind numbers:numbers];
-                    [imapMessagesFetchOp start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages){
+                    [folder start:^(NSError* error, MCOIMAPFolderInfo* info) {
                         if (error) {
                             [subscriber sendError:error];
                             return;
                         }
-                        NSInteger __block count = messages.count;
                         
-                        for (MCOIMAPMessage* msg in messages) {
+                        int batchsize = 20;
+                        
+                        if (!isFromStart) {
+                            batchsize = 50;
+                        }
+                        
+                        [self writeFinishedFolderState:sm emailCount:[info messageCount] withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                        
+                        if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
+                            NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
+                            [self writeFinishedFolderState:sm lastEnded:lE withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
                             
-                            NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountIndex:self.currentAccountIndex];
-                            NSString* folderPath = folderState[@"folderPath"];
-                            
-                            Email* email = [[Email alloc]init];
-                            
-                            if (!msg.header.from.displayName) {
-                                msg.header.from = [MCOAddress addressWithDisplayName:[msg.header.from.mailbox componentsSeparatedByString:@"@"].firstObject mailbox:msg.header.from.mailbox];
+                            if (currentFolder == [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex  forBaseFolder:FolderTypeAll]) {
+                                //NSDictionary* userInfo = @{NSLocalizedDescriptionKey: NSLocalizedString(@"Full Sync done.", nil)};
+                                //NSError* er = [NSError errorWithDomain:@"CocoaErrorDomain" code:-57 userInfo:userInfo];
+                                //[AppSettings firstFullSyncDone];
+                                [subscriber sendCompleted];
+                                return;
                             }
                             
-                            email.sender = msg.header.from;
-                            email.subject = msg.header.subject;
-                            
-                            if (!email.subject) {
-                                email.subject = @"";
+                            [subscriber sendCompleted];
+                            return;
+                        }
+                        
+                        NSInteger from = [info messageCount];
+                        
+                        if (!(isFromStart || isInBackground) && lastEnded != 0) {
+                            from = lastEnded-1;
+                        }
+                        
+                        uint64_t batch = MIN(batchsize, [info messageCount]);
+                        
+                        batch--;
+                        
+                        if (from > batch) {
+                            from -= batch;
+                        }
+                        else {
+                            from = 1;
+                        }
+                        
+                        //CCMLog(@"Checking account:%li folder:%@ from:%li batch:%llu",(long)self.currentAccount, folderPath,(long)from,batch);
+                        if (!isFromStart) {
+                            CCMLog(@"Account:%ld Folder:%@ %li%% complete fetching %ld to %llu of %u", (long)self.currentAccountIndex, folderPath,(long)(100 - ((from - 1)*  100) / [info messageCount]), (long)(from), (from + batch), [info messageCount]);
+                        }
+                        
+                        MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
+                        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchMessagesByNumberOperationWithFolder:folderPath requestKind:requestKind numbers:numbers];
+                        [imapMessagesFetchOp start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages){
+                            if (error) {
+                                [subscriber sendError:error];
+                                return;
                             }
-                            email.datetime = msg.header.receivedDate;
-                            email.msgId = msg.header.messageID;
-                            email.accountNum = [AppSettings numForData:self.currentAccountIndex];
-                            UidEntry* uid_entry = [[UidEntry alloc]init];
-                            uid_entry.uid = msg.uid;
-                            uid_entry.folder = currentFolder;
-                            uid_entry.account = email.accountNum;
-                            uid_entry.msgId = email.msgId;
+                            NSInteger __block count = messages.count;
                             
-                            email.tos = msg.header.to;
-                            
-                            if (!email.tos) {
-                                email.tos = [[NSArray alloc]init];
-                            }
-                            email.ccs = msg.header.cc;
-                            
-                            if (!email.ccs) {
-                                email.ccs = [[NSArray alloc]init];
-                            }
-                            email.bccs = msg.header.bcc;
-                            
-                            if (!email.bccs) {
-                                email.bccs = [[NSArray alloc]init];
-                            }
-                            email.flag = msg.flags;
-                            
-                            //email.references = msg.header.references;
-                            
-                            if (msg.gmailThreadID) {
-                                uid_entry.sonMsgId = [NSString stringWithFormat:@"%llu", msg.gmailThreadID];
-                            }
-                            else if(msg.header.references) {
-                                uid_entry.sonMsgId = msg.header.references[0];
-                            }
-                            else {
-                                uid_entry.sonMsgId = @"0";
-                            }
-                            
-                            if ([email existsLocally]) {
+                            for (MCOIMAPMessage* msg in messages) {
                                 
-                                if (![email uidEWithFolder:uid_entry.folder]) {
-                                    // already have this email in other folder than this one -> add folder in uid_entry
-                                    
-                                    if (currentFolder == 0 && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
-                                        [UIApplication sharedApplication].applicationIconBadgeNumber++;
-                                    }
-                                    
-                                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:emailProcessor selector:@selector(addToFolderWrapper:) object:uid_entry];
-                                    [emailProcessor.operationQueue addOperation:nextOp];
-                                    
-                                    MCOIMAPMessageRenderingOperation* op = [[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath];
-                                    [op start:^(NSString* plainTextBodyString, NSError* error) {
-                                        email.body = plainTextBodyString;
-                                        email.uids = [[NSMutableArray arrayWithArray:email.uids] arrayByAddingObject:uid_entry];
-                                        
-                                        if (currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) {
-                                            [subscriber sendNext:email];
-                                        }
-                                        
-                                        --count;
-                                        
-                                        if (!isInBackground) {
-                                            [self writeFinishedFolderState:sm dbNum:@([EmailProcessor dbNumForDate:email.datetime]) withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                                        }
-                                        
-                                        if (count == 0) {
-                                            if (!isFromStart && !isInBackground) {
-                                                [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                                            }
-                                            [subscriber sendCompleted];
-                                        }
-                                    }];
-                                    continue;
-                                }
-                                --count;
+                                NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountIndex:self.currentAccountIndex];
+                                NSString* folderPath = folderState[@"folderPath"];
                                 
-                                if (count == 0) {
-                                    if (!isFromStart && !isInBackground) {
-                                        [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                                    }
-                                    [subscriber sendCompleted];
-                                    //CCMLog(@"Complete sent");
+                                Email* email = [[Email alloc]init];
+                                
+                                if (!msg.header.from.displayName) {
+                                    msg.header.from = [MCOAddress addressWithDisplayName:[msg.header.from.mailbox componentsSeparatedByString:@"@"].firstObject mailbox:msg.header.from.mailbox];
                                 }
-                                //We already have email with folder
-                                continue;
-                            }
-                            
-                            if (currentFolder == 0 && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
-                                [UIApplication sharedApplication].applicationIconBadgeNumber++;
-                            }
-                            
-                            NSMutableArray* atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count + msg.htmlInlineAttachments.count];
-                            
-                            for (MCOIMAPPart* part in msg.attachments) {
-                                Attachment* at = [[Attachment alloc]init];
-                                at.mimeType = part.mimeType;
-                                at.msgId = email.msgId;
-                                at.fileName = part.filename;
-                                at.partID = part.partID;
-                                at.size = part.size;
-                                at.contentID = @"";
-                                [atts addObject:at];
-                            }
-                            
-                            for (MCOIMAPPart* part in msg.htmlInlineAttachments) {
-                                Attachment* at = [[Attachment alloc]init];
-                                at.mimeType = part.mimeType;
-                                at.msgId = email.msgId;
-                                at.fileName = part.filename;
-                                at.partID = part.partID;
-                                at.size = part.size;
-                                at.contentID = part.contentID;
-                                [atts addObject:at];
-                            }
-                            
-                            email.attachments = atts;
-                            
-                            email.uids = @[uid_entry];
-                            
-                            [[[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
-                                email.body =  plainTextBodyString?:@"";
-                                [[[ImapSync sharedServices:self.currentAccountIndex].imapSession htmlBodyRenderingOperationWithMessage:msg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
-                                    email.htmlBody = htmlString;
+                                
+                                email.sender = msg.header.from;
+                                email.subject = msg.header.subject;
+                                
+                                if (!email.subject) {
+                                    email.subject = @"";
+                                }
+                                email.datetime = msg.header.receivedDate;
+                                email.msgId = msg.header.messageID;
+                                email.accountNum = [AppSettings numForData:self.currentAccountIndex];
+                                UidEntry* uid_entry = [[UidEntry alloc]init];
+                                uid_entry.uid = msg.uid;
+                                uid_entry.folder = currentFolder;
+                                uid_entry.account = email.accountNum;
+                                uid_entry.msgId = email.msgId;
+                                
+                                email.tos = msg.header.to;
+                                
+                                if (!email.tos) {
+                                    email.tos = [[NSArray alloc]init];
+                                }
+                                email.ccs = msg.header.cc;
+                                
+                                if (!email.ccs) {
+                                    email.ccs = [[NSArray alloc]init];
+                                }
+                                email.bccs = msg.header.bcc;
+                                
+                                if (!email.bccs) {
+                                    email.bccs = [[NSArray alloc]init];
+                                }
+                                email.flag = msg.flags;
+                                
+                                //email.references = msg.header.references;
+                                
+                                if (msg.gmailThreadID) {
+                                    uid_entry.sonMsgId = [NSString stringWithFormat:@"%llu", msg.gmailThreadID];
+                                }
+                                else if(msg.header.references) {
+                                    uid_entry.sonMsgId = msg.header.references[0];
+                                }
+                                else {
+                                    uid_entry.sonMsgId = @"0";
+                                }
+                                
+                                if ([email existsLocally]) {
                                     
-                                    //Cache email if in Background
-                                    if (isInBackground) {
-                                        BOOL isInInbox = (currentFolder == [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex forBaseFolder:FolderTypeInbox]);
-                                        BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
+                                    if (![email uidEWithFolder:uid_entry.folder]) {
+                                        // already have this email in other folder than this one -> add folder in uid_entry
                                         
-                                        if (isInInbox & isUnread) {
-                                            if (![self.emailIDs containsObject:email.msgId]) {
-                                                CCMLog(@"Had Cached %li Emails", (unsigned long)self.emailIDs.count);
-                                                CCMLog(@"Notifying Email: %@", email.subject);
-                                                [self.cachedData addObject:email];
-                                                [self.emailIDs addObject:email.msgId];
-                                                
-                                                if ([AppSettings notifications]) {
-                                                    UILocalNotification* localNotification = [[UILocalNotification alloc] init];
-                                                    localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
-                                                    NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
-                                                    localNotification.alertBody = alertText;
-                                                    localNotification.timeZone = [NSTimeZone defaultTimeZone];
-                                                    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-                                                }
-                                            }
+                                        if (currentFolder == 0 && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
+                                            [UIApplication sharedApplication].applicationIconBadgeNumber++;
                                         }
-                                    } else {
-                                        NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:emailProcessor selector:@selector(addEmailWrapper:) object:email];
+                                        
+                                        NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:emailProcessor selector:@selector(addToFolderWrapper:) object:uid_entry];
                                         [emailProcessor.operationQueue addOperation:nextOp];
-                                        [self writeFinishedFolderState:sm dbNum:@([EmailProcessor dbNumForDate:email.datetime]) withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                                    }
-                            
-                                    if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                                        [subscriber sendNext:email];
+                                        
+                                        //MCOIMAPMessageRenderingOperation* op = [[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath];
+                                        //[op start:^(NSString* plainTextBodyString, NSError* error) {
+                                        
+                                            email.uids = [[NSMutableArray arrayWithArray:email.uids] arrayByAddingObject:uid_entry];
+                                            
+                                            if (currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) {
+                                                [email loadBody];
+                                                [subscriber sendNext:email];
+                                            }
+                                            
+                                            --count;
+                                            
+                                            if (!isInBackground) {
+                                                [self writeFinishedFolderState:sm dbNum:@([EmailProcessor dbNumForDate:email.datetime]) withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                                            }
+                                            
+                                            if (count == 0) {
+                                                if (!isFromStart && !isInBackground) {
+                                                    [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                                                }
+                                                [subscriber sendCompleted];
+                                            }
+                                        //}];
+                                        continue;
                                     }
                                     --count;
                                     
@@ -736,14 +672,89 @@
                                             [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
                                         }
                                         [subscriber sendCompleted];
+                                        //CCMLog(@"Complete sent");
+                                    }
+                                    //We already have email with folder
+                                    continue;
+                                }
+                                
+                                if (currentFolder == 0 && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
+                                    [UIApplication sharedApplication].applicationIconBadgeNumber++;
+                                }
+                                
+                                NSMutableArray* atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count + msg.htmlInlineAttachments.count];
+                                
+                                for (MCOIMAPPart* part in msg.attachments) {
+                                    Attachment* at = [[Attachment alloc]init];
+                                    at.mimeType = part.mimeType;
+                                    at.msgId = email.msgId;
+                                    at.fileName = part.filename;
+                                    at.partID = part.partID;
+                                    at.size = part.size;
+                                    at.contentID = @"";
+                                    [atts addObject:at];
+                                }
+                                
+                                for (MCOIMAPPart* part in msg.htmlInlineAttachments) {
+                                    Attachment* at = [[Attachment alloc]init];
+                                    at.mimeType = part.mimeType;
+                                    at.msgId = email.msgId;
+                                    at.fileName = part.filename;
+                                    at.partID = part.partID;
+                                    at.size = part.size;
+                                    at.contentID = part.contentID;
+                                    [atts addObject:at];
+                                }
+                                
+                                email.attachments = atts;
+                                
+                                email.uids = @[uid_entry];
+                                
+                                [[[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
+                                    email.body =  plainTextBodyString?:@"";
+
+                                    NSDate* month = [[NSDate date] dateByAddingTimeInterval:- 60 * 60 * 24 * 30];
+                                    
+                                    if (!isFromStart && [email.datetime compare:month] == NSOrderedAscending) {
+                                        [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
+                                        
+                                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                                            [subscriber sendNext:email];
+                                        }
+                                        --count;
+                                        
+                                        if (count == 0) {
+                                            if (!isFromStart && !isInBackground) {
+                                                [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                                            }
+                                            [subscriber sendCompleted];
+                                        }
+                                    }
+                                    else {
+                                    [[[ImapSync sharedServices:self.currentAccountIndex].imapSession htmlBodyRenderingOperationWithMessage:msg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                                        email.htmlBody = htmlString;
+                                        
+                                        [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
+                                        
+                                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                                            [subscriber sendNext:email];
+                                        }
+                                        --count;
+                                        
+                                        if (count == 0) {
+                                            if (!isFromStart && !isInBackground) {
+                                                [self writeFinishedFolderState:sm lastEnded:from withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                                            }
+                                            [subscriber sendCompleted];
+                                        }
+                                    }];
                                     }
                                 }];
-                            }];
-                        }
-                    }];//Fetch Messages
-                }];//Fetch folder Info
-            }];//Fetch All Folders
-        }];
+                            }
+                        }];//Fetch Messages
+                    }];//Fetch folder Info
+                }];//Fetch All Folders
+            }];
         }
         
         return [RACDisposable disposableWithBlock:^{
@@ -751,6 +762,37 @@
     }];
 }
 
+-(void) _saveEmail:(Email*)email inBackground:(BOOL)isInBackground folder:(NSInteger)currentFolder
+{
+    //Cache email if in Background
+    if (isInBackground) {
+        BOOL isInInbox = (currentFolder == [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex forBaseFolder:FolderTypeInbox]);
+        BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
+        
+        if (isInInbox & isUnread) {
+            if (![self.emailIDs containsObject:email.msgId]) {
+                CCMLog(@"Had Cached %li Emails", (unsigned long)self.emailIDs.count);
+                CCMLog(@"Notifying Email: %@", email.subject);
+                [self.cachedData addObject:email];
+                [self.emailIDs addObject:email.msgId];
+                
+                if ([AppSettings notifications]) {
+                    UILocalNotification* localNotification = [[UILocalNotification alloc] init];
+                    localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
+                    NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
+                    localNotification.alertBody = alertText;
+                    localNotification.timeZone = [NSTimeZone defaultTimeZone];
+                    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+                }
+            }
+        }
+    } else {
+        NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:email];
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+        [self writeFinishedFolderState:[SyncManager getSingleton] dbNum:@([EmailProcessor dbNumForDate:email.datetime]) withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+    }
+
+}
 -(void) writeFinishedFolderState:(SyncManager*)sm emailCount:(NSInteger)count withAccountIndex:(NSInteger)accountIndex andFolder:(NSInteger)folder
 {
     // used by fetchFrom to write the finished state for this round of syncing to disk
@@ -846,8 +888,13 @@
                 
             }
         }
-        [ep removeFromFolderWrapper:delDatas folderIndex:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
-        [ep updateFlag:upDatas];
+        
+        NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[delDatas,@([[Accounts sharedInstance].currentAccount currentFolderIdx])] forKeys:@[@"datas",@"folderIdx"]];
+        NSInvocationOperation* nextOpDel = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeFromFolderWrapper:) object:data];
+        [ep.operationQueue addOperation:nextOpDel];
+        
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(updateFlag:) object:upDatas];
+        [ep.operationQueue addOperation:nextOpUp];
     }];
     return;
 }
@@ -871,61 +918,62 @@
     
     [[ImapSync doLogin:self.currentAccountIndex]
      subscribeError:^(NSError *error) {
-        completedBlock();
-    } completed:^{
-        MCOIMAPFetchMessagesOperation* op = [self.imapSession  fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindFlags uids:uidsIS];
-        
-        [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
-            if (error) {
-                CCMLog(@"error testing emails, %@", error);
-                return;
-            }
-            
-            EmailProcessor* ep = [EmailProcessor getSingleton];
-            
-            for (MCOIMAPMessage* msg in messages) {
-                //If in this folder or cross check in other folder
-                if ([uidsIS containsIndex:msg.uid]) {
-                    //Don't Delete
-                    [uidsIS removeIndex:msg.uid];
-                }
-            }
-            
-            NSMutableArray* delDatas = [[NSMutableArray alloc]init];
-            NSMutableArray* upDatas = [[NSMutableArray alloc]init];
-            
-            for (Email* email in emails) {
-                UidEntry* uid_entry = [email uidEWithFolder:folderIdx];
-                
-                if ([uidsIS containsIndex:uid_entry.uid]) {
-                    //Remove email from local folder
-                    [delDatas addObject:email];
-                }
-                else {
-                    for (MCOIMAPMessage* msg in messages) {
-                        if (msg.uid == uid_entry.uid && msg.flags != email.flag) {
-                            email.flag = msg.flags;
-                            [upDatas addObject:email];
-                        }
-                    }
-                    
-                }
-            }
-            
-            if (delDatas.count > 0) {
-                CCMLog(@"Delete %lu emails", (unsigned long)delDatas.count);
-                [ep removeFromFolderWrapper:delDatas folderIndex:folderIdx];
-            }
-            
-            if (upDatas.count > 0) {
-                CCMLog(@"Update %lu emails", (unsigned long)upDatas.count);
-                [ep updateFlag:upDatas];
-            }
-            
-            completedBlock();
-        }];
-        
-    }];
+         completedBlock();
+     } completed:^{
+         MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindFlags uids:uidsIS];
+         
+         [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
+             if (error) {
+                 CCMLog(@"error testing emails in %@, %@", path, error);
+                 return;
+             }
+             
+             EmailProcessor* ep = [EmailProcessor getSingleton];
+             
+             for (MCOIMAPMessage* msg in messages) {
+                 //If in this folder or cross check in other folder
+                 if ([uidsIS containsIndex:msg.uid]) {
+                     //Don't Delete
+                     [uidsIS removeIndex:msg.uid];
+                 }
+             }
+             
+             NSMutableArray* delDatas = [[NSMutableArray alloc]init];
+             NSMutableArray* upDatas = [[NSMutableArray alloc]init];
+             
+             for (Email* email in emails) {
+                 UidEntry* uid_entry = [email uidEWithFolder:folderIdx];
+                 
+                 if ([uidsIS containsIndex:uid_entry.uid]) {
+                     //Remove email from local folder
+                     [delDatas addObject:email];
+                 }
+                 else {
+                     for (MCOIMAPMessage* msg in messages) {
+                         if (msg.uid == uid_entry.uid && msg.flags != email.flag) {
+                             email.flag = msg.flags;
+                             [upDatas addObject:email];
+                         }
+                     }
+                 }
+             }
+             
+             if (delDatas.count > 0) {
+                 CCMLog(@"Delete %lu emails", (unsigned long)delDatas.count);
+                 NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[delDatas,@(folderIdx)] forKeys:@[@"datas",@"folderIdx"]];
+                 NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeFromFolderWrapper:) object:data];
+                 [ep.operationQueue addOperation:nextOp];
+             }
+             
+             if (upDatas.count > 0) {
+                 CCMLog(@"Update %lu emails", (unsigned long)upDatas.count);
+                 NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(updateFlag:) object:upDatas];
+                 [ep.operationQueue addOperation:nextOp];
+             }
+             
+             completedBlock();
+         }];
+     }];
     return;
 }
 

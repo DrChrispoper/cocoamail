@@ -30,7 +30,7 @@
     [back addTarget:self action:@selector(_back) forControlEvents:UIControlEventTouchUpInside];
     item.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:back];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"My Folders", @"My Folders")];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"move-email-to-folder-view.title", @"My Folders")];
     
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,

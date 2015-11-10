@@ -323,6 +323,8 @@
 		271D4DBD1B84856B00D19373 /* providers.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = providers.json; path = ../../mailcore2/resources/providers.json; sourceTree = "<group>"; };
 		271D4E101B85DC6100D19373 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		271D4E121B85DC7400D19373 /* CocoaMail.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CocoaMail.entitlements; sourceTree = "<group>"; };
+		2728483D1BEB9AED00E832EB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Main.strings; sourceTree = "<group>"; };
+		2728483E1BEB9AED00E832EB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		273E62D81BDF7FC700E3F318 /* CCMStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMStatus.h; sourceTree = "<group>"; };
 		273E62D91BDF7FC700E3F318 /* CCMStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMStatus.m; sourceTree = "<group>"; };
 		273EA0881BA18221009AC691 /* MCOMessageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MCOMessageView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -1435,6 +1437,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				271D4D0F1B846E4500D19373 /* Base */,
+				2728483D1BEB9AED00E832EB /* fr */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -1443,6 +1446,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				271D4D141B846E4600D19373 /* Base */,
+				2728483E1BEB9AED00E832EB /* fr */,
 			);
 			name = LaunchScreen.xib;
 			sourceTree = "<group>";

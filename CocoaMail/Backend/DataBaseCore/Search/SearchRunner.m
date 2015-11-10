@@ -221,7 +221,7 @@ static SearchRunner * searchSingleton = nil;
         NSInteger __block allFound = 500;
         
         for (NSNumber* dbNum in dbNums) {
-            if (self.cancelled || allFound < 0) {
+            if (self.cancelled || allFound <= 0) {
                 [subscriber sendCompleted];
                 
                 return [RACDisposable disposableWithBlock:^{}];
@@ -295,13 +295,21 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) performFolderSearch:(NSInteger)folderNum withDbNum:(NSArray*)dbNums from:(NSInteger)pEmail
+-(RACSignal*) performFolderSearch:(NSInteger)folderNum withDbNum:(NSArray*)dbNums from:(Conversation*)pConversation
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         EmailDBAccessor* manager = [EmailDBAccessor sharedManager];
-        NSMutableArray* uids = [UidEntry getUidEntriesFrom:pEmail withFolder:folderNum];
         
-        NSInteger __block allFound = uids.count;
+        NSMutableArray* uids;
+        
+        if (pConversation) {
+            uids = [UidEntry getUidEntriesFrom:pConversation withFolder:folderNum];
+        }
+        else {
+            uids = [UidEntry getUidEntriesWithFolder:folderNum];
+        }
+        
+        NSInteger __block allFound = uids.count+1;
         NSUInteger count = 20;
         
         if (allFound != 0) {
@@ -438,7 +446,7 @@ static SearchRunner * searchSingleton = nil;
     return [self searchForSignal:[self performFolderSearchwithDbNum:dbs]];
 }
 
--(RACSignal*) activeFolderSearch:(NSInteger)email
+-(RACSignal*) activeFolderSearch:(Conversation*)conversation
 {
     SyncManager* sm = [SyncManager getSingleton];
     NSDictionary* folderState;
@@ -464,7 +472,13 @@ static SearchRunner * searchSingleton = nil;
         nums = [nums sortedArrayUsingDescriptors:@[sortOrder]];
     }
     
-    return [self searchForSignal:[self performFolderSearch:[[Accounts sharedInstance].currentAccount currentFolderIdx] withDbNum:nums from:email]];
+    if (conversation) {
+        NSInteger refDBNum = [EmailProcessor dbNumForDate:[conversation firstMail].date];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"(self <= %i)",refDBNum];
+        nums = [nums filteredArrayUsingPredicate:predicate];
+    }
+    
+    return [self searchForSignal:[self performFolderSearch:[[Accounts sharedInstance].currentAccount currentFolderIdx] withDbNum:nums from:conversation]];
 }
 
 -(RACSignal*) threadSearch:(NSString*)thread

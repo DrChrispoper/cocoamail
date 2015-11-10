@@ -49,7 +49,7 @@
 
 @interface SingleMailView : UIView <MCOMessageViewDelegate, CCMAttachmentViewDelegate>
 
--(void) setupWithText:(NSString*)texte extended:(BOOL)extended;
+-(void) setupWithText:(Mail*)texte extended:(BOOL)extended;
 
 @property (nonatomic, strong) NSString* textContent;
 @property (nonatomic, strong) UIView* htmlView;
@@ -86,7 +86,6 @@
     
     self.folder = [AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccountIndex:kActiveAccountIndex];
 
-    
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
     Mail* mail = [self.conversation firstMail];
@@ -179,10 +178,10 @@
     
         NSString* day = m.day;
         NSString* hour = m.hour;
-        NSString* mail = m.content;
+        //NSString* mail = m.content;
 
         posY = [self _addHeaderDay:day hour:hour atYPos:posY inView:contentView];
-        posY = [self _addMail:mail withIndex:idx extended:(idx==0) atYPos:posY inView:contentView];
+        posY = [self _addMail:m withIndex:idx extended:(idx==0) atYPos:posY inView:contentView];
         
         idx++;
     }
@@ -298,7 +297,7 @@
      
 }
 
--(CGFloat) _addMail:(NSString*)mail withIndex:(NSInteger)idx extended:(BOOL)extended atYPos:(CGFloat)posY inView:(UIView*)v
+-(CGFloat) _addMail:(Mail*)mail withIndex:(NSInteger)idx extended:(BOOL)extended atYPos:(CGFloat)posY inView:(UIView*)v
 {
     
     CGFloat WIDTH = self.view.bounds.size.width;
@@ -502,7 +501,7 @@
 
 @implementation SingleMailView
 
--(void) setupWithText:(NSString*)texte extended:(BOOL)extended;
+-(void) setupWithText:(Mail*)pMail extended:(BOOL)extended;
 {
 
     [self.subviews.firstObject removeFromSuperview];
@@ -510,7 +509,7 @@
     Mail* mail = [self.delegate mailDisplayed:self];
     Person* person = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
     
-    self.textContent = texte;
+    self.textContent = pMail.content;
     
     CGFloat WIDTH = self.bounds.size.width;
     
@@ -616,7 +615,7 @@
             if (!self.htmlView) {
                 self.height = size.height = 100;
                 MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
-                [view setHtml:mail.email.htmlBody];
+                [view setMail:mail];
                 view.delegate = self;
                 self.htmlView = view;
             }
@@ -660,7 +659,7 @@
         
     }
     else {
-        n.text = [texte stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        n.text = [pMail.content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
     
     inIV.userInteractionEnabled = YES;
@@ -840,12 +839,14 @@
         
         CGFloat nextHeight = 44.f;
         
+        Mail* mail = [self.delegate mailDisplayed:self];
+
         if (mailView.bounds.size.height>50) {
-            [self setupWithText:self.textContent extended:NO];
+            [self setupWithText:mail extended:NO];
             nextHeight = 44.f;
         }
         else {
-            [self setupWithText:self.textContent extended:YES];
+            [self setupWithText:mail extended:YES];
             nextHeight = self.bounds.size.height;
         }
         
@@ -868,7 +869,7 @@
     
     CGFloat oldFrame = self.frame.size.height;
     
-    [self setupWithText:self.textContent extended:YES];
+    [self setupWithText:[self.delegate mailDisplayed:self] extended:YES];
     
     CGFloat nextHeight = self.bounds.size.height;
     CGFloat diff = nextHeight - oldFrame;

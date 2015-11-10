@@ -547,7 +547,12 @@
     self.conversation = conv;
     Mail* mail = [self mail];
     
-    self.title.text = mail.title;
+    if (![mail.title isEqualToString:@""]) {
+        self.title.text = mail.title;
+    }
+    else {
+        self.title.text = [mail.content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    }
     
     Person* p = nil;
     

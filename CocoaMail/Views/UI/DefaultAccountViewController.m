@@ -28,7 +28,7 @@
     
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
-    NSString* title = NSLocalizedString(@"Default account", @"Default account");
+    NSString* title = NSLocalizedString(@"default-account-view.title", @"Default account");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,

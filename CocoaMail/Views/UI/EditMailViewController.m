@@ -287,6 +287,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
         }
         
+        if ([ImapSync sharedServices:self.selectedAccount.idx].connected) {
         //[self.selectedAccount saveDraft:self.mail];
         NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
         NSString* draftPath = [AppSettings folderName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
@@ -296,6 +297,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                 [self.selectedAccount refreshCurrentFolder];
             }
         }];
+        }
+        else {
+            [[Accounts sharedInstance].accounts[self.selectedAccount.idx] saveDraft:self.mail];
+        }
         
         [self _reallyGoBack];
         
@@ -414,7 +419,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     toView.backgroundColor = [UIColor whiteColor];
     
     UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, 10, 45)];
-    label.text = @"To:";
+    label.text = NSLocalizedString(@"compose-view.label.add-contact", @"To:");
     label.backgroundColor = [UIColor whiteColor];
     label.font = [UIFont systemFontOfSize:15.];
     label.textColor = [UIColor colorWithWhite:0.5 alpha:1.0];
@@ -551,7 +556,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     signature.textColor = [UIGlobal noImageBadgeColor];
     signature.backgroundColor = [UIColor whiteColor];
     signature.font = [UIFont systemFontOfSize:15];
-    signature.text = @"Sent with CocoaMail";
+    signature.text = [AppSettings signature:self.selectedAccount.idx];
     [bdView addSubview:signature];
     signature.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
     
@@ -589,7 +594,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [oldView addSubview:oldtv];
         
         Person* from = [[Persons sharedInstance] getPersonID:self.mail.fromMail.fromPersonID];
-        NSString* wrote = NSLocalizedString(@"wrote", @"wrote");
+        NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
         
         NSString* oldcontent = [NSString stringWithFormat:@"\n%@ %@ :\n\n%@\n", from.name, wrote, self.mail.fromMail.content];
         oldtv.text = oldcontent;
@@ -663,6 +668,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     CGRect fourLineFrame = self.bodyTextView.frame;
     
     [self.bodyTextView sizeToFit];
+    
+    CGRect newBounds = self.bodyTextView.frame;
+    newBounds.size.width = fourLineFrame.size.width;
+    self.bodyTextView.frame = newBounds;
     
     CGFloat delta = self.bodyTextView.frame.size.height - lastH;
     
@@ -1548,7 +1557,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     
-    UIAlertAction* action = [UIAlertAction actionWithTitle:NSLocalizedString(@"My pictures", @"My pictures")
+    UIAlertAction* action = [UIAlertAction actionWithTitle:NSLocalizedString(@"compose-view.attachments.add.my-pictures", @"My pictures")
                                                      style:UIAlertActionStyleDefault
                                                    handler:^(UIAlertAction* aa) {
                                                        [self _openPhotoPicker:UIImagePickerControllerSourceTypePhotoLibrary];
@@ -1558,7 +1567,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [ac addAction:action];
     
     
-    action = [UIAlertAction actionWithTitle:NSLocalizedString(@"New picture", @"New picture")
+    action = [UIAlertAction actionWithTitle:NSLocalizedString(@"compose-view.attachments.add.new-picture", @"New picture")
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         [self _openPhotoPicker:UIImagePickerControllerSourceTypeCamera];
@@ -1568,7 +1577,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [ac addAction:action];
     
     
-    action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Dropbox", @"Dropbox")
+    action = [UIAlertAction actionWithTitle:@"Dropbox"
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         // Pass any objects to the view controller here, like...
@@ -1597,7 +1606,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [ac addAction:action];
     
-    /*action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Google Drive", @"Google Drive")
+    /*action = [UIAlertAction actionWithTitle:@"Google Drive"
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         // Pass any objects to the view controller here, like...
@@ -1620,7 +1629,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [ac addAction:action];
     
-    action = [UIAlertAction actionWithTitle:NSLocalizedString(@"Box", @"Box")
+    action = [UIAlertAction actionWithTitle:@"Box"
                                       style:UIAlertActionStyleDefault
                                     handler:^(UIAlertAction* aa) {
                                         [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];
@@ -1636,7 +1645,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [ac addAction:action];*/
     
     
-    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIAlertActionStyleCancel
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"compose-view.attachments.cancel", @"Cancel") style:UIAlertActionStyleCancel
                                                           handler:nil];
     [ac addAction:defaultAction];
     
@@ -1720,7 +1729,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }
     
 
-    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel") style:UIAlertActionStyleCancel
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"alert-view.cancel", @"Cancel") style:UIAlertActionStyleCancel
                                                           handler:nil];
     [ac addAction:defaultAction];
     

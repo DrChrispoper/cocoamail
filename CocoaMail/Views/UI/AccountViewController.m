@@ -35,7 +35,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString* title = NSLocalizedString(@"Account", @"Account");
+    NSString* title = NSLocalizedString(@"account-view.title", @"Account View Title");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -112,21 +112,21 @@
 -(void) _prepareTable
 {
     NSArray* infos = @[
-                       @{TEXT: @"Name", TEXT_2 : self.account.person.name, DACTION : @"EDIT_NAME"},
-                       @{TEXT: @"Address", TEXT_2 : self.account.userMail},
-                       @{TEXT: @"Password", TEXT_2 : @"password", DACTION : @"EDIT_PASS"},
-                       @{TEXT: @"Signature", ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION, OBJECT:self.account},
-                       @{TEXT: @"Server settings", ACTION : @"OPEN_SERVER"}
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.name",@"Name"), TEXT_2 : self.account.person.name, DACTION : @"EDIT_NAME"},
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.address",@"Address"), TEXT_2 : self.account.userMail},
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.password",@"Password"), TEXT_2 : @"password", DACTION : @"EDIT_PASS"},
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.signature",@"Signature"), ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION, OBJECT:self.account},
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.server-settings",@"Server settings"), ACTION : @"OPEN_SERVER"}
                         ];
     
     
-    NSString* tAccount = NSLocalizedString(@"ACCOUNT DETAILS", @"ACCOUNT DETAILS");
+    NSString* tAccount = NSLocalizedString(@"account-view.main-details-section", @"ACCOUNT DETAILS");
     NSDictionary* Paccounts = @{TITLE:tAccount, CONTENT:infos};
     
-    NSString* tButton = NSLocalizedString(@"COCOA BUTTON", @"COCOA BUTTON");
+    NSString* tButton = NSLocalizedString(@"account-view.cocoa-button-section", @"COCOA BUTTON");
     NSDictionary* Pbutton = @{TITLE:tButton, CONTENT:@[@{DACTION : @"EDIT_CODE"}]};
     
-    NSString* tDelete = NSLocalizedString(@"Delete account", @"Delete account");
+    NSString* tDelete = NSLocalizedString(@"account-view.delete-account-button", @"Delete account");
     NSDictionary* PDelete = @{TITLE:@"", CONTENT:@[@{TEXT:tDelete, DACTION : @"DELETE"}]};
     
     self.settings = @[Paccounts, Pbutton, PDelete];

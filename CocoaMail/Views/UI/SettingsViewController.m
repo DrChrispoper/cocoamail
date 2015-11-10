@@ -34,7 +34,7 @@
 
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    NSString* title = NSLocalizedString(@"Settings", @"Settings");
+    NSString* title = NSLocalizedString(@"settings-view.title", @"Settings");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -98,15 +98,15 @@
     }
     
     if (as.count<5) {
-        NSString* addAccount = NSLocalizedString(@"Add account", @"Add account");
+        NSString* addAccount = NSLocalizedString(@"settings-view.menu.add-account", @"Add account");
         [as addObject:@{BVIEW : [[UIView alloc] init], TEXT : addAccount, ACTION : kSETTINGS_ADD_ACCOUNT_NOTIFICATION}];
     }
     
-    NSString* tAccount = NSLocalizedString(@"ACCOUNTS", @"ACCOUNTS");
+    NSString* tAccount = NSLocalizedString(@"settings-view.header.accounts", @"ACCOUNTS");
     NSDictionary* Paccounts = @{TITLE:tAccount, FOOTER:@"", CONTENT:as};
     
-    NSString* tDAccount = NSLocalizedString(@"DEFAULT ACCOUNT", @"DEFAULT ACCOUNT");
-    NSString* fDAccount = NSLocalizedString(@"Default account used to send emails when using unified Inbox", @"Default account used to send emails when using unified Inbox");
+    NSString* tDAccount = NSLocalizedString(@"settings-view.header.default-sending-account", @"DEFAULT ACCOUNT");
+    NSString* fDAccount = NSLocalizedString(@"settings-view.menu.default-sending-account", @"Default account used to send emails when using unified Inbox");
     NSDictionary* PdftAccount = @{TITLE:tDAccount, FOOTER:fDAccount, CONTENT:da};
     
     NSArray* clouds = @[
@@ -116,12 +116,12 @@
                         //@{BIMAGE:@"icone_box", TEXT: @"Box", ACTION : kSETTINGS_CLOUD_NOTIFICATION, OBJECT: @"Box"}
                         ];
     
-    NSString* tCloud = NSLocalizedString(@"CLOUD SERVICES", @"CLOUD SERVICES");
+    NSString* tCloud = NSLocalizedString(@"settings-view.header.cloud-services", @"CLOUD SERVICES");
     NSDictionary* Pclouds = @{TITLE:tCloud, FOOTER:@"", CONTENT:clouds};
     
-    NSString* tNotif = NSLocalizedString(@"Notifications", @"Notifications");
-    NSString* tBadge = NSLocalizedString(@"Display badge count", @"Display badge count");
-    NSString* tSwipe = NSLocalizedString(@"Quick Swipe", @"Quick Swipe");
+    NSString* tNotif = NSLocalizedString(@"settings-view.menu.notifications", @"Notifications");
+    NSString* tBadge = NSLocalizedString(@"settings-view.menu.display-badge-count", @"Display badge count");
+    NSString* tSwipe = NSLocalizedString(@"settings-view.menu.quick-swipe", @"Quick Swipe");
     
     NSArray* displays = @[
                           @{TEXT: tSwipe, ACTION : kSETTINGS_SWIPE_NOTIFICATION},
@@ -129,15 +129,15 @@
                           @{TEXT: tNotif, ACTION : kSETTINGS_NOTIF_NOTIFICATION}
                         ];
     
-    NSString* tDisplay = NSLocalizedString(@"DISPLAY", @"DISPLAY");
+    NSString* tDisplay = NSLocalizedString(@"settings-view.header.display", @"DISPLAY");
     NSDictionary* Pdisplay = @{TITLE:tDisplay, FOOTER:@"", CONTENT:displays};
 
-    NSString* tCredit = NSLocalizedString(@"Credits", @"Credits");
+    NSString* tCredit = NSLocalizedString(@"settings-view.menu.credits", @"Credits");
     NSDictionary* Pcredit = @{TITLE:@"", FOOTER:@"",
                               CONTENT:@[@{TEXT:tCredit, ACTION:kSETTINGS_CREDIT_NOTIFICATION}]
                               };
     
-    NSString* tDelete = NSLocalizedString(@"Delete stored attachments", @"Delete stored attachments");
+    NSString* tDelete = NSLocalizedString(@"settings-view.menu.delete-attachments", @"Delete stored attachments");
     NSDictionary* PDelete = @{TITLE:@"", FOOTER:@"",
                               CONTENT:@[@{TEXT:tDelete, DACTION : @"CLEAR"}]
                               };

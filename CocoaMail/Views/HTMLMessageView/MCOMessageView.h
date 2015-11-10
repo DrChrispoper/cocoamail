@@ -10,10 +10,12 @@
 
 @protocol MCOMessageViewDelegate;
 
+@class Mail;
 
 @interface MCOMessageView : UIView <UIWebViewDelegate>
 
 @property (nonatomic, copy) NSString* html;
+@property (nonatomic, copy) Mail* mail;
 @property (nonatomic, weak) id <MCOMessageViewDelegate> delegate;
 
 
