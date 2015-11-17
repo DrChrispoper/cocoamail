@@ -16,7 +16,7 @@
 	volatile BOOL cancelled;
 }
 
--(RACSignal*) searchOfFolder:(NSString*)searchText;
+-(RACSignal*) search:(NSString*)searchText;
 -(RACSignal*) senderSearch:(NSArray*)addressess;
 
 -(RACSignal*) activeFolderSearch:(Conversation*)conversation;
@@ -29,5 +29,6 @@
 +(id) getSingleton;
 -(void) cancel;
 
++(NSArray*) dbNumsInAccount:(NSInteger)accountIndex;
 
 @end

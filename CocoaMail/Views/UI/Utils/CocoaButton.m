@@ -28,6 +28,7 @@
 @property (nonatomic, weak) UIView* backViewAnim;
 @property (nonatomic) double backViewAnimAngle;
 
+@property (nonatomic) BOOL isSpinning;
 
 @end
 
@@ -88,6 +89,8 @@
     
     Account* cac = [[Accounts sharedInstance] currentAccount];
     
+    self.isSpinning = NO;
+    
     self.backgroundColor = [UIColor clearColor];
     
     UIView* background = [[UIView alloc] initWithFrame:self.bounds];
@@ -135,8 +138,8 @@
 
 -(void) refreshAnimation:(BOOL)anim
 {
-    if (anim) {
-        
+    if (anim && !self.isSpinning) {
+        self.isSpinning = YES;
         if (self.backViewAnim==nil) {
             UIView* background = [[UIView alloc] initWithFrame:self.bounds];
             background.backgroundColor = self.backView.backgroundColor;
@@ -161,8 +164,8 @@
         }
         
     }
-    else {
-        
+    else if (!anim) {
+        self.isSpinning = NO;
         [UIView animateWithDuration:0.1
                          animations:^{
                              CGPoint center = self.backView.center;

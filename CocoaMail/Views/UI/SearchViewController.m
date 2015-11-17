@@ -267,12 +267,12 @@
         }
         
 
-        if (![peopleIn containsIndex:mail.fromPersonID] && [fromName rangeOfString:word options:NSCaseInsensitiveSearch].location != NSNotFound) {
+        if (![peopleIn containsIndex:mail.fromPersonID] && [fromName rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {
             [next addObject:@{kCONTENT:c, kSUBTEXT: @""}];
             [peopleIn addIndex:mail.fromPersonID];
             
         }
-        else if ([title rangeOfString:word options:NSCaseInsensitiveSearch].location != NSNotFound) {
+        else if ([title rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {
             [next addObject:@{kCONTENT:c, kSUBTEXT: @""}];
         }
         else {
@@ -280,7 +280,7 @@
             BOOL found = NO;
             
             for (NSString* att in attachs) {
-                if ([att rangeOfString:word options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                if ([att rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {
                     [next addObject:@{kCONTENT:c, kSUBTEXT: att}];
                     found = YES;
                     break;
@@ -291,7 +291,7 @@
                 continue;
             }
             
-            NSRange r = [content rangeOfString:word options:NSCaseInsensitiveSearch];
+            NSRange r = [content rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch];
             
             if (r.location != NSNotFound) {
 

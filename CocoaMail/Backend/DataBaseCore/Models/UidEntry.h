@@ -10,14 +10,7 @@
 
 @class Conversation;
 
-@interface UidEntry : NSObject <NSCopying>{
-    NSInteger pk;
-    uint32_t uid;
-    NSInteger folder;
-    NSInteger account;
-    NSString* msgId;
-    NSString* sonMsgId;
-}
+@interface UidEntry : NSObject <NSCopying>
 
 @property (assign) NSInteger pk;
 @property (nonatomic, readwrite) uint32_t uid;
@@ -25,16 +18,17 @@
 @property (nonatomic, readwrite) NSInteger account;
 @property (nonatomic, readwrite,copy) NSString* msgId;
 @property (nonatomic, readwrite,copy) NSString* sonMsgId;
+@property (nonatomic, readwrite) NSInteger dbNum;
+
 
 +(void) tableCheck;
 +(BOOL) addUid:(UidEntry*)uid_entry;
-+(BOOL) addUidUnsafe:(UidEntry*)uid_entry;
 +(BOOL) removeFromFolderUid:(UidEntry*)uid_entry;
 +(BOOL) removeFromAllFoldersUid:(UidEntry*)uid_entry;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
-+(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum;
-+(NSMutableArray*) getUidEntriesFrom:(Conversation*)conversation withFolder:(NSInteger)folderNum;
++(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
++(NSMutableArray*) getUidEntriesFrom:(Conversation*)conversation withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString*)msgId;
 +(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgId;
 +(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;
@@ -45,7 +39,7 @@
 +(BOOL) move:(UidEntry*)uidE toFolder:(NSInteger)to;
 /// Mark as deleted in the origin folder. Expunge origin folder.
 +(BOOL) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
-+(BOOL) delete:(UidEntry*)uidE;
++(BOOL) deleteUidEntry:(UidEntry*)uidE;
 +(void) deleteAllfromAccount:(NSInteger)accountN;
 /// Add Flag
 +(BOOL) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
@@ -54,5 +48,6 @@
 +(BOOL) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
 +(BOOL) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
 
++(NSArray*) dbNumsInAccount:(NSInteger)accountIndex;
 
 @end

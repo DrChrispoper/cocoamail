@@ -16,6 +16,8 @@
 #import "DropboxBrowserViewController.h"
 #import "GoogleDriveExplorer.h"
 #import "ImapSync.h"
+#import "EmailProcessor.h"
+#import "MCOMessageView.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -277,28 +279,43 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         self.mail.title = self.subjectTextView.text;
         self.mail.content = self.bodyTextView.text;
         
-        //If draft exists delete and create new
-        if (self.mail.email.msgId) {
-            NSInteger acIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
-            
-            Conversation* c = [[Conversation alloc]init];
-            [c addMail:self.mail];
-            
-            [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
-        }
-        
         if ([ImapSync sharedServices:self.selectedAccount.idx].connected) {
-        //[self.selectedAccount saveDraft:self.mail];
-        NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
-        NSString* draftPath = [AppSettings folderName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
-        MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
-        [addOp start:^(NSError * error, uint32_t createdUID) {
-            if (error == nil) {
-                [self.selectedAccount refreshCurrentFolder];
+            
+            //If draft exists delete and create new
+            if (self.mail.email.msgId) {
+                NSInteger acIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
+                
+                Conversation* c = [[Conversation alloc]init];
+                [c addMail:self.mail];
+                
+                [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
             }
-        }];
+            
+            //[self.selectedAccount saveDraft:self.mail];
+            NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
+            NSString* draftPath = [AppSettings folderName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
+            
+            MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
+            [addOp start:^(NSError * error, uint32_t createdUID) {
+                if (error == nil) {
+                    [self.selectedAccount refreshCurrentFolder];
+                }
+            }];
         }
         else {
+            if (self.mail.email.uids.count == 0) {
+                UidEntry* uidE = [[UidEntry alloc]init];
+                uidE.account = [AppSettings numForData:self.selectedAccount.idx];
+                uidE.folder = [AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts];
+                uidE.uid = [AppSettings draftCount];
+                uidE.msgId = [NSString stringWithFormat:@"%i",-uidE.uid];
+                
+                self.mail.email.uids = @[uidE];
+                
+                NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:self.mail.email];
+                [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+            }
+            
             [[Accounts sharedInstance].accounts[self.selectedAccount.idx] saveDraft:self.mail];
         }
         
@@ -347,7 +364,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) _send
 {
     self.mail.title = self.subjectTextView.text;
-    self.mail.content = [NSString stringWithFormat:@"%@ \n%@", self.bodyTextView.text, [AppSettings signature:self.selectedAccount.idx]];
+    self.mail.content = [NSString stringWithFormat:@"%@ \n%@\n%@", self.bodyTextView.text, [AppSettings signature:self.selectedAccount.idx], self.mail.transferContent];
     
     [self.selectedAccount sendMail:self.mail bcc:self.personsAreHidden];
     
@@ -578,14 +595,50 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     // last message
     
-    
-    if (self.mail.fromMail != nil) {
-        
-        UIView* oldView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 100)];
+    if (self.mail.transferContent) {
+        UIView* oldView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 200)];
         oldView.backgroundColor = [UIColor whiteColor];
         
         
-        UITextView* oldtv = [[UITextView alloc] initWithFrame:CGRectMake(10, 4, WIDTH-20, 50)];
+        MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
+        Mail* m = [[Mail alloc]init];
+        m.email = [[Email alloc]init];
+        m.email.htmlBody = self.mail.transferContent;
+        [view setMail:m];
+        [oldView addSubview:view];
+        
+        CGRect f = oldView.frame;
+        f.size.height = view.frame.size.height + 20;
+        oldView.frame = f;
+        
+        
+        UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
+        UIImageView* iv = [[UIImageView alloc] initWithImage:[rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
+        
+        CGRect ivf = view.frame;
+        ivf.origin.x -= 2;
+        ivf.size.width += 4;
+        ivf.size.height += 6;
+        iv.frame = ivf;
+        iv.tintColor = [UIGlobal standardLightGrey];
+        [oldView insertSubview:iv belowSubview:view];
+        
+        [contentView addSubview:oldView];
+        oldView.tag = ContentOld;
+    }
+    
+    if (self.mail.fromMail != nil) {
+        
+        UIView* oldView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 200)];
+        oldView.backgroundColor = [UIColor whiteColor];
+        
+        
+        MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
+        [view setMail:self.mail.fromMail];
+        //view.delegate = self;
+        [oldView addSubview:view];
+        
+        /*UITextView* oldtv = [[UITextView alloc] initWithFrame:CGRectMake(10, 4, WIDTH-20, 50)];
         oldtv.textColor = [UIColor blackColor];
         oldtv.backgroundColor = [UIColor clearColor];
         oldtv.font = [UIFont systemFontOfSize:15];
@@ -599,23 +652,23 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         NSString* oldcontent = [NSString stringWithFormat:@"\n%@ %@ :\n\n%@\n", from.name, wrote, self.mail.fromMail.content];
         oldtv.text = oldcontent;
         
-        [oldtv sizeToFit];
+        [oldtv sizeToFit];*/
 
         CGRect f = oldView.frame;
-        f.size.height = oldtv.frame.size.height + 20;
+        f.size.height = view.frame.size.height + 20;
         oldView.frame = f;
 
         
         UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
         UIImageView* iv = [[UIImageView alloc] initWithImage:[rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
         
-        CGRect ivf = oldtv.frame;
+        CGRect ivf = view.frame;
         ivf.origin.x -= 2;
         ivf.size.width += 4;
         ivf.size.height += 6;
         iv.frame = ivf;
         iv.tintColor = [UIGlobal standardLightGrey];
-        [oldView insertSubview:iv belowSubview:oldtv];
+        [oldView insertSubview:iv belowSubview:view];
         
         [contentView addSubview:oldView];
         oldView.tag = ContentOld;
@@ -633,6 +686,19 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [self _fixContentSize];
     
     [self _updateAttachView];
+}
+
+-(void) webViewLoaded:(UIWebView*)webView
+{
+
+    UIView* oldView = [self.contentView viewWithTag:ContentOld];
+    
+    CGFloat oldFrame = oldView.frame.size.height;
+    
+    CGFloat nextHeight = webView.frame.size.height;
+    //CGFloat diff = nextHeight - oldFrame;
+    
+    [self _fixContentSize];
 }
 
 -(void) _fillTitle
@@ -898,6 +964,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     UIView* last = [self.contentView viewWithTag:ContentOld];
     
     if (last==nil) {
+
         last = [self.contentView viewWithTag:ContentAttach];
         
         if (last==nil) {

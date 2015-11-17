@@ -216,6 +216,8 @@
     cell.textLabel.textAlignment = NSTextAlignmentNatural;
     cell.textLabel.textColor = [UIColor blackColor];
     
+    [cell.textLabel sizeToFit];
+    
     cell.accessoryType = UITableViewCellAccessoryNone;
     
     
@@ -223,8 +225,9 @@
     bounds.height = 52;
     
     if (infoCell[TEXT_2] != nil) {
+        NSInteger labelWidth = MAX(cell.textLabel.frame.size.width+20, 100);
         
-        UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(100, 0, bounds.width - 110, bounds.height)];
+        UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(labelWidth, 0, bounds.width - labelWidth - 10, bounds.height)];
         tf.text = infoCell[TEXT_2];
         tf.delegate = self;
         [cell addSubview:tf];

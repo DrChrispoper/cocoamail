@@ -11,15 +11,13 @@
 
 @implementation CachedAction
 
-@synthesize pk, uid, actionIndex, toFolder;
-
 +(void) tableCheck
 {
     CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        if (![db executeUpdate:@"CREATE TABLE cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER)"]) {
+        if (![db executeUpdate:@"CREATE TABLE cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER, dbNum INTEGER)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
         }
     }];
@@ -44,12 +42,13 @@
         }
         [result close];
         
-        success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder) VALUES (?,?,?,?,?);",
+        success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder,dbNum) VALUES (?,?,?,?,?,?);",
                     @(action.uid.uid),
                     @(action.uid.folder),
                     @(action.uid.account),
                     @(action.actionIndex),
-                    @(action.toFolder)];
+                    @(action.toFolder),
+                    @(action.uid.dbNum)];
         
     }];
     
@@ -100,7 +99,7 @@
             cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
             cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
             cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
-            
+            cachedA.uid.dbNum = [results intForColumn:@"dbNum"];
             [actions addObject:cachedA];
         }
         
@@ -128,7 +127,8 @@
             cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
             cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
             cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
-            
+            cachedA.uid.dbNum = [results intForColumn:@"dbNum"];
+
             [actions addObject:cachedA];
         }
         
@@ -147,7 +147,7 @@
             break;
         case 1:
             self.uid.pk = -1;
-            success = [UidEntry delete:self.uid];
+            success = [UidEntry deleteUidEntry:self.uid];
             break;
         case 2:
             success = [UidEntry addFlag:MCOMessageFlagFlagged to:self.uid];

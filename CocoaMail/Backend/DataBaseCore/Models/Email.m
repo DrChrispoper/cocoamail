@@ -122,10 +122,23 @@
 
 -(void) loadBody
 {
-    Email* e = [Email getEmailWithMsgId:self.msgId];
-    self.pk = e.pk;
-    self.body = e.body;
-    self.htmlBody = e.htmlBody;
+    __block Email* email = [[Email alloc] init];
+
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
+    
+    [queue inDatabase:^(FMDatabase* db) {
+        
+        FMResultSet* results = [db executeQuery:@"SELECT email.pk,email.datetime,email.sender,email.tos,email.ccs,email.bccs,email.msg_id,email.html_body,email.flag,search_email.subject,search_email.body FROM email, search_email WHERE email.pk = search_email.rowid AND search_email.msg_id = ?", self.msgId];
+        
+        if ([results next]) {
+            email = [Email resToEmail:results];
+            self.pk = email.pk;
+            self.body = email.body;
+            self.htmlBody = email.htmlBody;
+        }
+        
+        [results close];
+    }];
 }
 
 -(void) fetchAllAttachments
@@ -335,7 +348,8 @@
 
 +(void) updateEmailFlag:(Email*)email
 {
-    Email* oldEmail = [Email getEmailWithMsgId:email.msgId];
+    NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
+    Email* oldEmail = [Email getEmailWithMsgId:email.msgId dbNum:dbNum];
 
     if ([UidEntry hasUidEntrywithMsgId:email.msgId withFolder:0] && !(oldEmail.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
         [UIApplication sharedApplication].applicationIconBadgeNumber--;
@@ -343,7 +357,7 @@
     
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:email.datetime]]]];
+    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         [db executeUpdate:@"UPDATE email SET flag = ? WHERE pk = ?;", @(email.flag), @(email.pk)];
@@ -352,11 +366,12 @@
 
 +(void) updateEmailBody:(Email*)email;
 {
-    email.pk = [Email getEmailWithMsgId:email.msgId].pk;
+    NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
+    email.pk = [Email getEmailWithMsgId:email.msgId dbNum:dbNum].pk;
     
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:email.datetime]]]];
+    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         [db executeUpdate:@"UPDATE email SET html_body = ? WHERE pk = ?;", email.htmlBody, @(email.pk)];
@@ -364,19 +379,19 @@
     }];
 }
 
-+(BOOL) removeEmail:(NSString*)msgIdDel
++(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
 {
     __block BOOL success = FALSE;
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     
-    Email* email = [Email getEmailWithMsgId:msgIdDel];
+    [[EmailProcessor getSingleton] switchToDBNum:dbNum];
+
+    Email* email = [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
     
     if ([UidEntry hasUidEntrywithMsgId:msgIdDel withFolder:0] && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
         [UIApplication sharedApplication].applicationIconBadgeNumber--;
     }
     
-    [[EmailProcessor getSingleton] switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
-
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;",
                     msgIdDel];
@@ -385,11 +400,13 @@
     return success;
 }
 
-+(Email*) getEmailWithMsgId:(NSString*)msgIdDel
++(Email*) getEmailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
 {
     __block Email* email = [[Email alloc] init];
     
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    [databaseManager.databaseQueue close];
+    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
@@ -494,6 +511,7 @@
     if ([self uidEWithFolder:fromFolderIdx]) {
         [UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx];
         [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+        _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
 }
 
@@ -501,6 +519,7 @@
 {
     [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
     [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+    _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
 -(void) star
@@ -515,6 +534,8 @@
     }
     
     [Email updateEmailFlag:self];
+    
+    _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
 -(void) read
@@ -529,7 +550,21 @@
     }
     
     [Email updateEmailFlag:self];
+    
+    _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
++(void) clean:(Email*)email
+{
+/*    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    [databaseManager.databaseQueue close];
+    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:email.datetime]]]];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        if ([db executeUpdate:@"DELETE FROM email WHERE pk = ?;", @(email.pk)]) {
+            CCMLog(@"Email cleaned");
+        }
+    }];*/
+}
 
 @end

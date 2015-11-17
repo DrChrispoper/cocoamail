@@ -75,8 +75,9 @@ static NSDateFormatter * s_df_hour = nil;
     
     Person* from = [[Persons sharedInstance] getPersonID:self.fromPersonID];
     NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
-    NSString* oldcontent = [NSString stringWithFormat:@"\n\n%@ %@ :\n\n%@\n", from.name, wrote, self.content];
-    mail.content = oldcontent;
+    NSString* oldcontent = [NSString stringWithFormat:@"\n\n%@ %@ :\n\n%@\n", from.name, wrote, self.email.htmlBody];
+    
+    mail.transferContent = oldcontent;
     
     mail.fromMail = nil;
     
@@ -103,14 +104,20 @@ static NSDateFormatter * s_df_hour = nil;
         [[builder header] setBcc:to];
     }
     
+    [builder setTextBody:self.content];
+
     if (self.fromMail) {
-     [[builder header] setReferences:@[self.fromMail.email.getSonID]];
-     [[builder header] setInReplyTo: @[self.fromMail.email.msgId]];
+        [[builder header] setReferences:@[self.fromMail.email.getSonID]];
+        [[builder header] setInReplyTo: @[self.fromMail.email.msgId]];
+        
+        Person* from = [[Persons sharedInstance] getPersonID:self.fromMail.fromPersonID];
+        NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
+        
+        [builder setTextBody:[NSString stringWithFormat:@"%@\n%@ %@ :\n\n%@\n",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
     }
     
     [[builder header] setSubject:self.title];
     
-    [builder setTextBody:self.content];
     
     //NSString* documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     //NSString* filesSubdirectory = [NSTemporaryDirectory()  stringByAppendingPathComponent:@""];
@@ -309,9 +316,21 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) toggleFav
 {
-    [[self firstMail] toggleFav];
+    BOOL isStarred = [self isFav];
     
-    [[[Accounts sharedInstance] accounts][self.accountIdx] star:([[self firstMail] isFav]) conversation:self];
+    if(isStarred) {
+        for (Mail* m in self.mails) {
+            if ([m isFav]) {
+                [[self firstMail] toggleFav];
+            }
+        }
+    }
+    else {
+        [[self firstMail] toggleFav];
+    }
+    
+    
+    [[[Accounts sharedInstance] accounts][self.accountIdx] star:!isStarred conversation:self];
     
 }
 

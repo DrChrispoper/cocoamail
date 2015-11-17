@@ -50,6 +50,8 @@
 		271D4DBC1B847DE800D19373 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4DBB1B847DE700D19373 /* UIKit.framework */; };
 		271D4DBE1B84856B00D19373 /* providers.json in Resources */ = {isa = PBXBuildFile; fileRef = 271D4DBD1B84856B00D19373 /* providers.json */; };
 		271D4E111B85DC6200D19373 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4E101B85DC6100D19373 /* StoreKit.framework */; };
+		2723201B1BF48E84000F7EFF /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2723201D1BF48E84000F7EFF /* Localizable.strings */; };
+		272320201BF48E88000F7EFF /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 272320221BF48E88000F7EFF /* InfoPlist.strings */; };
 		273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 273E62D91BDF7FC700E3F318 /* CCMStatus.m */; };
 		273EA08B1BA18221009AC691 /* MCOMessageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 273EA0891BA18221009AC691 /* MCOMessageView.mm */; };
 		273EA08C1BA18221009AC691 /* MCOMessageViewScript.js in Resources */ = {isa = PBXBuildFile; fileRef = 273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */; };
@@ -260,8 +262,6 @@
 		271D4D031B846E4500D19373 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		271D4D051B846E4500D19373 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = AppDelegate.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		271D4D061B846E4500D19373 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = AppDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		271D4D0F1B846E4500D19373 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		271D4D141B846E4600D19373 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		271D4D351B8471AC00D19373 /* libbox-ios-browse-sdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libbox-ios-browse-sdk.a"; path = "Pods/../build/Debug-iphoneos/libbox-ios-browse-sdk.a"; sourceTree = "<group>"; };
 		271D4D361B8471AC00D19373 /* libbox-ios-sdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libbox-ios-sdk.a"; path = "Pods/../build/Debug-iphoneos/libbox-ios-sdk.a"; sourceTree = "<group>"; };
 		271D4D371B8471AC00D19373 /* libFMDB.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libFMDB.a; path = "Pods/../build/Debug-iphoneos/libFMDB.a"; sourceTree = "<group>"; };
@@ -323,8 +323,10 @@
 		271D4DBD1B84856B00D19373 /* providers.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = providers.json; path = ../../mailcore2/resources/providers.json; sourceTree = "<group>"; };
 		271D4E101B85DC6100D19373 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		271D4E121B85DC7400D19373 /* CocoaMail.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CocoaMail.entitlements; sourceTree = "<group>"; };
-		2728483D1BEB9AED00E832EB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Main.strings; sourceTree = "<group>"; };
-		2728483E1BEB9AED00E832EB /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
+		2723201C1BF48E84000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-US"; path = "en-US.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		272320211BF48E88000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-US"; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		272320231BF48EA7000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		272320241BF48EA8000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		273E62D81BDF7FC700E3F318 /* CCMStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMStatus.h; sourceTree = "<group>"; };
 		273E62D91BDF7FC700E3F318 /* CCMStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMStatus.m; sourceTree = "<group>"; };
 		273EA0881BA18221009AC691 /* MCOMessageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MCOMessageView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -484,6 +486,12 @@
 		27818C6E1BABF35F00D26D1A /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		27818C6F1BABF35F00D26D1A /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		27B7F99C1BF4841C00B4F421 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = fr; path = fr.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		27B7F99D1BF4841C00B4F421 /* en-US */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "en-US"; path = "en-US.lproj/LaunchScreen.xib"; sourceTree = "<group>"; };
+		27B7F99E1BF4841C00B4F421 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = fr; path = fr.lproj/Main.storyboard; sourceTree = "<group>"; };
+		27B7F99F1BF4841D00B4F421 /* en-US */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "en-US"; path = "en-US.lproj/Main.storyboard"; sourceTree = "<group>"; };
+		27B7F9A01BF4845400B4F421 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = fr; path = fr.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		27B7F9A11BF4845600B4F421 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = fr; path = fr.lproj/Main.storyboard; sourceTree = "<group>"; };
 		27C077B81BBC1E4300FC1841 /* RegExCategories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegExCategories.h; sourceTree = "<group>"; };
 		27C077B91BBC1E4300FC1841 /* RegExCategories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegExCategories.m; sourceTree = "<group>"; };
 		27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -587,6 +595,8 @@
 		271D4D011B846E4500D19373 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				272320221BF48E88000F7EFF /* InfoPlist.strings */,
+				2723201D1BF48E84000F7EFF /* Localizable.strings */,
 				278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */,
 				271D4DBD1B84856B00D19373 /* providers.json */,
 				271D4D711B8472DA00D19373 /* CocoaMail-Prefix.pch */,
@@ -1088,6 +1098,7 @@
 				271D4CFC1B846E4500D19373 /* Resources */,
 				1C2F9E1F295DFDC02481677C /* Copy Pods Resources */,
 				OBJCLEANCUSTOMRUNSCRIPTT /* Objective-Clean Run Script */,
+				5C4D1CF95FC0C60ED575BC86 /* Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1133,8 +1144,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
-				Base,
+				fr,
 			);
 			mainGroup = 271D4CF51B846E4500D19373;
 			productRefGroup = 271D4CFF1B846E4500D19373 /* Products */;
@@ -1217,6 +1227,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				277D89661BB183B300FAFED5 /* folder_public.png in Resources */,
+				272320201BF48E88000F7EFF /* InfoPlist.strings in Resources */,
 				271D4DBE1B84856B00D19373 /* providers.json in Resources */,
 				277D89871BB183B300FAFED5 /* page_white_dvd@2x.png in Resources */,
 				277D897D1BB183B300FAFED5 /* page_white_code@2x.png in Resources */,
@@ -1241,6 +1252,7 @@
 				277D898E1BB183B300FAFED5 /* page_white_gear.png in Resources */,
 				277D89681BB183B300FAFED5 /* folder_user.png in Resources */,
 				277D895E1BB183B300FAFED5 /* folder_app.png in Resources */,
+				2723201B1BF48E84000F7EFF /* Localizable.strings in Resources */,
 				273EA08C1BA18221009AC691 /* MCOMessageViewScript.js in Resources */,
 				277D89671BB183B300FAFED5 /* folder_public@2x.png in Resources */,
 				277D899A1BB183B300FAFED5 /* page_white_php.png in Resources */,
@@ -1326,6 +1338,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5C4D1CF95FC0C60ED575BC86 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		97348202A481B1D799F877B8 /* Check Pods Manifest.lock */ = {
@@ -1436,8 +1463,9 @@
 		271D4D0E1B846E4500D19373 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				271D4D0F1B846E4500D19373 /* Base */,
-				2728483D1BEB9AED00E832EB /* fr */,
+				27B7F99E1BF4841C00B4F421 /* fr */,
+				27B7F99F1BF4841D00B4F421 /* en-US */,
+				27B7F9A11BF4845600B4F421 /* fr */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -1445,10 +1473,29 @@
 		271D4D131B846E4600D19373 /* LaunchScreen.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				271D4D141B846E4600D19373 /* Base */,
-				2728483E1BEB9AED00E832EB /* fr */,
+				27B7F99C1BF4841C00B4F421 /* fr */,
+				27B7F99D1BF4841C00B4F421 /* en-US */,
+				27B7F9A01BF4845400B4F421 /* fr */,
 			);
 			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+		2723201D1BF48E84000F7EFF /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2723201C1BF48E84000F7EFF /* en-US */,
+				272320231BF48EA7000F7EFF /* fr */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		272320221BF48E88000F7EFF /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				272320211BF48E88000F7EFF /* en-US */,
+				272320241BF48EA8000F7EFF /* fr */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

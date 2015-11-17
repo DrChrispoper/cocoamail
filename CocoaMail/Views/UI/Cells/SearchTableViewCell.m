@@ -230,7 +230,7 @@ static NSDateFormatter * s_df_date = nil;
         
         NSMutableAttributedString* res = [[NSMutableAttributedString alloc] initWithString:subtextToDisplay
                                                                                 attributes:@{ NSFontAttributeName : self.title.font,
-                                                                                              NSForegroundColorAttributeName : self.title.textColor,
+                                                                                              NSForegroundColorAttributeName : [UIColor colorWithWhite:0.47 alpha:1.0],
                                                                                               NSBackgroundColorAttributeName : [UIColor whiteColor]
                                                                                               }];
         

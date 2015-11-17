@@ -22,5 +22,18 @@
 -(void) setDatabaseFilepath:(NSString*)databaseFilepath;
 -(void) deleteDatabase;
 
+@end
+
+@interface EmailDBReader : NSObject {
+@private
+    NSString* _databaseFilepath;
+}
+
+@property (nonatomic, strong) FMDatabaseQueue* databaseQueue;
+
++(id) sharedManager;
+
+-(NSString*) databaseFilepath;
+-(void) setDatabaseFilepath:(NSString*)databaseFilepath;
 
 @end

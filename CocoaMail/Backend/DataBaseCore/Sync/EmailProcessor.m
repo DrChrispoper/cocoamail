@@ -218,10 +218,20 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         return;
     }
     
+    UidEntry* uidE = email.uids[0];
+
     if ([Email insertEmail:email] != -1) {
-        [UidEntry addUid:email.uids[0]];
+        [UidEntry addUid:uidE];
     }
     else {
+        email.uids = nil;
+        
+        if (![email existsLocally]) {
+            [UidEntry addUid:uidE];
+        }
+        
+        email.uids = @[uidE];
+
         CCMLog(@"Trying to add Duplicate");
     }
 }

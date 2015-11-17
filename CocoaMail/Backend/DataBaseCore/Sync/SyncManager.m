@@ -201,19 +201,6 @@ static SyncManager * singleton = nil;
 	return [folderStates[folderNum] mutableCopy];
 }
 
--(NSSet*) retrieveAllDBNums:(NSInteger)accountIndex
-{
-    NSArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
-	
-	NSMutableSet* nums = [[NSMutableSet alloc]initWithCapacity:1];
-
-    for (NSDictionary* dic in folderStates) {
-        [nums addObjectsFromArray:dic[@"dbNums"]];
-    }
-    
-	return nums;
-}
-
 -(void) addAccountState
 {
 	NSInteger numAccounts = [AppSettings numAccounts] + 1;

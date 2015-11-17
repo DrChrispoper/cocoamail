@@ -152,8 +152,6 @@ didSignInForUser:(GIDGoogleUser*)user
     NSString* name = user.profile.name;
     NSString* email = user.profile.email;
     
-    CCMLog(@"Token expires: %@",[[DateUtil getSingleton] humanDate:user.authentication.accessTokenExpirationDate]);
-    
     // [START_EXCLUDE]
     NSDictionary* statusText = @{@"accessToken":accessToken, @"email":email, @"name":name};
     [[NSNotificationCenter defaultCenter]
@@ -166,11 +164,13 @@ didSignInForUser:(GIDGoogleUser*)user
         NSInteger accountIndex = [AppSettings accountIndexForEmail:email];
         
         if (accountIndex != -1) {
-            CCMLog(@"Old token:%@", [AppSettings oAuth:accountIndex]);
-            CCMLog(@"New token:%@", accessToken);
             if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
                 [AppSettings setOAuth:accessToken accountIndex:accountIndex];
             }
+            
+            [[ImapSync doLogin:accountIndex] subscribeCompleted:^{
+                [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
+            }];
         }
     }
 }

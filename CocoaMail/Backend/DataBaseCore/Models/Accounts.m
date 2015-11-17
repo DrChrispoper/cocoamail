@@ -143,6 +143,7 @@
                  //CCMLog(@"Adding email to account:%u",self.idx);
                  if (email.accountNum == 0) {
                      CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
+                     [Email clean:email];
                  }
                  else {
                      [self.accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
@@ -312,7 +313,9 @@
 @interface Account () {
     NSOperationQueue* _localFetchQueue;
     BOOL _isLoadingMore;
+    BOOL _hasLoadedAllLocal;
     BOOL _isSyncing;
+    BOOL _isSyncingCurrentFolder;
     NSMutableArray* _drafts;
 }
 
@@ -356,8 +359,11 @@
     _localFetchQueue = [NSOperationQueue new];
     [_localFetchQueue setMaxConcurrentOperationCount:1];
     _isLoadingMore = NO;
-    _isSyncing = NO;
+    _hasLoadedAllLocal = NO;
 
+    _isSyncing = NO;
+    _isSyncingCurrentFolder = NO;
+    
     // create structure
     NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:7];
     
@@ -398,6 +404,9 @@
              if (new == 0) {
                  [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
              }
+             else if (new == 1) {
+                 [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
+             }
              else {
                  [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
              }
@@ -409,6 +418,7 @@
                  [self runTestData];
                  
                  _currentFolderFullSyncCompleted = YES;
+                 _isSyncingCurrentFolder = NO;
                  [self importantFoldersRefresh:1];
              }
          } completed:^{
@@ -417,7 +427,16 @@
                  [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
              }
              else {
-                 [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                 if (new == 1) {
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
+                 }
+                 else {
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                 }
+                 
+                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                     [self.mailListSubscriber reFetch];
+                 }];
              }
              
              [CCMStatus dismissAfter:2];
@@ -426,9 +445,11 @@
                  [self runTestData];
                  
                  if (_currentFolderFullSyncCompleted) {
+                     _isSyncingCurrentFolder = NO;
                      [self importantFoldersRefresh:1];
                  }
-                 else {
+                 else if (!_isSyncingCurrentFolder) {
+                     _isSyncingCurrentFolder = YES;
                      [self syncCurrentFolder];
                  }
              }
@@ -443,7 +464,7 @@
          //[self insertRows:email];
      } error:^(NSError* error) {
          CCMLog(@"Error: %@", error.localizedDescription);
-         
+         _isSyncingCurrentFolder = NO;
          if (error.code == 9001) {
              _currentFolderFullSyncCompleted = YES;
              [self importantFoldersRefresh:1];
@@ -744,7 +765,9 @@
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
     self.currentFolderType = folder;
-    
+    _currentFolderFullSyncCompleted = NO;
+    _hasLoadedAllLocal = NO;
+
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
@@ -856,14 +879,13 @@
 {
     NSInteger __block folder = pFolder;
     
-
     //If last important folder start full sync
     if (folder > 4) {
         [self doLoadServer];
         return;
     }
     
-    if (!_isSyncing) {
+    if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
         
     [[[SyncManager getSingleton] refreshImportantFolder:folder]
@@ -889,7 +911,7 @@
 
 -(void) doLoadServer
 {
-    if (!_isSyncing) {
+    if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
     [[[[SyncManager getSingleton] syncFolders] deliverOn:[RACScheduler scheduler]]
      subscribeNext:^(Email* email) {
@@ -942,18 +964,21 @@
 
         [[ImapSync sharedServices:self.idx] runUpToDateTest:res folderIndex:self.currentFolderIdx completed:^{
             [self.mailListSubscriber removeConversationList:nil];
-        
-            [_aMS enumerateObjectsAtIndexes:setAll
-                                              options:0
-                                           usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
-                                               [resAll addObject:obj];
-                                           }];
             
-            [[ImapSync sharedServices:self.idx] runUpToDateTest:resAll folderIndex:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx] completed:^{
-                _runningUpToDateTest = NO;
+            if (self.currentFolderType.type != FolderTypeAll) {
+                [_aMS enumerateObjectsAtIndexes:setAll
+                                        options:0
+                                     usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
+                                                    [resAll addObject:obj];
+                                                }];
+            
+            
+                [[ImapSync sharedServices:self.idx] runUpToDateTest:resAll folderIndex:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx] completed:^{
+                    _runningUpToDateTest = NO;
                 
-                [self.mailListSubscriber removeConversationList:nil];
-            }];
+                    [self.mailListSubscriber removeConversationList:nil];
+                }];
+            }
             
         }];
     }
@@ -1043,23 +1068,6 @@
     [self.mailListSubscriber removeConversationList:idxs];
 }
 
--(void) doLoadServer:(BOOL)refresh
-{
-    [ViewController animateCocoaButtonRefresh:YES];
-    
-    [[[[SyncManager getSingleton] syncActiveFolderFromStart:refresh] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email* email) {
-         [self insertRows:email];
-     }
-     error:^(NSError* error) {
-         CCMLog(@"Error: %@", error.localizedDescription);
-     }
-     completed:^{
-         CCMLog(@"Done");
-         [ViewController animateCocoaButtonRefresh:NO];
-     }];
-}
-
 -(void) doPersonSearch:(NSArray*)addressess
 {
     //LocalSearch
@@ -1091,19 +1099,44 @@
 
 -(void) localFetchAfter:(Conversation*)conversation
 {
-    if (!_isLoadingMore) {
+    if (!_isLoadingMore && !_hasLoadedAllLocal) {
         _isLoadingMore = YES;
+        
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [ViewController animateCocoaButtonRefresh:YES];
+        }];
+        
+        NSInteger refBatch = 50;
+        
+        if (!conversation) {
+            refBatch = 5;
+        }
+        
+        NSInteger __block batch = refBatch;
+        BOOL __block more = NO;
+
         [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] activeFolderSearch:conversation]
          subscribeNext:^(Email* email) {
-             //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
+             more = YES;
+             
              [[Accounts sharedInstance].accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
-             //}];
+             if (batch-- == 0) {
+                 batch = refBatch;
+                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                     [self.mailListSubscriber reFetch];
+                 }];
+             }
          }
          completed:^{
              _isLoadingMore = NO;
              
+             if (!more) {
+                 _hasLoadedAllLocal = YES;
+             }
+             
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 [ViewController animateCocoaButtonRefresh:NO];
                  [self.mailListSubscriber reFetch];
              }];
          }];

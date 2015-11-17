@@ -98,7 +98,6 @@
 -(void) deliverUpdate:(NSArray<Email*>*)emails;
 -(void) deliverDelete:(NSArray<Email*>*)emails;
 
--(void) doLoadServer:(BOOL)refresh;
 -(void) doPersonSearch:(NSArray*)addressess;
 
 -(void) localFetchAfter:(Conversation*)conversation;

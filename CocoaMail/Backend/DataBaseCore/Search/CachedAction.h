@@ -9,12 +9,7 @@
 #import "UidEntry.h"
 
 
-@interface CachedAction : NSObject{
-    NSInteger pk;
-    UidEntry* uid;
-    NSInteger actionIndex;
-    NSInteger toFolder;
-}
+@interface CachedAction : NSObject
 
 @property (assign) NSInteger pk;
 @property (nonatomic, readwrite) UidEntry* uid;

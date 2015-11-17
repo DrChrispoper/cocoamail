@@ -18,6 +18,7 @@
 @property (nonatomic, strong) NSArray* toPersonID;
 @property (nonatomic, strong) NSString* title;
 @property (nonatomic, strong) NSString* content;
+@property (nonatomic, strong) NSString* transferContent;
 
 @property (nonatomic, strong) NSDate* date;
 

@@ -129,6 +129,10 @@
     
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
+    if (indexPath.row == [((NSDictionary*)self.tableContent[indexPath.section]) count]-1) {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+    
     NSString* sub = infos[kSUB];
     
     if (sub.length>0) {

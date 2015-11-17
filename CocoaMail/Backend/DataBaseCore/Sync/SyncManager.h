@@ -47,7 +47,6 @@
 -(void) markFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
 -(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
--(NSSet*) retrieveAllDBNums:(NSInteger)accountIndex;
 
 
 @end

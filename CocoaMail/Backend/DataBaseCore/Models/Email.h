@@ -62,7 +62,7 @@
 +(NSInteger) insertEmailUnsafe:(Email*)email;
 +(void) updateEmailFlag:(Email*)email;
 +(void) updateEmailBody:(Email*)email;
-+(BOOL) removeEmail:(NSString*)msgId;
++(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;
 +(NSMutableArray*) getEmails;
 +(Email*) resToEmail:(FMResultSet*)result;
 
@@ -72,6 +72,7 @@
 -(void) star;
 -(void) read;
 
++(void) clean:(Email*)email;
 
 @end
 

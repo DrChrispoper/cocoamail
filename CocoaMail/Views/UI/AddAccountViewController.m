@@ -242,6 +242,8 @@
     cell.textLabel.textAlignment = NSTextAlignmentNatural;
     cell.textLabel.textColor = [UIColor blackColor];
     
+    [cell.textLabel sizeToFit];
+    
     cell.accessoryType = UITableViewCellAccessoryNone;
     
     
@@ -256,8 +258,9 @@
         cell.textLabel.textColor = [UIGlobal standardBlue];
     }
     else {
+        NSInteger labelWidth = MAX(cell.textLabel.frame.size.width+20, 100);
         
-        UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(100, 0, bounds.width - 110, bounds.height)];
+        UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(labelWidth, 0, bounds.width - labelWidth - 10, bounds.height)];
         tf.delegate = self;
         [cell addSubview:tf];
         
@@ -682,8 +685,7 @@
                                        @"fullsynced":@false,
                                        @"lastended":@0,
                                        @"flags":@(folder.flags),
-                                       @"emailCount":@(0),
-                                       @"dbNums":@[]};
+                                       @"emailCount":@(0)};
         
         [sm addFolderState:folderState accountIndex:newAccountIndex];
         
