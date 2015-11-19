@@ -198,7 +198,8 @@
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {    
     if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
-        [[UIApplication sharedApplication] openURL:[request URL]];
+        [self.delegate openWebURL:[request URL]];
+        //[[UIApplication sharedApplication] openURL:[request URL]];
         return NO;
     }
     else if (navigationType == UIWebViewNavigationTypeOther) {
@@ -223,6 +224,8 @@
             
             [_loadingView setHidden:YES];
             [self.delegate webViewLoaded:_webView];
+
+            [_webView.scrollView scrollRectToVisible:CGRectMake(1,_webView.scrollView.contentSize.height - 1, 1, 1) animated:YES];
 
             return NO;
         }

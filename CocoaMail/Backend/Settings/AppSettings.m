@@ -292,6 +292,8 @@
         }
     }
     
+    NSAssert(i < [AppSettings numActiveAccounts],@"returning an incorrect account index");
+
     return i;
 }
 

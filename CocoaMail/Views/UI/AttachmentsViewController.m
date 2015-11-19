@@ -229,7 +229,7 @@
 
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    AttachmentsCell*  cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
+/*    AttachmentsCell*  cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
     
     Mail* m = self.mailsWithAttachment[indexPath.section];
     Attachment* att = m.attachments[indexPath.row];
@@ -242,7 +242,7 @@
         [att.data writeToFile:filePath atomically:YES];
         NSURL* URL = [NSURL fileURLWithPath:filePath];
         [self openURL:URL];
-    }
+    }*/
     
     return nil;
 }

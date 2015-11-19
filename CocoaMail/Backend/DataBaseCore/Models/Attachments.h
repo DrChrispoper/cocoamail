@@ -52,6 +52,7 @@ typedef enum : NSUInteger {
 @protocol CCMAttachmentViewDelegate <NSObject>
 
 -(void) shareAttachment:(Attachment*)att;
+-(void) openURL:(NSURL*)url;
 
 
 @end

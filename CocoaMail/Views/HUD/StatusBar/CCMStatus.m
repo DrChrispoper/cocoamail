@@ -8,7 +8,7 @@
 
 #import "CCMStatus.h"
 
-@interface CCMStatus (){
+@interface CCMStatus () {
     UIWindow *_statusWindow;
     UIView *_backgroundView;
     UILabel *_statusLabel;
@@ -19,7 +19,8 @@
 
 @implementation CCMStatus
 
-- (id)init{
+-(id) init
+{
     self = [super init];
     if (self) {
         [self setupDefaultApperance];
@@ -27,7 +28,8 @@
     return self;
 }
 
-- (void)setupDefaultApperance{
+-(void) setupDefaultApperance
+{
     _statusWindow = [[UIWindow alloc] initWithFrame:CGRectMake(0, 0, [[UIScreen mainScreen] bounds].size.width, 20)];
     _statusWindow.windowLevel = UIWindowLevelStatusBar;
     _statusWindow.backgroundColor = [UIColor clearColor];

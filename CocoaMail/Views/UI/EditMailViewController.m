@@ -601,10 +601,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         
         MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
-        Mail* m = [[Mail alloc]init];
-        m.email = [[Email alloc]init];
-        m.email.htmlBody = self.mail.transferContent;
-        [view setMail:m];
+        [view setHtml:self.mail.transferContent];
         [oldView addSubview:view];
         
         CGRect f = oldView.frame;

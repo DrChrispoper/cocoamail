@@ -115,6 +115,7 @@
 @property (nonatomic, weak) UILabel* size;
 @property (nonatomic, weak) UIImageView* mini;
 @property (nonatomic, weak) UIButton* btn;
+@property (nonatomic, weak) UIButton* cellBtn;
 @property (nonatomic, weak) Attachment* att;
 
 @property (nonatomic) NSInteger internalState;
@@ -178,6 +179,15 @@
     [self addSubview:d];
     d.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     self.btn = d;
+    
+    UIButton* tapAttach = [[UIButton alloc] initWithFrame:CGRectMake(0, 1.f, self.frame.size.width - 32, 71.f)];
+    tapAttach.layer.cornerRadius = 8.f;
+    tapAttach.backgroundColor = [UIColor clearColor];
+    tapAttach.layer.masksToBounds = YES;
+    
+    [self addSubview:tapAttach];
+    
+    self.cellBtn = tapAttach;
     
     return self;
     
@@ -267,8 +277,11 @@
         [self.btn setImage:[UIImage imageNamed:@"download_export_on"] forState:UIControlStateHighlighted];
         [self.btn addTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
         self.internalState = 2;
+        
+        [self.cellBtn addTarget:self action:@selector(_openAttach:) forControlEvents:UIControlEventTouchUpInside];
     }
     else {
+        [self.cellBtn addTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
         [self buttonActionType:AttachmentViewActionDonwload];
     }
 }
@@ -315,6 +328,14 @@
             [self.btn setImage:[UIImage imageNamed:@"download_export_on"] forState:UIControlStateHighlighted];
             self.internalState = 2;
         }
+}
+
+-(void) _openAttach:(UIButton*)b
+{
+    NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:self.att.fileName];
+    [self.att.data writeToFile:filePath atomically:YES];
+    NSURL* URL = [NSURL fileURLWithPath:filePath];
+    [self.delegate openURL:URL];
 }
 
 -(void) _applyButtonDownload:(UIButton*)b

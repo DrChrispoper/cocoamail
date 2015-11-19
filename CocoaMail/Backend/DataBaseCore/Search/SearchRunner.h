@@ -19,7 +19,7 @@
 -(RACSignal*) search:(NSString*)searchText;
 -(RACSignal*) senderSearch:(NSArray*)addressess;
 
--(RACSignal*) activeFolderSearch:(Conversation*)conversation;
+-(RACSignal*) activeFolderSearch:(Email*)email;
 -(RACSignal*) threadSearch:(NSString*)thread;
 -(RACSignal*) allEmailsSearch;
 

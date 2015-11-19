@@ -104,7 +104,7 @@ static NSArray * sharedServices = nil;
          CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
          }
          }];*/
-        
+                
         if (sharedService.connected) {
             [subscriber sendCompleted];
         }
@@ -166,7 +166,7 @@ static NSArray * sharedServices = nil;
                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
                     [sharedService.imapCheckOp start:^(NSError* error) {
                         sharedService.isConnecting = NO;
-                        
+
                         if (error) {
                             sharedService.connected = NO;
                             CCMLog(@"error:%@ loading account:%li %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);

@@ -15,6 +15,7 @@
 #import "SearchRunner.h"
 #import "ImapSync.h"
 #import "DateUtil.h"
+#import "CCMStatus.h"
 
 #import "GlobalDBFunctions.h"
 

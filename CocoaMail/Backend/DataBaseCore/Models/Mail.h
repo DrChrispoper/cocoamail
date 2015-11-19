@@ -59,6 +59,7 @@
 
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
+-(NSArray*) uidsWithFolder:(NSInteger)folder;
 -(NSInteger) accountIdx;
 -(void) toggleFav;
 -(void) addMail:(Mail*)mail;

@@ -100,7 +100,7 @@
 
 -(void) doPersonSearch:(NSArray*)addressess;
 
--(void) localFetchAfter:(Conversation*)conversation;
+-(void) localFetchMore:(BOOL)loadMore;
 
 -(void) showProgress;
 

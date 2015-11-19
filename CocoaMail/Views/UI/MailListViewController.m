@@ -351,7 +351,6 @@ static NSInteger pageCount = 15;
         
         [self.table reloadData];
     }];
-    
 }
 
 -(void) removeConversations:(NSArray*)pConvs
@@ -360,6 +359,10 @@ static NSInteger pageCount = 15;
     
     for (ConversationIndex* pConversationIndex in pConvs) {
         BOOL found = NO;
+        
+        if (![self.indexSet containsIndex:pConversationIndex.index]) {
+            continue;
+        }
         
         NSInteger section = 0;
         
@@ -594,6 +597,10 @@ static NSInteger pageCount = 15;
     // change in model
     NSDictionary* dayInfos = self.convByDay[ip.section];
     NSMutableArray* ma = dayInfos[@"list"];
+    ConversationIndex* cIndex = ma[ip.row];
+    
+    [self.indexSet removeIndex:cIndex.index];
+    
     if (ip.row < ma.count) {
         [ma removeObjectAtIndex:ip.row];
     }
@@ -682,12 +689,14 @@ static NSInteger pageCount = 15;
         [self _applyTrueTitleViewTo:item];
     }
     else {
+        NSString* formatString = NSLocalizedString(@"%d Selected multiple", @"Title when emails selected");
+
         if (nbSelected==1) {
+            formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
             [cb forceOpenHorizontal];
         }
         
         UILabel* l = [[UILabel alloc] init];
-        NSString* formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
         l.text = [NSString stringWithFormat:formatString, nbSelected];
         l.textColor = [[Accounts sharedInstance] currentAccount].userColor;
         [l sizeToFit];
@@ -744,7 +753,7 @@ static NSInteger pageCount = 15;
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
     
     if (self.indexSet.count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
-        [[Accounts sharedInstance].currentAccount localFetchAfter:conv];
+        [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
     NSString* idToUse = (conv.mails.count > 1) ? kCONVERSATION_CELL_ID : kMAIL_CELL_ID;

@@ -61,13 +61,22 @@
             [result close];
         }
         
-        success =  [db executeUpdate:@"INSERT INTO uid_entry (uid,folder,msg_id,son_msg_id,dbNum) VALUES (?,?,?,?,?);",
-                    @(uid_entry.uid),
-                    @(uid_entry.folder + 1000 * uid_entry.account),
-                    uid_entry.msgId,
-                    uid_entry.sonMsgId,
-                    @(uid_entry.dbNum)];
+        FMResultSet* result = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? and folder = ?", uid_entry.msgId, @(uid_entry.folder + 1000 * uid_entry.account)];
         
+        //Doesn't exist
+        if (![result next]) {
+            [result close];
+            
+            success =  [db executeUpdate:@"INSERT INTO uid_entry (uid,folder,msg_id,son_msg_id,dbNum) VALUES (?,?,?,?,?);",
+                        @(uid_entry.uid),
+                        @(uid_entry.folder + 1000 * uid_entry.account),
+                        uid_entry.msgId,
+                        uid_entry.sonMsgId,
+                        @(uid_entry.dbNum)];
+        }
+        else {
+            [result close];
+        }
     }];
     
     return success;
@@ -193,6 +202,8 @@
             results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE ? ORDER BY uid DESC LIMIT 50", [NSString stringWithFormat:@"_%03ld", (long)folderNum]];
         }
         
+        NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
+
         while ([results next]) {
             UidEntry* uid = [UidEntry resToUidEntry:results];
             
@@ -201,12 +212,15 @@
                 [uids addObject:[NSMutableArray new]];
             }
             
-            NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
-            NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
-
-            NSInteger index = [sortedNums indexOfObject:@(uid.dbNum)];
-            
-            [uids[index] addObject:uid];
+            [tmpUids addObject:uid];
+        }
+        
+        NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
+        NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
+        
+        for (UidEntry* uidE in tmpUids) {
+            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            [uids[index] addObject:uidE];
         }
         
     }];
@@ -214,7 +228,7 @@
     return uids;
 }
 
-+(NSMutableArray*) getUidEntriesFrom:(Conversation*)conversation withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex
++(NSMutableArray*) getUidEntriesFrom:(Email*)email withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex
 {
     NSMutableArray* uids = [[NSMutableArray alloc] init];
     NSMutableSet* dbNums = [[NSMutableSet alloc] init];
@@ -223,7 +237,7 @@
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
-    UidEntry* uidE = [[conversation firstMail].email uidEWithFolder:folderNum];
+    UidEntry* uidE = [email uidEWithFolder:folderNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;
@@ -259,6 +273,8 @@
         
         results = [db executeQuery:query];
         
+        NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
+        
         while ([results next]) {
             UidEntry* uid = [UidEntry resToUidEntry:results];
             
@@ -267,12 +283,15 @@
                 [uids addObject:[NSMutableArray new]];
             }
             
-            NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
-            NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
-            
-            NSInteger index = [sortedNums indexOfObject:@(uid.dbNum)];
-            
-            [uids[index] addObject:uid];
+            [tmpUids addObject:uid];
+        }
+        
+        NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
+        NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
+        
+        for (UidEntry* uidE in tmpUids) {
+            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            [uids[index] addObject:uidE];
         }
     }];
     
@@ -370,7 +389,9 @@
     __block BOOL success = false;
     
     //No Important folder at Index
-    if (to == -1) {
+    if (to == -1 || uidE.pk == 0) {
+        CCMLog(@"Email not synced in folder, so can't move it");
+
         return true;
     }
     
@@ -380,7 +401,7 @@
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
         NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
-        
+
         MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
                                                                                                                                uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                          destFolder:folderName];
@@ -419,13 +440,14 @@
     if (uidE.pk == 0) {
         CCMLog(@"Email not synced in folder, so can't delete it");
         
-        return success;
+        return true;
     }
+    
+    NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
     
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
         MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
@@ -488,6 +510,12 @@
 {
     __block BOOL success = false;
 
+    if (uidE.pk == 0) {
+        CCMLog(@"Email not synced in folder, so can't add flag");
+        
+        return true;
+    }
+    
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
@@ -526,6 +554,12 @@
 {
     __block BOOL success = false;
 
+    if (uidE.pk == 0) {
+        CCMLog(@"Email not synced in folder, so can't remove flag");
+        
+        return true;
+    }
+    
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {

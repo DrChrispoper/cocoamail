@@ -26,6 +26,7 @@
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
 -(void) makeConversationFav:(BOOL)isFav;
 -(void) openURL:(NSURL*)url;
+-(void) openWebURL:(NSURL*)url;
 -(void) shareAttachment:(Attachment*)att;
 
 @end
@@ -266,7 +267,14 @@
     
     [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
 }
-
+-(void) openWebURL:(NSURL*)url
+{
+    NSString *noteStr = @"Open link in...";
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[noteStr, url] applicationActivities:nil];
+    [self.view.window.rootViewController presentViewController:activityViewController
+                                                      animated:YES
+                                                    completion:nil];
+}
 #pragma mark - QLPreviewControllerDataSource
 
 -(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
@@ -770,6 +778,11 @@
     return v;
 }
 
+-(void) openURL:(NSURL*)url
+{
+    [self.delegate openURL:url];
+}
+
 -(void) _openEdit:(UIButton*)button
 {
     Mail* m = [self.delegate mailDisplayed:self];
@@ -863,6 +876,11 @@
     
 }
 
+-(void) openWebURL:(NSURL*)url;
+{
+    [self.delegate openWebURL:url];
+}
+
 -(void) webViewLoaded:(UIWebView*)webView
 {
     self.height = webView.frame.size.height;
@@ -879,11 +897,6 @@
     self.frame = f;
     
     [self.delegate mailView:self changeHeight:diff];
-}
-
--(void) openURL:(NSURL*)url
-{
-    [self.delegate openURL:url];
 }
 
 -(void) shareAttachment:(Attachment*)att

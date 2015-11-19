@@ -309,6 +309,18 @@ static NSDateFormatter * s_df_hour = nil;
     return [self.mails firstObject];
 }
 
+-(NSArray*) uidsWithFolder:(NSInteger)folder
+{
+    NSMutableArray* uids = [[NSMutableArray alloc]init];
+    for (Mail* m in self.mails) {
+        if ([m.email uidEWithFolder:folder]) {
+            [uids addObject:[m.email uidEWithFolder:folder]];
+        }
+    }
+    
+    return uids;
+}
+
 -(NSInteger) accountIdx
 {
     return [AppSettings indexForAccount:[self firstMail].email.accountNum];

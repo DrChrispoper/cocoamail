@@ -317,6 +317,7 @@
     BOOL _isSyncing;
     BOOL _isSyncingCurrentFolder;
     NSMutableArray* _drafts;
+    NSMutableArray* _lastEmails;
 }
 
 @end
@@ -360,7 +361,8 @@
     [_localFetchQueue setMaxConcurrentOperationCount:1];
     _isLoadingMore = NO;
     _hasLoadedAllLocal = NO;
-
+    _lastEmails = [[NSMutableArray alloc]initWithCapacity:7+self.userFolders.count];
+    
     _isSyncing = NO;
     _isSyncingCurrentFolder = NO;
     
@@ -381,7 +383,7 @@
     
     [self setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
     
-    [self localFetchAfter:nil];
+    [self localFetchMore:NO];
 }
 
 -(void) connect
@@ -401,20 +403,24 @@
          } error:^(NSError* error) {
              CCMLog(@"Error: %@", error.localizedDescription);
              
-             if (new == 0) {
-                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
-             }
-             else if (new == 1) {
-                 [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
-             }
-             else {
+             if (error.code == 9000) {
                  [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                 [CCMStatus dismissAfter:2];
              }
-             
-             [CCMStatus dismissAfter:2];
-
-             
              if (error.code == 9001) {
+                 
+                 if (new == 0) {
+                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
+                 }
+                 else if (new == 1) {
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
+                 }
+                 else {
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                 }
+                 
+                 [CCMStatus dismissAfter:2];
+                 
                  [self runTestData];
                  
                  _currentFolderFullSyncCompleted = YES;
@@ -422,7 +428,7 @@
                  [self importantFoldersRefresh:1];
              }
          } completed:^{
-             
+
              if (new == 0) {
                  [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
              }
@@ -566,7 +572,7 @@
     
     [_aMS enumerateObjectsAtIndexes:set
                                       options:0
-                                   usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
+                                   usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop){
                                        [res addObject:[ConversationIndex initWithIndex:idx Account:self.idx]];
                                    }];
     
@@ -717,6 +723,11 @@
             [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx Account:self.idx]]];
         }
     }
+    else {
+        [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.done", @"Done")];
+        [CCMStatus dismissAfter:1];
+    }
+    
     [setTo addIndex:idx];
     
     return remove;
@@ -775,6 +786,7 @@
             if ([name isEqualToString:names[i]]) {
                 self.currentFolderIdx = i;
                 [self refreshCurrentFolder];
+                [self localFetchMore:NO];
                 return;
             }
         }
@@ -786,6 +798,7 @@
             self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:folder.type];
         }
         [self refreshCurrentFolder];
+        [self localFetchMore:NO];
     }
 }
 
@@ -1097,9 +1110,10 @@
      }];
 }
 
--(void) localFetchAfter:(Conversation*)conversation
+-(void) localFetchMore:(BOOL)loadMore
 {
     if (!_isLoadingMore && !_hasLoadedAllLocal) {
+        CCMLog(@"local fetch");
         _isLoadingMore = YES;
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1108,15 +1122,15 @@
         
         NSInteger refBatch = 50;
         
-        if (!conversation) {
+        if (!loadMore) {
             refBatch = 5;
         }
         
         NSInteger __block batch = refBatch;
         BOOL __block more = NO;
-
+        
         [_localFetchQueue addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] activeFolderSearch:conversation]
+        [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil]
          subscribeNext:^(Email* email) {
              more = YES;
              
@@ -1127,6 +1141,8 @@
                      [self.mailListSubscriber reFetch];
                  }];
              }
+             
+             _lastEmails[self.currentFolderIdx] = email;
          }
          completed:^{
              _isLoadingMore = NO;

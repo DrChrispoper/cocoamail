@@ -293,19 +293,20 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccount:(NSInteger)accountIndex from:(Conversation*)pConversation
+-(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccount:(NSInteger)accountIndex from:(Email*)email
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         NSMutableArray* uidsInGroups;
         
-        if (pConversation) {
-            uidsInGroups = [UidEntry getUidEntriesFrom:pConversation withFolder:folderNum inAccount:accountIndex];
+        if (email) {
+            uidsInGroups = [UidEntry getUidEntriesFrom:email withFolder:folderNum inAccount:accountIndex];
         }
         else {
             uidsInGroups = [UidEntry getUidEntriesWithFolder:folderNum inAccount:accountIndex];
         }
         
         for (NSArray* pagedUids in uidsInGroups) {
+            NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
             if (self.cancelled) {
                 CCMLog(@"Cancel");
@@ -327,7 +328,6 @@ static SearchRunner * searchSingleton = nil;
             query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-4)]];
             [query appendFormat:@"'"];
             
-            NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
             
@@ -404,7 +404,7 @@ static SearchRunner * searchSingleton = nil;
     return [self searchForSignal:[self performAllSearch]];
 }
 
--(RACSignal*) activeFolderSearch:(Conversation*)conversation
+-(RACSignal*) activeFolderSearch:(Email*)email
 {
     self.cancelled = NO;
     
@@ -414,7 +414,7 @@ static SearchRunner * searchSingleton = nil;
      nums = [nums filteredArrayUsingPredicate:predicate];
      }*/
     
-    return [self searchForSignal:[self performFolderSearch:[Accounts sharedInstance].currentAccount.currentFolderIdx inAccount:[Accounts sharedInstance].currentAccount.idx from:conversation]];
+    return [self searchForSignal:[self performFolderSearch:[Accounts sharedInstance].currentAccount.currentFolderIdx inAccount:[Accounts sharedInstance].currentAccount.idx from:email]];
 }
 
 -(RACSignal*) threadSearch:(NSString*)thread
