@@ -80,7 +80,7 @@ static ViewController * s_self;
     
     [GIDSignIn sharedInstance].uiDelegate = self;
     
-    [[[Accounts sharedInstance] currentAccount] connect];
+    //[[[Accounts sharedInstance] currentAccount] connect];
     
     [self setup];
     
@@ -124,7 +124,7 @@ static ViewController * s_self;
     UIView* nextView;
     
     if ([Accounts sharedInstance].accountsCount !=  1) {
-        [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        //[[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
         MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;

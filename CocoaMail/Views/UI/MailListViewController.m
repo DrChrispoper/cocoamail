@@ -28,6 +28,7 @@
 @property (nonatomic, strong) NSMutableIndexSet* indexSet;
 
 @property (nonatomic) NSInteger pageIndex;
+@property (nonatomic) NSInteger deletedSections;
 @property (nonatomic) NSInteger countBeforeLoadMore;
 
 @property (nonatomic, weak) UITableView* table;
@@ -61,6 +62,7 @@ static NSInteger pageCount = 15;
     
     self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
     self.pageIndex = 1;
+    self.deletedSections = 0;
     self.countBeforeLoadMore = 0;
     return self;
 }
@@ -293,9 +295,13 @@ static NSInteger pageCount = 15;
         setHidden = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:self.folder forAccountIndex:[Accounts sharedInstance].currentAccountIdx] accountIndex:[Accounts sharedInstance].currentAccountIdx][@"fullsynced"] boolValue];
     }
     
+    if (self.onlyPerson) {
+        setHidden = YES;
+    }
+    
     [self.table.tableFooterView setHidden:setHidden];
     
-    
+    self.deletedSections = 0;
     [self.table reloadData];
     
 }
@@ -320,6 +326,7 @@ static NSInteger pageCount = 15;
     
     self.pageIndex = 1;
     self.countBeforeLoadMore = 0;
+    self.deletedSections = 0;
 }
 
 -(void) setupData
@@ -349,6 +356,7 @@ static NSInteger pageCount = 15;
             [self removeConversations:convs];
         }
         
+        self.deletedSections = 0;
         [self.table reloadData];
     }];
 }
@@ -490,6 +498,7 @@ static NSInteger pageCount = 15;
         //});
     }
     
+    self.deletedSections = 0;
     [self.table reloadData];
 }
 
@@ -595,25 +604,33 @@ static NSInteger pageCount = 15;
 -(void) _commonRemoveCell:(NSIndexPath*)ip
 {
     // change in model
-    NSDictionary* dayInfos = self.convByDay[ip.section];
-    NSMutableArray* ma = dayInfos[@"list"];
-    ConversationIndex* cIndex = ma[ip.row];
-    
-    [self.indexSet removeIndex:cIndex.index];
-    
-    if (ip.row < ma.count) {
-        [ma removeObjectAtIndex:ip.row];
-    }
-    
-    // change in UI
-    if (ma.count < 1) {
-        [self.convByDay removeObjectAtIndex:ip.section];
-        
-        NSIndexSet* set = [NSIndexSet indexSetWithIndex:ip.section];
-        [self.table deleteSections:set withRowAnimation:UITableViewRowAnimationLeft];
-    }
-    else {
-        [self.table deleteRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationLeft];
+    //Double check everything to avoid crashes
+    if (ip.section < self.convByDay.count) {
+        NSDictionary* dayInfos = self.convByDay[ip.section];
+        NSMutableArray* ma = dayInfos[@"list"];
+        if (ip.row < ma.count) {
+            ConversationIndex* cIndex = ma[ip.row];
+            
+            if ([self.indexSet containsIndex:cIndex.index]) {
+                
+                [self.indexSet removeIndex:cIndex.index];
+                [ma removeObjectAtIndex:ip.row];
+            
+                // change in UI
+                if (ma.count < 1) {
+                    [self.convByDay removeObjectAtIndex:ip.section];
+                
+                    [self.table deleteRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationLeft];
+
+                    NSIndexSet* set = [NSIndexSet indexSetWithIndex:ip.section];
+                    [self.table deleteSections:set withRowAnimation:UITableViewRowAnimationLeft];
+                    self.deletedSections++;
+                }
+                else {
+                    [self.table deleteRowsAtIndexPaths:@[ip] withRowAnimation:UITableViewRowAnimationLeft];
+                }
+            }
+        }
     }
 }
 
@@ -690,7 +707,7 @@ static NSInteger pageCount = 15;
     }
     else {
         NSString* formatString = NSLocalizedString(@"%d Selected multiple", @"Title when emails selected");
-
+        
         if (nbSelected==1) {
             formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
             [cb forceOpenHorizontal];
@@ -729,7 +746,7 @@ static NSInteger pageCount = 15;
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    return MIN(self.convByDay.count, (pageCount * self.pageIndex)+1);
+    return MIN(self.convByDay.count, (pageCount * self.pageIndex)+1 - self.deletedSections);
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
@@ -745,14 +762,14 @@ static NSInteger pageCount = 15;
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
     
-    if (self.indexSet.count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    if (!self.onlyPerson && self.indexSet.count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
         [self reFetch];
     }
     
     ConversationIndex* conversationIndex = convs[indexPath.row];
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
     
-    if (self.indexSet.count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    if (!self.onlyPerson && self.indexSet.count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
         [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
@@ -1135,6 +1152,7 @@ static NSInteger pageCount = 15;
     }
     
     self.pageIndex++;
+    self.deletedSections = 0;
     [self.table reloadData];
 }
 

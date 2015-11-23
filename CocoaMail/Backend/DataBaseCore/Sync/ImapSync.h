@@ -30,5 +30,6 @@
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deleted;
++(void) runInboxUnread:(NSInteger)accountIndex;
 
 @end

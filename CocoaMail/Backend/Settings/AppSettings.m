@@ -157,13 +157,13 @@
 
 +(NSArray*) defaultColors
 {
-    return @[[UIColor colorWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
-             [UIColor colorWithRed:0.44f green:0.02f blue:1.f alpha:1.f],
-             [UIColor colorWithRed:1.f green:0.01f blue:0.87f alpha:1.f],
-             [UIColor colorWithRed:1.f green:0.07f blue:0.01f alpha:1.f],
-             [UIColor colorWithRed:1.f green:0.49f blue:0.01f alpha:1.f],
-             [UIColor colorWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
-             [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];
+    return @[[[UIColor alloc] initWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
+             [[UIColor alloc] initWithRed:0.44f green:0.02f blue:1.f alpha:1.f],
+             [[UIColor alloc] initWithRed:1.f green:0.01f blue:0.87f alpha:1.f],
+             [[UIColor alloc] initWithRed:1.f green:0.07f blue:0.01f alpha:1.f],
+             [[UIColor alloc] initWithRed:1.f green:0.49f blue:0.01f alpha:1.f],
+             [[UIColor alloc] initWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
+             [[UIColor alloc] initWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];
 }
 
 +(QuickSwipeType) quickSwipe
@@ -781,5 +781,27 @@
     [AppSettings setSmtpEnc:accountVal.smtpServer.connectionType accountIndex:accountIndex];
 }
 
++(NSInteger) inboxUnread:(NSInteger)accountIndex
+{
+    NSNumber* str =  [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"inboxUnread_%lu", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [str integerValue];
+}
+
++(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex
+{
+
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%lu", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    [defaults synchronize];
+    
+    int badge = 0;
+    
+    for (int index = 0; index < [AppSettings numActiveAccounts]; index++) {
+        badge += [AppSettings inboxUnread:index];
+    }
+    
+    [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
+
+}
 
 @end

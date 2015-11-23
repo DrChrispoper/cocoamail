@@ -13,6 +13,7 @@
 #import "Email.h"
 #import "SyncManager.h"
 #import "Mail.h"
+#import "ImapSync.h"
 
 
 @interface FolderViewController () <UITableViewDataSource, UITableViewDelegate>
@@ -65,6 +66,9 @@
     
     _cachedEmailIDs = [[NSMutableSet alloc] initWithCapacity:1];
     
+    if (currentAccount && !currentAccount.isAllAccounts) {
+        [ImapSync runInboxUnread:currentAccount.idx];
+    }
     //[self addPullToRefreshWithDelta:30];
 }
 

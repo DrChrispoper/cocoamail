@@ -107,8 +107,9 @@
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE folder LIKE ?;",
-                    [NSString stringWithFormat:@"%li___", (long)accountN]];
+        NSMutableString* query = [NSMutableString string];
+        [query appendFormat:@"DELETE FROM uid_entry WHERE folder LIKE '%ld___' ", (long)accountN];
+        success =  [db executeUpdate:query];
         
     }];
     
@@ -600,8 +601,9 @@
         FMResultSet* results;
         
         if (accountIndex != [Accounts sharedInstance].accountsCount -1) {
-            NSString* account = [NSString stringWithFormat:@"'%ld___'", (long)[AppSettings numForData:accountIndex]];
-            results = [db executeQuery:@"SELECT distinct(dbNum) FROM uid_entry WHERE folder LIKE ?", account];
+            NSMutableString* query = [NSMutableString string];
+            [query appendFormat:@"SELECT distinct(dbNum) FROM uid_entry WHERE folder LIKE '%ld___' ", (long)[AppSettings numForData:accountIndex]];
+            results = [db executeQuery:query];
         }
         else {
             results = [db executeQuery:@"SELECT distinct(dbNum) FROM uid_entry"];

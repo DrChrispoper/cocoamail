@@ -391,9 +391,9 @@
 
 -(void) receiveToggleAuthUINotification:(NSNotification*)notification
 {
-    if ([[notification name] isEqualToString:@"ToggleAuthUINotification"]) {
+    if ([[notification name] isEqualToString:@"ToggleAuthUINotification"] && [notification userInfo][@"accessToken"]) {
 
-        NSString* accessToken = [notification userInfo][@"accessToken"];;
+        NSString* accessToken = [notification userInfo][@"accessToken"];
         NSString* email = [notification userInfo][@"email"];
         NSString* name = [notification userInfo][@"name"];
     

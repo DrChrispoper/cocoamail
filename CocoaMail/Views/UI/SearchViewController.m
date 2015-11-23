@@ -242,7 +242,7 @@
     
     self.lastSearchLength = word.length;
     
-    NSMutableIndexSet* peopleIn = [[NSMutableIndexSet alloc] init];
+    NSMutableSet* peopleIn = [[NSMutableSet alloc] init];
     
     NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
     
@@ -267,9 +267,9 @@
         }
         
 
-        if (![peopleIn containsIndex:mail.fromPersonID] && [fromName rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {
+        if (![peopleIn containsObject:@(mail.fromPersonID)] && [fromName rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {
             [next addObject:@{kCONTENT:c, kSUBTEXT: @""}];
-            [peopleIn addIndex:mail.fromPersonID];
+            [peopleIn addObject:@(mail.fromPersonID)];
             
         }
         else if ([title rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch].location != NSNotFound) {

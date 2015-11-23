@@ -369,8 +369,6 @@
     [b2 setImage:[UIImage imageNamed:@"button_archive_on"] forState:UIControlStateHighlighted];
     b2.tag = 1;
     [b2 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
-    
-
 
     UIButton* b3 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b3 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
@@ -384,14 +382,14 @@
     b4.tag = 0;
     [b4 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
     
-    /*if (self.folder.type==FolderTypeDeleted) {
-        [b4 setImage:[UIImage imageNamed:@"button_delete_off"] forState:UIControlStateNormal];
-        [b4 setImage:[UIImage imageNamed:@"button_delete_on"] forState:UIControlStateHighlighted];
+    if (self.folder.type==FolderTypeDeleted) {
+        [b4 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateNormal];
+        [b4 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateHighlighted];
     }
     else if (self.folder.type==FolderTypeAll) {
-        [b2 setImage:[UIImage imageNamed:@"button_archive_off"] forState:UIControlStateNormal];
-        [b2 setImage:[UIImage imageNamed:@"button_archive_on"] forState:UIControlStateHighlighted];
-    }*/
+        [b2 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateNormal];
+        [b2 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateHighlighted];
+    }
     
     return @[b1, b2, b3, b4];
 }
@@ -428,13 +426,15 @@
     
     switch (button.tag) {
         case 0:
-            toFolder.type = FolderTypeDeleted;//(self.folder.type == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
+            toFolder.type = (self.folder.type == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
             break;
         case 1:
-            toFolder.type = FolderTypeAll;//(self.folder.type == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
+            toFolder.type = (self.folder.type == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
             break;
         case 2:
         {
+            doNothing = YES;//Not right away at least! (Chris don't delete this...) :P
+            
             UserFolderViewController* ufvc = [[UserFolderViewController alloc] init];
             ufvc.delegate = self;
             

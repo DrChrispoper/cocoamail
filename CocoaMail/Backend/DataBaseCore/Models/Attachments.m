@@ -321,6 +321,9 @@
         }
         
         if (self.internalState==1) {
+            [self.cellBtn removeTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
+            [self.cellBtn addTarget:self action:@selector(_openAttach:) forControlEvents:UIControlEventTouchUpInside];
+
             [self.circleView removeFromSuperview];
             self.circleView = nil;
             
@@ -349,7 +352,7 @@
         
         UIImageView* cercle = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"download_on_circle"]];
         cercle.backgroundColor = [UIColor clearColor];
-        [b addSubview:cercle];
+        [self.btn addSubview:cercle];
         self.circleView = cercle;
         
         NSTimer* t = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(_timerCercle:) userInfo:nil repeats:YES];
@@ -396,7 +399,16 @@
     
     if ([networkReachability currentReachabilityStatus] == ReachableViaWiFi) {
         if (!att.data) {
-            UidEntry* uidE = [UidEntry getUidEntryWithFolder:[[Accounts sharedInstance] currentAccount].currentFolderIdx msgId:att.msgId];
+            NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgId];
+            
+            if (uidEs.count == 0 || ((UidEntry*)uidEs[0]).pk == 0) {
+                CCMLog(@"Can't find the uid of Attachment");
+
+                return;
+            }
+            
+            UidEntry* uidE = uidEs[0];
+            
             NSString* folderName = [AppSettings folderName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]];
             self.op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession fetchMessageAttachmentOperationWithFolder:folderName
                                                                                                                 uid:uidE.uid

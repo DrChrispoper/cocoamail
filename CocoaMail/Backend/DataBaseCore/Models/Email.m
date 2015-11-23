@@ -350,10 +350,6 @@
 {
     NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
     Email* oldEmail = [Email getEmailWithMsgId:email.msgId dbNum:dbNum];
-
-    if ([UidEntry hasUidEntrywithMsgId:email.msgId withFolder:0] && !(oldEmail.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
-        [UIApplication sharedApplication].applicationIconBadgeNumber--;
-    }
     
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     [databaseManager.databaseQueue close];
@@ -387,10 +383,6 @@
     [[EmailProcessor getSingleton] switchToDBNum:dbNum];
 
     Email* email = [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
-    
-    if ([UidEntry hasUidEntrywithMsgId:msgIdDel withFolder:0] && !(email.flag & MCOMessageFlagSeen) && [AppSettings badgeCount] == 0) {
-        [UIApplication sharedApplication].applicationIconBadgeNumber--;
-    }
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;",

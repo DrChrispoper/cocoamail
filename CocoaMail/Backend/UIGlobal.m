@@ -20,9 +20,9 @@
     return [UIColor colorWithWhite:0.92 alpha:1.0];
 }
 
-+(UIColor*) noImageBadgeColor
++(UIColor*) noImageBadgeColor //Weird Crash if not.
 {
-    return [UIColor colorWithWhite:120. / 255. alpha:1.0];
+    return [UIColor colorWithCIColor:[CIColor colorWithCGColor:[UIColor colorWithWhite:120. / 255. alpha:1.0].CGColor]];
 }
 
 +(UIColor*) standardTableLineColor

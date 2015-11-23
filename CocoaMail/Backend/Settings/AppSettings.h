@@ -137,5 +137,7 @@
 
 +(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex;
 
++(NSInteger) inboxUnread:(NSInteger)accountIndex;
++(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex;
 
 @end

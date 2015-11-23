@@ -67,6 +67,11 @@
 {
     [self.window makeKeyAndVisible];
     
+    if (options[UIApplicationLaunchOptionsLocalNotificationKey]) {
+        NSDictionary* msgInfos = options[UIApplicationLaunchOptionsLocalNotificationKey];
+        CCMLog(@"msgID: %@", msgInfos[@"msgID"]);
+    }
+    
     return YES;
 }
 
@@ -149,6 +154,7 @@
 didSignInForUser:(GIDGoogleUser*)user
      withError:(NSError*)error
 {
+    if (!error) {
     NSString* accessToken = user.authentication.accessToken; // Safe to send to the server
     NSString* name = user.profile.name;
     NSString* email = user.profile.email;
@@ -167,12 +173,13 @@ didSignInForUser:(GIDGoogleUser*)user
         if (accountIndex != -1) {
             if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
                 [AppSettings setOAuth:accessToken accountIndex:accountIndex];
+                [[ImapSync doLogin:accountIndex] subscribeCompleted:^{}];
             }
-            
-            [[ImapSync doLogin:accountIndex] subscribeCompleted:^{
-                [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
-            }];
         }
+    }
+    }
+    else {
+        CCMLog(@"Erorr signing in %@",error.localizedDescription);
     }
 }
 

@@ -71,6 +71,7 @@
 
 -(void) initContent;
 -(void) connect;
+-(void) setConnected:(BOOL)isConnected;
 -(void) runTestData;
 -(void) releaseContent;
 
