@@ -401,7 +401,7 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    Account* ac = [[Accounts sharedInstance] currentAccount];
+    Account* ac = [[Accounts sharedInstance] getAccount:self.conversation.accountIdx];
     
     SEL selector = NSSelectorFromString(@"deleteRow:");
     

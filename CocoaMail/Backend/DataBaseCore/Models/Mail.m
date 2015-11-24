@@ -397,6 +397,13 @@ static NSDateFormatter * s_df_hour = nil;
     }
 }
 
+-(void) trash
+{
+    for (Mail* m in self.mails) {
+        [m.email trash];
+    }
+}
+
 -(BOOL) isEqualToConversation:(Conversation*)conv
 {
     if (!conv) {

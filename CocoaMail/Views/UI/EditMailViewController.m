@@ -293,7 +293,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             
             //[self.selectedAccount saveDraft:self.mail];
             NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
-            NSString* draftPath = [AppSettings folderName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
+            NSString* draftPath = [AppSettings folderServerName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
             
             MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
             [addOp start:^(NSError * error, uint32_t createdUID) {

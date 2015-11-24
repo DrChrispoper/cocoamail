@@ -106,6 +106,7 @@ static NSArray * sharedServices = nil;
                 
         if (sharedService.connected) {
             [subscriber sendCompleted];
+            [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:YES];
         }
         else if (sharedService.isConnecting) {
             [subscriber sendCompleted];
@@ -147,7 +148,9 @@ static NSArray * sharedServices = nil;
                                 if (![GIDSignIn sharedInstance].currentUser.authentication) {
                                     CCMLog(@"Resign & refresh token");
                                     sharedService.isWaitingForOAuth = YES;
-                                    [[GIDSignIn sharedInstance] signInSilently];
+                                    [[GIDSignIn sharedInstance] signOut];
+                                    [[GIDSignIn sharedInstance] signIn];
+                                    //[[GIDSignIn sharedInstance] signInSilently];
                                 }
                                 else {
                                     [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:NO];
@@ -182,6 +185,7 @@ static NSArray * sharedServices = nil;
                             [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:YES];
                             [sharedService checkForCachedActions];
                         }
+                        
                         [subscriber sendCompleted];
                     }];
                 }
@@ -256,7 +260,7 @@ static NSArray * sharedServices = nil;
         }
         
         NSInteger currentFolder = [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex forBaseFolder:FolderTypeAll];
-        NSString* folder = [AppSettings folderName:currentFolder forAccountIndex:self.currentAccountIndex];
+        NSString* folder = [AppSettings folderServerName:currentFolder forAccountIndex:self.currentAccountIndex];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:((Person*)things[0]).email];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:self.currentAccountIndex].imapSession searchExpressionOperationWithFolder:folder expression:expr];
         
@@ -491,7 +495,9 @@ static NSArray * sharedServices = nil;
             [subscriber sendCompleted];
         }
         else {
-            [[ImapSync doLogin:self.currentAccountIndex] subscribeCompleted:^{
+            [[ImapSync doLogin:self.currentAccountIndex] subscribeError:^(NSError *error) {
+                CCMLog(@"connection error");
+            } completed:^{
                 if (![ImapSync sharedServices:self.currentAccountIndex].connected) {
                     [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
                 }
@@ -547,8 +553,9 @@ static NSArray * sharedServices = nil;
                                 batchsize = 50;
                             //}
                             
-                            [self writeFinishedFolderState:sm emailCount:[info messageCount] withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
-                            
+                            if (!isInBackground) {
+                                [self writeFinishedFolderState:sm emailCount:[info messageCount] withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
+                            }
                             if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
                                 NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
                                 [self writeFinishedFolderState:sm lastEnded:lE withAccountIndex:self.currentAccountIndex andFolder:currentFolder];
@@ -783,16 +790,6 @@ static NSArray * sharedServices = nil;
                 CCMLog(@"Notifying Email: %@", email.subject);
                 [self.cachedData addObject:email];
                 [self.emailIDs addObject:email.msgId];
-                
-                if ([AppSettings notifications]) {
-                    UILocalNotification* localNotification = [[UILocalNotification alloc] init];
-                    localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
-                    NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
-                    localNotification.alertBody = alertText;
-                    localNotification.timeZone = [NSTimeZone defaultTimeZone];
-                    localNotification.userInfo = @{@"msgID":email.msgId};
-                    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-                }
             }
         }
     } else {
@@ -824,7 +821,7 @@ static NSArray * sharedServices = nil;
 -(void) runUpToDateCachedTest:(NSArray*)emails
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
-    NSString* path = [AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:self.currentAccountIndex];
+    NSString* path = [AppSettings folderServerName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:self.currentAccountIndex];
     
     NSMutableArray* datas = [[NSMutableArray alloc]init];
     
@@ -895,7 +892,7 @@ static NSArray * sharedServices = nil;
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
     //NSString* path = [AppSettings folderName:[[[Accounts sharedInstance] getAccount:((Conversation*)convs[0]).accountIdx] currentFolderIdx] forAccountIndex:self.currentAccountIndex];
-    NSString* path = [AppSettings folderName:folderIdx forAccountIndex:self.currentAccountIndex];
+    NSString* path = [AppSettings folderServerName:folderIdx forAccountIndex:self.currentAccountIndex];
     
     NSMutableArray* emails = [NSMutableArray arrayWithCapacity:convs.count];
     
@@ -1011,7 +1008,7 @@ static NSArray * sharedServices = nil;
         }
         
         NSInteger currentFolder = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeInbox];
-        NSString* folder = [AppSettings folderName:currentFolder forAccountIndex:accountIndex];
+        NSString* folder = [AppSettings folderServerName:currentFolder forAccountIndex:accountIndex];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:accountIndex].imapSession searchExpressionOperationWithFolder:folder expression:expr];
         

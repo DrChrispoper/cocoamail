@@ -81,7 +81,7 @@
         
         NSInteger accountIdx = [AppSettings indexForAccount:mail.email.accountNum];
         
-        NSString* folderPath = [AppSettings folderName:uidE.folder forAccountIndex:accountIdx];
+        NSString* folderPath = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIdx];
         
         [[[ImapSync sharedServices].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS]
          start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {

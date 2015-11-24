@@ -67,7 +67,6 @@
 +(Email*) resToEmail:(FMResultSet*)result;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
--(void) archive;
 -(void) trash;
 -(void) star;
 -(void) read;

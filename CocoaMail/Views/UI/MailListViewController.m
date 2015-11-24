@@ -231,11 +231,12 @@ static NSInteger pageCount = 15;
         NSArray* convs = d[@"list"];
         
         for (ConversationIndex* cI in convs) {
-            Conversation* c = [[Accounts sharedInstance] conversationForCI:cI];
-            for (Mail* m in c.mails) {
+            Conversation* con = [[Accounts sharedInstance] conversationForCI:cI];
+            for (Mail* m in con.mails) {
                 if ([m haveAttachment]) {
                     if ([m.email.sender.mailbox isEqualToString:self.onlyPerson.email]) {
                         [c addMail:m];
+                        break;
                     }
                 }
             }
@@ -245,7 +246,7 @@ static NSInteger pageCount = 15;
     //c.mails = tmp;
     
     // to have the right title in next VC
-    //[c firstMail].title = self.onlyPerson.name;
+    [c firstMail].title = self.onlyPerson.name;
     
     return c;
 }

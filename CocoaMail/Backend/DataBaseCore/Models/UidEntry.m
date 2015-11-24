@@ -196,12 +196,12 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;
         
-        if (!kisActiveAccountAll) {
+        //if (!kisActiveAccountAll) {
             results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ? ORDER BY uid DESC LIMIT 50", @(folderNum + 1000 * accountNum)];
-        }
-        else {
-            results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE ? ORDER BY uid DESC LIMIT 50", [NSString stringWithFormat:@"_%03ld", (long)folderNum]];
-        }
+        //}
+        //else {
+        //    results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE ? ORDER BY uid DESC LIMIT 50", [NSString stringWithFormat:@"_%03ld", (long)folderNum]];
+        //}
         
         NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
 
@@ -245,7 +245,7 @@
         
         NSMutableString* query = [NSMutableString string];
 
-        if (!kisActiveAccountAll) {
+        //if (!kisActiveAccountAll) {
             NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
 
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
@@ -258,8 +258,8 @@
                 NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
                 [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder LIKE %@ ", uidE.uid, folder];
             }
-        }
-        else {
+        //}
+        /*else {
             [query appendFormat:@"SELECT * FROM uid_entry WHERE t.uid < %i AND", uidE.uid];
             
             for (Account* ac in [Accounts sharedInstance].accounts) {
@@ -268,7 +268,8 @@
             }
             
             query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length - 3)]];
-        }
+        }*/
+         
         
         [query appendString:@" ORDER BY uid DESC LIMIT 150"];
         
@@ -396,16 +397,17 @@
         return true;
     }
     
-    NSString* folderName = [AppSettings folderName:to forAccountIndex:[AppSettings indexForAccount:uidE.account]];
+    NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
+
+    NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
+    NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
     
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
-
-        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
+        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:fromFolderName
                                                                                                                                uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
-                                                                                                                         destFolder:folderName];
+                                                                                                                         destFolder:toFolderName];
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error) {
                 CCMLog(@"Updated folder!");
@@ -449,7 +451,7 @@
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]
+        MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
                                                                                                            flags:MCOMessageFlagDeleted];
@@ -461,14 +463,14 @@
                 CCMLog(@"Error updating flags:%@", error);
             }
             
-            MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:accountIndex].imapSession expungeOperation:[AppSettings folderName:uidE.folder forAccountIndex:accountIndex]];
+            MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:accountIndex].imapSession expungeOperation:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]];
             [deleteOp start:^(NSError* error) {
                 if (error) {
                     CCMLog(@"Error expunging folder:%@", error);
                 }
                 else {
                     success = true;
-                    CCMLog(@"Successfully expunged folder:%@", [AppSettings folderName:uidE.folder forAccountIndex:accountIndex]);
+                    CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
                     [self removeFromFolderUid:uidE];
                 }
             }];
@@ -520,7 +522,7 @@
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:[AppSettings indexForAccount:uidE.account]]
+        MCOIMAPOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession storeFlagsOperationWithFolder:[AppSettings folderServerName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:[AppSettings indexForAccount:uidE.account]]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindAdd
                                                                                                            flags:flag];
@@ -564,7 +566,7 @@
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
     if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession storeFlagsOperationWithFolder:[AppSettings folderName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:[AppSettings indexForAccount:uidE.account]]
+        MCOIMAPOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession storeFlagsOperationWithFolder:[AppSettings folderServerName:[[Accounts sharedInstance].currentAccount currentFolderIdx] forAccountIndex:[AppSettings indexForAccount:uidE.account]]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindRemove
                                                                                                            flags:flag];

@@ -17,10 +17,10 @@
 }
 
 -(RACSignal*) search:(NSString*)searchText;
--(RACSignal*) senderSearch:(NSArray*)addressess;
+-(RACSignal*) senderSearch:(NSArray*)addressess inAccount:(NSInteger)accountIndex;
 
--(RACSignal*) activeFolderSearch:(Email*)email;
--(RACSignal*) threadSearch:(NSString*)thread;
+-(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex;
+-(RACSignal*) threadSearch:(NSString*)thread inAccount:(NSInteger)accountIndex;
 -(RACSignal*) allEmailsSearch;
 
 @property (assign) volatile BOOL cancelled; // flag for when we cancel a search op

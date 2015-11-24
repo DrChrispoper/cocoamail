@@ -67,12 +67,39 @@
 {
     [self.window makeKeyAndVisible];
     
-    if (options[UIApplicationLaunchOptionsLocalNotificationKey]) {
-        NSDictionary* msgInfos = options[UIApplicationLaunchOptionsLocalNotificationKey];
-        CCMLog(@"msgID: %@", msgInfos[@"msgID"]);
+    UILocalNotification *localNotif =
+    [options objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+    if (localNotif) {
+        NSNumber *index = [localNotif.userInfo objectForKey:@"index"];
+        NSNumber *accountNum = [localNotif.userInfo objectForKey:@"accountNum"];
+        Conversation* conversation = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[accountNum integerValue]]] getConversationForIndex:[index integerValue]];
+        
+        CCMLog(@"Opening email:%@", [conversation firstMail].title);
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
+                                                            object:nil
+                                                          userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
     }
     
     return YES;
+}
+
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+    //if (application.applicationState == UIApplicationStateActive) {
+    if (notification && application.applicationState == 1) {
+        NSNumber *index = [notification.userInfo objectForKey:@"index"];
+        NSNumber *accountNum = [notification.userInfo objectForKey:@"accountNum"];
+        Conversation* conversation = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[accountNum integerValue]]] getConversationForIndex:[index integerValue]];
+        
+        CCMLog(@"Opening email:%@", [conversation firstMail].title);
+        CCMLog(@"Application state:%i", application.applicationState);
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
+                                                            object:nil
+                                                          userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
+    }
+    //}
 }
 
 -(void) applicationWillTerminate:(UIApplication*)application
@@ -173,7 +200,9 @@ didSignInForUser:(GIDGoogleUser*)user
         if (accountIndex != -1) {
             if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
                 [AppSettings setOAuth:accessToken accountIndex:accountIndex];
-                [[ImapSync doLogin:accountIndex] subscribeCompleted:^{}];
+                [[ImapSync doLogin:accountIndex] subscribeError:^(NSError *error) {
+                    CCMLog(@"connection error");
+                } completed:^{}];
             }
         }
     }

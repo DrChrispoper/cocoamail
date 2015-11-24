@@ -100,7 +100,7 @@
             scrollView.contentInset = lastInset;
             [[Accounts sharedInstance].currentAccount connect];
             [[Accounts sharedInstance].currentAccount showProgress];
-            
+            [[Accounts sharedInstance].currentAccount localFetchMore:NO];
         });
         // TODO true one
     }

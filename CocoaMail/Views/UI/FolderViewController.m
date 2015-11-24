@@ -139,11 +139,11 @@
                 break;
             case 1:
                 colorBubble = [UIColor whiteColor];
-                count = [cac getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
+                count = [cac favorisCount];
                 break;
             case 3:
                 colorBubble = [UIGlobal bubbleFolderGrey];
-                count = [cac getConversationsForFolder:FolderTypeWith(FolderTypeDrafts, 0)].count;
+                count = [cac draftCount];
                 break;
             default:
                 break;
@@ -269,7 +269,20 @@
             
             Conversation* conv = [[Conversation alloc] init];
             [conv addMail:[Mail mail:email]];
-            [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
+            NSUInteger index = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
+            
+            if ([AppSettings notifications]) {
+                UILocalNotification* localNotification = [[UILocalNotification alloc] init];
+                localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
+                NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
+                localNotification.alertBody = alertText;
+                localNotification.timeZone = [NSTimeZone defaultTimeZone];
+                localNotification.userInfo = @{@"index":@(index),
+                                               @"accountNum":@(email.accountNum)};
+                //[localNotification setAlertAction:@"Read Email"];
+                //[localNotification setHasAction:YES];
+                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+            }
         }
     } error:^(NSError* error) {
         _completionHandler(hasNewEmail);

@@ -68,7 +68,7 @@
 -(BOOL) isFav;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
-
+-(void) trash;
 
 @end
 

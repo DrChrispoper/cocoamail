@@ -80,7 +80,7 @@ static ViewController * s_self;
     
     [GIDSignIn sharedInstance].uiDelegate = self;
     
-    //[[[Accounts sharedInstance] currentAccount] connect];
+    [[[Accounts sharedInstance] currentAccount] connect];
     
     [self setup];
     
@@ -1046,7 +1046,7 @@ static ViewController * s_self;
     for (UIViewController* vc in self.viewControllers) {
         if ([vc isKindOfClass:[FolderViewController class]]) {
             [((FolderViewController*)vc) refreshWithCompletionHandler:completionHandler];
-            break;
+            return;
         }
     }
 }

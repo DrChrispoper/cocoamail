@@ -115,7 +115,8 @@
 +(CCMFolderType) typeOfFolder:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
 +(NSInteger) numFolderWithFolder:(CCMFolderType)folder forAccountIndex:(NSInteger)accountIndex;
 
-+(NSString*) folderName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
++(NSString*) folderDisplayName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
++(NSString*) folderServerName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex;
 +(NSArray*) allFoldersNameforAccountIndex:(NSInteger)accountIndex;
 +(NSArray*) allNonImportantFoldersNameforAccountIndex:(NSInteger)accountIndex;
 +(void) setFoldersName:(NSArray*)folders forAccountIndex:(NSInteger)accountIndex;

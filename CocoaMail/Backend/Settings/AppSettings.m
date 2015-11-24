@@ -10,6 +10,7 @@
 #import "PDKeychainBindings.h"
 #import <UIKit/UIDevice.h>
 #import "Accounts.h"
+#import "SyncManager.h"
 
 @implementation AppSettings
 
@@ -610,7 +611,7 @@
     }
     
     NSArray* nonImportantFolders = [AppSettings allNonImportantFoldersNameforAccountIndex:accountIndex];
-    NSString* folderName = [AppSettings folderName:folder forAccountIndex:accountIndex];
+    NSString* folderName = [AppSettings folderDisplayName:folder forAccountIndex:accountIndex];
     
     for (int idx = 0; idx < nonImportantFolders.count;idx++) {
         if ([folderName isEqualToString:nonImportantFolders[idx]]) {
@@ -621,7 +622,7 @@
     return FolderTypeWith(FolderTypeAll, 0);
 }
 
-+(NSString*) folderName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex
++(NSString*) folderDisplayName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex
 {
     if (accountIndex == [AppSettings numActiveAccounts]) {
         return @"INBOX";
@@ -630,6 +631,12 @@
 	NSArray* allFoldersPreference = [defaults objectForKey:[NSString stringWithFormat:@"allFolders_%lu", (long)[AppSettings numAccountForIndex:accountIndex]]];
 	
     return allFoldersPreference[folder];
+}
+
++(NSString*) folderServerName:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex
+{
+    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folder accountIndex:accountIndex];
+    return folderState[@"folderPath"];
 }
 
 +(NSInteger) numFolderWithFolder:(CCMFolderType)folder forAccountIndex:(NSInteger)accountIndex

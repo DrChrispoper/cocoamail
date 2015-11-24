@@ -492,25 +492,24 @@
 
 #pragma Email Actions
 
--(void) archive
-{
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeAll]];
-    [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
-}
-
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
     if ([self uidEWithFolder:fromFolderIdx]) {
-        [UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx];
-        [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+        if([UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx]) {
+            [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+        }
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
 }
 
 -(void) trash
 {
-    [UidEntry moveMsgId:self.msgId inFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
-    [UidEntry deleteMsgId:self.msgId fromfolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+    for (UidEntry* uidE in _uids) {
+        if ([UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]]) {
+            [UidEntry deleteMsgId:self.msgId fromfolder:uidE.folder];
+        }
+    }
+
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
@@ -558,5 +557,6 @@
         }
     }];*/
 }
+
 
 @end

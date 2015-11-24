@@ -132,6 +132,7 @@
     
     ac.userFolders = userfolders;
     ac.person = [Person createWithName:nil email:nil icon:nil codeName:@"ALL"];
+    ac.idx = account.count;
     
     return ac;
 }
@@ -388,29 +389,57 @@
     self.userFoldersContent = arrayU;
     
     self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeInbox];
-    [self connect];
+    //[self connect];
     [self localFetchMore:NO];
 }
 
 -(void) connect
 {
-    [[ImapSync doLogin:self.idx] subscribeCompleted:^{}];
+    if (self.isAllAccounts) {
+        for (Account* a in [[Accounts sharedInstance] accounts]) {
+            if (!a.isAllAccounts && !a.isConnected) {
+                [[ImapSync doLogin:a.idx] subscribeError:^(NSError *error) {
+                    CCMLog(@"connection error");
+                } completed:^{}];
+                
+                break;
+            }
+        }
+    }
+    else {
+    [[ImapSync doLogin:self.idx] subscribeError:^(NSError *error) {
+        CCMLog(@"connection error");
+    } completed:^{}];
+    }
+}
+
+-(BOOL) isConnected
+{
+    return _connected;
 }
 
 -(void) setConnected:(BOOL)isConnected
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+    if (kisActiveAccountAll){
+        [[Accounts sharedInstance].currentAccount connect];
+    }
     _connected = isConnected;
-        if (isConnected) {
-            [self refreshCurrentFolder];
-            [ImapSync runInboxUnread:self.idx];
-        }
+    if (isConnected) {
+        [ImapSync runInboxUnread:self.idx];
+        [self refreshCurrentFolder];
+    }
 }
 
 -(void) refreshCurrentFolder
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     if (_connected) {
         NSInteger __block new = 0;
         
+        [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.checking-email", @"Checking for new emails")];
+
         [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES] deliverOn:[RACScheduler mainThreadScheduler]]
          subscribeNext:^(Email* email) {
              new++;
@@ -472,10 +501,15 @@
              }
          }];
     }
+    else {
+        [self connect];
+    }
 }
 
 -(void) syncCurrentFolder
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     [[[[SyncManager getSingleton] syncActiveFolderFromStart:NO] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          //[self insertRows:email];
@@ -504,6 +538,8 @@
 
 -(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     for (NSNumber* Fuser in folders) {
         [self _addIdx:idx inArray:decodeFolderTypeWith([Fuser integerValue])];
     }
@@ -511,6 +547,8 @@
 
 -(void) _addIdx:(NSUInteger)idx inArray:(CCMFolderType)type
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSMutableIndexSet* set = nil;
     
     if (type.type == FolderTypeUser) {
@@ -540,18 +578,26 @@
     }
 }
 
--(void) addConversation:(Conversation*)conv
+-(NSUInteger) addConversation:(Conversation*)conv
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
     
     if (index == NSNotFound) {
         [self.allsMails addObject:conv];
+        index  = self.allsMails.count - 1;
 
         if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] && ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)] && ![conv.foldersType containsObject:numberWithFolderType(FolderTypeDrafts)]) {
-            [self _addIdx:self.allsMails.count - 1 inArray:FolderTypeWith(FolderTypeAll, 0)];
+            [self _addIdx:index inArray:FolderTypeWith(FolderTypeAll, 0)];
         }
-        [self _addCon:self.allsMails.count - 1 toFoldersContent:conv.foldersType];
+        
+        if ([conv isFav]) {
+            [self _addIdx:index inArray:FolderTypeWith(FolderTypeFavoris, 0)];
+        }
+        
+        [self _addCon:index toFoldersContent:conv.foldersType];
     }
     else {
         Conversation* con = [self.allsMails objectAtIndex:index];
@@ -560,6 +606,8 @@
             [con addMail:m];
         }
     }
+    
+    return index;
 }
 
 -(NSArray*) conversations
@@ -567,8 +615,17 @@
     return self.allsMails;
 }
 
+-(Conversation*) getConversationForIndex:(NSUInteger)index
+{
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
+    return [self.allsMails objectAtIndex:index];
+}
+
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSMutableIndexSet* set = nil;
     
     if (type.type == FolderTypeUser) {
@@ -594,6 +651,8 @@
 
 -(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:self.idx]];
     
     NSArray* smtpServicesArray = accountProvider.smtpServices;
@@ -638,6 +697,8 @@
 
 -(void) saveDraft:(Mail*)mail
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSInteger idx = [_drafts indexOfObject:mail];
 
     if (idx == NSNotFound) {
@@ -650,16 +711,22 @@
  
 -(void) deleteDraft:(Mail*)mail
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     [_drafts removeObject:mail];
 }
 
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     return [self moveConversation:[self.allsMails objectAtIndex:index] from:folderFrom to:folderTo];
 }
 
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
@@ -728,7 +795,12 @@
      return YES;
      }*/
     
-    [conversation moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
+    if (folderTo.type == FolderTypeDeleted) {
+        [conversation trash];
+    }
+    else {
+        [conversation moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
+    }
     
     if (remove) {
         [setFrom removeIndex:idx];
@@ -748,6 +820,8 @@
 
 -(void) star:(BOOL)add conversation:(Conversation*)conversation
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
@@ -761,17 +835,66 @@
 
 -(NSInteger) unreadInInbox
 {
-    return [AppSettings inboxUnread:self.idx];
+    NSInteger count = 0;
+
+    if (!self.isAllAccounts) {
+        count = [AppSettings inboxUnread:self.idx];
+    }
+    else {
+        for (Account* a in [Accounts sharedInstance].accounts) {
+            if (!a.isAllAccounts) {
+                count += [AppSettings inboxUnread:a.idx];
+            }
+        }
+    }
+    
+    return count;
 }
 
 -(NSInteger) favorisCount
 {
-    return [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+    NSInteger count = 0;
+
+    if (!self.isAllAccounts) {
+        if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx]) {
+            count = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+        }
+        else {
+            count = [self getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
+        }
+    }
+    else {
+        for (Account* a in [Accounts sharedInstance].accounts) {
+            if (!a.isAllAccounts) {
+                if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:a.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:a.idx]) {
+                    count += [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:a.idx] accountIndex:a.idx][@"emailCount"] integerValue];
+                }
+                else {
+                    count += [a getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
+                }
+            }
+        }
+    }
+    
+    return count;
 }
 
 -(NSInteger) draftCount
 {
-    return [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+    NSInteger count = 0;
+
+    if (!self.isAllAccounts) {
+        count = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+    }
+    else {
+        for (Account* a in [Accounts sharedInstance].accounts) {
+            if (!a.isAllAccounts) {
+                count +=  [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0) forAccountIndex:a.idx] accountIndex:a.idx][@"emailCount"] integerValue];
+            }
+        }
+    }
+    
+    return count;
 }
 
 -(void) setCurrentFolder:(CCMFolderType)folder
@@ -795,12 +918,17 @@
     } else {
         if (self.isAllAccounts) {
             self.currentFolderIdx = folder.type;
+            for (Account* a in [Accounts sharedInstance].accounts) {
+                if (!a.isAllAccounts) {
+                    [a setCurrentFolder:folder];
+                }
+            }
         }
         else {
             self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:folder.type];
+            [self refreshCurrentFolder];
+            [self localFetchMore:NO];
         }
-        [self refreshCurrentFolder];
-        [self localFetchMore:NO];
     }
 }
 
@@ -850,6 +978,8 @@
 
 -(void) insertRows:(Email*)email
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     if ((![[email getSonID] isEqualToString:@""] & ![[email getSonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email getSonID]]) {
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
@@ -894,6 +1024,8 @@
 
 -(void) importantFoldersRefresh:(NSInteger)pFolder
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSInteger __block folder = pFolder;
     
     //If last important folder start full sync
@@ -927,6 +1059,8 @@
 
 -(void) doLoadServer
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
     [[[[SyncManager getSingleton] syncFolders] deliverOn:[RACScheduler scheduler]]
@@ -957,6 +1091,8 @@
 
 -(void) runTestData
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     if (!self.isAllAccounts && self.allsMails.count != 0 && !_runningUpToDateTest) {
         _runningUpToDateTest = YES;
         
@@ -1006,6 +1142,8 @@
 
 -(void) deliverUpdate:(NSArray <Email*>*)emails
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     CCMLog(@"Updates");
     
     for (Email* email in emails) {
@@ -1036,6 +1174,8 @@
 
 -(void) deliverDelete:(NSArray*)emails
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     CCMLog(@"Deletes");
     
     NSMutableArray* idxs = [[NSMutableArray alloc]initWithCapacity:emails.count];
@@ -1090,6 +1230,8 @@
 
 -(void) doPersonSearch:(NSArray*)addressess
 {
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+
     NSInteger refBatch = 5;
     NSInteger __block batch = refBatch;
 
@@ -1099,7 +1241,7 @@
     
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] senderSearch:addressess]
+        [[[SearchRunner getSingleton] senderSearch:addressess inAccount:self.idx]
          subscribeNext:^(Email* email) {
                  [self insertPersonRows:email];
                  if (batch-- == 0) {
@@ -1138,6 +1280,16 @@
 
 -(void) localFetchMore:(BOOL)loadMore
 {
+
+    if (self.isAllAccounts) {
+        for (Account* a in [Accounts sharedInstance].accounts) {
+            if (!self.isAllAccounts) {
+                [a localFetchMore:loadMore];
+            }
+        }
+        return;
+    }
+    
     if (!_isLoadingMore && !_hasLoadedAllLocal) {
         _isLoadingMore = YES;
         
@@ -1155,7 +1307,7 @@
         BOOL __block more = NO;
         
         [_localFetchQueue addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil]
+            [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil inAccount:self.idx]
          subscribeNext:^(Email* email) {
              more = YES;
              

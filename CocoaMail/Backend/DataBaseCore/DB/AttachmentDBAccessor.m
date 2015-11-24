@@ -33,7 +33,7 @@
     self = [super init];
     
     if (self) {
-        _databaseQueue = [[FMDatabaseQueue alloc] initWithPath:[self databaseFilepath]];
+        _databaseQueue = [[FMDatabaseQueue alloc] initWithPath:[self databaseFilepath] flags:SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FILEPROTECTION_NONE];
     }
     
     return self;

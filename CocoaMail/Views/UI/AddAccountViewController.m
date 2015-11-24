@@ -96,7 +96,6 @@
     table.delegate = self;
     self.table = table;
     
-    
     UIImageView* cocoa = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"cocoamail"]];
     
     CGFloat posYbutton = screenBounds.size.height - 20 - (70 + 45);
@@ -115,6 +114,12 @@
     [google addTarget:self action:@selector(_google:) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:google];
+    
+    for (Account* a in [Accounts sharedInstance].accounts) {
+        if ([AppSettings isUsingOAuth:a.idx]) {
+            google.hidden = YES;
+        }
+    }
     self.googleBtn = google;
 }
 
@@ -155,7 +160,13 @@
 
 -(void) _google:(UIButton*)sender
 {
+    [[GIDSignIn sharedInstance] signOut];
     [[GIDSignIn sharedInstance] signIn];
+}
+
+- (void)signInWillDispatch:(GIDSignIn *)signIn error:(NSError *)error
+{
+    CCMLog(@"Remove Spinner");
 }
 
 -(void) _hideKeyboard

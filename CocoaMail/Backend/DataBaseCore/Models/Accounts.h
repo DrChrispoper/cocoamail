@@ -71,6 +71,7 @@
 
 -(void) initContent;
 -(void) connect;
+-(BOOL) isConnected;
 -(void) setConnected:(BOOL)isConnected;
 -(void) runTestData;
 -(void) releaseContent;
@@ -79,8 +80,9 @@
 -(NSInteger) draftCount;
 
 -(void) insertRows:(Email*)email;
--(void) addConversation:(Conversation*)conv;
+-(NSUInteger) addConversation:(Conversation*)conv;
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
+-(Conversation*) getConversationForIndex:(NSUInteger)index;
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
 // return NO if not removed from form folder, YES if really removed
