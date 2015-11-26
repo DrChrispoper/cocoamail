@@ -26,6 +26,7 @@
 #import <Google/SignIn.h>
 #import "DropboxBrowserViewController.h"
 
+#import <Instabug/Instabug.h>
 
 @interface ViewController () <CocoaButtonDatasource, GIDSignInUIDelegate>
 
@@ -444,6 +445,7 @@ static ViewController * s_self;
 -(void) setupNavigation
 {
     [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
+        IBGLog(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
         AddAccountViewController* f = [[AddAccountViewController alloc] init];
         f.firstRunMode = YES;
@@ -478,6 +480,8 @@ static ViewController * s_self;
             return;
         }
         
+        IBGLog(kPRESENT_FOLDER_NOTIFICATION);
+
         [[SearchRunner getSingleton] cancel];
 
         MailListViewController* f = nil;
@@ -515,6 +519,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_SETTINGS_NOTIFICATION);
         SettingsViewController* f = [[SettingsViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -523,6 +528,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_CREDIT_NOTIFICATION);
         CreditViewController* f = [[CreditViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -531,6 +537,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_CREDIT2_NOTIFICATION);
         CreditContentViewController* f = [[CreditContentViewController alloc] init];
         f.type = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
@@ -540,6 +547,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_CLOUD_NOTIFICATION);
         CloudViewController* f = [[CloudViewController alloc] init];
         f.cloudServiceName = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
@@ -549,6 +557,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
         DefaultAccountViewController* f = [[DefaultAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -557,6 +566,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_SWIPE_NOTIFICATION);
         QuickSwipeViewController* f = [[QuickSwipeViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -565,6 +575,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_NOTIF_NOTIFICATION);
         NotificationViewController* f = [[NotificationViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -573,6 +584,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_ACCOUNT_NOTIFICATION);
         AccountViewController* f = [[AccountViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
@@ -582,6 +594,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
         SignatureViewController* f = [[SignatureViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
@@ -591,6 +604,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
         AddAccountViewController* f = [[AddAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -600,6 +614,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_CONVERSATION_NOTIFICATION);
         ConversationViewController* f = [[ConversationViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
         [self _animatePushVC:f];
@@ -609,6 +624,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
         AttachmentsViewController* f = [[AttachmentsViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
         [self _animatePushVC:f];
@@ -618,6 +634,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_CONTACTS_NOTIFICATION);
         ContactsViewController* f = [[ContactsViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
@@ -627,6 +644,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_SEARCH_NOTIFICATION);
         SearchViewController* f = [[SearchViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -635,6 +653,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_EDITMAIL_NOTIFICATION);
         EditMailViewController* f = [[EditMailViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
@@ -644,6 +663,7 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
+        IBGLog(kPRESENT_DROPBOX_NOTIFICATION);
         
         DropboxBrowserViewController* f = [[DropboxBrowserViewController alloc]init];
         f.rootViewDelegate = [notif.userInfo objectForKey:kPRESENT_DELEGATE_KEY];
@@ -654,7 +674,8 @@ static ViewController * s_self;
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
-        
+        IBGLog(kBACK_TO_INBOX_NOTIFICATION);
+
         [[SearchRunner getSingleton] cancel];
         
         if (self.viewControllers.count>3) {
@@ -683,7 +704,8 @@ static ViewController * s_self;
         if ([self _checkInteractionAndBlock]) {
             return;
         }
-        
+        IBGLog(kBACK_NOTIFICATION);
+
         InViewController* vc = [self.viewControllers lastObject];
         [vc cleanBeforeGoingBack];
         UIView* lastView = vc.view;
@@ -748,7 +770,8 @@ static ViewController * s_self;
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
-        
+        IBGLog(kACCOUNT_CHANGED_NOTIFICATION);
+
         //[[Parser sharedParser] cleanConversations];
         
         BOOL inFolders = self.viewControllers.count == 1;

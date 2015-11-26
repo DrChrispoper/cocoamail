@@ -61,12 +61,12 @@
 +(NSInteger) insertEmail:(Email*)email;
 +(NSInteger) insertEmailUnsafe:(Email*)email;
 +(void) updateEmailFlag:(Email*)email;
-+(void) updateEmailBody:(Email*)email;
++(void) updateEmail:(Email*)email;
 +(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;
 +(NSMutableArray*) getEmails;
 +(Email*) resToEmail:(FMResultSet*)result;
 
--(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
+-(BOOL) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
 -(void) trash;
 -(void) star;
 -(void) read;

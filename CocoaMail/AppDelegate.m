@@ -93,7 +93,7 @@
         Conversation* conversation = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[accountNum integerValue]]] getConversationForIndex:[index integerValue]];
         
         CCMLog(@"Opening email:%@", [conversation firstMail].title);
-        CCMLog(@"Application state:%i", application.applicationState);
+        CCMLog(@"Application state:%ld", (long)application.applicationState);
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                             object:nil

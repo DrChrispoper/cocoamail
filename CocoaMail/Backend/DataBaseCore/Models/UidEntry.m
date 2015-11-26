@@ -425,6 +425,7 @@
             }
         }];
     } else {
+        success = true;
         [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
     }
     
@@ -476,6 +477,7 @@
             }];
         }];
     } else {
+        success = true;
         [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
     }
     

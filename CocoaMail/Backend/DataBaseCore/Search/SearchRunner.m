@@ -57,9 +57,9 @@ static SearchRunner * searchSingleton = nil;
     }
 }
 
--(RACSignal*) search:(NSString*)searchText
+-(RACSignal*) search:(NSString*)searchText inAccount:(NSInteger)accountIndex
 {
-    NSArray* dbNumbers = [SearchRunner dbNumsInAccount:kActiveAccountIndex];
+    NSArray* dbNumbers = [SearchRunner dbNumsInAccount:accountIndex];
     
     searchText = [searchText stringByAppendingString:@"*"];
     
@@ -320,7 +320,7 @@ static SearchRunner * searchSingleton = nil;
             uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccount:accountIndex];
         }
         
-        CCMLog(@"Account:%i Searching in Folder:%@ with count:%i", accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], uidsInGroups.count);
+        CCMLog(@"Account:%ld Searching in Folder:%@ with count:%lu", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], (long)uidsInGroups.count);
         
         for (NSArray* pagedUids in uidsInGroups) {
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;

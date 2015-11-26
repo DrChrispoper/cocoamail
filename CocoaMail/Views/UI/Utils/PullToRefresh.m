@@ -98,7 +98,7 @@
             [ViewController animateCocoaButtonRefresh:YES];
             [self.pullToRefresh stopAnimating];
             scrollView.contentInset = lastInset;
-            [[Accounts sharedInstance].currentAccount connect];
+            [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
             [[Accounts sharedInstance].currentAccount showProgress];
             [[Accounts sharedInstance].currentAccount localFetchMore:NO];
         });

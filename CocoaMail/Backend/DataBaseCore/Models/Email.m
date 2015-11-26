@@ -356,11 +356,11 @@
     [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE email SET flag = ? WHERE pk = ?;", @(email.flag), @(email.pk)];
+        [db executeUpdate:@"UPDATE email SET flag = ? WHERE pk = ?;", @(email.flag), @(oldEmail.pk)];
     }];
 }
 
-+(void) updateEmailBody:(Email*)email;
++(void) updateEmail:(Email*)email;
 {
     NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
     email.pk = [Email getEmailWithMsgId:email.msgId dbNum:dbNum].pk;
@@ -370,8 +370,14 @@
     [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE email SET sender = ? WHERE pk = ?;", email.sender, @(email.pk)];
+        [db executeUpdate:@"UPDATE email SET tos = ? WHERE pk = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
+        [db executeUpdate:@"UPDATE email SET bccs = ? WHERE pk = ?;", email.bccs.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
         [db executeUpdate:@"UPDATE email SET html_body = ? WHERE pk = ?;", email.htmlBody, @(email.pk)];
+        
         [db executeUpdate:@"UPDATE search_email SET body = ? WHERE rowid = ?;", email.body, @(email.pk)];
+        [db executeUpdate:@"UPDATE search_email SET subject = ? WHERE pk = ?;", email.subject, @(email.pk)];
+        [db executeUpdate:@"UPDATE search_email SET tos = ? WHERE pk = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
     }];
 }
 
@@ -382,7 +388,7 @@
     
     [[EmailProcessor getSingleton] switchToDBNum:dbNum];
 
-    Email* email = [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
+    [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;",
@@ -492,14 +498,19 @@
 
 #pragma Email Actions
 
--(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
+-(BOOL) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
+    BOOL moved = NO;
+    
     if ([self uidEWithFolder:fromFolderIdx]) {
         if([UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx]) {
+            moved = YES;
             [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
         }
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
+    
+    return moved;
 }
 
 -(void) trash

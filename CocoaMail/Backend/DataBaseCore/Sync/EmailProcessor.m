@@ -201,7 +201,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     if (self.shuttingDown) {
         return;
     }
-    [Email updateEmailBody:email];
+    [Email updateEmail:email];
 }
 
 -(void) addEmailWrapper:(Email*)email

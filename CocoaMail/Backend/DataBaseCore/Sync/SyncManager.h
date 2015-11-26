@@ -38,6 +38,7 @@
 -(RACSignal*) syncInboxFoldersBackground;
 
 -(RACSignal*) searchThings:(NSArray*)things;
+-(RACSignal*) searchText:(NSString*)text;
 
 //Update recorded state
 -(NSInteger) folderCount:(NSInteger)accountIndex;

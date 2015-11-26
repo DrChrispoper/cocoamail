@@ -18,6 +18,7 @@
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "MCOMessageView.h"
+#import "CocoaMail-Swift.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -39,7 +40,6 @@ typedef enum : NSUInteger {
 
 
 @end
-
 
 @interface EditMailViewController () <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, ExpendableBadgeDelegate,
 UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate>
@@ -70,7 +70,6 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 @property (nonatomic, strong) NSMutableArray* viewsWithAccountTintColor;
 
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
-
 
 @end
 
@@ -279,49 +278,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         self.mail.title = self.subjectTextView.text;
         self.mail.content = self.bodyTextView.text;
         
-        if ([ImapSync sharedServices:self.selectedAccount.idx].connected) {
-            
-            //If draft exists delete and create new
-            if (self.mail.email.msgId) {
-                NSInteger acIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
-                
-                Conversation* c = [[Conversation alloc]init];
-                [c addMail:self.mail];
-                
-                [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
-            }
-            
-            //[self.selectedAccount saveDraft:self.mail];
-            NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
-            NSString* draftPath = [AppSettings folderServerName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
-            
-            MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
-            [addOp start:^(NSError * error, uint32_t createdUID) {
-                if (error == nil) {
-                    [self.selectedAccount refreshCurrentFolder];
-                }
-            }];
-        }
-        else {
-            if (self.mail.email.uids.count == 0) {
-                UidEntry* uidE = [[UidEntry alloc]init];
-                uidE.account = [AppSettings numForData:self.selectedAccount.idx];
-                uidE.folder = [AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts];
-                uidE.uid = [AppSettings draftCount];
-                uidE.msgId = [NSString stringWithFormat:@"%i",-uidE.uid];
-                
-                self.mail.email.uids = @[uidE];
-                
-                NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:self.mail.email];
-                [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-            }
-            
-            [[Accounts sharedInstance].accounts[self.selectedAccount.idx] saveDraft:self.mail];
-        }
+        //[self _reallyGoBack];
         
-        [self _reallyGoBack];
         
-        /*
         UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
                                                                     message:NSLocalizedString(@"Save to drafts ?", @"Save to drafts ?")
                                                              preferredStyle:UIAlertControllerStyleAlert];
@@ -329,10 +288,75 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Save", @"Save") style:UIAlertActionStyleDefault
                                                               handler:^(UIAlertAction* aa) {
                                                                   
-                                                                  self.mail.title = self.subjectTextView.text;
-                                                                  self.mail.content = self.bodyTextView.text;
-                                                                  
                                                                   [self.selectedAccount saveDraft:self.mail];
+                                                                  
+                                                                  if ([ImapSync sharedServices:self.selectedAccount.idx].connected) {
+                                                                      
+                                                                      //If draft exists delete and create new
+                                                                      if (self.mail.email.msgId) {
+                                                                          NSInteger acIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
+                                                                          
+                                                                          Conversation* c = [[Conversation alloc]init];
+                                                                          [c addMail:self.mail];
+                                                                          
+                                                                          [[Accounts sharedInstance].accounts[acIndex] moveConversation:c from:FolderTypeWith(FolderTypeDrafts, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
+                                                                      }
+                                                                      
+                                                                      //[self.selectedAccount saveDraft:self.mail];
+                                                                      NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
+                                                                      NSString* draftPath = [AppSettings folderServerName:[AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts] forAccountIndex:self.selectedAccount.idx];
+                                                                      
+                                                                      MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
+                                                                      [addOp start:^(NSError * error, uint32_t createdUID) {
+                                                                          if (error == nil) {
+                                                                              [self.selectedAccount refreshCurrentFolder];
+                                                                          }
+                                                                      }];
+                                                                  }
+                                                                  else {
+                                                                      //TODO:Check email object has all the info
+                                                                      
+                                                                      if (self.mail.email.uids.count == 0) {
+                                                                          self.mail.email.datetime = [NSDate date];
+                                                                          
+                                                                          self.mail.email.tos = [[NSArray alloc]init];
+                                                                          self.mail.email.ccs = [[NSArray alloc]init];
+                                                                          self.mail.email.bccs = [[NSArray alloc]init];
+                                                                        
+                                                                          NSMutableArray* to = [[NSMutableArray alloc] init];
+                                                                          
+                                                                          for (NSNumber* personID in self.mail.toPersonID) {
+                                                                              Person* p = [[Persons sharedInstance] getPersonID:[personID intValue]];
+                                                                              MCOAddress* newAddress = [MCOAddress addressWithDisplayName:p.name mailbox:p.email];
+                                                                              [to addObject:newAddress];
+                                                                          }
+                                                                          
+                                                                          if (!self.personsAreHidden) {
+                                                                              self.mail.email.tos = to;
+                                                                          }
+                                                                          else {
+                                                                              self.mail.email.bccs = to;
+                                                                          }
+
+                                                                          UidEntry* uidE = [[UidEntry alloc]init];
+                                                                          uidE.account = [AppSettings numForData:self.selectedAccount.idx];
+                                                                          uidE.folder = [AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts];
+                                                                          uidE.uid = [AppSettings draftCount];
+                                                                          uidE.msgId = [NSString stringWithFormat:@"%i",-uidE.uid];
+                                                                          
+                                                                          self.mail.email.uids = @[uidE];
+                                                                          
+                                                                          NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:self.mail.email];
+                                                                          [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                                                                      }
+                                                                      else {
+                                                                          NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:self.mail.email];
+                                                                          [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                                                                      }
+                                                                      
+                                                                      [[Accounts sharedInstance].accounts[self.selectedAccount.idx] saveDraft:self.mail];
+                                                                  }
+                                                                  
                                                                   [self _reallyGoBack];
                                                               }];
         [ac addAction:defaultAction];
@@ -348,7 +372,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         ViewController* vc = [ViewController mainVC];
         
         [vc presentViewController:ac animated:YES completion:nil];
-         */
+        
         
     }
     else {
@@ -560,14 +584,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     tv.backgroundColor = [UIColor whiteColor];
     tv.font = [UIFont systemFontOfSize:15];
     tv.delegate = self;
-    [bdView addSubview:tv];
+    //[bdView addSubview:tv];
     tv.text = @"\n\n\n";
     
     NSRange start = {0, 0};
     tv.selectedRange = start;
-    
+   
     self.bodyTextView = tv;
-    
     
     UILabel* signature = [[UILabel alloc] initWithFrame:CGRectMake(8, bdView.frame.size.height-28 , WIDTH-16, 20)];
     signature.textColor = [UIGlobal noImageBadgeColor];
@@ -602,6 +625,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
         [view setHtml:self.mail.transferContent];
+
         [oldView addSubview:view];
         
         CGRect f = oldView.frame;
@@ -687,14 +711,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) webViewLoaded:(UIWebView*)webView
 {
-
     UIView* oldView = [self.contentView viewWithTag:ContentOld];
-    
-    CGFloat oldFrame = oldView.frame.size.height;
-    
-    CGFloat nextHeight = webView.frame.size.height;
-    //CGFloat diff = nextHeight - oldFrame;
-    
+
     [self _fixContentSize];
 }
 
@@ -726,7 +744,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     CGFloat lastH = self.bodyTextView.frame.size.height;
     
-    self.bodyTextView.text = self.mail.content;
+    [self.bodyTextView setText:self.mail.content];
     
     CGRect fourLineFrame = self.bodyTextView.frame;
     

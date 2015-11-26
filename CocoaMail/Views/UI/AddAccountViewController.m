@@ -116,7 +116,7 @@
     [self.view addSubview:google];
     
     for (Account* a in [Accounts sharedInstance].accounts) {
-        if ([AppSettings isUsingOAuth:a.idx]) {
+        if (!a.isAllAccounts && [AppSettings isUsingOAuth:a.idx]) {
             google.hidden = YES;
         }
     }

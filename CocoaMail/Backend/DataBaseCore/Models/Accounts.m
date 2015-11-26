@@ -209,7 +209,7 @@
         return self.accounts[accountIndex];
     }
     
-    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
+    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%ld is incorrect only %ld active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
     
     return nil;
 }
@@ -424,11 +424,15 @@
     if (kisActiveAccountAll){
         [[Accounts sharedInstance].currentAccount connect];
     }
-    _connected = isConnected;
-    if (isConnected) {
+    
+    if (isConnected && !_connected) {
+        _connected = isConnected;
+
         [ImapSync runInboxUnread:self.idx];
         [self refreshCurrentFolder];
     }
+    
+    _connected = isConnected;
 }
 
 -(void) refreshCurrentFolder
@@ -456,7 +460,7 @@
                      [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
                  }
                  else {
-                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%ld new emails"),(long)new]];
                  }
                  
                  [CCMStatus dismissAfter:2];
@@ -477,7 +481,7 @@
                      [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.one-new-email", @"one new email"),(long)new]];
                  }
                  else {
-                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%li new emails"),(long)new]];
+                     [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.x-new-emails", @"%ld new emails"),(long)new]];
                  }
                  
                  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -971,7 +975,7 @@
     }
     
     if ((long)(syncCount * 100) / emailCount < 99) {
-        [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.account-progress-sync", @"%@ %li%% synced"), self.person.codeName, (long)(syncCount * 100) / emailCount]];
+        [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.account-progress-sync", @"%@ %ld%% synced"), self.person.codeName, (long)(syncCount * 100) / emailCount]];
         [CCMStatus dismissAfter:3.0];
     }
 }
@@ -1260,6 +1264,56 @@
     
     //ServerSearch
     [[[[SyncManager getSingleton] searchThings:addressess] deliverOn:[RACScheduler mainThreadScheduler]]
+     subscribeNext:^(Email* email) {
+         [self insertPersonRows:email];
+     }
+     error:^(NSError* error) {
+         CCMLog(@"Error: %@", error.localizedDescription);
+         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+             [ViewController animateCocoaButtonRefresh:NO];
+             [self.mailListSubscriber reFetch];
+         }];
+     }
+     completed:^{
+         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+             [ViewController animateCocoaButtonRefresh:NO];
+             [self.mailListSubscriber reFetch];
+         }];
+     }];
+}
+
+-(void) doTextSearch:(NSString*)searchString
+{
+    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
+    
+    NSInteger refBatch = 5;
+    NSInteger __block batch = refBatch;
+    
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [ViewController animateCocoaButtonRefresh:YES];
+    }];
+    
+    //LocalSearch
+    [_localFetchQueue addOperationWithBlock:^{
+        [[[SearchRunner getSingleton] search:searchString inAccount:self.idx]
+         subscribeNext:^(Email* email) {
+             [self insertPersonRows:email];
+             if (batch-- == 0) {
+                 batch = refBatch;
+                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                     [self.mailListSubscriber reFetch];
+                 }];
+             }
+         }
+         completed:^{
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 [self.mailListSubscriber reFetch];
+             }];
+         }];
+    }];
+    
+    //ServerSearch
+    [[[[SyncManager getSingleton] searchText:searchString] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          [self insertPersonRows:email];
      }

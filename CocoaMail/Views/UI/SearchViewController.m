@@ -16,7 +16,7 @@
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
 
-@interface SearchViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
+@interface SearchViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, MailListDelegate>
 
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) id keyboardNotificationId;
@@ -60,6 +60,9 @@
     self.view.backgroundColor = table.backgroundColor;
     
     [self setupNavBarWith:item overMainScrollView:table];
+    
+    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+
     
     table.allowsSelection = false;
     table.rowHeight = 90;
@@ -240,6 +243,10 @@
         current = currentContent;
     }
     
+    if (word.length > 2) {
+        [[[Accounts sharedInstance] currentAccount] doTextSearch:word];
+    }
+    
     self.lastSearchLength = word.length;
     
     NSMutableSet* peopleIn = [[NSMutableSet alloc] init];
@@ -337,6 +344,16 @@
 -(void) searchBarSearchButtonClicked:(UISearchBar*)searchBar
 {
     [searchBar resignFirstResponder];
+}
+
+-(void) removeConversationList:(NSArray *)convs { }
+
+-(BOOL) isPresentingDrafts { return false;}
+
+- (void)reFetch
+{
+    self.lastSearchLength++;
+    [self _updateSearchResultWith:self.searchBar.text];
 }
 
 @end

@@ -25,6 +25,7 @@
 +(RACSignal*) doLogin:(NSInteger)account;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;
+-(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchThing:(NSArray*)things;
 -(void) runUpToDateTest:(NSArray*)data folderIndex:(NSInteger)folderIdx completed:(void (^)(void))completedBlock;
 -(void) runUpToDateCachedTest:(NSArray*)data;

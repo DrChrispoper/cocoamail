@@ -16,7 +16,7 @@
 	volatile BOOL cancelled;
 }
 
--(RACSignal*) search:(NSString*)searchText;
+-(RACSignal*) search:(NSString*)searchText inAccount:(NSInteger)accountIndex;
 -(RACSignal*) senderSearch:(NSArray*)addressess inAccount:(NSInteger)accountIndex;
 
 -(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex;

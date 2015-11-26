@@ -157,6 +157,23 @@ static SyncManager * singleton = nil;
     return [RACSignal merge:newEmailsSignalArray];
 }
 
+-(RACSignal*) searchText:(NSString*)text
+{
+    if (kisActiveAccountAll) {
+        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
+        
+        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
+            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchText:text]]];
+        }
+        
+        return [RACSignal merge:newEmailsSignalArray];
+    }
+    else {
+        return [self emailForSignal:[[ImapSync sharedServices] runSearchText:text]];
+    }
+}
+
 -(RACSignal*) searchThings:(NSArray*)things
 {
     if (kisActiveAccountAll) {

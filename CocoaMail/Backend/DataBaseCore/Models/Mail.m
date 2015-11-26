@@ -392,9 +392,17 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
+    BOOL moved = NO;
+    NSInteger nbInFolder = 0;
+    
     for (Mail* m in self.mails) {
-        [m.email moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
+        if ([m.email uidEWithFolder:fromFolderIdx]) {
+            nbInFolder++;
+        }
+        moved |= [m.email moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
     }
+    
+    NSAssert(moved, @"Oups moving %@ from:%@ to:%@ with %d emails in conversation %d in initial folder", [self firstMail].title, [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:[self accountIdx]],[AppSettings folderDisplayName:toFolderIdx forAccountIndex:[self accountIdx]], self.mails.count, nbInFolder);
 }
 
 -(void) trash

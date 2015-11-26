@@ -257,6 +257,7 @@
 
 /* Begin PBXFileReference section */
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
+		270EC6481C0711EC008292B9 /* CocoaMail-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CocoaMail-Bridging-Header.h"; sourceTree = "<group>"; };
 		271D4CFE1B846E4500D19373 /* CocoaMail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CocoaMail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		271D4D021B846E4500D19373 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		271D4D031B846E4500D19373 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -323,9 +324,9 @@
 		271D4DBD1B84856B00D19373 /* providers.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = providers.json; path = ../../mailcore2/resources/providers.json; sourceTree = "<group>"; };
 		271D4E101B85DC6100D19373 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		271D4E121B85DC7400D19373 /* CocoaMail.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CocoaMail.entitlements; sourceTree = "<group>"; };
-		2723201C1BF48E84000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-US"; path = "en-US.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		2723201C1BF48E84000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; lineEnding = 0; name = "en-US"; path = "en-US.lproj/Localizable.strings"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.simpleColoring; };
 		272320211BF48E88000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-US"; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		272320231BF48EA7000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		272320231BF48EA7000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; lineEnding = 0; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.simpleColoring; };
 		272320241BF48EA8000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		273E62D81BDF7FC700E3F318 /* CCMStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMStatus.h; sourceTree = "<group>"; };
 		273E62D91BDF7FC700E3F318 /* CCMStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMStatus.m; sourceTree = "<group>"; };
@@ -558,6 +559,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		270BD8391C05FA9E001ED16D /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Editor;
+			sourceTree = "<group>";
+		};
 		271D4CF51B846E4500D19373 = {
 			isa = PBXGroup;
 			children = (
@@ -595,6 +603,7 @@
 		271D4D011B846E4500D19373 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				270EC6481C0711EC008292B9 /* CocoaMail-Bridging-Header.h */,
 				272320221BF48E88000F7EFF /* InfoPlist.strings */,
 				2723201D1BF48E84000F7EFF /* Localizable.strings */,
 				278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */,
@@ -848,6 +857,7 @@
 		277D88F51BB13C0E00FAFED5 /* Compose */ = {
 			isa = PBXGroup;
 			children = (
+				270BD8391C05FA9E001ED16D /* Editor */,
 				27818C311BABF22500D26D1A /* EditMailViewController.h */,
 				27818C321BABF22500D26D1A /* EditMailViewController.m */,
 			);
@@ -1648,6 +1658,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
+				SWIFT_OBJC_BRIDGING_HEADER = "CocoaMail-Bridging-Header.h";
 			};
 			name = Debug;
 		};
@@ -1715,6 +1726,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
+				SWIFT_OBJC_BRIDGING_HEADER = "CocoaMail-Bridging-Header.h";
 			};
 			name = Release;
 		};
