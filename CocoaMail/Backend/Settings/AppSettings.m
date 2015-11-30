@@ -133,6 +133,8 @@
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setInteger:y forKey:@"badgecount_preference"];
     [defaults synchronize];
+    
+    [AppSettings setInboxUnread:[AppSettings inboxUnread:0] accountIndex:0];
 }
 
 +(NSInteger) badgeCount
@@ -802,12 +804,13 @@
     
     int badge = 0;
     
-    for (int index = 0; index < [AppSettings numActiveAccounts]; index++) {
-        badge += [AppSettings inboxUnread:index];
+    if ([AppSettings badgeCount] == 1) {
+        for (int index = 0; index < [AppSettings numActiveAccounts]; index++) {
+            badge += [AppSettings inboxUnread:index];
+        }
     }
     
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
-
 }
 
 @end

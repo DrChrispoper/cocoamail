@@ -226,10 +226,10 @@ static NSInteger pageCount = 15;
             Conversation* con = [[Accounts sharedInstance] conversationForCI:cI];
             for (Mail* m in con.mails) {
                 if ([m haveAttachment]) {
-                    if ([m.email.sender.mailbox isEqualToString:self.onlyPerson.email]) {
+                    //if ([m.email.sender.mailbox isEqualToString:self.onlyPerson.email]) {
                         [c addMail:m];
-                        break;
-                    }
+                     //   break;
+                    //}
                 }
             }
         }
@@ -456,7 +456,7 @@ static NSInteger pageCount = 15;
     NSMutableArray* current = [convs mutableCopy];
     
     NSInteger personID = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
-    
+    NSInteger meID = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
     NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
     
     for (ConversationIndex* c in current) {
@@ -468,7 +468,7 @@ static NSInteger pageCount = 15;
                 [next addObject:c];
                 found = true;
             }
-            else {
+            else if (mail.fromPersonID == meID) {
                 for (NSNumber* toPersonID in mail.toPersonID) {
                     if ([toPersonID integerValue] == personID) {
                         [next addObject:c];

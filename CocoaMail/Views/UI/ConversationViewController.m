@@ -269,12 +269,42 @@
 }
 -(void) openWebURL:(NSURL*)url
 {
+    if ([self isEmailRegExp:url.absoluteString]) {
+        NSString* email = [url.absoluteString stringByReplacingOccurrencesOfString:@"mailto:" withString:@""];
+        
+        Mail* mail = [Mail newMailFormCurrentAccount];
+        
+        Persons* p = [Persons sharedInstance];
+        
+        Person* more = [Person createWithName:nil email:email icon:nil codeName:nil];
+        NSInteger personID = [p addPerson:more];
+        
+        mail.toPersonID = @[@(personID)];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+        
+        return;
+    }
     NSString *noteStr = @"Open link in...";
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[noteStr, url] applicationActivities:nil];
     [self.view.window.rootViewController presentViewController:activityViewController
                                                       animated:YES
                                                     completion:nil];
 }
+
+-(BOOL) isEmailRegExp:(NSString*)text
+{
+    NSError* error = NULL;
+    NSString* pattern = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+    NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
+    
+    if (error) {
+        CCMLog(@"%@", error.description);
+    }
+    
+    return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
+}
+
 #pragma mark - QLPreviewControllerDataSource
 
 -(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController

@@ -260,6 +260,7 @@
     self.name.text = at.fileName;
     self.size.text = [at stringSize];
     self.mini.image = [at miniature];
+    self.extention.text = @"";
     
     if ([at.mimeType  isEqualToString:@"application/msword"] ||
        [at.mimeType isEqualToString:@"application/vnd.oasis.opendocument.text"]||

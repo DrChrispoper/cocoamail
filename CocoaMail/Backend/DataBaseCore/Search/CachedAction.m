@@ -137,34 +137,27 @@
     return actions;
 }
 
--(BOOL) doAction
+-(void) doAction
 {
-    BOOL success = false;
-    
     switch (self.actionIndex) {
         case 0:
-            success = [UidEntry move:self.uid toFolder:self.toFolder];
+            [UidEntry move:self.uid toFolder:self.toFolder];
             break;
         case 1:
-            self.uid.pk = -1;
-            success = [UidEntry deleteUidEntry:self.uid];
+            //self.uid.pk = -1;
+            [UidEntry deleteUidEntry:self.uid];
             break;
         case 2:
-            success = [UidEntry addFlag:MCOMessageFlagFlagged to:self.uid];
+            [UidEntry addFlag:MCOMessageFlagFlagged to:self.uid];
             break;
         case 3:
-            success = [UidEntry removeFlag:MCOMessageFlagFlagged to:self.uid];
+            [UidEntry removeFlag:MCOMessageFlagFlagged to:self.uid];
             break;
-            
         default:
             break;
     }
     
-    if (success) {
-        [CachedAction removeAction:self];
-    }
-    
-    return success;
+    [CachedAction removeAction:self];
 }
 
 

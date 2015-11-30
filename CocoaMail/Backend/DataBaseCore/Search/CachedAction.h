@@ -24,7 +24,7 @@
 +(NSMutableArray*) getActions;
 +(NSMutableArray*) getActionsForAccount:(NSInteger)account;
 
--(BOOL) doAction;
+-(void) doAction;
 
 
 @end

@@ -69,6 +69,7 @@
     
     UILocalNotification *localNotif =
     [options objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+    
     if (localNotif) {
         NSNumber *index = [localNotif.userInfo objectForKey:@"index"];
         NSNumber *accountNum = [localNotif.userInfo objectForKey:@"accountNum"];
@@ -76,6 +77,10 @@
         
         CCMLog(@"Opening email:%@", [conversation firstMail].title);
 
+        if (![[conversation firstMail] isRead]) {
+            [[conversation firstMail] toggleRead];
+        }
+        
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                             object:nil
                                                           userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
@@ -86,7 +91,6 @@
 
 - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
 {
-    //if (application.applicationState == UIApplicationStateActive) {
     if (notification && application.applicationState == 1) {
         NSNumber *index = [notification.userInfo objectForKey:@"index"];
         NSNumber *accountNum = [notification.userInfo objectForKey:@"accountNum"];
@@ -95,11 +99,14 @@
         CCMLog(@"Opening email:%@", [conversation firstMail].title);
         CCMLog(@"Application state:%ld", (long)application.applicationState);
         
+        if (![[conversation firstMail] isRead]) {
+            [[conversation firstMail] toggleRead];
+        }
+        
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                             object:nil
                                                           userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
     }
-    //}
 }
 
 -(void) applicationWillTerminate:(UIApplication*)application
@@ -125,9 +132,9 @@
             //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
             [[ImapSync sharedServices:accountIndex] saveCachedData];
             
-            if ([AppSettings badgeCount] == 1) {
+            /*if ([AppSettings badgeCount] == 1) {
                 [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
-            }
+            }*/
         }
     } else {
         [UIApplication sharedApplication].applicationIconBadgeNumber = 0;

@@ -113,7 +113,7 @@ static NSDateFormatter * s_df_hour = nil;
         Person* from = [[Persons sharedInstance] getPersonID:self.fromMail.fromPersonID];
         NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
         
-        [builder setTextBody:[NSString stringWithFormat:@"%@\n%@ %@ :\n\n%@\n",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
+        [builder setTextBody:[NSString stringWithFormat:@"<html>%@\n%@ %@ :\n\n%@\n</html>",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
     }
     
     [[builder header] setSubject:self.title];
@@ -248,7 +248,7 @@ static NSDateFormatter * s_df_hour = nil;
     
     Accounts* allAccounts = [Accounts sharedInstance];
     
-    if (allAccounts.currentAccountIdx == allAccounts.accountsCount - 1) {
+    if (allAccounts.currentAccount.isAllAccounts) {
         mail.fromPersonID = -(1 + [Accounts sharedInstance].defaultAccountIdx);;
     }
     else {
@@ -392,17 +392,16 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    BOOL moved = NO;
-    NSInteger nbInFolder = 0;
+    BOOL hasEmailInFolder = NO;
     
     for (Mail* m in self.mails) {
         if ([m.email uidEWithFolder:fromFolderIdx]) {
-            nbInFolder++;
+            hasEmailInFolder = YES;
         }
-        moved |= [m.email moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
+        [m.email moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
     }
     
-    NSAssert(moved, @"Oups moving %@ from:%@ to:%@ with %d emails in conversation %d in initial folder", [self firstMail].title, [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:[self accountIdx]],[AppSettings folderDisplayName:toFolderIdx forAccountIndex:[self accountIdx]], self.mails.count, nbInFolder);
+    NSAssert(hasEmailInFolder, @"Oups moving from:%@ to:%@ but no emails in conversation", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:[self accountIdx]],[AppSettings folderDisplayName:toFolderIdx forAccountIndex:[self accountIdx]]);
 }
 
 -(void) trash

@@ -860,7 +860,7 @@
     NSInteger count = 0;
 
     if (!self.isAllAccounts) {
-        if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx]) {
+        if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx]) {
             count = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
         }
         else {

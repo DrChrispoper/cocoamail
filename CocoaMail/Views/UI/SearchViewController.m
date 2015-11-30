@@ -352,7 +352,6 @@
 
 - (void)reFetch
 {
-    self.lastSearchLength++;
     [self _updateSearchResultWith:self.searchBar.text];
 }
 

@@ -498,29 +498,25 @@
 
 #pragma Email Actions
 
--(BOOL) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
+-(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    BOOL moved = NO;
-    
     if ([self uidEWithFolder:fromFolderIdx]) {
-        if([UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx]) {
-            moved = YES;
+        if ([self uidEWithFolder:toFolderIdx]) {
             [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+        }
+        else {
+            [UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx];
         }
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
-    
-    return moved;
 }
 
 -(void) trash
 {
     for (UidEntry* uidE in _uids) {
-        if ([UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]]) {
-            [UidEntry deleteMsgId:self.msgId fromfolder:uidE.folder];
-        }
+        [UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
     }
-
+    
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 

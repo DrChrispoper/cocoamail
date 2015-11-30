@@ -66,7 +66,7 @@
 +(NSMutableArray*) getEmails;
 +(Email*) resToEmail:(FMResultSet*)result;
 
--(BOOL) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
+-(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
 -(void) trash;
 -(void) star;
 -(void) read;

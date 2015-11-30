@@ -381,24 +381,22 @@
     return uidEntry;
 }
 
-+(BOOL) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to
++(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to
 {
     return [UidEntry move:[UidEntry getUidEntryWithFolder:from msgId:msg_id] toFolder:to];
 }
 
-+(BOOL) move:(UidEntry*)uidE toFolder:(NSInteger)to
++(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
 {
-    __block BOOL success = false;
-    
     //No Important folder at Index
     if (to == -1 || uidE.pk == 0) {
         CCMLog(@"Email not synced in folder, so can't move it");
-
-        return true;
+        return ;
     }
     
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
 
+    NSInteger fromFolderNb = uidE.folder;
     NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
     NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
     
@@ -410,41 +408,38 @@
                                                                                                                          destFolder:toFolderName];
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error) {
-                CCMLog(@"Updated folder!");
-                
-                success = true;
-                
+                CCMLog(@"Email copied to folder!");
+            
                 if (destUids) {
                     uidE.folder = to;
                     uidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
                     uidE.sonMsgId = uidE.sonMsgId;
                     [self addUid:uidE];
                 }
+                
+                [UidEntry deleteMsgId:uidE.msgId fromfolder:fromFolderNb];
+
             } else {
-                CCMLog(@"Error updating label:%@", error);
+                [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
+                CCMLog(@"Error copying email to folder:%@", error);
             }
         }];
     } else {
-        success = true;
         [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
     }
-    
-    return success;
 }
 
-+(BOOL) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)from
++(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)from
 {
     return [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:from msgId:msg_id]];
 }
 
-+(BOOL) deleteUidEntry:(UidEntry*)uidE
++(void) deleteUidEntry:(UidEntry*)uidE
 {
-    __block BOOL success = false;
-
     if (uidE.pk == 0) {
         CCMLog(@"Email not synced in folder, so can't delete it");
         
-        return true;
+        return;
     }
     
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
@@ -458,30 +453,27 @@
                                                                                                            flags:MCOMessageFlagDeleted];
         [op start:^(NSError* error) {
             if (!error) {
-                CCMLog(@"Updated flags!");
+                CCMLog(@"Updated the deleted flags!");
+                
+                MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:accountIndex].imapSession expungeOperation:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]];
+                [deleteOp start:^(NSError* error) {
+                    if (error) {
+                        CCMLog(@"Error expunging folder:%@", error);
+                    }
+                    else {
+                        CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
+                        [self removeFromFolderUid:uidE];
+                    }
+                }];
             }
             else {
-                CCMLog(@"Error updating flags:%@", error);
+                CCMLog(@"Error updating the deleted flags:%@", error);
+                [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
             }
-            
-            MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:accountIndex].imapSession expungeOperation:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]];
-            [deleteOp start:^(NSError* error) {
-                if (error) {
-                    CCMLog(@"Error expunging folder:%@", error);
-                }
-                else {
-                    success = true;
-                    CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
-                    [self removeFromFolderUid:uidE];
-                }
-            }];
         }];
     } else {
-        success = true;
         [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
     }
-    
-    return success;
 }
 
 +(void) deleteAllfromAccount:(NSInteger)accountN

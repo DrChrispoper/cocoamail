@@ -35,11 +35,11 @@
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 
 /// Copy email from origin folder to destination folder.
-+(BOOL) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to;
-+(BOOL) move:(UidEntry*)uidE toFolder:(NSInteger)to;
++(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to;
++(void) move:(UidEntry*)uidE toFolder:(NSInteger)to;
 /// Mark as deleted in the origin folder. Expunge origin folder.
-+(BOOL) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
-+(BOOL) deleteUidEntry:(UidEntry*)uidE;
++(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
++(void) deleteUidEntry:(UidEntry*)uidE;
 +(void) deleteAllfromAccount:(NSInteger)accountN;
 /// Add Flag
 +(BOOL) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
