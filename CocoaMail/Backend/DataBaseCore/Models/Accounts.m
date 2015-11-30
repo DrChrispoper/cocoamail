@@ -679,10 +679,12 @@
         if (error) {
             CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.")];
+            [CCMStatus dismissAfter:2];
         }
         else {
             CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")];
+            [CCMStatus dismissAfter:2];
         }
     }];
     

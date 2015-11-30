@@ -584,7 +584,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     tv.backgroundColor = [UIColor whiteColor];
     tv.font = [UIFont systemFontOfSize:15];
     tv.delegate = self;
-    //[bdView addSubview:tv];
+    [bdView addSubview:tv];
     tv.text = @"\n\n\n";
     
     NSRange start = {0, 0};

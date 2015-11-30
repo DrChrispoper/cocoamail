@@ -86,6 +86,14 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc
 {
+    if (!self.content) {
+        self.content = @"";
+    }
+    else {
+        self.content = [self.content stringByReplacingOccurrencesOfString:@"\n" withString:@"<br/>"];
+        self.content = [self.content stringByReplacingOccurrencesOfString:@"\r" withString:@"<br/>"];
+    }
+    
     MCOMessageBuilder* builder = [[MCOMessageBuilder alloc] init];
     [[builder header] setFrom:[MCOAddress addressWithDisplayName:[AppSettings name:idx] mailbox:[AppSettings username:idx]]];
     
@@ -104,7 +112,7 @@ static NSDateFormatter * s_df_hour = nil;
         [[builder header] setBcc:to];
     }
     
-    [builder setTextBody:self.content];
+    [builder setHTMLBody:self.content];
 
     if (self.fromMail) {
         [[builder header] setReferences:@[self.fromMail.email.getSonID]];
@@ -113,7 +121,7 @@ static NSDateFormatter * s_df_hour = nil;
         Person* from = [[Persons sharedInstance] getPersonID:self.fromMail.fromPersonID];
         NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
         
-        [builder setTextBody:[NSString stringWithFormat:@"<html>%@\n%@ %@ :\n\n%@\n</html>",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
+        [builder setHTMLBody:[NSString stringWithFormat:@"%@<br/>%@ %@ :<br/><br/>%@<br/>",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
     }
     
     [[builder header] setSubject:self.title];
