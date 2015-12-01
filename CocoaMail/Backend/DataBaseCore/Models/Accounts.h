@@ -101,7 +101,7 @@
 -(void) deliverUpdate:(NSArray<Email*>*)emails;
 -(void) deliverDelete:(NSArray<Email*>*)emails;
 
--(void) doPersonSearch:(NSArray*)addressess;
+-(void) doPersonSearch:(Person*)person;
 -(void) doTextSearch:(NSString*)searchString;
 
 -(void) localFetchMore:(BOOL)loadMore;

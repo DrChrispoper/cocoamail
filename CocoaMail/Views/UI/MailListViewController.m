@@ -228,7 +228,7 @@ static NSInteger pageCount = 15;
                 if ([m haveAttachment]) {
                     //if ([m.email.sender.mailbox isEqualToString:self.onlyPerson.email]) {
                         [c addMail:m];
-                     //   break;
+                    //   break;
                     //}
                 }
             }
@@ -272,28 +272,6 @@ static NSInteger pageCount = 15;
 {
     [super viewWillAppear:animated];
     
-    BOOL setHidden = YES;
-    
-    if ([Accounts sharedInstance].currentAccount.isAllAccounts) {
-        for (Account* ac in [Accounts sharedInstance].accounts) {
-            if (!ac.isAllAccounts) {
-                if (![[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:self.folder forAccountIndex:ac.idx] accountIndex:ac.idx][@"fullsynced"] boolValue]) {
-                    setHidden = NO;
-                    break;
-                }
-            }
-        }
-    }
-    else {
-        setHidden = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:self.folder forAccountIndex:[Accounts sharedInstance].currentAccountIdx] accountIndex:[Accounts sharedInstance].currentAccountIdx][@"fullsynced"] boolValue];
-    }
-    
-    if (self.onlyPerson) {
-        setHidden = YES;
-    }
-    
-    [self.table.tableFooterView setHidden:setHidden];
-    
     [self.table reloadData];
 }
 
@@ -301,12 +279,13 @@ static NSInteger pageCount = 15;
 {
     [super viewDidAppear:animated];
     
+    //TODO:TODO? :)
+    //[[CocoaButton sharedButton] enterLevel:1];
+    
     [[Accounts sharedInstance].currentAccount showProgress];
-    
-    [ViewController animateCocoaButtonRefresh:YES];
-    
+        
     if (self.onlyPerson) {
-        [[Accounts sharedInstance].currentAccount doPersonSearch:@[self.onlyPerson]];
+        [[Accounts sharedInstance].currentAccount doPersonSearch:self.onlyPerson];
     }
 }
 
@@ -694,14 +673,15 @@ static NSInteger pageCount = 15;
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
     
-    if (!self.onlyPerson && self.indexSet.count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    ConversationIndex* conversationIndex = convs[indexPath.row];
+
+    if (!self.onlyPerson && self.indexSet[conversationIndex.account].count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
         [self reFetch];
     }
     
-    ConversationIndex* conversationIndex = convs[indexPath.row];
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
     
-    if (!self.onlyPerson && self.indexSet.count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    if (!self.onlyPerson && self.indexSet[conversationIndex.account].count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
         [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
@@ -1002,6 +982,12 @@ static NSInteger pageCount = 15;
 
 - (void)reFetch
 {
+    NSInteger mailCountBefore = 0;
+
+    for (NSMutableIndexSet* indexSet in self.indexSet) {
+        mailCountBefore += indexSet.count;
+    }
+    
     self.countBeforeLoadMore =  MIN(self.indexSet.count, self.countBeforeLoadMore + pageCount);
     
     if (self.convByDay.count <= pageCount * self.pageIndex ) {
@@ -1018,6 +1004,14 @@ static NSInteger pageCount = 15;
         }
     }
     
+    NSInteger mailCountAfer = 0;
+    
+    for (NSMutableIndexSet* indexSet in self.indexSet) {
+        mailCountAfer += indexSet.count;
+    }
+    
+    [self.table.tableFooterView setHidden:(mailCountBefore == mailCountAfer)];
+
     self.pageIndex++;
     [self.table reloadData];
 }

@@ -14,8 +14,9 @@
 
 #import <MailCore/Mailcore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
-#import "Email.h"
 
+
+@class Person;
 
 @interface SyncManager : NSObject {    
 	// sync-related stuff
@@ -37,7 +38,7 @@
 -(RACSignal*) refreshImportantFolder:(NSInteger)folder;
 -(RACSignal*) syncInboxFoldersBackground;
 
--(RACSignal*) searchThings:(NSArray*)things;
+-(RACSignal*) searchPerson:(Person*)person;
 -(RACSignal*) searchText:(NSString*)text;
 
 //Update recorded state

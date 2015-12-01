@@ -442,6 +442,10 @@
     if (_connected) {
         NSInteger __block new = 0;
         
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [ViewController animateCocoaButtonRefresh:YES];
+        }];
+        
         [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.checking-email", @"Checking for new emails")];
 
         [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES] deliverOn:[RACScheduler mainThreadScheduler]]
@@ -451,6 +455,10 @@
          } error:^(NSError* error) {
              CCMLog(@"Error: %@", error.localizedDescription);
 
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 [ViewController animateCocoaButtonRefresh:NO];
+             }];
+             
              if (error.code == 9001 || error.code == 9002) {
                  
                  if (new == 0) {
@@ -473,6 +481,10 @@
              }
          } completed:^{
 
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 [ViewController animateCocoaButtonRefresh:NO];
+             }];
+             
              if (new == 0) {
                  [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.no-new-emails", @"No new emails")];
              }
@@ -1234,20 +1246,16 @@
     [self.mailListSubscriber removeConversationList:idxs];
 }
 
--(void) doPersonSearch:(NSArray*)addressess
+-(void) doPersonSearch:(Person*)person
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
     NSInteger refBatch = 5;
     NSInteger __block batch = refBatch;
-
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        [ViewController animateCocoaButtonRefresh:YES];
-    }];
     
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] senderSearch:addressess inAccount:self.idx]
+        [[[SearchRunner getSingleton] senderSearch:person inAccount:self.idx]
          subscribeNext:^(Email* email) {
                  [self insertPersonRows:email];
                  if (batch-- == 0) {
@@ -1265,20 +1273,18 @@
     }];
     
     //ServerSearch
-    [[[[SyncManager getSingleton] searchThings:addressess] deliverOn:[RACScheduler mainThreadScheduler]]
+    [[[[SyncManager getSingleton] searchPerson:person] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          [self insertPersonRows:email];
      }
      error:^(NSError* error) {
          CCMLog(@"Error: %@", error.localizedDescription);
          [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-             [ViewController animateCocoaButtonRefresh:NO];
              [self.mailListSubscriber reFetch];
          }];
      }
      completed:^{
          [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-             [ViewController animateCocoaButtonRefresh:NO];
              [self.mailListSubscriber reFetch];
          }];
      }];
@@ -1290,10 +1296,6 @@
     
     NSInteger refBatch = 5;
     NSInteger __block batch = refBatch;
-    
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        [ViewController animateCocoaButtonRefresh:YES];
-    }];
     
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
@@ -1322,13 +1324,11 @@
      error:^(NSError* error) {
          CCMLog(@"Error: %@", error.localizedDescription);
          [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-             [ViewController animateCocoaButtonRefresh:NO];
              [self.mailListSubscriber reFetch];
          }];
      }
      completed:^{
          [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-             [ViewController animateCocoaButtonRefresh:NO];
              [self.mailListSubscriber reFetch];
          }];
      }];
@@ -1348,10 +1348,6 @@
     
     if (!_isLoadingMore && !_hasLoadedAllLocal) {
         _isLoadingMore = YES;
-        
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            [ViewController animateCocoaButtonRefresh:YES];
-        }];
         
         NSInteger refBatch = 50;
         
@@ -1385,7 +1381,6 @@
              }
              
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                 [ViewController animateCocoaButtonRefresh:NO];
                  [self.mailListSubscriber reFetch];
              }];
          }];

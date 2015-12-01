@@ -130,8 +130,8 @@
 +(void) setLastAccountIndex:(NSInteger)accountIndex;
 
 // in-store sales
-+(BOOL) featurePurchased:(NSString*)productIdentifier;
-+(void) setFeaturePurchased:(NSString*)productIdentifier;
++(BOOL) premiumPurchased;
++(void) setPremiumPurchased;
 
 +(void) firstFullSyncDone:(NSInteger)accountIndex;
 +(BOOL) isFirstFullSyncDone:(NSInteger)accountIndex;;

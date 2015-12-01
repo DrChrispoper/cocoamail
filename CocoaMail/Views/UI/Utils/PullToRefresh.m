@@ -80,24 +80,22 @@
     if (scrollView.contentOffset.y < (-scrollView.contentInset.top-60)) {
         
         [self.pullToRefresh startAnimating];
-        [ViewController animateCocoaButtonRefresh:YES];
         
         //[scrollView setContentOffset:scrollView.contentOffset animated:NO];
         
-        UIEdgeInsets lastInset = scrollView.contentInset;
+        /*UIEdgeInsets lastInset = scrollView.contentInset;
         
         UIEdgeInsets newInset = scrollView.contentInset;
         newInset.top += 65;
         
         [UIView animateWithDuration:0.2 animations:^{
             scrollView.contentInset = newInset;
-        }];
+        }];*/
         
         // fake async
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [ViewController animateCocoaButtonRefresh:YES];
             [self.pullToRefresh stopAnimating];
-            scrollView.contentInset = lastInset;
+            //scrollView.contentInset = lastInset;
             [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
             [[Accounts sharedInstance].currentAccount showProgress];
             [[Accounts sharedInstance].currentAccount localFetchMore:NO];

@@ -136,6 +136,56 @@
     self.backViewAnim.backgroundColor = cac.userColor;
 }
 
+-(void) enterLevel:(NSInteger)level
+{
+    self.userInteractionEnabled = YES;
+    self.nameView.text = @"";
+
+    UIImage* imageLevel;
+
+    switch (level) {
+        case 1: //List
+            imageLevel = [UIImage imageNamed:@"swipe_cocoabutton_folder"];
+            
+            break;
+            
+        case 2: //Conversation
+            imageLevel = [UIImage imageNamed:@"swipe_cocoabutton_spam"];
+            
+            break;
+            
+        default:
+            break;
+    }
+    
+    UIImageView* iv = [[UIImageView alloc] initWithImage:imageLevel];
+    iv.contentMode = UIViewContentModeCenter;
+    iv.frame = self.nameView.bounds;
+    [self.nameView addSubview:iv];
+    
+    Account* cac = [[Accounts sharedInstance] currentAccount];
+
+    [UIView animateWithDuration:0.01
+                          delay:0.12
+                        options:UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         self.transform = CGAffineTransformMakeScale(0.84f, 1.f);
+                     }
+                     completion:^(BOOL fini){
+                         [self _boingAnimationForView:self andThen:^{
+                             self.userInteractionEnabled = YES;
+                             self.openState = 0;
+                             
+                             for (UIView* iv in [self.nameView subviews]) {
+                                 [iv removeFromSuperview];
+                             }
+                             
+                             self.nameView.text = cac.codeName;
+                         }];
+                     }];
+
+}
+
 -(void) refreshAnimation:(BOOL)anim
 {
     if (anim && !self.isSpinning) {

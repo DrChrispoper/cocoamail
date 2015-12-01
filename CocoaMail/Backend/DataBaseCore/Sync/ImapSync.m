@@ -449,7 +449,7 @@ static NSArray * sharedServices = nil;
     }];
 }
 
--(RACSignal*) runSearchThing:(NSArray*)things
+-(RACSignal*) runSearchPerson:(Person*)person
 {
     @weakify(self);
     
@@ -462,7 +462,7 @@ static NSArray * sharedServices = nil;
         
         NSInteger currentFolder = [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex forBaseFolder:FolderTypeAll];
         NSString* folder = [AppSettings folderServerName:currentFolder forAccountIndex:self.currentAccountIndex];
-        MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:((Person*)things[0]).email];
+        MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:person.email];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:self.currentAccountIndex].imapSession searchExpressionOperationWithFolder:folder expression:expr];
         
         [so start:^(NSError* error, MCOIndexSet* searchResult) {

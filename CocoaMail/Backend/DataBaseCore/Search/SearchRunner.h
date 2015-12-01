@@ -8,8 +8,9 @@
 
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "sqlite3.h"
-#import "Email.h"
 
+@class Person;
+@class Email;
 
 @interface SearchRunner : NSObject {
 	NSOperationQueue* operationQueue;
@@ -17,7 +18,7 @@
 }
 
 -(RACSignal*) search:(NSString*)searchText inAccount:(NSInteger)accountIndex;
--(RACSignal*) senderSearch:(NSArray*)addressess inAccount:(NSInteger)accountIndex;
+-(RACSignal*) senderSearch:(Person*)person inAccount:(NSInteger)accountIndex;
 
 -(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex;
 -(RACSignal*) threadSearch:(NSString*)thread inAccount:(NSInteger)accountIndex;

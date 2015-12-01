@@ -47,5 +47,6 @@
 
 -(void) openWide;
 
+-(void) enterLevel:(NSInteger)level;
 
 @end

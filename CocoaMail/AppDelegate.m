@@ -32,9 +32,6 @@
         [self resetApp];
     }
     
-    //TOOD:IAP
-    [self activatePurchasedFeatures];
-    
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924"
                captureSource:IBGCaptureSourceUIKit
              invocationEvent:IBGInvocationEventScreenshot];
@@ -122,14 +119,14 @@
 }
 
 -(void) applicationWillResignActive:(UIApplication*)application
-{}
+{
+
+}
 
 -(void) applicationDidBecomeActive:(UIApplication*)application
 {
-    
-    if (([AppSettings numActiveAccounts])>0) {
+    if ([AppSettings numActiveAccounts] > 0) {
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
             [[ImapSync sharedServices:accountIndex] saveCachedData];
             
             /*if ([AppSettings badgeCount] == 1) {
@@ -220,11 +217,6 @@ didSignInForUser:(GIDGoogleUser*)user
 }
 
 #pragma mark - Settings
-
--(void) activatePurchasedFeatures
-{
-    [AppSettings setFeaturePurchased:@"Premium"];
-}
 
 -(void) resetApp
 {

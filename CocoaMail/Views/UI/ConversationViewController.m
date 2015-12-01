@@ -76,7 +76,6 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
-    //
     Persons* p = [Persons sharedInstance];
     
     if (p.idxMorePerson == 0) {
@@ -106,6 +105,14 @@
     [self _setup];
     
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    //TODO:TODO? :)
+    //[[CocoaButton sharedButton] enterLevel:2];
 }
 
 -(void) cleanBeforeGoingBack

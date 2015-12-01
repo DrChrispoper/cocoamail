@@ -77,11 +77,11 @@
     [super viewDidAppear:animated];
     [self.table reloadData];
     
-    if ([Accounts sharedInstance].accountsCount ==  1) {
+    CCMLog(@"Num active accounts:%d", [AppSettings numActiveAccounts]);
+    
+    if ([AppSettings numActiveAccounts] ==  0) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
     }
-    
-    //[[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
 }
 
 -(NSArray*) nextViewControllerInfos

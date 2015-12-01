@@ -174,20 +174,20 @@ static SyncManager * singleton = nil;
     }
 }
 
--(RACSignal*) searchThings:(NSArray*)things
+-(RACSignal*) searchPerson:(Person*)person
 {
     if (kisActiveAccountAll) {
         NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
         
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
             //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchThing:things]]];
+            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchPerson:person]]];
         }
         
         return [RACSignal merge:newEmailsSignalArray];
     }
     else {
-        return [self emailForSignal:[[ImapSync sharedServices] runSearchThing:things]];
+        return [self emailForSignal:[[ImapSync sharedServices] runSearchPerson:person]];
     }
 }
 

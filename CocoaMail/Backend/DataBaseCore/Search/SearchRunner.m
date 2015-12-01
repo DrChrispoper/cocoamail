@@ -440,19 +440,19 @@ static SearchRunner * searchSingleton = nil;
 // Sender Search
 #pragma mark Sender Search
 
--(RACSignal*) senderSearch:(NSArray*)addressess inAccount:(NSInteger)accountIndex
+-(RACSignal*) senderSearch:(Person*)person inAccount:(NSInteger)accountIndex
 {
     self.cancelled = NO;
     
-    NSArray* dbNumbers = [SearchRunner dbNumsInAccount:kActiveAccountIndex];
+    NSArray* dbNumbers = [SearchRunner dbNumsInAccount:accountIndex];
     
     NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
     dbNumbers = [dbNumbers sortedArrayUsingDescriptors:@[sortOrder]];
     
-    return [self searchForSignal:[self performSenderSearch:addressess withDbNum:dbNumbers inAccount:accountIndex]];
+    return [self searchForSignal:[self performSenderSearch:person withDbNum:dbNumbers inAccount:accountIndex]];
 }
 
--(RACSignal*) performSenderSearch:(NSArray*)addresses withDbNum:(NSArray*)dbNums inAccount:(NSInteger)accountIndex
+-(RACSignal*) performSenderSearch:(Person*)person withDbNum:(NSArray*)dbNums inAccount:(NSInteger)accountIndex
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
@@ -465,15 +465,14 @@ static SearchRunner * searchSingleton = nil;
          "FROM  email, search_email "
          "WHERE email.pk = search_email.rowid AND "];
         
-        for (Person* p in addresses) {
-            [query appendFormat:@"search_email.people LIKE '%@%@%@' OR", @"%", p.email,@"%"];
-        }
+        [query appendFormat:@"search_email.people LIKE '%@%@%@'", @"%", person.email,@"%"];
         
-        NSString* queryString = [query substringToIndex:(query.length - 3)];
+        //NSString* queryString = [query substringToIndex:(query.length - 3)];
+        //query = [NSMutableString string];
         
-        query = [NSMutableString string];
-        [query appendFormat:@"%@ ORDER BY email.datetime DESC;", queryString];
-        queryString = query;
+        [query appendString:@" ORDER BY email.datetime DESC;"];
+        
+        NSString* queryString = query;
         
         for (NSNumber* dbNumObj in dbNums) {
             int dbNum = [dbNumObj intValue];
@@ -514,6 +513,10 @@ static SearchRunner * searchSingleton = nil;
                     if (![[results stringForColumnIndex:9] isEqualToString:@""]) {
                         email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]];
                     }
+                    
+                    /*if (![email.sender.mailbox isEqualToString:person.email] || ![email.sender.mailbox isEqualToString:[AppSettings username:accountIndex]]) {
+                        continue;
+                    }*/
                     
                     email.htmlBody = [results stringForColumnIndex:10];
                     email.body = email.body?:@"";

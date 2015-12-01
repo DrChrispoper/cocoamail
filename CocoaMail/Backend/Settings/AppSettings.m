@@ -206,14 +206,14 @@
     return [defaults boolForKey:[NSString stringWithFormat:@"first_sync_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
 }
 
-+(BOOL) featurePurchased:(NSString*)productIdentifier
++(BOOL) premiumPurchased
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	
     return  [defaults boolForKey:@"premium"];
 }
 
-+(void) setFeaturePurchased:(NSString*)productIdentifier
++(void) setPremiumPurchased
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	[defaults setObject:@YES forKey:@"premium"];
