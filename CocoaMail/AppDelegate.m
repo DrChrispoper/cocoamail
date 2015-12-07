@@ -64,30 +64,17 @@
 {
     [self.window makeKeyAndVisible];
     
-    UILocalNotification *localNotif =
-    [options objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
-    
-    if (localNotif) {
-        NSNumber *index = [localNotif.userInfo objectForKey:@"index"];
-        NSNumber *accountNum = [localNotif.userInfo objectForKey:@"accountNum"];
-        Conversation* conversation = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[accountNum integerValue]]] getConversationForIndex:[index integerValue]];
-        
-        CCMLog(@"Opening email:%@", [conversation firstMail].title);
-
-        if (![[conversation firstMail] isRead]) {
-            [[conversation firstMail] toggleRead];
-        }
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
-                                                            object:nil
-                                                          userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
-    }
-    
     return YES;
 }
 
 - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
 {
+    CCMLog(@"Two");
+
+    for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+        [[ImapSync sharedServices:accountIndex] saveCachedData];
+    }
+
     if (notification && application.applicationState == 1) {
         NSNumber *index = [notification.userInfo objectForKey:@"index"];
         NSNumber *accountNum = [notification.userInfo objectForKey:@"accountNum"];
@@ -96,9 +83,6 @@
         CCMLog(@"Opening email:%@", [conversation firstMail].title);
         CCMLog(@"Application state:%ld", (long)application.applicationState);
         
-        if (![[conversation firstMail] isRead]) {
-            [[conversation firstMail] toggleRead];
-        }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                             object:nil
@@ -120,7 +104,11 @@
 
 -(void) applicationWillResignActive:(UIApplication*)application
 {
+}
 
+-(void) applicationWillEnterForeground:(UIApplication *)application
+{
+    CCMLog(@"One");
 }
 
 -(void) applicationDidBecomeActive:(UIApplication*)application

@@ -32,14 +32,13 @@
 +(SyncManager*) getSingleton;
 
 //-(RACSignal*) refreshActiveFolder;
--(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart;
--(RACSignal*) refreshInbox;
--(RACSignal*) syncFolders;
--(RACSignal*) refreshImportantFolder:(NSInteger)folder;
+-(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) syncFoldersAccountIndex:(NSInteger)accountIndex;
+-(RACSignal*) refreshImportantFolder:(NSInteger)folder accountIndex:(NSInteger)accountIndex;
 -(RACSignal*) syncInboxFoldersBackground;
 
--(RACSignal*) searchPerson:(Person*)person;
--(RACSignal*) searchText:(NSString*)text;
+-(RACSignal*) searchPerson:(Person*)person accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) searchText:(NSString*)text accountIndex:(NSInteger)accountIndex;
 
 //Update recorded state
 -(NSInteger) folderCount:(NSInteger)accountIndex;

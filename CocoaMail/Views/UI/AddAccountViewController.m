@@ -450,6 +450,7 @@
     
     if (networkStatus == NotReachable) {
         [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.no-internet", @"Alert message: Not connected to Internet")];
+        return;
     }
     
     AddAccountViewController* __weak bself = self;
@@ -479,9 +480,14 @@
                 [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
-            /*else if(strongSelf.accountVal.imapError.code == MCOErrorNoValidServerFound)  {
-                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
-            }*/
+            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection)  {
+                if (networkStatus != NotReachable) {
+                    [ViewController presentAlertWIP:@"Please try again 😇"];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
+                }
+                else {
+                    [ViewController presentAlertWIP:@"Connection error"];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
+                }
+            }
             else {
                 [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
             }

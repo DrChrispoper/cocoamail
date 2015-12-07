@@ -213,9 +213,12 @@ static NSArray * sharedServices = nil;
                 CCMLog(@"Houston on a un probleme avec les emails en cache");
                 continue;
             }
+            
             NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:email];
             [ep.operationQueue addOperation:nextOp];
         }
+        
+        self.cachedData = nil;
     }
 }
 
@@ -382,7 +385,6 @@ static NSArray * sharedServices = nil;
                             
                             if (count == 0) {
                                 [subscriber sendCompleted];
-                                //CCMLog(@"Complete sent");
                             }
                             //We already have email with folder
                             continue;
@@ -583,7 +585,6 @@ static NSArray * sharedServices = nil;
                             
                             if (count == 0) {
                                 [subscriber sendCompleted];
-                                //CCMLog(@"Complete sent");
                             }
                             //We already have email with folder
                             continue;
@@ -637,7 +638,6 @@ static NSArray * sharedServices = nil;
                                 
                                 if (count == 0) {
                                     [subscriber sendCompleted];
-                                    //CCMLog(@"Complete sent");
                                 }
                             }];
                         }];
@@ -982,13 +982,13 @@ static NSArray * sharedServices = nil;
 {
     //Cache email if in Background
     if (isInBackground) {
+        
         BOOL isInInbox = (currentFolder == [AppSettings importantFolderNumforAccountIndex:self.currentAccountIndex forBaseFolder:FolderTypeInbox]);
         BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
         
         if (isInInbox & isUnread) {
             if (![self.emailIDs containsObject:email.msgId]) {
                 CCMLog(@"Had Cached %ld Emails", (unsigned long)self.emailIDs.count);
-                CCMLog(@"Notifying Email: %@", email.subject);
                 [self.cachedData addObject:email];
                 [self.emailIDs addObject:email.msgId];
             }
@@ -1204,7 +1204,7 @@ static NSArray * sharedServices = nil;
 
 +(void) runInboxUnread:(NSInteger)accountIndex
 {
-        if (![ImapSync isNetworkAvailable]) {
+        if (![ImapSync isNetworkAvailable] | ([Accounts sharedInstance].accountsCount == accountIndex)) {
             return;
         }
         

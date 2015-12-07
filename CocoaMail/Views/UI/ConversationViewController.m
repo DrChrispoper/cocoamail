@@ -24,7 +24,6 @@
 
 -(Mail*) mailDisplayed:(SingleMailView*)mailView;
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
--(void) makeConversationFav:(BOOL)isFav;
 -(void) openURL:(NSURL*)url;
 -(void) openWebURL:(NSURL*)url;
 -(void) shareAttachment:(Attachment*)att;
@@ -149,8 +148,7 @@
     lbl.text = [self.conversation firstMail].title;
     lbl.numberOfLines = 0;
     lbl.textColor = [UIColor whiteColor];
-    //lbl.font = [UIFont boldSystemFontOfSize:16];
-    //lbl.textAlignment = NSTextAlignmentCenter;
+    lbl.lineBreakMode = NSLineBreakByWordWrapping;
     lbl.font = [UIFont systemFontOfSize:16];
     lbl.textAlignment = NSTextAlignmentNatural;
     
@@ -187,6 +185,10 @@
         NSString* day = m.day;
         NSString* hour = m.hour;
         //NSString* mail = m.content;
+        
+        if ((idx ==0) && !m.isRead) {
+            [m toggleRead];
+        }
 
         posY = [self _addHeaderDay:day hour:hour atYPos:posY inView:contentView];
         posY = [self _addMail:m withIndex:idx extended:(idx==0) atYPos:posY inView:contentView];
@@ -224,15 +226,15 @@
     return self.conversation.mails[mailView.idxInConversation];
 }
 
--(void) makeConversationFav:(BOOL)isFav
+/*-(void) makeConversationFav:(BOOL)isFav
 {
     //Account* ac = [[Accounts sharedInstance] currentAccount];
     //[ac manage:self.conversation isFav:isFav];
     
-    for (SingleMailView* smv in self.allMailViews) {
+    //for (SingleMailView* smv in self.allMailViews) {
         [smv updateFavUI:isFav];
-    }
-}
+    //}
+}*/
 
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight
 {
@@ -274,6 +276,7 @@
     
     [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
 }
+
 -(void) openWebURL:(NSURL*)url
 {
     if ([self isEmailRegExp:url.absoluteString]) {
@@ -635,7 +638,6 @@
     
     
     if (extended) {
-        
         //UIFont* textFont = [UIFont systemFontOfSize:16];
         
         //CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
@@ -679,7 +681,12 @@
         
         height = f.size.height;
         
-        n.text = person.name;
+        if (person.isGeneric) {
+            n.text = mail.email.sender.displayName;;
+        }
+        else {
+            n.text = person.name;
+        }
 
         f = n.frame;
         f.size.width = self.posXtoUsers - f.origin.x;
@@ -748,12 +755,17 @@
             
             if (name == [btns lastObject]) {
                 [b addTarget:self action:@selector(_fav:) forControlEvents:UIControlEventTouchUpInside];
-                b.selected = mail.isFav;
+                if (mail.isFav) {
+                    b.selected = YES;
+                }
                 self.favoriBtn = b;
             }
             else if (name == [btns firstObject]) {
                 [b addTarget:self action:@selector(_masr:) forControlEvents:UIControlEventTouchUpInside];
-                b.selected = mail.isRead;
+                if (mail.isRead) {
+                    b.selected = YES;
+                }
+                
             }
             else {
                 b.tag = idxTag++;
@@ -850,7 +862,10 @@
 {
     Mail* mail = [self.delegate mailDisplayed:self];
     [mail toggleFav];
-    [self.delegate makeConversationFav:!mail.isFav];
+    //[self updateFavUI:mail.isFav];
+    [self setupWithText:mail extended:YES];
+
+    //[self.delegate makeConversationFav:mail.isFav];
 }
 
 -(void) _extend:(UITapGestureRecognizer*)tgr
@@ -881,7 +896,9 @@
             }
             else {
                 Mail* mail = [self.delegate mailDisplayed:self];
-                [self.delegate makeConversationFav:!mail.isFav];
+                [mail toggleFav];
+                [self setupWithText:mail extended:NO];
+                //[self.delegate makeConversationFav:!mail.isFav];
             }
             return;
         }

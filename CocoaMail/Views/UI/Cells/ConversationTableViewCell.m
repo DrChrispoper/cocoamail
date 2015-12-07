@@ -427,9 +427,10 @@
                             //}
                             
                             // tap cell
-                            if (![self.delegate isPresentingDrafts] && !self.mail.isRead) {
+                            //Doing it in conversation view
+                            /*if (![self.delegate isPresentingDrafts] && !self.mail.isRead) {
                                 [self.mail toggleRead];
-                            }
+                            }*/
                             
                             UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
                             overView.backgroundColor = [UIColor lightGrayColor];
@@ -569,7 +570,16 @@
     }
     else {
         p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
-        self.name.text = p.name;
+        NSString* name;
+        
+        if (p.isGeneric) {
+            name = mail.email.sender.displayName;;
+        }
+        else {
+            name = p.name;
+        }
+        
+        self.name.text = name;
     }
 
     [self.badge.subviews.firstObject removeFromSuperview];
@@ -600,7 +610,7 @@
         }
         
         if (idxQuickSwipe == QuickSwipeMark) {
-            self.leftAction.highlighted = YES;
+            self.leftAction.highlighted = NO;
         }
         
     }
@@ -609,7 +619,7 @@
         self.readMask = nil;
         
         if (idxQuickSwipe == QuickSwipeMark) {
-            self.leftAction.highlighted = NO;
+            self.leftAction.highlighted = YES;
         }
     }
     

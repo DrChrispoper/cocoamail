@@ -63,7 +63,6 @@
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
 
-    
     table.allowsSelection = false;
     table.rowHeight = 90;
     table.separatorStyle = UITableViewCellSeparatorStyleNone;
@@ -71,6 +70,9 @@
     table.dataSource = self;
     table.delegate = self;
     self.table = table;
+    
+    self.searchQueue = [NSOperationQueue new];
+    [self.searchQueue setMaxConcurrentOperationCount:1];
 }
 
 -(void) _hideKeyboard
@@ -128,7 +130,9 @@
 -(void) cleanBeforeGoingBack
 {
     [self _keyboardNotification:NO];
-    
+    [[SearchRunner getSingleton] cancel];
+    [self.searchQueue cancelAllOperations];
+
     self.table.delegate = nil;
     self.table.dataSource = nil;
 }
@@ -333,9 +337,14 @@
 
 -(void) searchBar:(UISearchBar*)searchBar textDidChange:(NSString*)searchText
 {
-    [self _updateSearchResultWith:searchBar.text];
-
-    [self.table reloadData];
+    [self.searchQueue addOperationWithBlock:^{
+        [self _updateSearchResultWith:searchBar.text];
+        
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self.table reloadData];
+        }];
+    }];
+     
     
     [self.searchBar becomeFirstResponder];
     
@@ -352,7 +361,9 @@
 
 - (void)reFetch
 {
-    [self _updateSearchResultWith:self.searchBar.text];
+    [self.searchQueue addOperationWithBlock:^{
+        [self _updateSearchResultWith:self.searchBar.text];
+    }];
 }
 
 @end

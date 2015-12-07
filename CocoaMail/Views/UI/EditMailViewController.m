@@ -647,6 +647,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [contentView addSubview:oldView];
         oldView.tag = ContentOld;
     }
+    else {
+        self.mail.transferContent = @"";
+    }
     
     if (self.mail.fromMail != nil) {
         

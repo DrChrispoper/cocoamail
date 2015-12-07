@@ -197,7 +197,14 @@ static NSDateFormatter * s_df_date = nil;
     
     Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
     
-    NSString* mailFromName = p.name;
+    NSString* mailFromName;
+    
+    if (p.isGeneric) {
+        mailFromName = mail.email.sender.displayName;;
+    }
+    else {
+        mailFromName = p.name;
+    }
 
     NSRange r = [mailFromName rangeOfString:word options:NSCaseInsensitiveSearch];
     

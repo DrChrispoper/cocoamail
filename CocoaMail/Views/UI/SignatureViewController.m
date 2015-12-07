@@ -229,7 +229,6 @@
             [tf setAlpha:0.5];
         }
         
-        
         [cell addSubview:tf];
     
         NSString* action = infoCell[DACTION];

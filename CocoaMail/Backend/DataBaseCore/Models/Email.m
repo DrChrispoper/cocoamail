@@ -135,6 +135,7 @@
             self.pk = email.pk;
             self.body = email.body;
             self.htmlBody = email.htmlBody;
+            
         }
         
         [results close];
@@ -461,6 +462,8 @@
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
     
+    [email isInMultipleAccounts];
+
     return email;
 }
 

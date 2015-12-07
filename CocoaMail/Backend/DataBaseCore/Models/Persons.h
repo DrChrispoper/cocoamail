@@ -38,6 +38,7 @@
 @property (nonatomic, strong) NSString* name;
 @property (nonatomic, strong) NSString* codeName;
 @property (nonatomic, strong) NSString* email;
+@property (nonatomic) BOOL isGeneric;
 
 -(void) linkToAccount:(Account*)account;
 
@@ -45,5 +46,6 @@
 
 +(Person*) createWithName:(NSString*)name email:(NSString*)mail icon:(UIImage*)icon codeName:(NSString*)codeName;
 
+-(BOOL) hasGeneriEmail;
 
 @end

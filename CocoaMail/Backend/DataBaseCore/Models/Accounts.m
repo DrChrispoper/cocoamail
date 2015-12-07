@@ -448,7 +448,7 @@
         
         [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.checking-email", @"Checking for new emails")];
 
-        [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES] deliverOn:[RACScheduler mainThreadScheduler]]
+        [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
          subscribeNext:^(Email* email) {
              new++;
              [self insertRows:email];
@@ -526,7 +526,7 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
-    [[[[SyncManager getSingleton] syncActiveFolderFromStart:NO] deliverOn:[RACScheduler mainThreadScheduler]]
+    [[[[SyncManager getSingleton] syncActiveFolderFromStart:NO accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          //[self insertRows:email];
      } error:^(NSError* error) {
@@ -1055,7 +1055,7 @@
     if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
         
-    [[[SyncManager getSingleton] refreshImportantFolder:folder]
+    [[[SyncManager getSingleton] refreshImportantFolder:folder accountIndex:self.idx]
      subscribeNext:^(Email* email) {
      }
      error:^(NSError* error) {
@@ -1081,7 +1081,7 @@
 
     if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
-    [[[[SyncManager getSingleton] syncFolders] deliverOn:[RACScheduler scheduler]]
+    [[[[SyncManager getSingleton] syncFoldersAccountIndex:self.idx] deliverOn:[RACScheduler scheduler]]
      subscribeNext:^(Email* email) {
          //[self insertRows:email];
      }
@@ -1273,7 +1273,7 @@
     }];
     
     //ServerSearch
-    [[[[SyncManager getSingleton] searchPerson:person] deliverOn:[RACScheduler mainThreadScheduler]]
+    [[[[SyncManager getSingleton] searchPerson:person accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          [self insertPersonRows:email];
      }
@@ -1317,7 +1317,7 @@
     }];
     
     //ServerSearch
-    [[[[SyncManager getSingleton] searchText:searchString] deliverOn:[RACScheduler mainThreadScheduler]]
+    [[[[SyncManager getSingleton] searchText:searchString accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
          [self insertPersonRows:email];
      }

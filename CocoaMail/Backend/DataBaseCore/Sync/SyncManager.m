@@ -68,73 +68,19 @@ static SyncManager * singleton = nil;
 
 #pragma mark Request sync
 
--(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart
+-(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart accountIndex:(NSInteger)accountIndex;
 {
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[[[Accounts sharedInstance] getAccount:accountIndex] currentFolderIdx] fromStart:isFromStart fromAccount:NO]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
-    }
+    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
 }
 
--(RACSignal*) refreshImportantFolder:(NSInteger)pfolder
+-(RACSignal*) refreshImportantFolder:(NSInteger)pfolder accountIndex:(NSInteger)accountIndex;
 {
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            NSInteger folder = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:pfolder];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:folder fromStart:YES fromAccount:NO]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runFolder:[AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:pfolder] fromStart:YES fromAccount:NO]];
-    }
+    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:pfolder] fromStart:YES fromAccount:NO]];
 }
 
--(RACSignal*) refreshInbox
+-(RACSignal*) syncFoldersAccountIndex:(NSInteger)accountIndex;
 {
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0) forAccountIndex:accountIndex] fromStart:YES fromAccount:YES]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runFolder:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0) forAccountIndex:kActiveAccountIndex] fromStart:YES fromAccount:YES]];
-    }
-}
-
--(RACSignal*) syncFolders
-{
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:-1 fromStart:NO fromAccount:YES]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runFolder:-1 fromStart:NO fromAccount:YES]];
-    }
+    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:-1 fromStart:NO fromAccount:YES]];
 }
 
 -(RACSignal*) syncInboxFoldersBackground
@@ -142,53 +88,21 @@ static SyncManager * singleton = nil;
     NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
 
     for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-        //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            NSInteger folder = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeInbox];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:folder fromStart:YES fromAccount:NO]]];
-            /*[newEmailsSignal subscribeNext:^(Email* email) {
-                CCMLog(@"Background fetched: %@",email.subject);
-            }
-                                     error:^(NSError* error) {}
-                                 completed:^{
-                                     CCMLog(@"Done with bg fetch account");
-                                 }];*/
+        NSInteger folder = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeInbox];
+        [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:folder fromStart:YES fromAccount:NO]]];
     }
     
     return [RACSignal merge:newEmailsSignalArray];
 }
 
--(RACSignal*) searchText:(NSString*)text
+-(RACSignal*) searchText:(NSString*)text accountIndex:(NSInteger)accountIndex
 {
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchText:text]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runSearchText:text]];
-    }
+    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchText:text]];
 }
 
--(RACSignal*) searchPerson:(Person*)person
+-(RACSignal*) searchPerson:(Person*)person accountIndex:(NSInteger)accountIndex
 {
-    if (kisActiveAccountAll) {
-        NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
-        
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-            [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchPerson:person]]];
-        }
-        
-        return [RACSignal merge:newEmailsSignalArray];
-    }
-    else {
-        return [self emailForSignal:[[ImapSync sharedServices] runSearchPerson:person]];
-    }
+    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchPerson:person]];
 }
 
 -(RACSignal*) emailForSignal:(RACSignal*)signal

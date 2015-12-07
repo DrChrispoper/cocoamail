@@ -18,7 +18,7 @@
 
 
 @interface AttachmentsViewController () <UITableViewDataSource, UITableViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, CCMAttachmentViewDelegate, UIDocumentInteractionControllerDelegate>{
-    NSArray* _activityItems;
+    NSMutableArray* _activityItems;
 }
 
 @property (nonatomic, weak) UITableView* table;
@@ -220,7 +220,14 @@
     h.backgroundColor = support.backgroundColor;
     h.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
     h.font = [UIFont systemFontOfSize:16];
-    h.text = p.name;
+    
+    if (p.isGeneric) {
+        h.text = m.email.sender.displayName;;
+    }
+    else {
+        h.text = p.name;
+    }
+    
     [support addSubview:h];
     h.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
@@ -249,13 +256,17 @@
 
 -(void) openURL:(NSURL*)url
 {
+    if (!_activityItems) {
+        _activityItems = [[NSMutableArray alloc]init];
+    }
+    
+    [_activityItems addObject:url];
+
     QLPreviewController* previewController = [[QLPreviewController alloc]init];
     previewController.delegate = self;
     previewController.dataSource = self;
-    previewController.currentPreviewItemIndex = 0;
-    
-    _activityItems = @[url];
-    
+    previewController.currentPreviewItemIndex = _activityItems.count - 1;
+
     [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
 }
 

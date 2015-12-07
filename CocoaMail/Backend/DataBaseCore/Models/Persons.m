@@ -13,6 +13,7 @@
 #import <AddressBook/AddressBook.h>
 
 
+
 @interface Persons ()
 
 @property (nonatomic, strong) NSMutableArray* alls;
@@ -199,6 +200,18 @@
     p.image = icon;
     p.codeName = codeName;
     p.email = mail;
+
+    p.isGeneric = [p hasGeneriEmail];
+
+    if (p.isGeneric) {
+        NSString* partOne = [p.email componentsSeparatedByString:@"@"][1];
+
+        NSString* cN = [partOne uppercaseString];
+        cN = [cN stringByReplacingOccurrencesOfString:@" " withString:@""];
+        cN = [cN substringToIndex:(cN.length < 3)?cN.length:3];
+        
+        p.codeName = cN;
+    }
     
     [[Persons sharedInstance] addPerson:p];
     
@@ -262,6 +275,33 @@
         
         return iv;
     }
+}
+
+-(BOOL) hasGeneriEmail
+{
+    NSString* partOne = [self.email componentsSeparatedByString:@"@"][0];
+    
+    if ([partOne containsString:@"notify"]) {
+        return YES;
+    }
+    if ([partOne containsString:@"notifications"]) {
+        return YES;
+    }
+    if ([partOne containsString:@"member"]) {
+        return YES;
+    }
+    if ([partOne containsString:@"no-reply"]) {
+        return YES;
+    }
+    if ([partOne containsString:@"noreply"]) {
+        return YES;
+    }
+    
+    if ([self.name containsString:@" via "] || [self.name containsString:@" (via "]) {
+        return YES;
+    }
+    
+    return NO;
 }
 
 -(BOOL) isFakePerson

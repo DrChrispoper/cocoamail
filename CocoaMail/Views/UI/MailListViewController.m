@@ -20,6 +20,7 @@
 #import "ImapSync.h"
 #import "UserFolderViewController.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
+#import "CCMStatus.h"
 
 
 @interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate>
@@ -29,6 +30,7 @@
 
 @property (nonatomic) NSInteger pageIndex;
 @property (nonatomic) NSInteger countBeforeLoadMore;
+@property (nonatomic) NSInteger indexCount;
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSString* folderName;
 @property (nonatomic, strong) NSMutableSet* selectedCells;
@@ -53,6 +55,7 @@ static NSInteger pageCount = 15;
     self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
     self.pageIndex = 1;
     self.countBeforeLoadMore = 0;
+    self.indexCount = 0;
     return self;
 }
 
@@ -163,6 +166,14 @@ static NSInteger pageCount = 15;
         l.text = self.onlyPerson.email;
         l.font = [UIFont systemFontOfSize:16];
         l.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        [l setUserInteractionEnabled:YES];
+        
+        UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_longPress:)];
+        lpgr.minimumPressDuration = 1;
+        [l addGestureRecognizer:lpgr];
+        
+        UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
+        [header addGestureRecognizer:tgr];
         
         [header addSubview:l];
         
@@ -251,6 +262,26 @@ static NSInteger pageCount = 15;
                                                       userInfo:@{kPRESENT_CONVERSATION_KEY:c}];
 }
 
+-(void) _longPress:(UILongPressGestureRecognizer*)lpgr
+{
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    pasteboard.persistent = YES;
+    pasteboard.string = self.onlyPerson.email;
+    [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad")];
+    [CCMStatus dismissAfter:1];
+}
+
+-(void) _press:(UITapGestureRecognizer*)tgr
+{
+    Mail* mail = [Mail newMailFormCurrentAccount];
+    
+    NSInteger personIndex = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
+    
+    mail.toPersonID = @[@(personIndex)];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+}
+
 -(NSArray*) nextViewControllerInfos
 {
     if (self.presentAttach) {
@@ -264,15 +295,20 @@ static NSInteger pageCount = 15;
 
 -(void) cleanBeforeGoingBack
 {
+    self.pageIndex = 1;
+    self.countBeforeLoadMore = 0;
+    self.indexCount = 0;
+    
     self.table.delegate = nil;
     self.table.dataSource = nil;
+    [[SearchRunner getSingleton] cancel];
 }
 
 -(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     
-    [self.table reloadData];
+    [self reFetch];
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -293,9 +329,6 @@ static NSInteger pageCount = 15;
 {
     [super viewWillDisappear:animated];
     [ViewController animateCocoaButtonRefresh:NO];
-    
-    self.pageIndex = 1;
-    self.countBeforeLoadMore = 0;
 }
 
 -(void) setupData
@@ -674,14 +707,16 @@ static NSInteger pageCount = 15;
     NSArray* convs = mailsDay[@"list"];
     
     ConversationIndex* conversationIndex = convs[indexPath.row];
+    Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
 
-    if (!self.onlyPerson && self.indexSet[conversationIndex.account].count != self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    BOOL lastSection = (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1);
+    BOOL lastRow = indexPath.row == ([convs count] - 1);
+    
+    if (!self.onlyPerson && self.indexCount != self.countBeforeLoadMore && lastSection && lastRow) {
         [self reFetch];
     }
     
-    Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
-    
-    if (!self.onlyPerson && self.indexSet[conversationIndex.account].count == self.countBeforeLoadMore && (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1) && indexPath.row == ([convs count] - 1)) {
+    if (!self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
         [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
@@ -988,8 +1023,6 @@ static NSInteger pageCount = 15;
         mailCountBefore += indexSet.count;
     }
     
-    self.countBeforeLoadMore =  MIN(self.indexSet.count, self.countBeforeLoadMore + pageCount);
-    
     if (self.convByDay.count <= pageCount * self.pageIndex ) {
         if (kisActiveAccountAll) {
             for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
@@ -1009,6 +1042,11 @@ static NSInteger pageCount = 15;
     for (NSMutableIndexSet* indexSet in self.indexSet) {
         mailCountAfer += indexSet.count;
     }
+    
+    self.indexCount = mailCountAfer;
+    self.countBeforeLoadMore =  MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);
+
+    CCMLog(@"countBeforeLoadMore:%ld", (long)self.countBeforeLoadMore);
     
     [self.table.tableFooterView setHidden:(mailCountBefore == mailCountAfer)];
 

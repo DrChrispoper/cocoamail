@@ -77,7 +77,7 @@
 
 +(BOOL) firstSync
 {
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
+	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	
     return ([defaults boolForKey:@"app_first_sync"] == NO); //stores the opposite!
 }
@@ -131,8 +131,13 @@
 +(void) setBadgeCount:(NSInteger)y
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setInteger:y forKey:@"badgecount_preference"];
-    [defaults synchronize];
+	[defaults setObject:@(y) forKey:@"badgecount_preference"];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"badgecount_preference"];
+        [store synchronize];
+    }
     
     [AppSettings setInboxUnread:[AppSettings inboxUnread:0] accountIndex:0];
 }
@@ -141,14 +146,19 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	
-    return [defaults integerForKey:@"badgecount_preference"];
+    return [[defaults objectForKey:@"badgecount_preference"] integerValue];
 }
 
 +(void) setNotifications:(BOOL)y
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:@"notifications_preference"];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"notifications_preference"];
+        [store synchronize];
+    }
 }
 
 +(BOOL) notifications
@@ -178,7 +188,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(quickswipetype) forKey:@"quickswipe_preference"];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(quickswipetype) forKey:@"quickswipe_preference"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) draftCount
@@ -187,7 +202,12 @@
     
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(count + 1) forKey:@"drafts_preference"];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(count + 1) forKey:@"drafts_preference"];
+        [store synchronize];
+    }
     
     return count;
 }
@@ -196,7 +216,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(YES) forKey:[NSString stringWithFormat:@"first_sync_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(YES) forKey:@"first_sync_%li"];
+        [store synchronize];
+    }
 }
 
 +(BOOL) isFirstFullSyncDone:(NSInteger)accountIndex
@@ -217,7 +242,12 @@
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	[defaults setObject:@YES forKey:@"premium"];
-	[defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(YES) forKey:@"premium"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) globalDBVersion
@@ -308,7 +338,7 @@
 +(NSInteger) numAccounts
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	NSInteger numAccts = [defaults integerForKey:@"num_accounts"];
+	NSInteger numAccts = [[defaults objectForKey:@"num_accounts"] integerValue];
 	
     return numAccts;
 }
@@ -316,27 +346,36 @@
 +(void) addAccount
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSInteger numAccts = [defaults integerForKey:@"num_accounts"] + 1;
+    NSInteger numAccts = [[defaults objectForKey:@"num_accounts"] integerValue] + 1;
     
-	[defaults setInteger:numAccts forKey:@"num_accounts"];
+	[defaults setObject:@(numAccts) forKey:@"num_accounts"];
     
     [AppSettings setAccountDeleted:NO accountIndex:[AppSettings indexForAccount:numAccts]];
 
-	[defaults synchronize];
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(numAccts) forKey:@"num_accounts"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) numDelAccounts
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	
-    return [defaults integerForKey:@"num_del_accounts"];
+    return [[defaults objectForKey:@"num_del_accounts"] integerValue];
 }
 
 +(void) setNumDelAccounts:(NSInteger)value
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setInteger:value forKey:@"num_del_accounts"];
-	[defaults synchronize];
+	[defaults setObject:@(value) forKey:@"num_del_accounts"];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(value) forKey:@"num_del_accounts"];
+        [store synchronize];
+    }
 }
 
 +(BOOL) isAccountNumDeleted:(NSInteger)accountNum
@@ -356,7 +395,12 @@
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	[defaults setBool:value forKey:[NSString stringWithFormat:@"account_deleted_%ld", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(value) forKey:@"account_deleted_%ld"];
+        [store synchronize];
+    }
     
     if (value) {
         [self setNumDelAccounts:[AppSettings numDelAccounts] + 1];
@@ -374,7 +418,12 @@
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	[defaults setObject:value forKey:[NSString stringWithFormat:@"identifier_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:value forKey:@"identifier_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) username:(NSInteger)accountIndex
@@ -389,7 +438,12 @@
 {
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"username_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"username_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) password:(NSInteger)accountIndex
@@ -432,31 +486,46 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"IMAPServ%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"IMAPServ%li"];
+        [store synchronize];
+    }
 }
 
 +(unsigned int) imapPort:(NSInteger)accountIndex
 {
-    return (unsigned int)[[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat: @"IMAPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return (unsigned int)[[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat: @"IMAPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]] integerValue];
 }
 
 +(void) setImapPort:(NSInteger)y accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:[NSString stringWithFormat:@"IMAPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"IMAPPort_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) imapEnc:(NSInteger)accountIndex
 {
-    return [[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat:@"IMAPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"IMAPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]] integerValue];
 }
 
 +(void) setImapEnc:(NSInteger)y accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:[NSString stringWithFormat:@"IMAPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"IMAPEnc_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) smtpServer:(NSInteger)accountIndex
@@ -468,31 +537,46 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"SMTPServ%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"SMTPServ%li"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) smtpPort:(NSInteger)accountIndex
 {
-    return [[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat: @"SMTPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat: @"SMTPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]] integerValue];
 }
 
 +(void) setSmtpPort:(NSInteger)y accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:[NSString stringWithFormat:@"SMTPPort_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"SMTPPort_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) smtpEnc:(NSInteger)accountIndex
 {
-    return [[NSUserDefaults standardUserDefaults] integerForKey:[NSString stringWithFormat:@"SMTPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"SMTPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]] integerValue];
 }
 
 +(void) setSmtpEnc:(NSInteger)y accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:[NSString stringWithFormat:@"SMTPEnc_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(y) forKey:@"SMTPEnc_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) signature:(NSInteger)accountIndex
@@ -504,7 +588,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"Signature_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"Signature_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) name:(NSInteger)accountIndex
@@ -517,7 +606,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"Name_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"Name_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSString*) initials:(NSInteger)accountIndex
@@ -533,7 +627,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:y forKey:[NSString stringWithFormat:@"Initials_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:y forKey:@"Initials_%li"];
+        [store synchronize];
+    }
 }
 
 +(UIColor*) color:(NSInteger)accountIndex
@@ -552,7 +651,12 @@
     NSString* colorString = [CIColor colorWithCGColor:colorRef].stringRepresentation;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:colorString forKey:[NSString stringWithFormat:@"Color_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:colorString forKey:@"Color_%li"];
+        [store synchronize];
+    }
 }
 
 +(BOOL) isUsingOAuth:(NSInteger)accountIndex
@@ -593,7 +697,12 @@
     newfolders[baseFolder] = @(folder);
     
 	[defaults setObject:newfolders forKey:[NSString stringWithFormat:@"iFolder_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:newfolders forKey:@"iFolder_%li"];
+        [store synchronize];
+    }
 }
 
 +(CCMFolderType) typeOfFolder:(NSInteger)folder forAccountIndex:(NSInteger)accountIndex
@@ -671,7 +780,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:folders forKey:[NSString stringWithFormat:@"allFolders_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-	[defaults synchronize];
+	
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:folders forKey:@"allFolders_%li"];
+        [store synchronize];
+    }
 }
 
 +(NSArray*) allNonImportantFoldersNameforAccountIndex:(NSInteger)accountIndex
@@ -689,39 +803,6 @@
     
     return [[foldersSet allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
-/*+(CCMFolderType)activeFolder
-{
-	return [[NSUserDefaults standardUserDefaults] integerForKey:@"aFolder"];
-}
-
-+(void)setActiveFolder:(CCMFolderType)folder
-{
-    if (folder.type == FolderTypeUser) {
-        name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx];
-    }
-    else {
-        name = [Accounts systemFolderNames][folder.type];
-    }
-    
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setObject:@(folder) forKey:@"aFolder"];
-	[defaults synchronize];
-}*/
-/*+(NSInteger)activeAccount
-{
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"aAccount"]];
-	return [activeAcctPreference integerValue];
-}
-+(void)setActiveAccount:(NSInteger)account
-{
-    if(account > [AppSettings numActiveAccounts]){
-        account = -1;
-    }
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setObject:@(account) forKey:[NSString stringWithFormat:@"aAccount"]];
-	[defaults synchronize];
-}*/
 
 +(NSInteger) defaultAccountIndex
 {
@@ -741,7 +822,12 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"dAccount"]];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:@"dAccount"];
+        [store synchronize];
+    }
 }
 
 +(NSInteger) lastAccountIndex
@@ -762,9 +848,13 @@
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"lastAccount"]];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:@"lastAccount"];
+        [store synchronize];
+    }
 }
-
 
 +(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex
 {
@@ -797,10 +887,14 @@
 
 +(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex
 {
-
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
-    [defaults synchronize];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    if (store) {
+        [store setObject:@(value) forKey:@"inboxUnread_%li"];
+        [store synchronize];
+    }
     
     int badge = 0;
     

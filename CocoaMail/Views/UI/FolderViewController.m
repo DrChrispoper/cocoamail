@@ -56,6 +56,16 @@
     
     table.backgroundColor = [UIGlobal standardLightGrey];
     
+    NSUbiquitousKeyValueStore* store = [NSUbiquitousKeyValueStore
+                                        defaultStore];
+    if (store) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(storeChanged:)
+                                                     name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification
+                                                   object:store];
+        [store synchronize];
+    }
+    
     [self.view addSubview:table];
     
     [self setupNavBarWith:item overMainScrollView:table];
@@ -69,7 +79,13 @@
     if (currentAccount && !currentAccount.isAllAccounts) {
         [ImapSync runInboxUnread:currentAccount.idx];
     }
-    //[self addPullToRefreshWithDelta:30];
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccountIdx];
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -271,7 +287,9 @@
             [conv addMail:[Mail mail:email]];
             NSUInteger index = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
             
-            if ([AppSettings notifications]) {
+            BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
+            
+            if (isUnread && [AppSettings notifications]) {
                 UILocalNotification* localNotification = [[UILocalNotification alloc] init];
                 localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
                 NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
@@ -289,6 +307,31 @@
     } completed:^{
         _completionHandler(hasNewEmail);
     }];
+}
+
+- (void)storeChanged:(NSNotification*)notification
+{
+    NSDictionary *userInfo = [notification userInfo];
+    NSNumber *reason = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey];
+    
+    if (reason) {
+        NSInteger reasonValue = [reason integerValue];
+        NSLog(@"storeChanged with reason %ld", (long)reasonValue);
+        
+        if ((reasonValue == NSUbiquitousKeyValueStoreServerChange) ||
+            (reasonValue == NSUbiquitousKeyValueStoreInitialSyncChange)) {
+            
+            NSArray *keys = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
+            NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+            NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+            
+            for (NSString *key in keys) {
+                id value = [store objectForKey:key];
+                [userDefaults setObject:value forKey:key];
+                NSLog(@"storeChanged updated value for %@",key);
+            }
+        }
+    }
 }
 
 @end

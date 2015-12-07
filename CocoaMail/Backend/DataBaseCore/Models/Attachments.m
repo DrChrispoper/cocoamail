@@ -144,7 +144,7 @@
     UILabel* n = [[UILabel alloc] initWithFrame:CGRectMake(posX, 17, width - posX - 44, 20)];
     n.font = [UIFont systemFontOfSize:16];
     n.textColor = [UIColor blackColor];
-    n.backgroundColor = self.backgroundColor;
+    n.backgroundColor = [UIColor clearColor];//self.backgroundColor;
     [self addSubview:n];
     n.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.name = n;
@@ -152,13 +152,13 @@
     UILabel* s = [[UILabel alloc] initWithFrame:CGRectMake(posX, 38, width - posX - 44, 20)];
     s.font = [UIFont systemFontOfSize:12];
     s.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
-    s.backgroundColor = self.backgroundColor;
+    s.backgroundColor = [UIColor clearColor];//self.backgroundColor;
     [self addSubview:s];
     s.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.size = s;
     
     UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(posX-60, 11, 50, 50)];
-    iv.backgroundColor = self.backgroundColor;
+    iv.backgroundColor = [UIColor clearColor];//self.backgroundColor;
     iv.contentMode = UIViewContentModeScaleAspectFit;
     [self addSubview:iv];
     iv.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
@@ -175,7 +175,7 @@
     [self.extention setHidden:YES];
     
     UIButton* d = [[UIButton alloc] initWithFrame:CGRectMake(width-33.f-10.f, 20.f, 33.f, 33.f)];
-    d.backgroundColor = self.backgroundColor;
+    d.backgroundColor = [UIColor clearColor];//self.backgroundColor;
     [self addSubview:d];
     d.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     self.btn = d;
@@ -270,6 +270,9 @@
         [self.extention setHidden:NO];
     }
     
+    [self.cellBtn removeTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
+    [self.cellBtn removeTarget:self action:@selector(_openAttach:) forControlEvents:UIControlEventTouchUpInside];
+
     if (at.data) {
         [self.circleView removeFromSuperview];
         self.circleView = nil;
@@ -336,6 +339,12 @@
 
 -(void) _openAttach:(UIButton*)b
 {
+    [UIView animateWithDuration:.5 animations:^{
+        self.layer.backgroundColor = [UIColor lightGrayColor].CGColor;
+    } completion:^(BOOL finished) {
+        self.layer.backgroundColor = [UIColor clearColor].CGColor;
+    }];
+    
     NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:self.att.fileName];
     [self.att.data writeToFile:filePath atomically:YES];
     NSURL* URL = [NSURL fileURLWithPath:filePath];
@@ -346,6 +355,12 @@
 {
     if (self.internalState == 0) {
     
+        [UIView animateWithDuration:.5 animations:^{
+            self.layer.backgroundColor = [UIColor lightGrayColor].CGColor;
+        } completion:^(BOOL finished) {
+            self.layer.backgroundColor = [UIColor clearColor].CGColor;
+        }];
+        
         self.internalState = 1;
     
         [self.btn setImage:[UIImage imageNamed:@"download_on_stop"] forState:UIControlStateNormal];
