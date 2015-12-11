@@ -326,6 +326,10 @@
     }
     
     NSAssert(i < [AppSettings numActiveAccounts],@"returning an incorrect account index");
+    if (i < 0) {
+        
+        NSAssert(i >= 0,@"returning an incorrect account index; %s ", __PRETTY_FUNCTION__);
+    }
 
     return i;
 }

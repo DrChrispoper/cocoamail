@@ -29,7 +29,6 @@
 +(EmailProcessor*) getSingleton;
 
 +(NSInteger) dbNumForDate:(NSDate*)date;
--(void) switchToDBNum:(NSInteger)dbNum;
 -(void) updateFlag:(NSMutableArray*)datas;
 -(void) addToFolderWrapper:(UidEntry*)data;
 -(void) removeFromFolderWrapper:(NSDictionary*)data;

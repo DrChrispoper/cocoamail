@@ -106,7 +106,7 @@
     s.onTintColor = [UIGlobal standardBlue];
     [s addTarget:self action:@selector(_switchBadge:) forControlEvents:UIControlEventValueChanged];
     cell.accessoryView = s;
-    [s setOn:a.notificationEnabled animated:NO];
+    [s setOn:[AppSettings notifications] animated:NO];
     s.tag = indexPath.row;
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
@@ -116,8 +116,9 @@
 
 -(void) _switchBadge:(UISwitch*)s
 {
-    Account* a = [[Accounts sharedInstance] getAccount:s.tag];
-    a.notificationEnabled = s.isOn;
+    //Account* a = [[Accounts sharedInstance] getAccount:s.tag];
+    [AppSettings setNotifications:s.isOn];
+    [self.table reloadData];
 }
 
 #pragma mark Table Delegate

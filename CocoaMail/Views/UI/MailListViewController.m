@@ -207,7 +207,7 @@ static NSInteger pageCount = 15;
     UIView* headerView = [[UIView alloc] init];
     headerView.backgroundColor = self.table.backgroundColor;
     
-    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
     [button startAnimating];
     
@@ -308,6 +308,8 @@ static NSInteger pageCount = 15;
 {
     [super viewWillAppear:animated];
     
+    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+
     [self reFetch];
 }
 
@@ -521,10 +523,9 @@ static NSInteger pageCount = 15;
         type.type = FolderTypeDeleted;
     }
     
-    if (self.folder.type == type.type) {
+    /*if (self.folder.type == type.type) {
         swipetype = 4;
-    }
-    
+    }*/
     
     if ([self isPresentingDrafts]) {
         swipetype = QuickSwipeDelete;
@@ -537,6 +538,10 @@ static NSInteger pageCount = 15;
     }
     else if (swipetype == QuickSwipeMark) {
         arch.highlightedImage = [UIImage imageNamed:@"swipe_unread"];
+    }
+    else if(self.folder.type == type.type && swipetype == QuickSwipeArchive) {
+        //We archive emails from the archive folder if they are already in the Inbox
+        arch.highlightedImage = [UIImage imageNamed:@"swipe_inbox"];
     }
     
     return arch;
@@ -609,21 +614,39 @@ static NSInteger pageCount = 15;
         }
         default:
         {
-            // QuickSwipeArchive / QuickSwipeDelete
-            CCMFolderType type;
-            type.type = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
+            CCMFolderType fromtype = self.folder;
             
+            // QuickSwipeArchive / QuickSwipeDelete
+            CCMFolderType totype;
+            totype.type = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
+            
+            Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             // back action
-            if (self.folder.type == type.type) {
-                type.type = FolderTypeInbox;
+            if (self.folder.type == totype.type) {
+                //We archive emails from the archive folder if they are already in the Inbox
+                if(![conv isInInbox]) {
+                    totype.type = FolderTypeInbox;
+                }
+                else {
+                    fromtype.type = FolderTypeInbox;
+                }
             }
             else if ([self isPresentingDrafts]) {
-                type.type = FolderTypeDeleted;
+                totype.type = FolderTypeDeleted;
             }
             
-            if ([[Accounts sharedInstance].accounts[conversationIndex.account] moveConversationAtIndex:conversationIndex.index from:self.folder to:type]) {
-                [self _removeCell:cell];
+            if ([[Accounts sharedInstance].accounts[conversationIndex.account] moveConversationAtIndex:conversationIndex.index from:fromtype to:totype]) {
+                if (encodeFolderTypeWith(fromtype) == encodeFolderTypeWith(self.folder)) {
+                   [self _removeCell:cell];
+                }
+                else {
+                    [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+                }
             }
+            else {
+                [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            }
+            
             break;
         }
     }
@@ -1050,6 +1073,10 @@ static NSInteger pageCount = 15;
     
     [self.table.tableFooterView setHidden:(mailCountBefore == mailCountAfer)];
 
+    if (mailCountBefore == mailCountAfer) {
+        return;
+    }
+    
     self.pageIndex++;
     [self.table reloadData];
 }

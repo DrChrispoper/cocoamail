@@ -958,43 +958,58 @@
     [self.delegate shareAttachment:att];
 }
 
--(MCOAttachment*) partForUniqueID:(NSString*)partID
+-(void) partForUniqueID:(NSString*)partID completed:(void (^)(MCOAttachment * part))completedBlock
 {
-    for (Mail* mail in ((ConversationViewController*)self.delegate).conversation.mails) {
+    BOOL found = NO;
+    
+    Conversation* conv = ((ConversationViewController*)self.delegate).conversation;
+    for (Mail* mail in conv.mails) {
         for (Attachment* att in mail.attachments) {
-        
+
             if (att.isInline && [att.contentID isEqualToString:partID]) {
-            /*if(!att.data){
-             
-             MCOIMAPFetchContentOperation*  op = [[ImapSync sharedServices].imapSession fetchMessageAttachmentOperationWithFolder:[AppSettings folderName:[AppSettings activeFolder]]
-             uid:[UidEntry getUidEntryWithFolder:[AppSettings activeFolder] msgId:att.msgId].uid
-             partID:att.partID
-             encoding:MCOEncodingBase64];
-             op.progress = ^(unsigned int current, unsigned int maximum){
-             CCMLog(@"%u, %u", current,maximum);
-             };
-             
-             [op start:^(NSError*  error, NSData*  partData) {
-             if(error){
-             CCMLog(@"%@",error);
-             return;
-             }
-             att.data = partData;
-             [Attachment updateData:att];
-             }];
-             
-             
-             }*/
-            
-                MCOAttachment* attM = [[MCOAttachment alloc]init];
-                attM.data = att.data;
+                found = YES;
+                if(!att.data){
+                    UidEntry* uidE = [mail.email.uids firstObject];
+                    MCOIMAPFetchContentOperation*  op =
+                    [[ImapSync sharedServices:[conv accountIdx]].imapSession
+                     fetchMessageAttachmentOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[conv accountIdx]]
+                     uid:uidE.uid
+                     partID:att.partID
+                     encoding:MCOEncodingBase64];
                 
-                return attM;
+                    op.progress = ^(unsigned int current, unsigned int maximum){
+                        CCMLog(@"%u, %u", current,maximum);
+                    };
+             
+                    [op start:^(NSError*  error, NSData*  partData) {
+                        if(error){
+                            CCMLog(@"%@",error);
+                            return;
+                        }
+                        att.data = partData;
+                        [Attachment updateData:att];
+                        
+                        MCOAttachment* attM = [[MCOAttachment alloc]init];
+                        attM.data = att.data;
+                        completedBlock(attM);
+                    }];
+                    
+                    break;
+                }
+                else {
+                    MCOAttachment* attM = [[MCOAttachment alloc]init];
+                    attM.data = att.data;
+                    completedBlock(attM);
+                    
+                    break;
+                }
             }
         }
     }
     
-    return nil;
+    if (!found) {
+        completedBlock(nil);
+    }
 }
 
 @end

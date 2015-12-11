@@ -19,7 +19,7 @@
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
 @property (nonatomic) BOOL connected;
 
-+(ImapSync*) sharedServices;
+//+(ImapSync*) sharedServices;
 +(ImapSync*) sharedServices:(NSInteger)accountNum;
 +(NSArray*) allSharedServices:(MCOIMAPSession*)updated;
 +(RACSignal*) doLogin:(NSInteger)account;

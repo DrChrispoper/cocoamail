@@ -169,24 +169,6 @@
     
     return attachments;
 }
-/*+(BOOL)searchAttachmentswithMsgId:(NSString*)msgId
-{
-    __block BOOL result = NO;
-    
-    AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        
-        FMResultSet* results = [db executeQuery:@"SELECT pk FROM attachments WHERE msg_id = ?", msgId];
-        
-        if([results next]) result = YES;
-        
-        [results close];
-    }];
-    
-    return result;
-    
-}*/
 
 +(void) updateData:(CCMAttachment*)attachment
 {

@@ -11,6 +11,15 @@
 #import "UidEntry.h"
 #import "FMDatabase.h"
 
+static NSString* kQueryAll = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id";
+
+static NSString* kQueryAllMsgID = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id = ?";
+
+static NSString* kQueryPk = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND email.pk = ? LIMIT 1;";
+
+static NSString* kQuerySearch = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email MATCH ? ORDER BY email.datetime DESC;";
+
+static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id MATCH '";
 
 @interface Email : NSObject <NSCopying>
 
@@ -59,7 +68,6 @@
 +(void) tableCheck;
 +(void) tableCheck:(FMDatabase*)db;
 +(NSInteger) insertEmail:(Email*)email;
-+(NSInteger) insertEmailUnsafe:(Email*)email;
 +(void) updateEmailFlag:(Email*)email;
 +(void) updateEmail:(Email*)email;
 +(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;

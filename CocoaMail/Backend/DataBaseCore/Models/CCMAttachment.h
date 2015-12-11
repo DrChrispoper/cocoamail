@@ -28,8 +28,8 @@
 +(void) updateData:(CCMAttachment*)attachment;
 +(NSMutableArray*) getAttachmentsWithMsgId:(NSString*)msgId;
 +(NSMutableArray*) getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline;
-//+(BOOL)searchAttachmentswithMsgId:(NSString*)msgId;
 +(void) tableCheck;
+
 -(BOOL) isEqual:(id)other;
 -(NSUInteger) hash;
 -(BOOL) isInline;

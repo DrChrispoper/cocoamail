@@ -41,7 +41,6 @@ static NSDateFormatter * s_df_hour = nil;
     NSInteger currentAccountIndex = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
 
     if (replyAll) {
-        
         NSMutableArray* currents = [self.toPersonID mutableCopy];
         
         if (currentAccountIndex != self.fromPersonID) {
@@ -51,7 +50,6 @@ static NSDateFormatter * s_df_hour = nil;
         [currents removeObject:@(currentAccountIndex)];
         
         mail.toPersonID = currents;
-        
     }
     else {
         if (currentAccountIndex != self.fromPersonID) {
@@ -90,8 +88,9 @@ static NSDateFormatter * s_df_hour = nil;
         self.content = @"";
     }
     else {
-        self.content = [self.content stringByReplacingOccurrencesOfString:@"\n" withString:@"<br/>"];
-        self.content = [self.content stringByReplacingOccurrencesOfString:@"\r" withString:@"<br/>"];
+        //self.content = [self.content stringByRemovingPercentEncoding];
+        //self.content = [self.content stringByReplacingOccurrencesOfString:@"\n" withString:@"<br/>"];
+        //self.content = [self.content stringByReplacingOccurrencesOfString:@"\r" withString:@"<br/>"];
     }
     
     MCOMessageBuilder* builder = [[MCOMessageBuilder alloc] init];
@@ -328,6 +327,12 @@ static NSDateFormatter * s_df_hour = nil;
     
     return uids;
 }
+
+-(BOOL) isInInbox
+{
+    return [self uidsWithFolder:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0) forAccountIndex:[self accountIdx]]].count > 0;
+}
+
 
 -(NSInteger) accountIdx
 {

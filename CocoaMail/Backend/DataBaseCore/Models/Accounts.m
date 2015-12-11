@@ -216,8 +216,22 @@
 
 -(NSInteger) getPersonID:(NSInteger)accountIndex
 {
+    if (accountIndex >= self.accountsCount || accountIndex < 0) {
+        CCMLog(@"Person ID:%d",accountIndex);
+
+        Persons* p = [Persons sharedInstance];
+        
+        if (p.idxCocoaPerson == 0) {
+            Person* more = [Person createWithName:nil email:@"support@cocoamail.com" icon:[UIImage imageNamed:@"cocoamail"] codeName:nil];
+            p.idxCocoaPerson = [p addPerson:more];
+        }
+        
+        return p.idxCocoaPerson;
+    }
+    
     Account* ac = self.accounts[accountIndex];
-    return [[Persons sharedInstance] indexForPerson:ac.person];
+    NSInteger index = [[Persons sharedInstance] indexForPerson:ac.person];
+    return index;
 }
 
 -(NSInteger) accountsCount
@@ -552,6 +566,11 @@
     // let the drafts
 }
 
+- (void)cancelSearch
+{
+    self.mailListSubscriber = nil;
+}
+
 -(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
@@ -689,9 +708,67 @@
     [sendOperation start:^(NSError* error) {
         
         if (error) {
+            
+            if (error.code == MCOErrorNeedsConnectToWebmail) {
+                UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
+                                                                            message:@"Authorization in webmail needed"
+                                                                     preferredStyle:UIAlertControllerStyleAlert];
+                
+                UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault
+                                                                     handler:nil];
+                [ac addAction:cancelAction];
+                
+                ViewController* vc = [ViewController mainVC];
+                
+                [vc presentViewController:ac animated:YES completion:nil];
+            }
+            
             CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.")];
             [CCMStatus dismissAfter:2];
+            
+            if (smtpServicesArray.count == 2) {
+                [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...")];
+
+                MCOSMTPSession* smtpSessionAux = [[MCOSMTPSession alloc] init];
+
+                MCONetService* serviceAux = smtpServicesArray[1];
+                smtpSessionAux.hostname = serviceAux.hostname ;
+                smtpSessionAux.port = serviceAux.port;
+                smtpSessionAux.connectionType = serviceAux.connectionType;
+                smtpSessionAux.username = [AppSettings username:self.idx];
+                smtpSessionAux.password = [AppSettings password:self.idx];
+                
+                CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
+
+                MCOSMTPSendOperation* sendOperation = [smtpSessionAux sendOperationWithData:rfc822Data];
+                [sendOperation start:^(NSError* error) {
+                    if (error) {
+                        if (error.code == MCOErrorNeedsConnectToWebmail) {
+                            UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
+                                                                                        message:@"Authorization in webmail needed"
+                                                                                 preferredStyle:UIAlertControllerStyleAlert];
+                            
+                            UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault
+                                                                                 handler:nil];
+                            [ac addAction:cancelAction];
+                            
+                            ViewController* vc = [ViewController mainVC];
+                            
+                            [vc presentViewController:ac animated:YES completion:nil];
+                        }
+                        CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
+                        [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.")];
+                        [CCMStatus dismissAfter:2];
+                    }
+                    else {
+                        CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
+                        [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")];
+                        [CCMStatus dismissAfter:2];
+                    }
+                }];
+                
+            }
         }
         else {
             CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
@@ -922,6 +999,8 @@
     _hasLoadedAllLocal = NO;
     _isLoadingMore = NO;
 
+    [_localFetchQueue cancelAllOperations];
+
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
@@ -998,27 +1077,6 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
-    if ((![[email getSonID] isEqualToString:@""] & ![[email getSonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email getSonID]]) {
-        for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
-            Conversation* conv = self.allsMails[idx];
-            
-            if ([[[conv firstMail].email getSonID] isEqualToString:[email getSonID]]) {
-                [conv addMail:[Mail mail:email]];
-                [self _addCon:idx toFoldersContent:conv.foldersType];
-                return;
-            }
-        }
-    }
-    else {
-        Conversation* conv = [[Conversation alloc]init];
-        [conv addMail:[Mail mail:email]];
-        [_convIDs addObject:[email getSonID]];
-        [self addConversation:conv];
-    }
-}
-
--(void) insertPersonRows:(Email*)email
-{
     if ((![[email getSonID] isEqualToString:@""] & ![[email getSonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email getSonID]]) {
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
@@ -1257,7 +1315,7 @@
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] senderSearch:person inAccount:self.idx]
          subscribeNext:^(Email* email) {
-                 [self insertPersonRows:email];
+                 [self insertRows:email];
                  if (batch-- == 0) {
                      batch = refBatch;
                      [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1275,7 +1333,7 @@
     //ServerSearch
     [[[[SyncManager getSingleton] searchPerson:person accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
-         [self insertPersonRows:email];
+         [self insertRows:email];
      }
      error:^(NSError* error) {
          CCMLog(@"Error: %@", error.localizedDescription);
@@ -1301,7 +1359,7 @@
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] search:searchString inAccount:self.idx]
          subscribeNext:^(Email* email) {
-             [self insertPersonRows:email];
+             [self insertRows:email];
              if (batch-- == 0) {
                  batch = refBatch;
                  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1319,7 +1377,8 @@
     //ServerSearch
     [[[[SyncManager getSingleton] searchText:searchString accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
-         [self insertPersonRows:email];
+         CCMLog(@"Found email");
+         [self insertRows:email];
      }
      error:^(NSError* error) {
          CCMLog(@"Error: %@", error.localizedDescription);

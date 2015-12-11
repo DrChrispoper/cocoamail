@@ -60,6 +60,7 @@
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;
+-(BOOL) isInInbox;
 -(NSInteger) accountIdx;
 -(void) toggleFav;
 -(void) addMail:(Mail*)mail;

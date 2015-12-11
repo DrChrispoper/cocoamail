@@ -63,7 +63,6 @@
 @property (nonatomic, strong) Person* person;
 
 @property (nonatomic) BOOL isAllAccounts;
-@property (nonatomic) BOOL notificationEnabled;
 
 @property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
 
@@ -75,6 +74,7 @@
 -(void) setConnected:(BOOL)isConnected;
 -(void) runTestData;
 -(void) releaseContent;
+-(void) cancelSearch;
 
 -(NSInteger) favorisCount;
 -(NSInteger) draftCount;

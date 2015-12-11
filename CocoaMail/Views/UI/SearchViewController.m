@@ -71,6 +71,17 @@
     table.delegate = self;
     self.table = table;
     
+    UIView* headerView = [[UIView alloc] init];
+    headerView.backgroundColor = self.table.backgroundColor;
+    
+    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
+    [button startAnimating];
+    
+    [headerView addSubview:button];
+    
+    self.table.tableFooterView = headerView;
+    
     self.searchQueue = [NSOperationQueue new];
     [self.searchQueue setMaxConcurrentOperationCount:1];
 }
@@ -114,6 +125,12 @@
 -(void) viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
+    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+
+    if (![self.searchBar.text isEqualToString:@""]) {
+        [self reFetch];
+    }
     
     [self _keyboardNotification:YES];
     
@@ -226,10 +243,10 @@
 
 -(void) _updateSearchResultWith:(NSString*)word
 {
-    if (word.length < 2) {
+    /*if (word.length < 2) {
         self.searchResult = nil;
         return;
-    }
+    }*/
     
     NSMutableArray* current;
     
@@ -245,10 +262,6 @@
         }
         
         current = currentContent;
-    }
-    
-    if (word.length > 2) {
-        [[[Accounts sharedInstance] currentAccount] doTextSearch:word];
     }
     
     self.lastSearchLength = word.length;
@@ -331,37 +344,43 @@
         }
     }
     
-    
-    self.searchResult = next;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        self.searchResult = next;
+        [self.table reloadData];
+    }];
 }
 
 -(void) searchBar:(UISearchBar*)searchBar textDidChange:(NSString*)searchText
 {
     [self.searchQueue addOperationWithBlock:^{
         [self _updateSearchResultWith:searchBar.text];
-        
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            [self.table reloadData];
-        }];
     }];
-     
     
     [self.searchBar becomeFirstResponder];
-    
 }
 
 -(void) searchBarSearchButtonClicked:(UISearchBar*)searchBar
 {
+    if (searchBar.text.length > 1) {
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [[[Accounts sharedInstance] currentAccount] doTextSearch:searchBar.text];
+        }];
+    }
+    
     [searchBar resignFirstResponder];
 }
 
 -(void) removeConversationList:(NSArray *)convs { }
 
--(BOOL) isPresentingDrafts { return false;}
+-(BOOL) isPresentingDrafts
+{
+    return false;
+}
 
 - (void)reFetch
 {
     [self.searchQueue addOperationWithBlock:^{
+        //self.lastSearchLength = self.searchBar.text.length;
         [self _updateSearchResultWith:self.searchBar.text];
     }];
 }

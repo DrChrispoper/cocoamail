@@ -28,12 +28,14 @@
 
 -(void) loadData
 {
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
+    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    //[databaseManager.databaseQueue close];
+    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
     
-	[databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        FMResultSet* results = [db executeQuery:@"SELECT * FROM email, search_email WHERE email.pk = search_email.rowid AND email.pk = ? LIMIT 1;", @(self.pk)];
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
+
+	[queue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:kQueryPk, @(self.pk)];
         
         if ([results next]) {
             [Email res:results ToEmail:self];
@@ -128,7 +130,7 @@
     
     [queue inDatabase:^(FMDatabase* db) {
         
-        FMResultSet* results = [db executeQuery:@"SELECT email.pk,email.datetime,email.sender,email.tos,email.ccs,email.bccs,email.msg_id,email.html_body,email.flag,search_email.subject,search_email.body FROM email, search_email WHERE email.pk = search_email.rowid AND search_email.msg_id = ?", self.msgId];
+        FMResultSet* results = [db executeQuery:kQueryAllMsgID, self.msgId];
         
         if ([results next]) {
             email = [Email resToEmail:results];
@@ -272,9 +274,11 @@
         CCMLog(@"errorMessage = %@", db.lastErrorMessage);
     }
     
-    if (![db executeUpdate:@"CREATE TRIGGER IF NOT EXISTS delete_email_search AFTER DELETE ON email BEGIN DELETE FROM search_email WHERE search_email.rowid = OLD.pk; END;"]) {
+    if (![db executeUpdate:@"CREATE TRIGGER IF NOT EXISTS delete_email_search AFTER DELETE ON email BEGIN DELETE FROM search_email WHERE search_email.msg_id = OLD.msg_id; END;"]) {
         CCMLog(@"errorMessage = %@", db.lastErrorMessage);
     }
+    
+    [db executeUpdate:@"DELETE FROM search_email WHERE msg_id NOT IN (SELECT msg_id FROM email)"];
 }
 
 +(NSInteger) insertEmail:(Email*)email
@@ -315,70 +319,40 @@
     return (int)success;
 }
 
-+(NSInteger) insertEmailUnsafe:(Email*)email
-{
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    sqlite_int64 success = -1 ;
-    
-    FMDatabase* database = [FMDatabase databaseWithPath:databaseManager.databaseFilepath];
-    [database open];
-        
-        [database executeUpdate:@"INSERT INTO email (datetime,sender,tos,ccs,bccs,msg_id,html_body,flag) VALUES (?,?,?,?,?,?,?,?);",
-         email.datetime,
-         email.sender.nonEncodedRFC822String,
-         email.tos.mco_nonEncodedRFC822StringForAddresses,
-         email.ccs.mco_nonEncodedRFC822StringForAddresses,
-         email.bccs.mco_nonEncodedRFC822StringForAddresses,
-         email.msgId,
-         email.htmlBody,
-         @(email.flag)];
-        success = [database lastInsertRowId];
-        
-        [database executeUpdate:@"INSERT INTO search_email (subject,body,sender,tos,ccs,people) VALUES (?,?,?,?,?,?);",
-         email.subject,
-         email.body,
-         email.sender.nonEncodedRFC822String,
-         email.tos.mco_nonEncodedRFC822StringForAddresses,
-         email.ccs.mco_nonEncodedRFC822StringForAddresses,
-         [NSString stringWithFormat:@"%@, %@, %@, %@", email.sender.nonEncodedRFC822String, email.tos.mco_nonEncodedRFC822StringForAddresses, email.ccs.mco_nonEncodedRFC822StringForAddresses, email.bccs.mco_nonEncodedRFC822StringForAddresses]];
-    
-    [database close];
-    
-    return (int)success;
-}
-
 +(void) updateEmailFlag:(Email*)email
 {
     NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
-    Email* oldEmail = [Email getEmailWithMsgId:email.msgId dbNum:dbNum];
     
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    //[databaseManager.databaseQueue close];
+    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE email SET flag = ? WHERE pk = ?;", @(email.flag), @(oldEmail.pk)];
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+
+    [queue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE email SET flag = ? WHERE msg_id = ?;", @(email.flag), email.msgId];
     }];
 }
 
 +(void) updateEmail:(Email*)email;
 {
     NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
-    email.pk = [Email getEmailWithMsgId:email.msgId dbNum:dbNum].pk;
     
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    //[databaseManager.databaseQueue close];
+    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE email SET sender = ? WHERE pk = ?;", email.sender, @(email.pk)];
-        [db executeUpdate:@"UPDATE email SET tos = ? WHERE pk = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
-        [db executeUpdate:@"UPDATE email SET bccs = ? WHERE pk = ?;", email.bccs.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
-        [db executeUpdate:@"UPDATE email SET html_body = ? WHERE pk = ?;", email.htmlBody, @(email.pk)];
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+
+    [queue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE email SET sender = ? WHERE msg_id = ?;", email.sender, email.msgId];
+        [db executeUpdate:@"UPDATE email SET tos = ? WHERE msg_id = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, email.msgId];
+        [db executeUpdate:@"UPDATE email SET bccs = ? WHERE msg_id = ?;", email.bccs.mco_nonEncodedRFC822StringForAddresses, email.msgId];
+        [db executeUpdate:@"UPDATE email SET html_body = ? WHERE msg_id = ?;", email.htmlBody, email.msgId];
         
-        [db executeUpdate:@"UPDATE search_email SET body = ? WHERE rowid = ?;", email.body, @(email.pk)];
-        [db executeUpdate:@"UPDATE search_email SET subject = ? WHERE pk = ?;", email.subject, @(email.pk)];
-        [db executeUpdate:@"UPDATE search_email SET tos = ? WHERE pk = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, @(email.pk)];
+        [db executeUpdate:@"UPDATE search_email SET body = ? WHERE msg_id = ?;", email.body, email.msgId];
+        [db executeUpdate:@"UPDATE search_email SET subject = ? WHERE msg_id = ?;", email.subject, email.msgId];
+        [db executeUpdate:@"UPDATE search_email SET tos = ? WHERE msg_id = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, email.msgId];
     }];
 }
 
@@ -387,8 +361,6 @@
     __block BOOL success = FALSE;
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     
-    [[EmailProcessor getSingleton] switchToDBNum:dbNum];
-
     [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
@@ -403,13 +375,15 @@
 {
     __block Email* email = [[Email alloc] init];
     
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
+    //[databaseManager.databaseQueue close];
+    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+
+    [queue inDatabase:^(FMDatabase* db) {
         
-        FMResultSet* results = [db executeQuery:@"SELECT email.pk,email.datetime,email.sender,email.tos,email.ccs,email.bccs,email.msg_id,email.html_body,email.flag,search_email.subject,search_email.body FROM email, search_email WHERE email.pk = search_email.rowid AND search_email.msg_id = ?", msgIdDel];
+        FMResultSet* results = [db executeQuery:kQueryAllMsgID, msgIdDel];
         
         if ([results next]) {
             email = [Email resToEmail:results];
@@ -428,7 +402,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        FMResultSet* results = [db executeQuery:@"SELECT email.pk,email.datetime,email.sender,email.tos,email.ccs,email.bccs,email.msg_id,email.html_body,email.flag,search_email.subject,search_email.body FROM email, search_email WHERE email.pk = search_email.rowid"];
+        FMResultSet* results = [db executeQuery:kQueryAll];
         
         while ([results next]) {
             [emails addObject:[Email resToEmail:results]];
@@ -457,12 +431,17 @@
     
     email.msgId = [result stringForColumnIndex:6];
     email.htmlBody = [result stringForColumnIndex:7];
-    email.flag = (MCOMessageFlag)@([result intForColumnIndex:8]);
+    email.flag = [result intForColumnIndex:8];
     email.subject = [result stringForColumnIndex:9];
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
     
     [email isInMultipleAccounts];
+    
+    if (email.accountNum == 0) {
+        
+        CCMLog(@"Prout");
+    }
 
     return email;
 }
@@ -494,6 +473,7 @@
         newEmail.body = self.body;
         newEmail.attachments = self.attachments;
         newEmail.uids = self.uids;
+        newEmail.accountNum = self.accountNum;
     }
     
     return newEmail;
@@ -503,6 +483,8 @@
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
+    NSInteger accountndex = [AppSettings indexForAccount:self.accountNum];
+    CCMLog(@"Move from folder %@ to %@", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:accountndex],  [AppSettings folderDisplayName:toFolderIdx forAccountIndex:accountndex]);
     if ([self uidEWithFolder:fromFolderIdx]) {
         if ([self uidEWithFolder:toFolderIdx]) {
             [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];

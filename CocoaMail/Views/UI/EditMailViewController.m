@@ -101,7 +101,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     
     UIButton* back = [WhiteBlurNavBar navBarButtonWithImage:@"editmail_cancel_off" andHighlighted:@"editmail_cancel_on"];
-    [back addTarget:self action:@selector(_back) forControlEvents:UIControlEventTouchUpInside];
+    [back addTarget:self action:@selector(_reallyGoBack) forControlEvents:UIControlEventTouchUpInside];
     item.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:back];
     
     UIButton* send = [WhiteBlurNavBar navBarButtonWithImage:@"editmail_send_off" andHighlighted:@"editmail_send_on"];
@@ -209,6 +209,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     [self _hideKeyboard];
     [self _keyboardNotification:NO];
+    [self _back];
     
     self.scrollView.delegate = nil;
 }
@@ -262,10 +263,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 #pragma mark - UI
 
+/*-(void) _back
+{
+    [self _back:NO];
+}*/
+
 -(void) _back
 {
     BOOL haveSomething = self.subjectTextView.text.length > 0
-    || [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0
+    || [[self.bodyTextView.text stringByAppendingString:[AppSettings signature:self.selectedAccount.idx]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0
     || [self.mail.attachments count] > 0 ;
     
     if (self.mail.fromMail) {
@@ -357,14 +363,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       [[Accounts sharedInstance].accounts[self.selectedAccount.idx] saveDraft:self.mail];
                                                                   }
                                                                   
-                                                                  [self _reallyGoBack];
+                                                                  //[self _reallyGoBack];
                                                               }];
         [ac addAction:defaultAction];
         
         UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Delete", @"Delete") style:UIAlertActionStyleDestructive
                                                               handler:^(UIAlertAction* aa) {
                                                                   [self.selectedAccount deleteDraft:self.mail];
-                                                                  [self _reallyGoBack];
+                                                                  //[self _reallyGoBack];
                                                               }];
         [ac addAction:cancelAction];
         
@@ -376,7 +382,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
     }
     else {
-        [self _reallyGoBack];
+        //[self _reallyGoBack];
     }
 }
 
@@ -388,7 +394,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) _send
 {
     self.mail.title = self.subjectTextView.text;
-    self.mail.content = [NSString stringWithFormat:@"%@ \n%@\n%@", self.bodyTextView.text, [AppSettings signature:self.selectedAccount.idx], self.mail.transferContent];
+    self.mail.content = [NSString stringWithFormat:@"%@ %@", [self.bodyTextView.text stringByRemovingPercentEncoding], self.mail.transferContent];
     
     [self.selectedAccount sendMail:self.mail bcc:self.personsAreHidden];
     
@@ -585,21 +591,26 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     tv.font = [UIFont systemFontOfSize:15];
     tv.delegate = self;
     [bdView addSubview:tv];
-    tv.text = @"\n\n\n";
+    tv.text = @"\n\n";
+    
+    if ([AppSettings premiumPurchased]) {
+        tv.text = [NSString stringWithFormat:@"\n\n%@",[AppSettings signature:self.selectedAccount.idx]];
+    }
     
     NSRange start = {0, 0};
     tv.selectedRange = start;
    
     self.bodyTextView = tv;
     
-    UILabel* signature = [[UILabel alloc] initWithFrame:CGRectMake(8, bdView.frame.size.height-28 , WIDTH-16, 20)];
-    signature.textColor = [UIGlobal noImageBadgeColor];
-    signature.backgroundColor = [UIColor whiteColor];
-    signature.font = [UIFont systemFontOfSize:15];
-    signature.text = [AppSettings signature:self.selectedAccount.idx];
-    [bdView addSubview:signature];
-    signature.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
-    
+    if (![AppSettings premiumPurchased]) {
+        UILabel* signature = [[UILabel alloc] initWithFrame:CGRectMake(8, bdView.frame.size.height-28 , WIDTH-16, 20)];
+        signature.textColor = [UIGlobal noImageBadgeColor];
+        signature.backgroundColor = [UIColor whiteColor];
+        signature.font = [UIFont systemFontOfSize:15];
+        signature.text = [AppSettings signature:self.selectedAccount.idx];
+        [bdView addSubview:signature];
+        signature.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+    }
     
     [contentView addSubview:bdView];
     bdView.tag = ContentBody;
@@ -996,7 +1007,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     CGRect f = self.contentView.frame;
     f.size.height = height + 50;
     self.contentView.frame = f;
-
+    
     self.scrollView.contentSize = self.contentView.frame.size;
     
 }
@@ -1110,6 +1121,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                 if (fixDelta != 0) {
                     CGPoint nextOffset = self.scrollView.contentOffset;
                     nextOffset.y += fixDelta;
+                    
+                    nextOffset.y = fmaxf(nextOffset.y, 0.0f);
+                    
+                    if (nextOffset.y == INFINITY) {
+                        nextOffset.y = self.scrollView.contentSize.height - self.scrollView.bounds.size.height;
+                    }
+
+                    CCMLog(@"NextOffset.y = %f",nextOffset.y);
                     [self.scrollView setContentOffset:nextOffset animated:YES];
                 }
             }

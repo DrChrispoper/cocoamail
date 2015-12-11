@@ -482,7 +482,8 @@ static ViewController * s_self;
         
         IBGLog(kPRESENT_FOLDER_NOTIFICATION);
 
-        [[SearchRunner getSingleton] cancel];
+        //[[SearchRunner getSingleton] cancel];
+        [[[Accounts sharedInstance] currentAccount] cancelSearch];
 
         MailListViewController* f = nil;
         Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
@@ -645,6 +646,8 @@ static ViewController * s_self;
             return;
         }
         IBGLog(kPRESENT_SEARCH_NOTIFICATION);
+        [[[Accounts sharedInstance] currentAccount] cancelSearch];
+
         SearchViewController* f = [[SearchViewController alloc] init];
         [self _animatePushVC:f];
     }];
@@ -676,7 +679,7 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         IBGLog(kBACK_TO_INBOX_NOTIFICATION);
 
-        [[SearchRunner getSingleton] cancel];
+        //[[SearchRunner getSingleton] cancel];
         
         if (self.viewControllers.count>3) {
             NSRange toRemove;
@@ -695,7 +698,7 @@ static ViewController * s_self;
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
-        [[SearchRunner getSingleton] cancel];
+        //[[SearchRunner getSingleton] cancel];
 
         if (self.viewControllers.count == 1) {
             return;
@@ -787,6 +790,7 @@ static ViewController * s_self;
             self.viewControllers = [NSMutableArray arrayWithObject:f];
         }
         else {
+            [[[Accounts sharedInstance] currentAccount] cancelSearch];
             MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
             inbox.view.frame = self.contentView.bounds;
             nextView = inbox.view;

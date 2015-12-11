@@ -115,36 +115,10 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	
 	if (currentDBNum != dbNum) {
 		// need to switch between DBs
-		if (!firstOne) {
-			// don't open a transaction for the first one
-			//[self endTransactions];
-		}
-		//CCMLog(@"Switching to edb: %i", dbNum);
+
 		[self rolloverAddEmailDBTo:dbNum];
 		
-        if (!firstOne) {
-			//[self beginTransactions];
-		}
-		
-		addsSinceTransaction = 0;
 		currentDBNum = dbNum;
-		firstOne = NO;
-	}
-    else {
-		// have we exceeded the number of adds between transactions?
-		addsSinceTransaction += 1;
-		BOOL nextTransaction = (addsSinceTransaction >= ADDS_PER_TRANSACTION);
-		
-        if (nextTransaction) {
-			addsSinceTransaction = 0;
-		}
-		
-		// switching between transactions
-		if (nextTransaction) {
-			//[self endTransactions];
-			firstOne = NO;
-			//[self beginTransactions];
-		}
 	}
 }
 
@@ -160,7 +134,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
     for (Email* email in datas) {
-        [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
         [Email updateEmailFlag:email];
     }
     
@@ -183,7 +156,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
 	for (Email* email in datas) {
-        [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
         [UidEntry removeFromFolderUid:[email uidEWithFolder:folderIdx]];
     }
     
@@ -196,8 +168,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) updateEmailWrapper:(Email*)email
 {
-    // Note that there should be no parallel accesses to addEmailWrapper
-    [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
     if (self.shuttingDown) {
         return;
     }
@@ -207,7 +177,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 -(void) addEmailWrapper:(Email*)email
 {
 	// Note that there should be no parallel accesses to addEmailWrapper
-    [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
 	[self addEmail:email];
     [self addAttachments:email.attachments];
 }
@@ -218,6 +187,8 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         return;
     }
     
+    [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
+
     UidEntry* uidE = email.uids[0];
 
     if ([Email insertEmail:email] != -1) {

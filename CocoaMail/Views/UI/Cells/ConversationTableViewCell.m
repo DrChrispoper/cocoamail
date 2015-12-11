@@ -597,6 +597,10 @@
         self.leftAction.highlighted = toMany;
     }
     
+    if (idxQuickSwipe == QuickSwipeArchive) {
+        self.leftAction.highlighted = ![conv isInInbox];
+    }
+    
     if (mail.isRead) {
         
         if (self.readMask == nil) {

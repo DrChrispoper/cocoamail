@@ -55,6 +55,7 @@
 		273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 273E62D91BDF7FC700E3F318 /* CCMStatus.m */; };
 		273EA08B1BA18221009AC691 /* MCOMessageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 273EA0891BA18221009AC691 /* MCOMessageView.mm */; };
 		273EA08C1BA18221009AC691 /* MCOMessageViewScript.js in Resources */ = {isa = PBXBuildFile; fileRef = 273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */; };
+		2770B9791C19DF2E008F7784 /* MCOCIDURLProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2770B9781C19DF2E008F7784 /* MCOCIDURLProtocol.mm */; };
 		2777380B1B8B03830030F299 /* Accounts.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380A1B8B03830030F299 /* Accounts.m */; };
 		2777380E1B8B03A40030F299 /* MailListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380D1B8B03A40030F299 /* MailListViewController.m */; };
 		27781AFE1B8DC55D00BDE682 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27781AFD1B8DC55D00BDE682 /* Images.xcassets */; };
@@ -145,6 +146,8 @@
 		277D89AD1BB183B300FAFED5 /* page_white_word@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D89591BB183B300FAFED5 /* page_white_word@2x.png */; };
 		277D89AE1BB183B300FAFED5 /* pages.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D895A1BB183B300FAFED5 /* pages.png */; };
 		277D89AF1BB183B300FAFED5 /* pages@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D895B1BB183B300FAFED5 /* pages@2x.png */; };
+		277E9D1D1C1AD4540098EDB4 /* jquerymobile.js in Resources */ = {isa = PBXBuildFile; fileRef = 277E9D1C1C1AD4540098EDB4 /* jquerymobile.js */; };
+		277E9D271C1AD7C60098EDB4 /* jquery.js in Resources */ = {isa = PBXBuildFile; fileRef = 277E9D261C1AD7C60098EDB4 /* jquery.js */; };
 		27818C4A1BABF22500D26D1A /* AccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C191BABF22500D26D1A /* AccountViewController.m */; };
 		27818C4B1BABF22500D26D1A /* AddAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C1B1BABF22500D26D1A /* AddAccountViewController.m */; };
 		27818C4C1BABF22500D26D1A /* AttachmentsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C1D1BABF22500D26D1A /* AttachmentsViewController.m */; };
@@ -333,6 +336,8 @@
 		273EA0881BA18221009AC691 /* MCOMessageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MCOMessageView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		273EA0891BA18221009AC691 /* MCOMessageView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; lineEnding = 0; path = MCOMessageView.mm; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = MCOMessageViewScript.js; sourceTree = "<group>"; };
+		2770B9771C19DF2E008F7784 /* MCOCIDURLProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCOCIDURLProtocol.h; sourceTree = "<group>"; };
+		2770B9781C19DF2E008F7784 /* MCOCIDURLProtocol.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MCOCIDURLProtocol.mm; sourceTree = "<group>"; };
 		277738091B8B03830030F299 /* Accounts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Accounts.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		2777380A1B8B03830030F299 /* Accounts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Accounts.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		2777380C1B8B03A40030F299 /* MailListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MailListViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -428,6 +433,8 @@
 		277D89591BB183B300FAFED5 /* page_white_word@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "page_white_word@2x.png"; sourceTree = "<group>"; };
 		277D895A1BB183B300FAFED5 /* pages.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pages.png; sourceTree = "<group>"; };
 		277D895B1BB183B300FAFED5 /* pages@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pages@2x.png"; sourceTree = "<group>"; };
+		277E9D1C1C1AD4540098EDB4 /* jquerymobile.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jquerymobile.js; sourceTree = "<group>"; };
+		277E9D261C1AD7C60098EDB4 /* jquery.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jquery.js; sourceTree = "<group>"; };
 		27818C181BABF22500D26D1A /* AccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = AccountViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		27818C191BABF22500D26D1A /* AccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = AccountViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		27818C1A1BABF22500D26D1A /* AddAccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddAccountViewController.h; sourceTree = "<group>"; };
@@ -765,6 +772,10 @@
 		271D4DC01B848A4E00D19373 /* HTMLMessageView */ = {
 			isa = PBXGroup;
 			children = (
+				277E9D261C1AD7C60098EDB4 /* jquery.js */,
+				277E9D1C1C1AD4540098EDB4 /* jquerymobile.js */,
+				2770B9771C19DF2E008F7784 /* MCOCIDURLProtocol.h */,
+				2770B9781C19DF2E008F7784 /* MCOCIDURLProtocol.mm */,
 				273EA0881BA18221009AC691 /* MCOMessageView.h */,
 				273EA0891BA18221009AC691 /* MCOMessageView.mm */,
 				273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */,
@@ -1280,6 +1291,7 @@
 				277D89981BB183B300FAFED5 /* page_white_paint.png in Resources */,
 				277D898C1BB183B300FAFED5 /* page_white_flash.png in Resources */,
 				277D89AC1BB183B300FAFED5 /* page_white_word.png in Resources */,
+				277E9D1D1C1AD4540098EDB4 /* jquerymobile.js in Resources */,
 				277D89AE1BB183B300FAFED5 /* pages.png in Resources */,
 				277D89761BB183B300FAFED5 /* page_white_acrobat_import.png in Resources */,
 				277D896B1BB183B300FAFED5 /* invite_folder@2x.png in Resources */,
@@ -1322,6 +1334,7 @@
 				277D895D1BB183B300FAFED5 /* folder@2x.png in Resources */,
 				277D897F1BB183B300FAFED5 /* page_white_compressed@2x.png in Resources */,
 				277D89881BB183B300FAFED5 /* page_white_excel.png in Resources */,
+				277E9D271C1AD7C60098EDB4 /* jquery.js in Resources */,
 				277D89631BB183B300FAFED5 /* folder_camera_upload@2x.png in Resources */,
 				277D89A31BB183B300FAFED5 /* page_white_sound@2x.png in Resources */,
 				277D895C1BB183B300FAFED5 /* folder.png in Resources */,
@@ -1417,6 +1430,7 @@
 				27818C511BABF22500D26D1A /* ConversationViewController.m in Sources */,
 				27818C6D1BABF28D00D26D1A /* Persons.m in Sources */,
 				271D4D9C1B84758E00D19373 /* SyncManager.m in Sources */,
+				2770B9791C19DF2E008F7784 /* MCOCIDURLProtocol.mm in Sources */,
 				27818C611BABF22500D26D1A /* WhiteBlurNavBar.m in Sources */,
 				27818C4A1BABF22500D26D1A /* AccountViewController.m in Sources */,
 				27818C571BABF22500D26D1A /* FolderViewController.m in Sources */,

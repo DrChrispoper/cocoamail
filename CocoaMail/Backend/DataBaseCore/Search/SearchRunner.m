@@ -65,7 +65,7 @@ static SearchRunner * searchSingleton = nil;
     
     self.cancelled = NO;
     
-    return [self searchForSignal:[self performFTSearch:searchText withDbNum:dbNumbers]];
+    return [self searchForSignal:[self performFTSearch:searchText withDbNum:dbNumbers inAccount:accountIndex]];
 }
 
 -(RACSignal*) searchForSignal:(RACSignal*)signal
@@ -77,10 +77,12 @@ static SearchRunner * searchSingleton = nil;
 
 #pragma mark Full-text search
 
--(RACSignal*) performFTSearch:(NSString*)query withDbNum:(NSArray*)dbNums
+-(RACSignal*) performFTSearch:(NSString*)query withDbNum:(NSArray*)dbNums inAccount:(NSInteger)accountIndex
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
+        NSInteger accountNum = [AppSettings numForData:accountIndex];
+
         for (NSNumber* dbNum in dbNums) {
             if (self.cancelled) {
                 [subscriber sendCompleted];
@@ -91,27 +93,22 @@ static SearchRunner * searchSingleton = nil;
             
             [queue inDatabase:^(FMDatabase* db) {
                 
-                FMResultSet* results = [db executeQuery:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
-                                        "search_email.body, snippet(search_email,'[', ']','...'), email.msg_id FROM "
-                                        "email, search_email "
-                                        "WHERE email.pk = search_email.rowid AND search_email MATCH ?"
-                                        "ORDER BY email.datetime DESC;", query];
+                FMResultSet* results = [db executeQuery:kQuerySearch, query];
                 
                 while ([results next]) {
+                    Email* email = [Email resToEmail:results];
                     
-                    Email* email  = [[Email alloc]init];
+                    if ([email isInMultipleAccounts]) {
+                        Email* e = [email secondAccountDuplicate];
+                        
+                        if (e.accountNum == accountNum) {
+                            email = e;
+                        }
+                    }
                     
-                    email.pk = [results intForColumnIndex:0];
-                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
-                    email.subject = [results stringForColumnIndex:2];
-                    email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:4];
-                    //CCMLog(@"Snippet: %@",[results stringForColumnIndex:5]);
-                    email.msgId = [results stringForColumnIndex:6];
-                    
-                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
-                    
-                    [subscriber sendNext:email];
+                    if (email.accountNum == accountNum) {
+                        [subscriber sendNext:email];
+                    }
                     
                     if (self.cancelled) {
                         break;
@@ -141,10 +138,7 @@ static SearchRunner * searchSingleton = nil;
         NSMutableArray* uids = [UidEntry getUidEntriesWithThread:thread];
         
         NSMutableString* query = [NSMutableString string];
-        [query appendString:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
-         "SUBSTR(search_email.body,0,140), email.flag, email.msg_id, email.tos,email.ccs,email.bccs,email.html_body "
-         "FROM  email, search_email "
-         "WHERE email.pk = search_email.rowid AND search_email.msg_id MATCH '"];
+        [query appendString:kQueryThread];
         
         for (UidEntry* p in uids) {
             [query appendFormat:@"%@ OR ", p.msgId];
@@ -166,37 +160,7 @@ static SearchRunner * searchSingleton = nil;
                 
                 while ([results next]) {
                     CCMLog(@"Have One");
-                    Email* email = [[Email alloc]init];
-                    
-                    email.pk = [results intForColumnIndex:0];
-                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
-                    email.subject = [results stringForColumnIndex:2];
-                    email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:4];
-                    email.flag = [results intForColumnIndex:5];
-                    email.msgId = [results stringForColumnIndex:6];
-                    
-                    email.tos = @[];
-                    email.ccs = @[];
-                    email.bccs = @[];
-                    
-                    if (![[results stringForColumnIndex:7] isEqualToString:@""]) {
-                        email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:7]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:8] isEqualToString:@""]) {
-                        email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:8]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:9] isEqualToString:@""]) {
-                        email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]];
-                    }
-                    
-                    email.htmlBody = [results stringForColumnIndex:10];
-                    email.body = email.body?:@"";
-                    email.htmlBody = email.htmlBody?:@"";
-                    
-                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+                    Email* email = [Email resToEmail:results];
                     
                     if ([email isInMultipleAccounts]) {
                         Email* e = [email secondAccountDuplicate];
@@ -237,10 +201,7 @@ static SearchRunner * searchSingleton = nil;
             
             [queue inDatabase:^(FMDatabase* db) {
                 NSMutableString* query = [NSMutableString string];
-                [query appendString:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
-                 "search_email.body, email.flag, email.msg_id, email.tos,email.ccs,email.bccs,email.html_body "
-                 "FROM  email, search_email "
-                 "WHERE email.pk = search_email.rowid"];
+                [query appendString:kQueryAll];
                 
                 FMResultSet* results = [db executeQuery:query];
                 
@@ -250,37 +211,7 @@ static SearchRunner * searchSingleton = nil;
                 }
                 
                 while ([results next]) {
-                    Email* email = [[Email alloc]init];
-                    
-                    email.pk = [results intForColumnIndex:0];
-                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
-                    email.subject = [results stringForColumnIndex:2];
-                    email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:4];
-                    email.flag = [results intForColumnIndex:5];
-                    email.msgId = [results stringForColumnIndex:6];
-                    
-                    email.tos = @[];
-                    email.ccs = @[];
-                    email.bccs = @[];
-                    
-                    if (![[results stringForColumnIndex:7] isEqualToString:@""]) {
-                        email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:7]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:8] isEqualToString:@""]) {
-                        email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:8]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:9] isEqualToString:@""]) {
-                        email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]];
-                    }
-                    
-                    email.htmlBody = [results stringForColumnIndex:10];
-                    email.body = email.body?:@"";
-                    email.htmlBody = email.htmlBody?:@"";
-                    
-                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+                    Email* email = [Email resToEmail:results];
                     
                     if ([email isInMultipleAccounts]) {
                         allFound--;
@@ -333,10 +264,7 @@ static SearchRunner * searchSingleton = nil;
             }
             
             NSMutableString* query = [NSMutableString string];
-            [query appendString:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
-             "search_email.body, email.flag, email.msg_id, email.tos,email.ccs,email.bccs,email.html_body "
-             "FROM  email, search_email "
-             "WHERE email.pk = search_email.rowid AND search_email.msg_id MATCH '"];
+            [query appendString:kQueryThread];
             
             for (UidEntry* p in pagedUids) {
                 [query appendFormat:@"%@ OR ", p.msgId];
@@ -356,37 +284,7 @@ static SearchRunner * searchSingleton = nil;
                 }
                 
                 while ([results next]) {
-                    Email* email = [[Email alloc]init];
-                    
-                    email.pk = [results intForColumnIndex:0];
-                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
-                    email.subject = [results stringForColumnIndex:2];
-                    email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:4];
-                    email.flag = [results intForColumnIndex:5];
-                    email.msgId = [results stringForColumnIndex:6];
-                    
-                    email.tos = @[];
-                    email.ccs = @[];
-                    email.bccs = @[];
-                    
-                    if (![[results stringForColumnIndex:7] isEqualToString:@""]) {
-                        email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:7]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:8] isEqualToString:@""]) {
-                        email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:8]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:9] isEqualToString:@""]) {
-                        email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]];
-                    }
-                    
-                    email.htmlBody = [results stringForColumnIndex:10];
-                    email.body = email.body?:@"";
-                    email.htmlBody = email.htmlBody?:@"";
-                    
-                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+                    Email* email = [Email resToEmail:results];
                     
                     if ([email isInMultipleAccounts]) {
                         Email* e = [email secondAccountDuplicate];
@@ -460,15 +358,9 @@ static SearchRunner * searchSingleton = nil;
         
         NSMutableString* query = [NSMutableString string];
         
-        [query appendString:@"SELECT email.pk, email.sender, search_email.subject, email.datetime, "
-         "search_email.body, email.flag, email.msg_id, email.tos,email.ccs,email.bccs,email.html_body "
-         "FROM  email, search_email "
-         "WHERE email.pk = search_email.rowid AND "];
+        [query appendString:@"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND "];
         
         [query appendFormat:@"search_email.people LIKE '%@%@%@'", @"%", person.email,@"%"];
-        
-        //NSString* queryString = [query substringToIndex:(query.length - 3)];
-        //query = [NSMutableString string];
         
         [query appendString:@" ORDER BY email.datetime DESC;"];
         
@@ -484,53 +376,14 @@ static SearchRunner * searchSingleton = nil;
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
             
             [queue inDatabase:^(FMDatabase* db) {
-                
                 FMResultSet* results = [db executeQuery:queryString];
                 
                 while ([results next]) {
-                    Email* email = [[Email alloc]init];
-                    
-                    email.pk = [results intForColumnIndex:0];
-                    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[results stringForColumnIndex:1]];
-                    email.subject = [results stringForColumnIndex:2];
-                    email.datetime = [results dateForColumnIndex:3];
-                    email.body = [results stringForColumnIndex:4];
-                    email.flag = [results intForColumnIndex:5];
-                    email.msgId = [results stringForColumnIndex:6];
-                    
-                    email.tos = @[];
-                    email.ccs = @[];
-                    email.bccs = @[];
-                    
-                    if (![[results stringForColumnIndex:7] isEqualToString:@""]) {
-                        email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:7]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:8] isEqualToString:@""]) {
-                        email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:8]];
-                    }
-                    
-                    if (![[results stringForColumnIndex:9] isEqualToString:@""]) {
-                        email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[results stringForColumnIndex:9]];
-                    }
-                    
-                    /*if (![email.sender.mailbox isEqualToString:person.email] || ![email.sender.mailbox isEqualToString:[AppSettings username:accountIndex]]) {
-                        continue;
-                    }*/
-                    
-                    email.htmlBody = [results stringForColumnIndex:10];
-                    email.body = email.body?:@"";
-                    email.htmlBody = email.htmlBody?:@"";
-                    
-                    email.attachments = [CCMAttachment getAttachmentsWithMsgId:email.msgId];
+                    Email* email = [Email resToEmail:results];
                     
                     if ([email isInMultipleAccounts]) {
                         Email* e = [email secondAccountDuplicate];
                         
-                        ///if (kisActiveAccountAll) {
-                        //    [subscriber sendNext:e];
-                        //}
-                        //else
                         if (e.accountNum == accountNum) {
                             email = e;
                         }

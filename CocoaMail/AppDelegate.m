@@ -74,20 +74,23 @@
     for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         [[ImapSync sharedServices:accountIndex] saveCachedData];
     }
-
+    
     if (notification && application.applicationState == 1) {
         NSNumber *index = [notification.userInfo objectForKey:@"index"];
-        NSNumber *accountNum = [notification.userInfo objectForKey:@"accountNum"];
-        Conversation* conversation = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:[accountNum integerValue]]] getConversationForIndex:[index integerValue]];
+        NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+        Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
         
         CCMLog(@"Opening email:%@", [conversation firstMail].title);
         CCMLog(@"Application state:%ld", (long)application.applicationState);
         
-        
+        [[ImapSync sharedServices:accountIndex] saveCachedData];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                             object:nil
                                                           userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
+        
     }
+    
+
 }
 
 -(void) applicationWillTerminate:(UIApplication*)application
