@@ -14,6 +14,7 @@
 #import "ImapSync.h"
 #import "Reachability.h"
 #import "CachedAction.h"
+#import "EmailProcessor.h"
 
 @implementation UidEntry
 
@@ -95,7 +96,8 @@
     }];
     
     if ([self getUidEntriesWithMsgId:uid_entry.msgId].count == 0) {
-        [Email removeEmail:uid_entry.msgId dbNum:uid_entry.dbNum];
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(removeEmail:) object:uid_entry];
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     }
     
     return success;
@@ -112,21 +114,6 @@
         success =  [db executeUpdate:query];
         
     }];
-    
-    return success;
-}
-
-+(BOOL) removeFromAllFoldersUid:(UidEntry*)uid_entry
-{
-    __block BOOL success = FALSE;
-    UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ?;", uid_entry.msgId];
-        
-    }];
-    
-    [Email removeEmail:uid_entry.msgId dbNum:uid_entry.dbNum];
     
     return success;
 }
@@ -381,22 +368,25 @@
     return uidEntry;
 }
 
-+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to
-{
-    return [UidEntry move:[UidEntry getUidEntryWithFolder:from msgId:msg_id] toFolder:to];
-}
+//+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to
+//{
+//    return [UidEntry move:[UidEntry getUidEntryWithFolder:from msgId:msg_id] toFolder:to];
+//}
 
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
 {
     //No Important folder at Index
-    if (to == -1 || uidE.pk == 0) {
+    if (to == -1) {
         CCMLog(@"Email not synced in folder, so can't move it");
         return ;
     }
     
+    if (uidE.pk == 0) {
+        CCMLog(@"Moving cached email?");
+    }
+    
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
 
-    NSInteger fromFolderNb = uidE.folder;
     NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
     NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
     
@@ -411,13 +401,14 @@
                 CCMLog(@"Email copied to folder!");
             
                 if (destUids) {
-                    uidE.folder = to;
-                    uidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
-                    uidE.sonMsgId = uidE.sonMsgId;
+                    UidEntry* newUidE = [uidE copy];
+                    newUidE.folder = to;
+                    newUidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
+                    newUidE.sonMsgId = uidE.sonMsgId;
                     [self addUid:uidE];
                 }
                 
-                [UidEntry deleteMsgId:uidE.msgId fromfolder:fromFolderNb];
+                [UidEntry deleteUidEntry:uidE];
 
             } else {
                 [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
@@ -429,10 +420,10 @@
     }
 }
 
-+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)from
-{
-    return [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:from msgId:msg_id]];
-}
+//+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)from
+//{
+//    return [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:from msgId:msg_id]];
+//}
 
 +(void) deleteUidEntry:(UidEntry*)uidE
 {
@@ -581,7 +572,7 @@
     }
     
     if (success & (flag & MCOMessageFlagFlagged)) {
-        [UidEntry deleteMsgId:uidE.msgId fromfolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris]];
+        [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris] msgId:uidE.msgId]];
     }
     
     return success;

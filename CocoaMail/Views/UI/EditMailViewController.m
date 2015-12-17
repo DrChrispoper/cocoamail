@@ -71,6 +71,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
 
+@property (nonatomic) BOOL isSending;
+
 @end
 
 
@@ -191,6 +193,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [self.toTextField becomeFirstResponder];
     }
     
+    self.isSending = NO;
 }
 
 -(void) viewWillAppear:(BOOL)animated
@@ -198,6 +201,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [super viewDidAppear:animated];
     
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
+    
+    self.isSending = NO;
 }
 
 -(BOOL) haveCocoaButton
@@ -270,15 +275,19 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _back
 {
-    BOOL haveSomething = self.subjectTextView.text.length > 0
-    || [[self.bodyTextView.text stringByAppendingString:[AppSettings signature:self.selectedAccount.idx]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0
+    NSInteger subjectLength = self.subjectTextView.text.length;
+    NSString* body = [[self.bodyTextView.text stringByReplacingOccurrencesOfString:[AppSettings signature:self.selectedAccount.idx] withString:@""] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSInteger bodyLength = body.length;
+    
+    BOOL haveSomething = subjectLength > 0
+    || bodyLength > 0
     || [self.mail.attachments count] > 0 ;
     
     if (self.mail.fromMail) {
         haveSomething = [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0 ;
     }
     
-    if (haveSomething) {
+    if (!self.isSending && haveSomething) {
         
         // auto-save
         self.mail.title = self.subjectTextView.text;
@@ -398,6 +407,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self.selectedAccount sendMail:self.mail bcc:self.personsAreHidden];
     
+    self.isSending = YES;
+
     [self _reallyGoBack];
 }
 
@@ -536,7 +547,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     subView.backgroundColor = [UIColor whiteColor];
     
     label = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, 10, 45)];
-    label.text = @"Subject:";
+    label.text = NSLocalizedString(@"compose-view.label.subject", @"Label for subject") ;
     label.backgroundColor = [UIColor whiteColor];
     label.font = [UIFont systemFontOfSize:15.];
     label.textColor = [UIColor colorWithWhite:0.5 alpha:1.0];

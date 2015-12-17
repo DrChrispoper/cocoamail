@@ -262,10 +262,7 @@
     self.mini.image = [at miniature];
     self.extention.text = @"";
     
-    if ([at.mimeType  isEqualToString:@"application/msword"] ||
-       [at.mimeType isEqualToString:@"application/vnd.oasis.opendocument.text"]||
-       [at.mimeType rangeOfString:@"text/"].location != NSNotFound ||
-       [at.mimeType isEqualToString:@"application/pdf"]) {
+    if ([at.mimeType rangeOfString:@"audio/"].location == NSNotFound && [at.mimeType rangeOfString:@"video/"].location == NSNotFound) {
         self.extention.text = [[at.fileName componentsSeparatedByString:@"."] lastObject];
         [self.extention setHidden:NO];
     }
@@ -287,6 +284,7 @@
     else {
         [self.cellBtn addTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
         [self buttonActionType:AttachmentViewActionDonwload];
+
     }
 }
 

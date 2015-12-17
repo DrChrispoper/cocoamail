@@ -24,7 +24,6 @@
 +(void) tableCheck;
 +(BOOL) addUid:(UidEntry*)uid_entry;
 +(BOOL) removeFromFolderUid:(UidEntry*)uid_entry;
-+(BOOL) removeFromAllFoldersUid:(UidEntry*)uid_entry;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
 +(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
@@ -35,10 +34,10 @@
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 
 /// Copy email from origin folder to destination folder.
-+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to;
+//+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to;
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to;
 /// Mark as deleted in the origin folder. Expunge origin folder.
-+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
+//+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
 +(void) deleteUidEntry:(UidEntry*)uidE;
 +(void) deleteAllfromAccount:(NSInteger)accountN;
 /// Add Flag

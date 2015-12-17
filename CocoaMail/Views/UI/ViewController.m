@@ -68,6 +68,17 @@ static ViewController * s_self;
     [s_self presentViewController:ac animated:YES completion:nil];
 }
 
++(void) presentAlertOk:(NSString*)message
+{
+    UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil message:[NSString stringWithFormat:@"%@", message] preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault
+                                                          handler:nil];
+    [ac addAction:defaultAction];
+    
+    [s_self presentViewController:ac animated:YES completion:nil];
+}
+
 -(void) viewDidLoad
 {
     [super viewDidLoad];

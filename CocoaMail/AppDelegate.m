@@ -36,9 +36,14 @@
                captureSource:IBGCaptureSourceUIKit
              invocationEvent:IBGInvocationEventScreenshot];
     
-    UIUserNotificationSettings* settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
-    [application registerUserNotificationSettings:settings];
-    [application registerForRemoteNotifications];
+    // First, create an action
+    UIMutableUserNotificationAction *acceptAction = [self createAction];
+    
+    // Second, create a category and tie those actions to it (only the one action for now)
+    UIMutableUserNotificationCategory *inviteCategory = [self createCategory:@[acceptAction]];
+    
+    // Third, register those settings with our new notification category
+    [self registerSettings:inviteCategory];
     
     [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
     
@@ -47,15 +52,7 @@
     
     [Accounts sharedInstance];
     
-    NSString* driveScope = @"https://mail.google.com/";
-    NSArray* currentScopes = [GIDSignIn sharedInstance].scopes;
-    [GIDSignIn sharedInstance].scopes = [currentScopes arrayByAddingObject:driveScope];
-    
-    NSError* configureError;
-    [[GGLContext sharedInstance] configureWithError:&configureError];
-    NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
-    
-    [GIDSignIn sharedInstance].delegate = self;
+    [self registerGoogleSignIn];
     
     return YES;
 }
@@ -111,7 +108,6 @@
 
 -(void) applicationWillEnterForeground:(UIApplication *)application
 {
-    CCMLog(@"One");
 }
 
 -(void) applicationDidBecomeActive:(UIApplication*)application
@@ -119,10 +115,6 @@
     if ([AppSettings numActiveAccounts] > 0) {
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
             [[ImapSync sharedServices:accountIndex] saveCachedData];
-            
-            /*if ([AppSettings badgeCount] == 1) {
-                [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
-            }*/
         }
     } else {
         [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
@@ -152,6 +144,25 @@
     }
 }
 
+- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler {
+    
+    if ([identifier isEqualToString:@"DELETE_IDENTIFIER"]) {
+        // handle it
+        NSLog(@"Delete Cached Email");
+        
+        NSNumber *index = [notification.userInfo objectForKey:@"index"];
+        NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+        Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
+        
+        CCMLog(@"Email in account:%d (%d)", [[conversation firstMail].email.uids[0] account], [conversation firstMail].email.accountNum);
+
+        [[[Accounts sharedInstance] getAccount:accountIndex] moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
+    }
+    
+    // Call this when you're finished
+    completionHandler();
+}
+
 -(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
 {
     if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
@@ -168,6 +179,44 @@
         return YES;
     }
     
+    NSFileManager *filemgr = [NSFileManager defaultManager];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString* inboxPath = [documentsDirectory stringByAppendingPathComponent:@"Inbox"];
+    NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:inboxPath error:nil];
+    
+    if (dirFiles.count > 0) {
+        Mail* mail = [Mail newMailFormCurrentAccount];
+        
+        for (NSString* fileName in dirFiles) {
+            Attachment* attach = [[Attachment alloc]init];
+            attach.fileName = fileName;
+            
+            NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
+            
+            if ([filemgr fileExistsAtPath:localPath]) {
+                attach.data = [filemgr contentsAtPath:localPath];
+                attach.size = [attach.data length];
+            }
+            
+            if (mail.attachments == nil) {
+                mail.attachments = @[attach];
+            }
+            else {
+                NSMutableArray* ma = [mail.attachments mutableCopy];
+                [ma addObject:attach];
+                mail.attachments = ma;
+            }
+        }
+        
+        for (NSString* fileName in dirFiles) {
+            NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
+            [filemgr removeItemAtPath:localPath error:nil];
+        }
+
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+    }
     // Add whatever other url handling code your app requires here
     return NO;
 }
@@ -231,5 +280,62 @@ didSignInForUser:(GIDGoogleUser*)user
     [GlobalDBFunctions deleteAll];
 }
 
+#pragma mark - Notifications
+
+- (UIMutableUserNotificationAction *)createAction {
+    UIMutableUserNotificationAction *acceptAction = [[UIMutableUserNotificationAction alloc] init];
+    acceptAction.identifier = @"DELETE_IDENTIFIER";
+    acceptAction.title = NSLocalizedString(@"quick-swipe.delete",@"Lock screeen swipe");
+    
+    // Given seconds, not minutes, to run in the background
+    acceptAction.activationMode = UIUserNotificationActivationModeBackground;
+    
+    // If YES the actions is red
+    acceptAction.destructive = YES;
+    
+    // If YES requires passcode, but does not unlock the device
+    acceptAction.authenticationRequired = NO;
+    
+    return acceptAction;
+}
+
+- (UIMutableUserNotificationCategory *)createCategory:(NSArray *)actions {
+    UIMutableUserNotificationCategory *mailCategory = [[UIMutableUserNotificationCategory alloc] init];
+    mailCategory.identifier = @"MAIL_CATEGORY";
+    
+    // You can define up to 4 actions in the 'default' context
+    // On the lock screen, only the first two will be shown
+    // If you want to specify which two actions get used on the lockscreen, use UIUserNotificationActionContextMinimal
+    [mailCategory setActions:actions forContext:UIUserNotificationActionContextDefault];
+    
+    // These would get set on the lock screen specifically
+    // [inviteCategory setActions:@[declineAction, acceptAction] forContext:UIUserNotificationActionContextMinimal];
+    
+    return mailCategory;
+}
+
+- (void)registerSettings:(UIMutableUserNotificationCategory *)category {
+    UIUserNotificationType types = (UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound);
+    
+    NSSet *categories = [NSSet setWithObjects:category, nil];
+    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:types categories:categories];
+    
+    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+}
+
+#pragma mark - Google Sign In
+
+-(void) registerGoogleSignIn
+{
+    NSString* driveScope = @"https://mail.google.com/";
+    NSArray* currentScopes = [GIDSignIn sharedInstance].scopes;
+    [GIDSignIn sharedInstance].scopes = [currentScopes arrayByAddingObject:driveScope];
+    
+    NSError* configureError;
+    [[GGLContext sharedInstance] configureWithError:&configureError];
+    NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
+    
+    [GIDSignIn sharedInstance].delegate = self;
+}
 
 @end

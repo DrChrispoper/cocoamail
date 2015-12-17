@@ -20,6 +20,7 @@
 {
     CRefreshCompletionHandler _completionHandler;
     NSMutableSet* _cachedEmailIDs;
+    BOOL _isBackgroundFetching;
 }
 
 @property (nonatomic, weak) UITableView* table;
@@ -32,6 +33,8 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    
+    _isBackgroundFetching = NO;
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
@@ -92,8 +95,6 @@
 {
     [super viewDidAppear:animated];
     [self.table reloadData];
-    
-    CCMLog(@"Num active accounts:%d", [AppSettings numActiveAccounts]);
     
     if ([AppSettings numActiveAccounts] ==  0) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
@@ -275,6 +276,9 @@
     _completionHandler = completionHandler;
     
     BOOL __block hasNewEmail = NO;
+    
+    if (!_isBackgroundFetching) {
+        _isBackgroundFetching = YES;
     [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
         if (![_cachedEmailIDs containsObject:email.msgId]) {
@@ -297,16 +301,19 @@
                 localNotification.timeZone = [NSTimeZone defaultTimeZone];
                 localNotification.userInfo = @{@"index":@(index),
                                                @"accountNum":@(email.accountNum)};
-                //[localNotification setAlertAction:@"Read Email"];
-                //[localNotification setHasAction:YES];
+                localNotification.category = @"MAIL_CATEGORY";
+                
                 [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
             }
         }
     } error:^(NSError* error) {
+        _isBackgroundFetching = NO;
         _completionHandler(hasNewEmail);
     } completed:^{
+        _isBackgroundFetching = NO;
         _completionHandler(hasNewEmail);
     }];
+    }
 }
 
 - (void)storeChanged:(NSNotification*)notification

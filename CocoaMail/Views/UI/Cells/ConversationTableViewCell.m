@@ -609,7 +609,7 @@
             overView.alpha = 0.5f;
             overView.layer.cornerRadius = 20.f;
             overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-            [self.baseView addSubview:overView];
+            [self.baseView insertSubview:overView belowSubview:self.badge];
             self.readMask = overView;
         }
         
@@ -627,7 +627,7 @@
         }
     }
     
-    
+
     // selection
     self.currentSwipedPosition = (selected) ? -[self _limiteRightSwipe] : 0.f;
     [self _applyStableFrame];

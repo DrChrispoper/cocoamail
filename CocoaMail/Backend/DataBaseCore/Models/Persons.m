@@ -11,13 +11,14 @@
 #import "UIGlobal.h"
 #import "Accounts.h"
 #import <AddressBook/AddressBook.h>
-
+#import "MyLabel.h"
 
 
 @interface Persons ()
 
 @property (nonatomic, strong) NSMutableArray* alls;
 @property (nonatomic, strong) NSMutableArray* allsNeg;
+@property (nonatomic, strong) NSDictionary* spamPics;
 
 
 @end
@@ -53,6 +54,10 @@
     
     self.alls = [[NSMutableArray alloc]init];
     
+    NSString *path = [[[NSBundle mainBundle] URLForResource:@"pics" withExtension:@"json"] path];
+    NSData* spamPicsData = [[NSFileManager defaultManager] contentsAtPath:path];
+    self.spamPics = [NSJSONSerialization JSONObjectWithData:spamPicsData options:0 error:nil];
+    
     CNContactStore* store = [[CNContactStore alloc] init];
 
     if ([CNContactStore authorizationStatusForEntityType:CNEntityTypeContacts] == CNAuthorizationStatusAuthorized) {
@@ -74,6 +79,23 @@
     [self.allsNeg addObject:[[Person alloc] init]];
         
     return self;
+}
+
+-(void) checkSpam:(Person*)p
+{
+    for (id key in self.spamPics) {
+        for (id kkey in self.spamPics[key]) {
+            for (id domain in self.spamPics[key][kkey]) {
+                NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:domain options:NSRegularExpressionCaseInsensitive error:nil];
+                if ([regex matchesInString:p.email options:NSMatchingReportProgress range:NSMakeRange(0, p.email.length)].count) {
+                    NSString *path = [[[NSBundle mainBundle] URLForResource:key withExtension:@"png"] path];
+                    NSData* spamPicData = [[NSFileManager defaultManager] contentsAtPath:path];
+                    p.image = [UIImage imageWithData:spamPicData];
+                }
+            }
+        }
+    }
+
 }
 
 -(void) loadContacts:(CNContactStore*)store
@@ -144,6 +166,11 @@
     NSInteger idx = [self indexForPerson:person];
     
     if (idx == NSNotFound || idx == -NSNotFound) {
+        
+        if (person.email && !person.image) {
+            [[Persons sharedInstance] checkSpam:person];
+        }
+        
         [self.alls addObject:person];
         
         return (self.alls.count - 1);
@@ -200,7 +227,7 @@
     p.image = icon;
     p.codeName = codeName;
     p.email = mail;
-
+    
     p.isGeneric = [p hasGeneriEmail];
 
     if (p.isGeneric) {
@@ -212,6 +239,7 @@
         
         p.codeName = cN;
     }
+    
     
     [[Persons sharedInstance] addPerson:p];
     
@@ -227,12 +255,14 @@
 {
     if (self.image == nil) {
         
-        UILabel* perso = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
+        MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
         perso.backgroundColor = [UIGlobal noImageBadgeColor];
         
         if (self.userAccount != nil) {
             perso.backgroundColor = self.userAccount.userColor;
         }
+       
+        perso.isColorLocked = YES;
         
         perso.text = self.codeName;
         perso.textAlignment = NSTextAlignmentCenter;

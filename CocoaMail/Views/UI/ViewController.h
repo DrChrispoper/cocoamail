@@ -64,6 +64,7 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 +(void) refreshCocoaButton;
 
 +(void) presentAlertWIP:(NSString*)message;
++(void) presentAlertOk:(NSString*)message;
 
 -(void) closeCocoaButtonIfNeeded;
 

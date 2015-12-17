@@ -55,7 +55,6 @@
     NSString* text;
     NSString* name;
     
-    NSInteger limite = -1;
     
     if ([self.type isEqualToString:@"RF"]) {
         image = @"cocoamail";
@@ -63,7 +62,6 @@
         name = @"Reinald Freling";
         self.barTitle = @"Product Design";
         self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN", @"FACEBOOK"];
-        limite = 400;
     }
     else if ([self.type isEqualToString:@"CH"]) {
         image = @"cocoamail";
@@ -71,7 +69,6 @@
         name = @"Christopher Hockley";
         self.barTitle = @"Development";
         self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN"];
-        limite = 650;
     }
     else if ([self.type isEqualToString:@"CB"]) {
         image = @"cocoamail";
@@ -79,7 +76,6 @@
         name = @"Christophe Branche";
         self.barTitle = @"UI/UX Design";
         self.btnActions = @[@"MAIL", @"LINKEDIN"];
-        limite = 350;
     }
     else if ([self.type isEqualToString:@"PCC"]) {
         image = @"cocoamail";
@@ -87,17 +83,12 @@
         name = @"Pascal Costa-Cunha";
         self.barTitle = @"Helping hand";
         self.btnActions = @[@"LINKEDIN"];
-        limite = 200;
     }
     else if ([self.type isEqualToString:@"T"]) {
         image = nil;
         text = NSLocalizedString(@"credits.bio.thanks",@"");
         name = nil;
         self.barTitle = @"Thanks";
-    }
-    
-    if (limite>0) {
-        text = [text substringToIndex:limite];
     }
     
     

@@ -67,10 +67,7 @@ static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender,
 
 +(void) tableCheck;
 +(void) tableCheck:(FMDatabase*)db;
-+(NSInteger) insertEmail:(Email*)email;
-+(void) updateEmailFlag:(Email*)email;
-+(void) updateEmail:(Email*)email;
-+(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;
+
 +(NSMutableArray*) getEmails;
 +(Email*) resToEmail:(FMResultSet*)result;
 
@@ -80,6 +77,9 @@ static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender,
 -(void) read;
 
 +(void) clean:(Email*)email;
++(NSInteger) insertEmail:(Email*)email;
++(void) updateEmail:(Email*)email;
++(BOOL) removeEmail:(NSString*)msgIdDel;
 
 @end
 

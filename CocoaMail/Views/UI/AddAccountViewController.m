@@ -477,19 +477,19 @@
             [[PKHUD sharedHUD] hideWithAnimated:YES];
 
             if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication) {
-                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
+                [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
             else if(strongSelf.accountVal.imapError.code == MCOErrorConnection)  {
                 if (networkStatus != NotReachable) {
-                    [ViewController presentAlertWIP:@"Please try again 😇"];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
+                    [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
                 else {
-                    [ViewController presentAlertWIP:@"Connection error"];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
+                    [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.no-internet",@"Connection error. There seems to be not internet connection.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
             }
             else {
-                [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
+                [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
             }
         }
     }];

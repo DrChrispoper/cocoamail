@@ -207,8 +207,10 @@ static NSArray * sharedServices = nil;
     EmailProcessor* ep = [EmailProcessor getSingleton];
 
     if (self.cachedData) {
-        
-        for (Email* email in self.cachedData) {
+        NSMutableArray* tmpCache = self.cachedData;
+        self.cachedData = nil;
+
+        for (Email* email in tmpCache) {
             CCMLog(@"Saving Cached Email: %@", email.subject);
             
             if ([email.uids count] == 0) {
@@ -219,8 +221,6 @@ static NSArray * sharedServices = nil;
             NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:email];
             [ops addObject:nextOp];
         }
-        
-        self.cachedData = nil;
     }
     
     [ep.operationQueue addOperations:ops waitUntilFinished:YES];
@@ -788,10 +788,10 @@ static NSArray * sharedServices = nil;
                             }
                             
                             if (!isFromStart) {
-                                CCMLog(@"Account:%ld Folder:%@ %ld%% complete fetching %ld to %llu of %u", (long)self.currentAccountIndex, folderPath,(long)(100 - ((from - 1)*  100) / [info messageCount]), (long)(from), (from + batch), [info messageCount]);
+                                //CCMLog(@"Account:%ld Folder:%@ %ld%% complete fetching %ld to %llu of %u", (long)self.currentAccountIndex, folderPath,(long)(100 - ((from - 1)*  100) / [info messageCount]), (long)(from), (from + batch), [info messageCount]);
                             }
                             else {
-                                CCMLog(@"Account:%ld Folder:%@ refreshing from %ld", (long)self.currentAccountIndex, folderPath, (long)(from));
+                                //CCMLog(@"Account:%ld Folder:%@ refreshing from %ld", (long)self.currentAccountIndex, folderPath, (long)(from));
                             }
                             
                             MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
@@ -935,7 +935,7 @@ static NSArray * sharedServices = nil;
                                         
                                         NSDate* month = [[NSDate date] dateByAddingTimeInterval:- 60 * 60 * 24 * 30];
                                         
-                                        if (!isFromStart && [email.datetime compare:month] == NSOrderedAscending) {
+                                        if (isInBackground | (!isFromStart && [email.datetime compare:month] == NSOrderedAscending)) {
                                             [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
                                             
                                             if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
@@ -993,7 +993,7 @@ static NSArray * sharedServices = nil;
         
         if (isInInbox & isUnread) {
             if (![self.emailIDs containsObject:email.msgId]) {
-                CCMLog(@"Had Cached %ld Emails", (unsigned long)self.emailIDs.count);
+                CCMLog(@"Had Cached %ld Emails in account:%d (%d)", (unsigned long)self.emailIDs.count, [email.uids[0] account], email.accountNum);
                 [self.cachedData addObject:email];
                 [self.emailIDs addObject:email.msgId];
             }
@@ -1111,6 +1111,8 @@ static NSArray * sharedServices = nil;
         }
     }
     
+    CCMLog(@"Testing folder %@ with %i emails in accountIndex:%d", path, uidsIS.count, self.currentAccountIndex);
+
     if (uidsIS.count == 0) {
         completedBlock();
         return;
@@ -1125,7 +1127,6 @@ static NSArray * sharedServices = nil;
              return;
          }
          
-         CCMLog(@"Testing folder %@ with %i emails", path, uidsIS.count);
          MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags uids:uidsIS];
          
          [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
@@ -1134,6 +1135,8 @@ static NSArray * sharedServices = nil;
                  return;
              }
              
+             CCMLog(@"Connected and Testing folder %@ in accountIndex:%d", path, self.currentAccountIndex);
+
              EmailProcessor* ep = [EmailProcessor getSingleton];
              
              for (MCOIMAPMessage* msg in messages) {

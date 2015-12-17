@@ -142,16 +142,14 @@
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Email* email) {
-             //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                 //CCMLog(@"Adding email to account:%u",self.idx);
                  if (email.accountNum == 0) {
                      CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
-                     [Email clean:email];
+                     NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
+                     [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
                  }
                  else {
                      [self.accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
                  }
-             //}];
          }
          completed:^{
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -291,23 +289,6 @@
 {
     return _accounts;
 }
-
-/*-(NSM*) getAllDrafts
- {
- NSMutableIndexSet* alls = [[NSMutableIndexSet alloc] init];
- 
- for (Account* a in self.accounts) {
- if (a.isAllAccounts) {
- continue;
- }
- 
- NSIndexSet* drafts = [a getConversationsForFolder:FolderTypeWith(FolderTypeDrafts, 0)];
- [alls addIndexes:drafts];
- 
- }
- 
- return alls;
- }*/
 
 +(NSArray*) systemFolderIcons
 {
@@ -451,8 +432,14 @@
 
 -(void) refreshCurrentFolder
 {
-    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
-
+    if (self.isAllAccounts) {
+        for (Account* a in [[Accounts sharedInstance] accounts]) {
+            if (!a.isAllAccounts) {
+                [self refreshCurrentFolder];
+            }
+        }
+    }
+    else {
     if (_connected) {
         NSInteger __block new = 0;
         
@@ -487,11 +474,14 @@
                  
                  [CCMStatus dismissAfter:2];
                  
+                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+
                  [self runTestData];
                  
                  _currentFolderFullSyncCompleted = YES;
                  _isSyncingCurrentFolder = NO;
                  [self importantFoldersRefresh:1];
+                 }
              }
          } completed:^{
 
@@ -534,6 +524,7 @@
     else {
         [self connect];
     }
+    }
 }
 
 -(void) syncCurrentFolder
@@ -544,7 +535,7 @@
      subscribeNext:^(Email* email) {
          //[self insertRows:email];
      } error:^(NSError* error) {
-         CCMLog(@"Error: %@", error.localizedDescription);
+         //CCMLog(@"Error: %@", error.localizedDescription);
          _isSyncingCurrentFolder = NO;
          if (error.code == 9002) {
              _currentFolderFullSyncCompleted = YES;
@@ -601,7 +592,9 @@
             NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
             
             if (set.count == 20 || set.count == tmpEmailCount) {
-                [self runTestData];
+                if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+                    [self runTestData];
+                }
             }
             
             if (set.count == 10 || (tmpEmailCount < 10 && set.count == tmpEmailCount)) {
@@ -1145,11 +1138,11 @@
      }
      error:^(NSError* error) {
          _isSyncing = NO;
-         CCMLog(@"Error: %@", error.localizedDescription);
+         CCMLog(@"Error account %d : %@", self.idx, error.localizedDescription);
          
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
              if (error.code == 9001) {
-                 CCMLog(@"ALLLLLL Synced!?");
+                 //CCMLog(@"ALLLLLL Synced!?");
              }
              else if (error.code == 9002) {
                  [self doLoadServer];;
@@ -1220,7 +1213,7 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
-    CCMLog(@"Updates");
+    //CCMLog(@"Updates");
     
     for (Email* email in emails) {
         BOOL found = NO;
@@ -1228,7 +1221,7 @@
         for (Conversation* conv in self.allsMails) {
             for (Mail* m in conv.mails) {
                 if ([m.email.msgId isEqualToString:email.msgId]) {
-                    CCMLog(@"Updated Email");
+                    //CCMLog(@"Updated Email");
                     
                     m.email.flag = email.flag;
                     
@@ -1252,7 +1245,7 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
-    CCMLog(@"Deletes");
+    //CCMLog(@"Deletes");
     
     NSMutableArray* idxs = [[NSMutableArray alloc]initWithCapacity:emails.count];
     
@@ -1272,7 +1265,7 @@
         for (; !found && index < self.allsMails.count; index++) {
             for (Mail* m in ((Conversation* )self.allsMails[index]).mails) {
                 if ([m.email.msgId isEqualToString:email.msgId]) {
-                    CCMLog(@"Delete Email %@", email.subject);
+                    //CCMLog(@"Delete Email %@", email.subject);
                     found = YES;
                     break;
                 }
@@ -1407,7 +1400,7 @@
     
     if (!_isLoadingMore && !_hasLoadedAllLocal) {
         _isLoadingMore = YES;
-        
+
         NSInteger refBatch = 50;
         
         if (!loadMore) {
@@ -1425,6 +1418,7 @@
              [[Accounts sharedInstance].accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
              if (batch-- == 0) {
                  batch = refBatch;
+                 CCMLog(@"Batch in Folder account:%d", self.idx);
                  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                      [self.mailListSubscriber reFetch];
                  }];
@@ -1434,7 +1428,7 @@
          }
          completed:^{
              _isLoadingMore = NO;
-             
+
              if (!more) {
                  _hasLoadedAllLocal = YES;
              }

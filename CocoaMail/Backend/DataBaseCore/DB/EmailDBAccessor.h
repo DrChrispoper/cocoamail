@@ -16,7 +16,7 @@
 
 @property (nonatomic, strong) FMDatabaseQueue* databaseQueue;
 
-+(id) sharedManager;
++(EmailDBAccessor*) sharedManager;
 
 -(NSString*) databaseFilepath;
 -(void) setDatabaseFilepath:(NSString*)databaseFilepath;

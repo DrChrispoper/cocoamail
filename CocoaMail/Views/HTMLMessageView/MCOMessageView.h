@@ -27,7 +27,8 @@
 
 -(void) webViewLoaded:(UIWebView*)webView;
 -(void) openWebURL:(NSURL*)url;
--(MCOAttachment*) partForUniqueID:(NSString*)partID;
+-(void) openLongURL:(NSURL*)url;
+-(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock;
 
 
 @end

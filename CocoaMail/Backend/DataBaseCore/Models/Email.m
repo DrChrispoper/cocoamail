@@ -28,10 +28,6 @@
 
 -(void) loadData
 {
-    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    //[databaseManager.databaseQueue close];
-    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
-    
     FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
 
 	[queue inDatabase:^(FMDatabase* db) {
@@ -61,14 +57,6 @@
 {
     _uids = pUids;
 }
-/*-(NSInteger)account
-{
-    if ([self getFirstUIDE]) {
-        return [[self getFirstUIDE] account];
-    }
-    
-    return -1;
-}*/
 
 -(NSString*) getSonID
 {
@@ -171,22 +159,6 @@
     
     return NO;
 }
-/*-(void)forActiveAccount
-{
-    if (!self.uids) {
-        self.uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
-    }
-    
-    NSMutableArray* uidsOne = [[NSMutableArray alloc]init];
-    
-    for (UidEntry* e in self.uids) {
-        if(kisActiveAccountAll || e.account == kActiveAccountNum){
-            [uidsOne addObject:e];
-        }
-    }
-    
-    self.uids = uidsOne;
-}*/
 
 -(Email*) secondAccountDuplicate
 {
@@ -238,9 +210,7 @@
 
 +(void) tableCheck
 {
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+    [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         [Email tableCheck:db];
     }];
 }
@@ -283,10 +253,9 @@
 
 +(NSInteger) insertEmail:(Email*)email
 {
-    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     __block sqlite_int64 success = -1 ;
     
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+    [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         
         FMResultSet* results = [db executeQuery:@"SELECT * FROM email WHERE email.msg_id = ?", email.msgId];
         
@@ -319,36 +288,14 @@
     return (int)success;
 }
 
-+(void) updateEmailFlag:(Email*)email
-{
-    NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
-    
-    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    //[databaseManager.databaseQueue close];
-    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-    
-    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-
-    [queue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE email SET flag = ? WHERE msg_id = ?;", @(email.flag), email.msgId];
-    }];
-}
-
 +(void) updateEmail:(Email*)email;
 {
-    NSInteger dbNum = [EmailProcessor dbNumForDate:email.datetime];
-    
-    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    //[databaseManager.databaseQueue close];
-    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-    
-    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-
-    [queue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE email SET sender = ? WHERE msg_id = ?;", email.sender, email.msgId];
+    [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE email SET sender = ? WHERE msg_id = ?;", email.sender.nonEncodedRFC822String, email.msgId];
         [db executeUpdate:@"UPDATE email SET tos = ? WHERE msg_id = ?;", email.tos.mco_nonEncodedRFC822StringForAddresses, email.msgId];
         [db executeUpdate:@"UPDATE email SET bccs = ? WHERE msg_id = ?;", email.bccs.mco_nonEncodedRFC822StringForAddresses, email.msgId];
         [db executeUpdate:@"UPDATE email SET html_body = ? WHERE msg_id = ?;", email.htmlBody, email.msgId];
+        [db executeUpdate:@"UPDATE email SET flag = ? WHERE msg_id = ?;", @(email.flag), email.msgId];
         
         [db executeUpdate:@"UPDATE search_email SET body = ? WHERE msg_id = ?;", email.body, email.msgId];
         [db executeUpdate:@"UPDATE search_email SET subject = ? WHERE msg_id = ?;", email.subject, email.msgId];
@@ -356,12 +303,10 @@
     }];
 }
 
-+(BOOL) removeEmail:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
++(BOOL) removeEmail:(NSString*)msgIdDel
 {
     __block BOOL success = FALSE;
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    
-    [Email getEmailWithMsgId:msgIdDel dbNum:dbNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         success =  [db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;",
@@ -375,12 +320,8 @@
 {
     __block Email* email = [[Email alloc] init];
     
-    //EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    //[databaseManager.databaseQueue close];
-    //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-    
+    //TODO:Queue?
     FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-
     [queue inDatabase:^(FMDatabase* db) {
         
         FMResultSet* results = [db executeQuery:kQueryAllMsgID, msgIdDel];
@@ -391,6 +332,8 @@
     
         [results close];
     }];
+    
+    
     
     return email;
 }
@@ -424,7 +367,13 @@
     email.accountNum = -2;
     email.pk = [result intForColumnIndex:0];
     email.datetime = [result dateForColumnIndex:1];
-    email.sender = [MCOAddress addressWithNonEncodedRFC822String:[result stringForColumnIndex:2]];
+    //TODO:Change this later
+    NSString* adrs = [result stringForColumnIndex:2];
+    if (!adrs) {
+        adrs = @"Bug <beta.things@shamed.chris>";
+    }
+    email.sender = [MCOAddress addressWithNonEncodedRFC822String:adrs];
+        
     [[result stringForColumnIndex:3] isEqualToString:@""]?(email.tos = [[NSArray alloc]init]):(email.tos = [MCOAddress addressesWithNonEncodedRFC822String:[result stringForColumnIndex:3]]);
     [[result stringForColumnIndex:4] isEqualToString:@""]?(email.ccs = [[NSArray alloc]init]):(email.ccs = [MCOAddress addressesWithNonEncodedRFC822String:[result stringForColumnIndex:4]]);
     [[result stringForColumnIndex:5] isEqualToString:@""]?(email.bccs = [[NSArray alloc]init]):(email.bccs = [MCOAddress addressesWithNonEncodedRFC822String:[result stringForColumnIndex:5]]);
@@ -438,8 +387,32 @@
     
     [email isInMultipleAccounts];
     
-    if (email.accountNum == 0) {
+    //TODO:Remove this later
+    if ([email.sender.mailbox isEqualToString:@"mailcore"] | [email.sender.mailbox isEqualToString:@"beta.things@shamed.chris"]) {
+        email.sender = [MCOAddress addressWithDisplayName:@"Bug" mailbox:@"beta.things@shamed.chris"];
         
+        UidEntry* uidE = email.uids[0];
+    
+        MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
+        [uidsIS addIndex:uidE.uid];
+        
+        MCOIMAPFetchMessagesOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession fetchMessagesOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]] requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS];
+
+        [op start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
+            if (!error) {
+                if (messages.count > 0) {
+                    MCOIMAPMessage* msg = messages[0];
+                    
+                    email.sender = msg.header.sender;
+                    
+                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:email];
+                    [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                }
+            }
+        }];
+    }
+    
+    if (email.accountNum == 0) {
         CCMLog(@"Prout");
     }
 
@@ -487,10 +460,10 @@
     CCMLog(@"Move from folder %@ to %@", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:accountndex],  [AppSettings folderDisplayName:toFolderIdx forAccountIndex:accountndex]);
     if ([self uidEWithFolder:fromFolderIdx]) {
         if ([self uidEWithFolder:toFolderIdx]) {
-            [UidEntry deleteMsgId:self.msgId fromfolder:fromFolderIdx];
+            [UidEntry deleteUidEntry:[self uidEWithFolder:fromFolderIdx]];
         }
         else {
-            [UidEntry moveMsgId:self.msgId inFolder:fromFolderIdx toFolder:toFolderIdx];
+            [UidEntry move:[self uidEWithFolder:fromFolderIdx] toFolder:toFolderIdx];
         }
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
@@ -499,7 +472,8 @@
 -(void) trash
 {
     for (UidEntry* uidE in _uids) {
-        [UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
+        [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
+        //[UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:];
     }
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
@@ -516,7 +490,8 @@
         self.flag = self.flag & ~MCOMessageFlagFlagged;
     }
     
-    [Email updateEmailFlag:self];
+    NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
+    [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
@@ -532,22 +507,19 @@
         self.flag = self.flag & ~MCOMessageFlagSeen;
     }
     
-    [Email updateEmailFlag:self];
+    NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
+    [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
 +(void) clean:(Email*)email
 {
-/*    EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
-    [databaseManager.databaseQueue close];
-    [databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:email.datetime]]]];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        if ([db executeUpdate:@"DELETE FROM email WHERE pk = ?;", @(email.pk)]) {
+    [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        if ([db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;", email.msgId]) {
             CCMLog(@"Email cleaned");
         }
-    }];*/
+    }];
 }
 
 

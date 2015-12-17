@@ -251,11 +251,13 @@ static SearchRunner * searchSingleton = nil;
             uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccount:accountIndex];
         }
         
-        CCMLog(@"Account:%ld Searching in Folder:%@ with count:%lu", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], (long)uidsInGroups.count);
+        CCMLog(@"Account:%ld Searching in Folder:%@ from:%@", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], email.subject);
         
         for (NSArray* pagedUids in uidsInGroups) {
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
+            //CCMLog(@"Account:%ld Searching in Folder:%@ with count:%lu", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], (long)pagedUids.count);
+
             if (self.cancelled) {
                 CCMLog(@"Cancel");
                 [subscriber sendCompleted];

@@ -76,7 +76,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) rolloverAddEmailDBTo:(NSInteger)dbNum
 {
-	[[(EmailDBAccessor*)[EmailDBAccessor sharedManager] databaseQueue] close];
+	//[[[EmailDBAccessor sharedManager] databaseQueue] close];
 	
 	// create new, empty db file
 	NSString* fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
@@ -107,7 +107,12 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	return dbNum;
 }
 
--(void) switchToDBNum:(NSInteger)dbNum
+-(void) _switchDBForEmail:(Email*)email
+{
+    [self _switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
+}
+
+-(void) _switchToDBNum:(NSInteger)dbNum
 {
     if (self.shuttingDown) {
         return;
@@ -127,6 +132,12 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	[UidEntry addUid:data];
 }
 
+-(void)clean:(Email *)email
+{
+    [self _switchDBForEmail:email];
+    [Email clean:email];
+}
+
 -(void) updateFlag:(NSMutableArray*)datas
 {
     if (self.shuttingDown) {
@@ -134,7 +145,8 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
     for (Email* email in datas) {
-        [Email updateEmailFlag:email];
+        [self _switchDBForEmail:email];
+        [Email updateEmail:email];
     }
     
     SEL selector = NSSelectorFromString(@"deliverUpdate:");
@@ -171,7 +183,19 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     if (self.shuttingDown) {
         return;
     }
+    
+    [self _switchDBForEmail:email];
     [Email updateEmail:email];
+}
+
+-(void) removeEmail:(UidEntry*)uid_entry
+{
+    if (self.shuttingDown) {
+        return;
+    }
+    
+    [self _switchToDBNum:uid_entry.dbNum];
+    [Email removeEmail:uid_entry.msgId];
 }
 
 -(void) addEmailWrapper:(Email*)email
@@ -187,7 +211,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         return;
     }
     
-    [self switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
+    [self _switchDBForEmail:email];
 
     UidEntry* uidE = email.uids[0];
 

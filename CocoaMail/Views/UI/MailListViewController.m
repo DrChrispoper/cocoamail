@@ -640,11 +640,11 @@ static NSInteger pageCount = 15;
                    [self _removeCell:cell];
                 }
                 else {
-                    [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+                    [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
                 }
             }
             else {
-                [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+                [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
             }
             
             break;
@@ -1068,12 +1068,10 @@ static NSInteger pageCount = 15;
     
     self.indexCount = mailCountAfer;
     self.countBeforeLoadMore =  MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);
-
-    CCMLog(@"countBeforeLoadMore:%ld", (long)self.countBeforeLoadMore);
     
-    [self.table.tableFooterView setHidden:(mailCountBefore == mailCountAfer)];
+    [self.table.tableFooterView setHidden:(self.countBeforeLoadMore == mailCountAfer)];
 
-    if (mailCountBefore == mailCountAfer) {
+    if (self.countBeforeLoadMore == mailCountAfer) {
         return;
     }
     

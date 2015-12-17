@@ -35,15 +35,25 @@ var images = imageElements();\
 for (var i = 0; i < images.length; i++) {\
 var url = images[i].getAttribute('src');\
 if (url.indexOf(info.URLKey) == 0) {\
-images[i].setAttribute('src', info.LocalPathKey);\
+images[i].setAttribute('src', info.InlineDataKey);\
 break;\
 }\
 }\
 };\
+\
 $(document).ready(function() {\
 window.location.href = \"ready://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
 });\
+\
 $.mobile.loading().hide();\
+\
+function longClickHandler(e){\
+e.preventDefault();\
+window.location.href = \"long://\" + e.target.href;\
+}\
+\
+$(\"a\").bind( 'taphold', longClickHandler);\
+$(document).on( 'taphold', \"div\", longClickHandler );\
 ";
 
 static NSString * mainStyle = @"\
@@ -112,6 +122,8 @@ white-space: pre-wrap;\
 {
     if (!mail.email.htmlBody || [mail.email.htmlBody isEqualToString:@""]) {
         
+        CCMLog(@"No html");
+        
         UidEntry* uidE = [mail.email getUids][0];
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
         [uidsIS addIndex:uidE.uid];
@@ -120,7 +132,7 @@ white-space: pre-wrap;\
         
         NSString* folderPath = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIdx];
         
-        [[[ImapSync sharedServices:accountIdx].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS]
+        [[[ImapSync sharedServices:accountIdx].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
          start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
              if (messages.count > 0) {
                  [[[ImapSync sharedServices:accountIdx].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
@@ -158,6 +170,7 @@ white-space: pre-wrap;\
     
     NSURL * jsURL = [[NSBundle mainBundle] URLForResource:@"jquery" withExtension:@"js"];
     NSURL * jsMobileURL = [[NSBundle mainBundle] URLForResource:@"jquerymobile" withExtension:@"js"];
+    NSURL * jsLongURL = [[NSBundle mainBundle] URLForResource:@"jquerylong" withExtension:@"js"];
 
     BOOL haveStyle = ([content rangeOfString:@"<style"].location != NSNotFound);
     BOOL haveQuote = ([content rangeOfString:@"<blockquote"].location != NSNotFound);
@@ -171,9 +184,9 @@ white-space: pre-wrap;\
         _webView.scalesPageToFit = (haveMeta || haveStyle || haveTable);
     }
     
-    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
+    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
      @"<body>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'>"
-     @"</iframe></html>", [jsURL absoluteString], [jsMobileURL absoluteString], mainJavascript, mainStyle, content];
+     @"</iframe></html>", [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle, content];
     [_webView loadHTMLString:html baseURL:nil];
 }
 
@@ -193,27 +206,27 @@ white-space: pre-wrap;\
     NSArray* imagesURLStrings = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
     
     for(NSString* urlString in imagesURLStrings) {
-        MCOAttachment*  part = nil;
         NSURL*  url;
         
         url = [NSURL URLWithString:urlString];
         
         if ([self _isCID:url]) {
             CCMLog(@"url is cidurl:%@", url);
-            part = [self partForContentID:[url resourceSpecifier]];
+            [self partForContentID:[url resourceSpecifier] completed:^(NSData * data) {
+                if (!data) {
+                    return;
+                }
+                NSString* inlineData = [NSString stringWithFormat:@"data:image/jpg;base64,%@",[data base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength]];
+                
+                NSDictionary*  args = @{@"URLKey": urlString, @"InlineDataKey": inlineData };
+                
+                NSString*  jsonString = [self _jsonEscapedStringFromDictionary:args];
+                
+                NSString*  replaceScript = [NSString stringWithFormat:@"replaceImageSrc(%@)", jsonString];
+                NSString* res = [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
+                CCMLog(@"Javascript res:%@", res);
+            }];
         }
-        
-        if (part == nil)
-            continue;
-        
-        NSString* inlineData = [NSString stringWithFormat:@"data:image/jpg;base64,%@",[part.data base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength]];
-        
-        NSDictionary*  args = @{@"URLKey": urlString, @"InlineDataKey": inlineData };
-        
-        NSString*  jsonString = [self _jsonEscapedStringFromDictionary:args];
-        
-        NSString*  replaceScript = [NSString stringWithFormat:@"replaceImageSrc(%@)", jsonString];
-        [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
     }
 }
 
@@ -224,25 +237,35 @@ white-space: pre-wrap;\
     return jsonString;
 }
 
--(MCOAttachment*)partForContentID:(NSString*)partUniqueID
+-(void)partForContentID:(NSString*)partUniqueID completed:(void (^)(NSData * data))completedBlock
 {
-    return [self.delegate partForUniqueID:partUniqueID];
+    [self.delegate partForUniqueID:partUniqueID completed:completedBlock];
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    CCMLog(@"URLrequest scheme:%@", [[request URL] scheme]);
+    NSURL *url = [request URL];
+
+    if ([[url scheme] isEqualToString:@"long"]) {
+    
+        NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
+        
+        NSString* urlString = comps[1];
+        
+        urlString = [urlString substringFromIndex:2];
+        
+        [self.delegate openLongURL:[NSURL URLWithString:urlString]];
+        
+        return false;
+    }
     
     if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
-        [self.delegate openWebURL:[request URL]];
+        [self.delegate openWebURL:url];
         return NO;
     }
     else if (navigationType == UIWebViewNavigationTypeOther) {
-        NSURL *url = [request URL];
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
-
-            CCMLog(@"Height changed:%f", contentHeight);
             
             if (_webView.scrollView.contentSize.height > 0) {
             if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
@@ -263,6 +286,8 @@ white-space: pre-wrap;\
             
             [self.delegate webViewLoaded:_webView];
             
+            [_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
+
             return NO;
         }
     }

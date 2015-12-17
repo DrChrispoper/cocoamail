@@ -244,9 +244,7 @@
             
             cell.textLabel.textAlignment = NSTextAlignmentCenter;
             cell.textLabel.textColor = [UIGlobal standardBlue];
-            
         }
-        
     }
     else if (infoCell[ACTION]!=nil) {
         cell.accessoryView = nil;

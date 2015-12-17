@@ -280,6 +280,10 @@
         NSString* title = mail.title;
         NSString* content = mail.content;
         
+        if (!content){
+            content = @"";
+        }
+        
         content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
         
         NSMutableArray* attachs = [NSMutableArray arrayWithCapacity:mail.attachments.count];

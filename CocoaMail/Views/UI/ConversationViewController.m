@@ -17,6 +17,8 @@
 #import <QuickLook/QuickLook.h>
 #import "StringUtil.h"
 #import "ImapSync.h"
+@import SafariServices;
+#import "TTOpenInAppActivity.h"
 
 @class SingleMailView;
 
@@ -26,12 +28,13 @@
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight;
 -(void) openURL:(NSURL*)url;
 -(void) openWebURL:(NSURL*)url;
+-(void) openLongURL:(NSURL*)url;
 -(void) shareAttachment:(Attachment*)att;
 
 @end
 
 
-@interface ConversationViewController () <UIScrollViewDelegate, SingleMailViewDelegate, UserFolderViewControllerDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, UIDocumentInteractionControllerDelegate> {
+@interface ConversationViewController () <UIScrollViewDelegate, SingleMailViewDelegate, UserFolderViewControllerDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, UIDocumentInteractionControllerDelegate, SFSafariViewControllerDelegate> {
     NSArray* _activityItems;
 }
 
@@ -295,11 +298,23 @@
         
         return;
     }
-    NSString *noteStr = @"Open link in...";
-    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[noteStr, url] applicationActivities:nil];
+    
+    SFSafariViewController* sv = [[SFSafariViewController alloc] initWithURL:url];
+    sv.delegate = self;
+    [self.view.window.rootViewController presentViewController:sv animated:YES completion:nil];
+}
+
+-(void) openLongURL:(NSURL*)url
+{
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[[url absoluteString], url] applicationActivities:nil];
     [self.view.window.rootViewController presentViewController:activityViewController
                                                       animated:YES
                                                     completion:nil];
+}
+
+- (void)safariViewControllerDidFinish:(SFSafariViewController *)controller
+{
+    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(BOOL) isEmailRegExp:(NSString*)text
@@ -930,9 +945,14 @@
     
 }
 
--(void) openWebURL:(NSURL*)url;
+-(void) openWebURL:(NSURL*)url
 {
     [self.delegate openWebURL:url];
+}
+
+-(void) openLongURL:(NSURL*)url
+{
+    [self.delegate openLongURL:url];
 }
 
 -(void) webViewLoaded:(UIWebView*)webView
@@ -958,7 +978,7 @@
     [self.delegate shareAttachment:att];
 }
 
--(void) partForUniqueID:(NSString*)partID completed:(void (^)(MCOAttachment * part))completedBlock
+-(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock
 {
     BOOL found = NO;
     
@@ -988,18 +1008,15 @@
                         }
                         att.data = partData;
                         [Attachment updateData:att];
-                        
-                        MCOAttachment* attM = [[MCOAttachment alloc]init];
-                        attM.data = att.data;
-                        completedBlock(attM);
+
+                        completedBlock(att.data);
                     }];
                     
                     break;
                 }
                 else {
-                    MCOAttachment* attM = [[MCOAttachment alloc]init];
-                    attM.data = att.data;
-                    completedBlock(attM);
+
+                    completedBlock(att.data);
                     
                     break;
                 }
