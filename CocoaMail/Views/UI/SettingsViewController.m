@@ -134,7 +134,9 @@
 
     NSString* tCredit = NSLocalizedString(@"settings-view.menu.credits", @"Credits");
     NSDictionary* Pcredit = @{TITLE:@"", FOOTER:@"",
-                              CONTENT:@[@{TEXT:tCredit, ACTION:kSETTINGS_CREDIT_NOTIFICATION}]
+                              CONTENT:@[@{TEXT:tCredit, ACTION:kSETTINGS_CREDIT_NOTIFICATION},
+                                        @{TEXT:@"Spam Icons", ACTION:kSETTINGS_SPAMTEST_NOTIFICATION}
+                                        ]
                               };
     
     NSString* tDelete = NSLocalizedString(@"settings-view.menu.delete-attachments", @"Delete stored attachments");

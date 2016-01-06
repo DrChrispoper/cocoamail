@@ -215,8 +215,6 @@
 -(NSInteger) getPersonID:(NSInteger)accountIndex
 {
     if (accountIndex >= self.accountsCount || accountIndex < 0) {
-        CCMLog(@"Person ID:%d",accountIndex);
-
         Persons* p = [Persons sharedInstance];
         
         if (p.idxCocoaPerson == 0) {
@@ -591,7 +589,7 @@
             NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:self.currentFolderType forAccountIndex:self.idx] accountIndex:self.idx];
             NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
             
-            if (set.count == 20 || set.count == tmpEmailCount) {
+            if (set.count == 20) {
                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                     [self runTestData];
                 }
@@ -758,6 +756,7 @@
                         CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
                         [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")];
                         [CCMStatus dismissAfter:2];
+                        [self deleteDraft:mail];
                     }
                 }];
                 
@@ -767,6 +766,7 @@
             CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")];
             [CCMStatus dismissAfter:2];
+            [self deleteDraft:mail];
         }
     }];
     
@@ -783,25 +783,28 @@
     //[self _addIdx:index inArray:FolderTypeWith(FolderTypeSent, 0)];
 }
 
--(void) saveDraft:(Mail*)mail
-{
-    NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
-
-    NSInteger idx = [_drafts indexOfObject:mail];
-
-    if (idx == NSNotFound) {
-        [_drafts addObject:mail];
-    }
-    else {
-        _drafts[idx] = mail;
-    }
-}
- 
 -(void) deleteDraft:(Mail*)mail
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
 
-    [_drafts removeObject:mail];
+    CCMFolderType folderFrom = FolderTypeWith(FolderTypeDrafts, 0);
+    CCMFolderType folderTo = FolderTypeWith(FolderTypeDeleted, 0);
+
+    [mail.email moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
+    
+    NSMutableIndexSet* setFrom = self.systemFoldersContent[FolderTypeDrafts];
+    
+    Conversation* conversation = [[Conversation alloc]init];
+    [conversation addMail:mail];
+    
+    NSMutableArray* tmp = [self.allsMails mutableCopy];
+    NSUInteger idx = [tmp indexOfObject:conversation];
+    
+    [setFrom removeIndex:idx];
+    
+    if (encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType)) {
+        [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx Account:self.idx]]];
+    }
 }
 
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
@@ -1176,13 +1179,13 @@
         
         NSMutableArray* res = [NSMutableArray arrayWithCapacity:[set count]];
         
-        NSMutableArray* _aMS = [self.allsMails mutableCopy];
+        NSArray* _aMS = [self.allsMails mutableCopy];
         
         [_aMS enumerateObjectsAtIndexes:set
-                                          options:0
-                                       usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
+                                options:0
+                             usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
                                            [res addObject:obj];
-                                       }];
+                                        }];
         
         NSMutableIndexSet* setAll = [self.systemFoldersContent[FolderTypeAll] mutableCopy];
         NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[setAll count]];
@@ -1196,7 +1199,6 @@
                                      usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
                                                     [resAll addObject:obj];
                                                 }];
-            
             
                 [[ImapSync sharedServices:self.idx] runUpToDateTest:resAll folderIndex:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx] completed:^{
                     _runningUpToDateTest = NO;

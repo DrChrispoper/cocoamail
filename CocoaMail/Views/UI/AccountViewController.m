@@ -210,7 +210,8 @@
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
-    
+    cell.selectionStyle = UITableViewCellSelectionStyleGray;
+
     cell.textLabel.text = infoCell[TEXT];
     
     cell.textLabel.textAlignment = NSTextAlignmentNatural;
@@ -258,7 +259,7 @@
             ecbv.cocobuttonUpdated = ^(){
                 [self _updateCocoaButton];
             };
-            
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
             [cell addSubview:ecbv];
         }
         else if ([action isEqualToString:@"NAV_BAR_SOLID"]) {
@@ -275,8 +276,6 @@
             cell.accessoryType = UITableViewCellAccessoryCheckmark;
         }
     }
-    
-    cell.selectionStyle = UITableViewCellSelectionStyleGray;
     
     return cell;
 }

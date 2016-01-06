@@ -212,9 +212,9 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
     [self _switchDBForEmail:email];
-
+    
     UidEntry* uidE = email.uids[0];
-
+    
     if ([Email insertEmail:email] != -1) {
         [UidEntry addUid:uidE];
     }

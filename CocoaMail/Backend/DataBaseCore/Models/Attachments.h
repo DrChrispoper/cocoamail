@@ -53,6 +53,7 @@ typedef enum : NSUInteger {
 
 -(void) shareAttachment:(Attachment*)att;
 -(void) openURL:(NSURL*)url;
+-(void) downloaded:(Attachment*)att;
 
 
 @end

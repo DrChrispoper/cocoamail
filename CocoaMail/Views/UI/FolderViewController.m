@@ -88,7 +88,9 @@
 {
     [super viewWillAppear:animated];
     
-    [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccountIdx];
+    if ([AppSettings numActiveAccounts] !=  0) {
+        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccountIdx];
+    }
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -318,7 +320,7 @@
 
 - (void)storeChanged:(NSNotification*)notification
 {
-    NSDictionary *userInfo = [notification userInfo];
+    /*NSDictionary *userInfo = [notification userInfo];
     NSNumber *reason = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey];
     
     if (reason) {
@@ -338,7 +340,7 @@
                 NSLog(@"storeChanged updated value for %@",key);
             }
         }
-    }
+    }*/
 }
 
 @end

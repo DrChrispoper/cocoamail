@@ -36,6 +36,7 @@
 @property (nonatomic, strong) NSMutableSet* selectedCells;
 @property (nonatomic, strong) Person* onlyPerson;
 @property (nonatomic) BOOL presentAttach;
+@property (nonatomic, strong) UIButton* attachButton;
 @property (nonatomic, retain) NSOperationQueue* localFetchQueue;
 @property (nonatomic) CCMFolderType folder;
 @property (nonatomic) BOOL longPressOnCocoabutton;
@@ -138,8 +139,10 @@ static NSInteger pageCount = 15;
     
     if (self.presentAttach) {
         UIButton* attach = [WhiteBlurNavBar navBarButtonWithImage:@"attachment_off" andHighlighted:@"attachment_on"];
+        [attach setHidden:YES];
         [attach addTarget:self action:@selector(_attach) forControlEvents:UIControlEventTouchUpInside];
         item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:attach];
+        self.attachButton = attach;
     }
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -732,6 +735,10 @@ static NSInteger pageCount = 15;
     ConversationIndex* conversationIndex = convs[indexPath.row];
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
 
+    if (self.presentAttach && [conv haveAttachment]) {
+        [self.attachButton setHidden:NO];
+    }
+    
     BOOL lastSection = (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1);
     BOOL lastRow = indexPath.row == ([convs count] - 1);
     

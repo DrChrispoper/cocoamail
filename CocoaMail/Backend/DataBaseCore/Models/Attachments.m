@@ -432,7 +432,8 @@
             
             self.op.progress = ^(unsigned int current, unsigned int maximum){
                 if (maximum != 0) {
-                    self.size.text = [NSString stringWithFormat:@"%u%% of %@", (current * 100 / maximum), [att stringSize]];
+                    NSString *word = NSLocalizedString(@"attachment.dowload-progress",@"-percent- of -size-");
+                    self.size.text = [NSString stringWithFormat:@"%u%% %@ %@", (current * 100 / maximum), word, [att stringSize]];
                 }
             };
             
@@ -448,11 +449,15 @@
                 
                 att.image = nil;
                 self.mini.image = [att miniature];
+                
+                if ([att.mimeType rangeOfString:@"image/"].location != NSNotFound || [att.mimeType rangeOfString:@"video/"].location != NSNotFound) {
+                    self.extention.text = @"";
+                }
 
+                [self.delegate downloaded:att];
                 [self doneDownloading];
             }];
         }
-        
     }
 }
 

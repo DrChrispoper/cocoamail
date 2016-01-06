@@ -1,297 +1,318 @@
 {
     "facebook":{
         "domain-match":[
-                        "facebook\\..*",
-                        "fb\\.com"
-                        ]
+            "facebook\\..*",
+            "fb\\.com"
+        ]
     },
     "microsoft":{
         "domain-match":[
-                        "microsoft\\..*",
-                        "microsoft\\.fr"
-                        ]
+            "microsoft\\..*",
+            "microsoft\\.fr"
+        ]
     },
     "amazon":{
         "domain-match":[
-                        "amazon\\..*"
-                        ]
+            "amazon\\..*"
+        ]
     },
     "pocket":{
         "domain-match":[
-                        "getpocket.com"
-                        ]
+            "getpocket.com"
+        ]
     },
     "apple":{
         "domain-match":[
-                        "apple\\..*",
-                        "itunes\\..*"
-                        ]
+            "apple\\..*",
+            "itunes\\..*"
+        ]
     },
     "icloud":{
         "domain-match":[
-                        "me\\..*",
-                        "icloud\\..*"
-                        ]
+            "me\\..*",
+            "icloud\\..*"
+        ]
     },
-    "basecamp":{
+     "basecamp":{
         "domain-match":[
-                        "basecamp\\..*"
-                        ]
+            "basecamp\\..*"
+        ]
     },
-    "digg":{
+     "digg":{
         "domain-match":[
-                        "digg\\..*"
-                        ]
+            "digg\\..*"
+        ]
     },
     "dropbox":{
         "domain-match":[
-                        "dropbox\\..*"
-                        ]
+            "dropbox\\..*"
+        ]
     },
     "medium":{
         "domain-match":[
-                        "medium\\..*"
-                        ]
+            "medium\\..*"
+        ]
     },
     "ebay":{
         "domain-match":[
-                        "ebay\\..*"
-                        ]
+            "ebay\\..*"
+        ]
     },
     "evernote":{
         "domain-match":[
-                        "evernote\\..*"
-                        ]
+            "evernote\\..*"
+        ]
     },
     "flickr":{
         "domain-match":[
-                        "flickr\\..*"
-                        ]
+            "flickr\\..*"
+        ]
     },
     "foursquare":{
         "domain-match":[
-                        "foursquare\\..*"
-                        ]
+            "foursquare\\..*"
+        ]
     },
     "github":{
         "domain-match":[
-                        "github\\..*"
-                        ]
+            "github\\..*"
+        ]
     },
     "google":{
         "domain-match":[
-                        "google\\..*"
-                        ]
+            "google\\..*"
+        ]
     },
     "googleplus":{
         "domain-match":[
-                        "plus.google\\..*"
-                        ]
+            "plus.google\\..*"
+        ]
     },
     "googledrive":{
         "domain-match":[
-                        "drive.google\\..*"
-                        ]
+            "drive.google\\..*"
+        ]
     },
     "instagram":{
         "domain-match":[
-                        "instagram\\..*"
-                        ]
+            "instagram\\..*"
+        ]
     },
     "linkedin":{
         "domain-match":[
-                        "linkedin\\..*"
-                        ]
+            "linkedin\\..*"
+        ]
     },
     "instapaper":{
         "domain-match":[
-                        "instapaper\\..*"
-                        ]
+            "instapaper\\..*"
+        ]
     },
     "paypal":{
         "domain-match":[
-                        "paypal\\..*"
-                        ]
+            "paypal\\..*"
+        ]
     },
     "pinterest":{
         "domain-match":[
-                        "pinterest\\..*"
-                        ]
+            "pinterest\\..*"
+        ]
     },
     "playstation":{
         "domain-match":[
-                        "playstation\\..*"
-                        ]
+            "playstation\\..*"
+        ]
     },
     "xbox":{
         "domain-match":[
-                        "xbox\\..*"
-                        ]
+            "xbox\\..*"
+        ]
     },
     "nintendo":{
         "domain-match":[
-                        "nintendo\\..*"
-                        ]
+            "nintendo\\..*",
+            "nintendo-europe\\.com"
+        ]
     },
     "producthunt":{
         "domain-match":[
-                        "producthunt\\..*"
-                        ]
+            "producthunt\\..*"
+        ]
     },
     "readability":{
         "domain-match":[
-                        "readability\\..*"
-                        ]
+            "readability\\..*"
+        ]
     },
     "reddit":{
         "domain-match":[
-                        "reddit\\..*"
-                        ]
+            "reddit\\..*"
+        ]
     },
     "skype":{
         "domain-match":[
-                        "skype\\..*"
-                        ]
+            "skype\\..*"
+        ]
     },
     "slack":{
         "domain-match":[
-                        "slack\\..*"
-                        ]
+            "slack\\..*"
+        ]
     },
     "snapchat":{
         "domain-match":[
-                        "snapchat\\..*"
-                        ]
+            "snapchat\\..*"
+        ]
     },
     "soundcloud":{
         "domain-match":[
-                        "soundcloud\\..*"
-                        ]
+            "soundcloud\\..*"
+        ]
     },
     "spotify":{
         "domain-match":[
-                        "spotify\\..*",
-                        "spotifymail\\..*"
-                        ]
+            "spotify\\..*",
+            "spotifymail\\..*"
+        ]
     },
     "squarespace":{
         "domain-match":[
-                        "squarespace\\..*"
-                        ]
+            "squarespace\\..*"
+        ]
     },
     "steam":{
         "domain-match":[
-                        "steampowered\\..*"
-                        ]
+            "steampowered\\..*"
+        ]
     },
     "tripadvisor":{
         "domain-match":[
-                        "tripadvisor\\..*"
-                        ]
+            "tripadvisor\\..*"
+        ]
     },
     "tumblr":{
         "domain-match":[
-                        "tumblr\\..*"
-                        ]
+            "tumblr\\..*"
+        ]
     },
     "twitter":{
         "domain-match":[
-                        "twitter\\..*"
-                        ]
+            "twitter\\..*"
+        ]
     },
     "vimeo":{
         "domain-match":[
-                        "vimeo\\..*"
-                        ]
+            "vimeo\\..*"
+        ]
     },
     "vine":{
         "domain-match":[
-                        "vine\\..*"
-                        ]
+            "vine\\..*"
+        ]
     },
     "yelp":{
         "domain-match":[
-                        "yelp\\..*"
-                        ]
+            "yelp\\..*"
+        ]
     },
     "youtube":{
         "domain-match":[
-                        "youtube\\..*"
-                        ]
+            "youtube\\..*"
+        ]
     },
     "runkeeper":{
         "domain-match":[
-                        "runkeeper\\..*"
-                        ]
+            "runkeeper\\..*"
+        ]
     },
     "netflix":{
         "domain-match":[
-                        "netflix\\..*"
-                        ]
+            "netflix\\..*"
+        ]
     },
     "expedia":{
         "domain-match":[
-                        "expedia\\..*"
-                        ]
+            "expedia\\..*"
+        ]
     },
     "vkontakte":{
         "domain-match":[
-                        "vk\\..*"
-                        ]
+            "vk\\..*"
+        ]
     },
     "weibo":{
         "domain-match":[
-                        "weibo\\..*"
-                        ]
+            "weibo\\..*"
+        ]
     },
     "dribbble":{
         "domain-match":[
-                        "dribbble\\..*"
-                        ]
+            "dribbble\\..*"
+        ]
     },
     "behance":{
         "domain-match":[
-                        "behance\\..*"
-                        ]
+            "behance\\..*"
+        ]
     },
     "angellist":{
         "domain-match":[
-                        "angel\\.co"
-                        ]
+            "angel\\.co"
+        ]
     },
     "buffer":{
         "domain-match":[
-                        "buffer\\.com"
-                        ]
-    },
+            "buffer\\.com"
+        ]
+     },
     "mailchimp":{
         "domain-match":[
-                        "mailchimp\\..*"
-                        ]
+            "mailchimp\\..*"
+        ]
     },
     "number26":{
         "domain-match":[
-                        "number26\\.de"
-                        ]
+            "number26\\.de"
+        ]
     },
     "supinfo":{
         "domain-match":[
-                        "supinfo\\.com"
-                        ]
+            "supinfo\\.com"
+        ]
     },
     "groupon":{
         "domain-match":[
-                        "groupon\\..*"
-                        ]
+            "groupon\\..*"
+        ]
     },
     "crunchbase":{
         "domain-match":[
-                        "crunchbase\\..*"
-                        ]
+            "crunchbase\\..*"
+        ]
     },
     "quip":{
         "domain-match":[
-                        "quip\\..*"
-                        ]
+            "quip\\..*"
+        ]
+    },
+    "captaintrain":{
+        "domain-match":[
+            "captaintrain\\.com"
+        ]
+    },
+    "hover":{
+        "domain-match":[
+            "hover\\.com"
+        ]
+    },
+    "techcrunch":{
+        "domain-match":[
+            "techcrunch\\.com"
+        ]
+    },
+    "theverge":{
+        "domain-match":[
+            "theverge\\.com"
+        ]
     }
 }

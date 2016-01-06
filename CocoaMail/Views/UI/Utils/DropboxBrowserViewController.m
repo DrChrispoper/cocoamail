@@ -35,6 +35,7 @@
     DBMetadata* selectedFile;
     BOOL isLocalFileOverwritten;
     BOOL isSearching;
+    BOOL isLoading;
     UIBackgroundTaskIdentifier backgroundProcess;
     DropboxBrowserViewController* newSubdirectoryController;
 }
@@ -166,6 +167,8 @@ static NSString * currentFileName = nil;
         [self listDirectoryAtPath:@"/"];
     }
     
+    isLoading = YES;
+    
     [self updateContent];
 }
 
@@ -258,7 +261,12 @@ static NSString * currentFileName = nil;
                 cell.textLabel.text = NSLocalizedString(@"No Search Results", @"No Search Results");
             }
             else {
-                cell.textLabel.text =  NSLocalizedString(@"Folder is Empty", @"Folder is Empty");
+                if(isLoading) {
+                    cell.textLabel.text =  NSLocalizedString(@"dropbox.loading-files", @"Loading...");
+                }
+                else {
+                    cell.textLabel.text =  NSLocalizedString(@"Folder is Empty", @"Folder is Empty");
+                }
             }
             
             cell.textLabel.textAlignment = NSTextAlignmentCenter;
@@ -351,6 +359,8 @@ static NSString * currentFileName = nil;
         else {
             currentFileName = selectedFile.filename;
             
+            [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
             // Check if our delegate handles file selection
             if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didSelectFile:)]) {
                 [self.rootViewDelegate dropboxBrowser:self didSelectFile:selectedFile];
@@ -702,6 +712,8 @@ static NSString * currentFileName = nil;
         }
     }
     
+    isLoading = NO;
+
     fileList = dirList;
     
     [self updateTableData];

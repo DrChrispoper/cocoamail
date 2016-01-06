@@ -18,7 +18,6 @@
 #import "StringUtil.h"
 #import "ImapSync.h"
 @import SafariServices;
-#import "TTOpenInAppActivity.h"
 
 @class SingleMailView;
 

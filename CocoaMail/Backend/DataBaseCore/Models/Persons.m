@@ -95,7 +95,6 @@
             }
         }
     }
-
 }
 
 -(void) loadContacts:(CNContactStore*)store
@@ -253,7 +252,7 @@
 
 -(UIView*) badgeView
 {
-    if (self.image == nil) {
+    if (self.userAccount || self.image == nil) {
         
         MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
         perso.backgroundColor = [UIGlobal noImageBadgeColor];

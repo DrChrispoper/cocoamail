@@ -23,6 +23,7 @@
 
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSArray* mailsWithAttachment;
+@property (nonatomic, weak) UIButton* sendButton;
 
 
 @end
@@ -74,6 +75,15 @@
     item.titleView = support;
     */
     
+    UIButton* send = [WhiteBlurNavBar navBarButtonWithImage:@"editmail_send_off" andHighlighted:@"editmail_send_on"];
+    UIImage* imgNo = [[UIImage imageNamed:@"editmail_send_no"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [send setImage:imgNo forState:UIControlStateDisabled];
+    [send addTarget:self action:@selector(_openEdit) forControlEvents:UIControlEventTouchUpInside];
+    item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:send];
+    
+    self.sendButton = send;
+    
+    self.sendButton.enabled = NO;
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
@@ -117,6 +127,36 @@
     self.table.dataSource = nil;    
 }
 
+-(void) _openEdit
+{
+    Mail* mail = [Mail newMailFormCurrentAccount];
+    mail.content = @"";
+
+    mail.toPersonID = nil;
+    
+    NSMutableArray* atts = [[NSMutableArray alloc] init];
+    
+    for (Mail *mail in self.mailsWithAttachment) {
+        for (Attachment* at in mail.attachments) {
+            if (at.data) {
+                [atts addObject:at];
+            }
+        }
+    }
+    
+    mail.attachments = atts;
+    
+    mail.fromMail = nil;
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+}
+
+-(void) downloaded:(Attachment*)att
+{
+    self.sendButton.enabled = YES;
+}
+
+
 #pragma mark - Table Datasource
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
@@ -134,10 +174,12 @@
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    
     Mail* m = self.mailsWithAttachment[indexPath.section];
     Attachment* at = m.attachments[indexPath.row];
     
+    if (at.data) {
+        self.sendButton.enabled = YES;
+    }
     
     NSString* reuseID = @"kAttchCellID";
     

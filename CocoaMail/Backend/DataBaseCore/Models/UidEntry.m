@@ -428,10 +428,10 @@
 +(void) deleteUidEntry:(UidEntry*)uidE
 {
     if (uidE.pk == 0) {
-        CCMLog(@"Email not synced in folder, so can't delete it");
-        
-        return;
+        CCMLog(@"Email doesn't look synced in folder, so deleting it might not work");
     }
+    
+    [self removeFromFolderUid:uidE];
     
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
     
@@ -453,7 +453,6 @@
                     }
                     else {
                         CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
-                        [self removeFromFolderUid:uidE];
                     }
                 }];
             }

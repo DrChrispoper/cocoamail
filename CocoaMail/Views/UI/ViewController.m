@@ -17,6 +17,7 @@
 #import "EditMailViewController.h"
 #import "SearchViewController.h"
 #import "SignatureViewController.h"
+#import "SpamListViewController.h"
 
 #import "Accounts.h"
 #import "CocoaButton.h"
@@ -552,6 +553,15 @@ static ViewController * s_self;
         IBGLog(kSETTINGS_CREDIT2_NOTIFICATION);
         CreditContentViewController* f = [[CreditContentViewController alloc] init];
         f.type = [notif.userInfo objectForKey:kSETTINGS_KEY];
+        [self _animatePushVC:f];
+    }];
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_SPAMTEST_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
+        if ([self _checkInteractionAndBlock]) {
+            return;
+        }
+        IBGLog(kSETTINGS_SPAMTEST_NOTIFICATION);
+        SpamListViewController* f = [[SpamListViewController alloc] init];
         [self _animatePushVC:f];
     }];
     

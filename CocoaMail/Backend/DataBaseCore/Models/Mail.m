@@ -255,14 +255,17 @@ static NSDateFormatter * s_df_hour = nil;
     
     Accounts* allAccounts = [Accounts sharedInstance];
     
+    mail.email = [[Email alloc]init];
+
     if (allAccounts.currentAccount.isAllAccounts) {
-        mail.fromPersonID = -(1 + [Accounts sharedInstance].defaultAccountIdx);;
+        mail.fromPersonID = -(1 + [Accounts sharedInstance].defaultAccountIdx);
+        [mail.email setAccountNum:[AppSettings numForData:[Accounts sharedInstance].defaultAccountIdx]];
+
     }
     else {
         mail.fromPersonID = -(1 + [Accounts sharedInstance].currentAccountIdx);
+        [mail.email setAccountNum:[AppSettings numForData:[Accounts sharedInstance].currentAccountIdx]];
     }
-    
-    mail.email = [[Email alloc]init];
     
     return mail;
 }

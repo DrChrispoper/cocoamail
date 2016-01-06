@@ -94,7 +94,6 @@
 -(NSInteger) unreadInInbox;
 
 -(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc;
--(void) saveDraft:(Mail*)mail;
 -(void) deleteDraft:(Mail*)mail;
 
 -(NSArray*) systemFolderNames;

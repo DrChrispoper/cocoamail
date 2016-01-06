@@ -436,7 +436,14 @@ static NSArray * sharedServices = nil;
                         }
                         
                         [[[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
-                            email.body =  plainTextBodyString?:@"";
+                            if (plainTextBodyString) {
+                                plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
+                                
+                                email.body = plainTextBodyString;
+                            }
+                            else {
+                                email.body = @"";
+                            }
                             
                             NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:email];
                             [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
@@ -630,7 +637,15 @@ static NSArray * sharedServices = nil;
                         email.uids = @[uid_entry];
                         
                         [[[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
-                            email.body =  plainTextBodyString?:@"";
+                            if (plainTextBodyString) {
+                                plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
+                                
+                                email.body = plainTextBodyString;
+                            }
+                            else {
+                                email.body = @"";
+                            }
+                            
                             [[[ImapSync sharedServices:self.currentAccountIndex].imapSession htmlBodyRenderingOperationWithMessage:msg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
                                 email.htmlBody = htmlString;
                                 
@@ -931,7 +946,14 @@ static NSArray * sharedServices = nil;
                                     email.uids = @[uid_entry];
                                     
                                     [[[ImapSync sharedServices:self.currentAccountIndex].imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
-                                        email.body =  plainTextBodyString?:@"";
+                                        if (plainTextBodyString) {
+                                            plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
+
+                                            email.body = plainTextBodyString;
+                                        }
+                                        else {
+                                            email.body = @"";
+                                        }
                                         
                                         NSDate* month = [[NSDate date] dateByAddingTimeInterval:- 60 * 60 * 24 * 30];
                                         
@@ -1124,6 +1146,7 @@ static NSArray * sharedServices = nil;
      } completed:^{
          
          if (!self.connected){
+             completedBlock();
              return;
          }
          
@@ -1132,6 +1155,7 @@ static NSArray * sharedServices = nil;
          [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
              if (error) {
                  CCMLog(@"error testing emails in %@, %@", path, error);
+                 completedBlock();
                  return;
              }
              
@@ -1197,17 +1221,10 @@ static NSArray * sharedServices = nil;
 
 +(BOOL) isNetworkAvailable
 {
-    char* hostname;
-    struct hostent* hostinfo;
-    hostname = "google.com";
-    hostinfo = gethostbyname (hostname);
+    Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    if (hostinfo == NULL) {
-        return NO;
-    }
-    else {
-        return YES;
-    }
+    return (networkStatus != NotReachable);
 }
 
 +(void) runInboxUnread:(NSInteger)accountIndex

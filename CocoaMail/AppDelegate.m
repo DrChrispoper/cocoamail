@@ -32,9 +32,7 @@
         [self resetApp];
     }
     
-    [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924"
-               captureSource:IBGCaptureSourceUIKit
-             invocationEvent:IBGInvocationEventScreenshot];
+    [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     
     // First, create an action
     UIMutableUserNotificationAction *acceptAction = [self createAction];
