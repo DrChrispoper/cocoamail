@@ -65,8 +65,10 @@
 @property (nonatomic) CGFloat height;
 
 @property (nonatomic, weak) UIButton* favoriBtn;
+@property (nonatomic, strong) UIView* attchView;
 
 -(void) updateFavUI:(BOOL)isFav;
+-(void) refreshAtts;
 
 @end
 
@@ -112,6 +114,7 @@
 {
     [super viewDidAppear:animated];
     
+    [self refreshAttachments];
     //TODO:TODO? :)
     //[[CocoaButton sharedButton] enterLevel:2];
 }
@@ -221,6 +224,15 @@
     sv.alwaysBounceVertical = YES;
     sv.scrollsToTop = YES;
     self.scrollView = sv;
+}
+
+-(void) refreshAttachments
+{
+    for (UIView* m in self.contentView.subviews) {
+        if ([m isKindOfClass:[SingleMailView class]]) {
+            [(SingleMailView*)m refreshAtts];
+        }
+    }
 }
 
 -(Mail*) mailDisplayed:(SingleMailView*)mailView;
@@ -565,7 +577,6 @@
 
 -(void) setupWithText:(Mail*)pMail extended:(BOOL)extended;
 {
-
     [self.subviews.firstObject removeFromSuperview];
     
     Mail* mail = [self.delegate mailDisplayed:self];
@@ -720,9 +731,8 @@
             
             height = inIV.frame.size.height;
             [inIV addSubview:av];
+            self.attchView = av;
         }
-        
-        
     }
     else {
         n.text = [pMail.content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -799,6 +809,12 @@
     self.favori.highlighted = isFav;
 }
 
+-(void) refreshAtts
+{
+    Mail* mail = [self.delegate mailDisplayed:self];
+    self.attchView = [self _createAttachments:mail.attachments];
+}
+
 -(UIView*) _createAttachments:(NSArray*)attachs
 {
     if (attachs.count == 0) {
@@ -823,6 +839,7 @@
         f.origin.y = posY;
         av.frame = f;
         
+        a.image = nil;
         [av fillWith:a];
         [v addSubview:av];
         
@@ -975,6 +992,11 @@
 -(void) shareAttachment:(Attachment*)att
 {
     [self.delegate shareAttachment:att];
+}
+
+-(void) downloaded:(Attachment*)att
+{
+    [self refreshAtts];
 }
 
 -(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock

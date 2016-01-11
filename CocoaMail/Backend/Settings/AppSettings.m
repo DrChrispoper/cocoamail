@@ -11,122 +11,9 @@
 #import <UIKit/UIDevice.h>
 #import "Accounts.h"
 #import "SyncManager.h"
+#import <Instabug/Instabug.h>
 
 @implementation AppSettings
-
-+(NSString*) appID
-{
-	return [[NSBundle mainBundle] infoDictionary] [@"CFBundleIdentifier"];
-}
-
-+(NSString*) version
-{
-	return [[NSBundle mainBundle] infoDictionary] [@"CFBundleVersion"];
-}
-
-+(NSString*) dataInitVersion
-{
-	// version of the software at which the data store was initialized
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    
-	return  [defaults stringForKey:@"app_data_init_version"];
-}
-
-+(void) setDataInitVersion
-{
-	// version of the software at which the data store was initialized
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	[defaults setObject:[AppSettings version] forKey:@"app_data_init_version"];
-	[NSUserDefaults resetStandardUserDefaults];
-}
-
-+(NSInteger) datastoreVersion
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	
-    return [defaults integerForKey:@"datastore_version"];
-}
-
-+(void) setDatastoreVersion:(NSInteger)value
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	[defaults setInteger:value forKey:[NSString stringWithFormat:@"datastore_version"]];
-	[NSUserDefaults resetStandardUserDefaults];
-}
-
-+(NSString*) systemVersion
-{
-	NSString* systemVersion = [UIDevice currentDevice].systemVersion;
-	
-    return systemVersion;
-}
-
-+(NSString*) model
-{
-	NSString* model = [UIDevice currentDevice].model;
-	
-    return model;
-}
-
-+(NSString*) udid
-{
-	NSString* udid = [UIDevice currentDevice].identifierForVendor.UUIDString;
-	
-    return udid;
-}
-
-+(BOOL) firstSync
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	
-    return ([defaults boolForKey:@"app_first_sync"] == NO); //stores the opposite!
-}
-
-+(void) setFirstSync:(BOOL)firstSync
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	[defaults setBool:!firstSync forKey:@"app_first_sync"];
-	[defaults synchronize];
-}
-
-+(BOOL) firstInit
-{
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    BOOL resetPreference = [defaults boolForKey:@"init_preference"];
-    
-    return resetPreference;
-}
-
-+(void) setFirstInit:(BOOL)value
-{
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setBool:value forKey:@"init_preference"];
-    [NSUserDefaults resetStandardUserDefaults];
-}
-
-+(void) initDefaultValues
-{
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setInteger:0 forKey:@"num_accounts"];
-    [defaults synchronize];
-
-    [AppSettings setFirstInit:TRUE];
-}
-
-+(BOOL) reset
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	BOOL resetPreference = [defaults boolForKey:@"reset_preference"];
-	
-    return resetPreference;
-}
-
-+(void) setReset:(BOOL)value
-{
-	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
-	[defaults setBool:value forKey:@"reset_preference"];
-	[NSUserDefaults resetStandardUserDefaults];
-}
 
 +(void) setBadgeCount:(NSInteger)y
 {
@@ -336,7 +223,16 @@
 
 +(NSInteger) numActiveAccounts
 {
-    return [AppSettings numAccounts] - [AppSettings numDelAccounts];
+    NSInteger num = [AppSettings numAccounts] - [AppSettings numDelAccounts];
+    
+    if (num == 0) {
+        if ([AppSettings numDelAccounts] == 0 && [SyncManager getSingleton].syncStates.count > 0) {
+            [Instabug reportBugWithComment:@"There seems to be an issue with NSUserDefaults" screenshot:nil];
+            exit(0);
+        }
+    }
+    
+    return num;
 }
 
 +(NSInteger) numAccounts
@@ -811,7 +707,7 @@
 +(NSInteger) defaultAccountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"dAccount"]];
+    NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"dAccountNum"]];
     NSInteger index = [activeAcctPreference integerValue];
     
     if (index != 999) {
@@ -825,7 +721,8 @@
 +(void) setDefaultAccountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"dAccount"]];
+    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex];
+    [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"dAccountNum"]];
     
     /*NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
     if (store) {
@@ -837,11 +734,11 @@
 +(NSInteger) lastAccountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"lastAccount"]];
-    NSInteger index = [activeAcctPreference integerValue];
+    NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"lastAccountNum"]];
+    NSInteger num = [activeAcctPreference integerValue];
     
-    if ([AppSettings numActiveAccounts] != 0 && index != 999) {
-        return [AppSettings indexForAccount:index];
+    if ([AppSettings numActiveAccounts] != 0 && num != 999) {
+        return [AppSettings indexForAccount:num];
     }
     else {
         return [AppSettings numActiveAccounts];
@@ -851,7 +748,8 @@
 +(void) setLastAccountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@((accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex]) forKey:[NSString stringWithFormat:@"lastAccount"]];
+    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex];
+    [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"lastAccountNum"]];
     
     /*NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
     if (store) {

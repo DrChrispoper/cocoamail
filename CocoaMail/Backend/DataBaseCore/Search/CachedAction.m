@@ -17,7 +17,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        if (![db executeUpdate:@"CREATE TABLE cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER, dbNum INTEGER)"]) {
+        if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER, dbNum INTEGER)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
         }
     }];

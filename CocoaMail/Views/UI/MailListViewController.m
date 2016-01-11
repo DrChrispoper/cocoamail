@@ -270,8 +270,7 @@ static NSInteger pageCount = 15;
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     pasteboard.persistent = YES;
     pasteboard.string = self.onlyPerson.email;
-    [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad")];
-    [CCMStatus dismissAfter:1];
+    [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad") dismissAfter:2];
 }
 
 -(void) _press:(UITapGestureRecognizer*)tgr
@@ -313,7 +312,7 @@ static NSInteger pageCount = 15;
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
 
-    [self reFetch];
+    [self reFetch:NO];
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -743,7 +742,7 @@ static NSInteger pageCount = 15;
     BOOL lastRow = indexPath.row == ([convs count] - 1);
     
     if (!self.onlyPerson && self.indexCount != self.countBeforeLoadMore && lastSection && lastRow) {
-        [self reFetch];
+        [self reFetch:NO];
     }
     
     if (!self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
@@ -1045,7 +1044,7 @@ static NSInteger pageCount = 15;
 
 #pragma mark - Fetch Data
 
-- (void)reFetch
+- (void)reFetch:(BOOL)forceRefresh
 {
     NSInteger mailCountBefore = 0;
 
@@ -1078,7 +1077,7 @@ static NSInteger pageCount = 15;
     
     [self.table.tableFooterView setHidden:(self.countBeforeLoadMore == mailCountAfer)];
 
-    if (self.countBeforeLoadMore == mailCountAfer) {
+    if (!forceRefresh && self.countBeforeLoadMore == mailCountAfer) {
         return;
     }
     

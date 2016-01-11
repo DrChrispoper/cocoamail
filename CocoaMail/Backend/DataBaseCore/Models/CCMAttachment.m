@@ -205,7 +205,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        if (![db executeUpdate:@"CREATE TABLE attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"]) {
+        if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
         }
         

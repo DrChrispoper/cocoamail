@@ -48,6 +48,7 @@
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     
     item.leftBarButtonItem = [self backButtonInNavBar];
+    //item.backBarButtonItem
     
     UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:[self.conversation firstMail].title];
     item.titleView = l;

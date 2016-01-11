@@ -26,6 +26,7 @@
 +(BOOL) removeFromFolderUid:(UidEntry*)uid_entry;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
++(NSMutableArray*) getUidEntriesinAccount:(NSInteger)accountIndex andDelete:(BOOL)haveDeleted;
 +(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
 +(NSMutableArray*) getUidEntriesFrom:(Email*)email withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString*)msgId;
@@ -33,13 +34,13 @@
 +(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 
++(void) cleanBeforeDeleteinAccount:(NSInteger)accountIndex;
+
 /// Copy email from origin folder to destination folder.
-//+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to;
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to;
 /// Mark as deleted in the origin folder. Expunge origin folder.
-//+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)folder;
 +(void) deleteUidEntry:(UidEntry*)uidE;
-+(void) deleteAllfromAccount:(NSInteger)accountN;
+
 /// Add Flag
 +(BOOL) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
 +(BOOL) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;

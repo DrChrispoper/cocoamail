@@ -41,7 +41,7 @@
 -(Account*) getAccount:(NSInteger)accountIndex;
 -(NSInteger) accountsCount;
 -(void) addAccount:(Account*)account;
--(BOOL) deleteAccount:(Account*)account;
+-(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
 -(NSInteger) getPersonID:(NSInteger)accountIndex;
 

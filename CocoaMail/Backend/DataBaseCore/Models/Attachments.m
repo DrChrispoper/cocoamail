@@ -262,7 +262,7 @@
     self.mini.image = [at miniature];
     self.extention.text = @"";
     
-    if ([at.mimeType rangeOfString:@"audio/"].location == NSNotFound && [at.mimeType rangeOfString:@"video/"].location == NSNotFound) {
+    if ([at.mimeType rangeOfString:@"image/"].location == NSNotFound && [at.mimeType rangeOfString:@"video/"].location == NSNotFound) {
         self.extention.text = [[at.fileName componentsSeparatedByString:@"."] lastObject];
         [self.extention setHidden:NO];
     }
@@ -274,10 +274,11 @@
         [self.circleView removeFromSuperview];
         self.circleView = nil;
         
+        self.internalState = 2;
+
         [self.btn setImage:[UIImage imageNamed:@"download_export_off"] forState:UIControlStateNormal];
         [self.btn setImage:[UIImage imageNamed:@"download_export_on"] forState:UIControlStateHighlighted];
         [self.btn addTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
-        self.internalState = 2;
         
         [self.cellBtn addTarget:self action:@selector(_openAttach:) forControlEvents:UIControlEventTouchUpInside];
     }

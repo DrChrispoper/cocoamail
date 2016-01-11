@@ -549,14 +549,11 @@
 
             [AppSettings setName:self.username.text accountIndex:newAccountIndex];
                 
-                //[AppSettings setFirstSync:YES];
             [AppSettings setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature") accountIndex:newAccountIndex];
                 
             [AppSettings setBadgeCount:0];
             [AppSettings setNotifications:YES];
-            [AppSettings setDataInitVersion];
             [[Accounts sharedInstance] setCurrentAccountIdx:newAccountIndex];
-                //[AppSettings setActiveAccount:newAccountIndex];
             
             if (newAccountIndex == 0) {
                 [AppSettings setDefaultAccountIndex:newAccountIndex];

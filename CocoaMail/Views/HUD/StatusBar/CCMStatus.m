@@ -13,6 +13,7 @@
     UIView *_backgroundView;
     UILabel *_statusLabel;
     BOOL dissmissed;
+    NSMutableArray* _messageQueue;
 }
 
 @end
@@ -24,6 +25,7 @@
     self = [super init];
     if (self) {
         [self setupDefaultApperance];
+        _messageQueue = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -35,18 +37,19 @@
     _statusWindow.backgroundColor = [UIColor clearColor];
     _statusWindow.alpha = 0.0;
     _statusWindow.opaque = NO;
-    _statusWindow.userInteractionEnabled = YES;
+    _statusWindow.userInteractionEnabled = NO;
     
     _backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [[UIScreen mainScreen] bounds].size.width, 20)];
     _backgroundView.backgroundColor = [UIColor whiteColor];
-    
+    _backgroundView.userInteractionEnabled = NO;
+
     _statusLabel = [[UILabel alloc] initWithFrame:_backgroundView.bounds];
     _statusLabel.textColor = [UIColor blackColor];
     _statusLabel.numberOfLines = 1;
     _statusLabel.font = [UIFont systemFontOfSize:13.0];
     _statusLabel.textAlignment = NSTextAlignmentCenter;
     _statusLabel.opaque = NO;
-    _statusLabel.userInteractionEnabled = YES;
+    _statusLabel.userInteractionEnabled = NO;
     [_backgroundView addSubview:_statusLabel];
     
     dissmissed = NO;
@@ -64,14 +67,9 @@
     return _sharedCCMStatus;
 }
 
-+(void) showLoadingWithStatus:(NSString *)status
++(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval
 {
-    [[CCMStatus sharedCCMStatus] showLoadingWithStatus:status];
-}
-
-+(void) showStatus:(NSString *)status
-{
-    [[CCMStatus sharedCCMStatus] showStatus:status];
+    [[CCMStatus sharedCCMStatus] showStatus:status dismissAfter:interval];
 }
 
 +(void) dismiss
@@ -79,22 +77,13 @@
     [[CCMStatus sharedCCMStatus] dismiss];
 }
 
-+(void) dismissAfter:(NSTimeInterval)interval
-{
-    [[CCMStatus sharedCCMStatus] dismissAfter:interval];
-}
-
-+(void) dismissAfter:(NSTimeInterval)interval thenStatus:(NSString *)status
-{
-    [[CCMStatus sharedCCMStatus] dismissAfter:interval thenStatus:status];
-}
-
 #pragma mark - private
 
--(void) showStatus:(NSString *)status
+-(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval
 {
     if (_statusWindow.hidden) {
         [self setStatus:status];
+        [self dismissAfter:interval];
         _statusWindow.hidden = NO;
         [UIView animateWithDuration:0.2 animations:^{
             _statusWindow.alpha = 1;
@@ -105,19 +94,13 @@
         }];
     }
     else{
-        [UIView animateWithDuration:0.1 animations:^{
-            _backgroundView.alpha = 0.0;
-        } completion:^(BOOL finished) {
-            [self setStatus:status];
-            [UIView animateWithDuration:0.1 animations:^{
-                _backgroundView.alpha = 1;
-            }];
-        }];
+        [_messageQueue insertObject:@{status:@(interval)} atIndex:0];
     }
 }
 
 -(void) dismiss
 {
+    if (_messageQueue.count == 0) {
     [UIView animateWithDuration:0.5 animations:^{
         
         _backgroundView.alpha = 0.0;
@@ -134,6 +117,21 @@
             [[[[UIApplication sharedApplication] delegate] window] makeKeyWindow];
         }];
     }];
+    }
+    else {
+        NSDictionary* statusDic = [_messageQueue lastObject];
+        [_messageQueue removeLastObject];
+        
+        [UIView animateWithDuration:0.1 animations:^{
+            //_backgroundView.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            [self setStatus:[[statusDic allKeys] firstObject]];
+            [self dismissAfter:[[[statusDic allValues] firstObject] intValue]];
+            [UIView animateWithDuration:0.1 animations:^{
+                //_backgroundView.alpha = 1;
+            }];
+        }];
+    }
 }
 
 -(void) dismissAfter:(NSTimeInterval)interval
@@ -141,16 +139,6 @@
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         [self dismiss];
-    });
-}
-
--(void) dismissAfter:(NSTimeInterval)interval thenStatus:(NSString *)status
-{
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        if(!dissmissed){
-            [self showStatus:status];
-        }
     });
 }
 

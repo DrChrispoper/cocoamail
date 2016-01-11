@@ -13,26 +13,6 @@
 
 @interface AppSettings : NSObject
 
-+(NSString*) version;
-+(NSString*) appID;
-+(NSString*) udid;
-+(NSString*) systemVersion;
-+(NSString*) model;
-+(BOOL) firstInit;
-+(void) setFirstInit:(BOOL)value;
-+(void) initDefaultValues;
-+(BOOL) reset;
-+(void) setReset:(BOOL)value;
-//+(BOOL) firstSync;
-//+(void) setFirstSync:(BOOL)firstSync;
-+(NSString*) dataInitVersion;
-+(void) setDataInitVersion;
-+(NSInteger) datastoreVersion;
-+(void) setDatastoreVersion:(NSInteger)value;
-
-+(NSInteger) globalDBVersion;
-+(void) setGlobalDBVersion:(NSInteger)version;
-
 //Global Settings
 +(void) setBadgeCount:(NSInteger)y;
 +(NSInteger) badgeCount;

@@ -1524,15 +1524,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didLoadShareLink:(NSString*)link
 {
     [self.bodyTextView replaceRange:self.bodyTextView.selectedTextRange withText:[NSString stringWithFormat:@"\n%@",link]];
-    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added")];
-    [CCMStatus dismissAfter:1];
+    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2];
 }
 
 /// Sent to the delegate if there was an error creating or loading share link
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToLoadShareLinkWithError:(NSError*)error
 {
-    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link")];
-    [CCMStatus dismissAfter:1];
+    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2];
 }
 
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten

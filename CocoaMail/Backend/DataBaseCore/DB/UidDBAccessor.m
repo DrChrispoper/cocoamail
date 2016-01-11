@@ -15,7 +15,7 @@
 
 #pragma mark Singleton Methods
 
-+(id) sharedManager
++(UidDBAccessor*) sharedManager
 {
 	static id sharedMyManager = nil;
     static dispatch_once_t onceToken;

@@ -78,6 +78,7 @@ white-space: pre-wrap;\
     UIWebView*  _webView;
     NSString*  _html;
     __weak id <MCOMessageViewDelegate> _delegate;
+    UIView* _loadingView;
     BOOL _hasResized;
 }
 
@@ -99,7 +100,19 @@ white-space: pre-wrap;\
         
         [_webView setDelegate:self];
         
+        _loadingView = [[UIView alloc]initWithFrame:[self bounds]];
+        _loadingView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
+        
+        UIActivityIndicatorView* activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        activityView.center = CGPointMake(_loadingView.frame.size.width / 2.0, _loadingView.frame.size.height / 2.0);
+        [activityView startAnimating];
+        activityView.tag = 100;
+        
+        [_loadingView addSubview:activityView];
+        [_loadingView setHidden:YES];
+
         [self addSubview:_webView];
+        [self addSubview:_loadingView];
     }
     
     return self;
@@ -123,7 +136,8 @@ white-space: pre-wrap;\
     if (!mail.email.htmlBody || [mail.email.htmlBody isEqualToString:@""]) {
         
         CCMLog(@"No html");
-        
+        [_loadingView setHidden:NO];
+
         UidEntry* uidE = [mail.email getUids][0];
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
         [uidsIS addIndex:uidE.uid];
@@ -140,7 +154,7 @@ white-space: pre-wrap;\
                      
                      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail.email];
                      [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-                     
+                     [_loadingView setHidden:YES];
                      [self setHtml:mail.email.htmlBody];
                  }];
              }

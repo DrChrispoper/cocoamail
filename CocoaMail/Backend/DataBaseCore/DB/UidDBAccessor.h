@@ -13,7 +13,7 @@
 
 @property (nonatomic, strong) FMDatabaseQueue* databaseQueue;
 
-+(id) sharedManager;
++(UidDBAccessor*) sharedManager;
 
 -(NSString*) databaseFilepath;
 -(void) deleteDatabase;

@@ -32,5 +32,6 @@
 -(void) saveCachedData;
 +(void) deleted;
 +(void) runInboxUnread:(NSInteger)accountIndex;
+-(void) cancel;
 
 @end

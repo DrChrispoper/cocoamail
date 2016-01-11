@@ -21,6 +21,8 @@ static NSString* kQuerySearch = @"SELECT email.pk, email.datetime, email.sender,
 
 static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id MATCH '";
 
+static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
+
 @interface Email : NSObject <NSCopying>
 
 //email

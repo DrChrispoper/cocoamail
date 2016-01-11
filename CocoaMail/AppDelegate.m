@@ -27,13 +27,8 @@
 
 -(BOOL) application:(UIApplication*)application willFinishLaunchingWithOptions:(NSDictionary*)launchOptions
 {
-    
-    if ([AppSettings reset]) {
-        [self resetApp];
-    }
-    
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
-    
+    [Instabug setIntroMessageEnabled:NO];
     // First, create an action
     UIMutableUserNotificationAction *acceptAction = [self createAction];
     
@@ -252,30 +247,6 @@ didSignInForUser:(GIDGoogleUser*)user
     else {
         CCMLog(@"Erorr signing in %@",error.localizedDescription);
     }
-}
-
-#pragma mark - Settings
-
--(void) resetApp
-{
-    // reset - delete all data and settings
-    [AppSettings setReset:NO];
-    for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
-        //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-        [AppSettings setUsername:@"" accountIndex:accountIndex];
-        [AppSettings setPassword:@"" accountIndex:accountIndex];
-        [AppSettings setOAuth:@"" accountIndex:accountIndex];
-        [AppSettings setIdentifier:@"" accountIndex:accountIndex];
-        [AppSettings setAccountDeleted:YES accountIndex:accountIndex];
-    }
-    
-    [AppSettings setDataInitVersion];
-    //[AppSettings setFirstSync:YES];
-    [AppSettings setGlobalDBVersion:0];
-    
-    //[AppSettings setNumAccounts:0];
-    
-    [GlobalDBFunctions deleteAll];
 }
 
 #pragma mark - Notifications

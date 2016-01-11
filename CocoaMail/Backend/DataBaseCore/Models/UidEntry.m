@@ -24,7 +24,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        if (![db executeUpdate:@"CREATE TABLE uid_entry (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, msg_id TEXT, son_msg_id TEXT, dbNum INTEGER)"]) {
+        if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS uid_entry (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, msg_id TEXT, son_msg_id TEXT, dbNum INTEGER)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
         }
         
@@ -136,6 +136,73 @@
     return uids;
 }
 
++(void) cleanBeforeDeleteinAccount:(NSInteger)accountIndex
+{
+    NSInteger accountNum = [AppSettings numForData:accountIndex];
+
+    NSMutableString* query = [NSMutableString string];
+    [query appendFormat:@"SELECT msg_id, folder, count(*) c FROM uid_entry where folder LIKE '%ld___' GROUP BY msg_id HAVING c > 1;", (long)accountNum];
+     
+    [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:query];
+        
+        while ([results next]) {
+            UidEntry* uidEntry = [[UidEntry alloc] init];
+            
+            uidEntry.folder = [results intForColumn:@"folder"] % 1000;
+            uidEntry.msgId = [results stringForColumn:@"msg_id"];
+
+            [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? and folder = ?", uidEntry.msgId, @(uidEntry.folder)];
+        }
+    }];
+}
+
++(NSMutableArray*) getUidEntriesinAccount:(NSInteger)accountIndex andDelete:(BOOL)haveDeleted
+{
+    NSMutableArray* uids = [[NSMutableArray alloc] init];
+    NSMutableSet* dbNums = [[NSMutableSet alloc] init];
+    
+    NSInteger accountNum = [AppSettings numForData:accountIndex];
+    NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
+    NSString* query = [NSString stringWithFormat:@"SELECT * FROM uid_entry where folder LIKE %@ ORDER BY uid DESC LIMIT 500", folder];
+    
+    [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:query];
+        
+        NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
+        
+        while ([results next]) {
+            UidEntry* uid = [UidEntry resToUidEntry:results];
+            
+            if (![dbNums containsObject:@(uid.dbNum)]) {
+                [dbNums addObject:@(uid.dbNum)];
+                [uids addObject:[NSMutableArray new]];
+            }
+            
+            [tmpUids addObject:uid];
+        }
+        
+        NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
+        NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
+        
+        for (UidEntry* uidE in tmpUids) {
+            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            [uids[index] addObject:uidE];
+        }
+        
+        if (haveDeleted) {
+            for (NSArray* uidEs in uids) {
+                for (UidEntry* uid in uidEs) {
+                    [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? and folder = ?", uid.msgId, @(uid.folder)];
+                }
+            }
+            
+        }
+    }];
+    
+    return uids;
+}
+
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId
 {
     NSMutableArray* uids = [[NSMutableArray alloc] init];
@@ -181,14 +248,7 @@
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        FMResultSet* results;
-        
-        //if (!kisActiveAccountAll) {
-            results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ? ORDER BY uid DESC LIMIT 50", @(folderNum + 1000 * accountNum)];
-        //}
-        //else {
-        //    results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder LIKE ? ORDER BY uid DESC LIMIT 50", [NSString stringWithFormat:@"_%03ld", (long)folderNum]];
-        //}
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ? ORDER BY uid DESC LIMIT 50", @(folderNum + 1000 * accountNum)];
         
         NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
 
@@ -232,7 +292,6 @@
         
         NSMutableString* query = [NSMutableString string];
 
-        //if (!kisActiveAccountAll) {
             NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
 
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
@@ -245,18 +304,6 @@
                 NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
                 [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder LIKE %@ ", uidE.uid, folder];
             }
-        //}
-        /*else {
-            [query appendFormat:@"SELECT * FROM uid_entry WHERE t.uid < %i AND", uidE.uid];
-            
-            for (Account* ac in [Accounts sharedInstance].accounts) {
-                NSNumber* folderAccount = @([AppSettings numFolderWithFolder:FolderTypeWith(folderNum, 0) forAccountIndex:ac.idx] + 1000 * [AppSettings numForData:ac.idx]);
-                [query appendFormat:@"folder = %@ OR ", folderAccount];
-            }
-            
-            query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length - 3)]];
-        }*/
-         
         
         [query appendString:@" ORDER BY uid DESC LIMIT 150"];
         
@@ -368,11 +415,6 @@
     return uidEntry;
 }
 
-//+(void) moveMsgId:(NSString*)msg_id inFolder:(NSInteger)from toFolder:(NSInteger)to
-//{
-//    return [UidEntry move:[UidEntry getUidEntryWithFolder:from msgId:msg_id] toFolder:to];
-//}
-
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
 {
     //No Important folder at Index
@@ -390,26 +432,21 @@
     NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
     NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
     
-    Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
-    
-    if ([networkReachability currentReachabilityStatus] != NotReachable) {
-        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:fromFolderName
-                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
-                                                                                                                         destFolder:toFolderName];
-        [opMove start:^(NSError* error, NSDictionary* destUids) {
-            if (!error) {
-                CCMLog(@"Email copied to folder!");
-            
-                if (destUids) {
-                    UidEntry* newUidE = [uidE copy];
-                    newUidE.folder = to;
-                    newUidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
-                    newUidE.sonMsgId = uidE.sonMsgId;
-                    [self addUid:uidE];
-                }
-                
-                [UidEntry deleteUidEntry:uidE];
+    [self removeFromFolderUid:uidE];
 
+    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
+        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:fromFolderName
+                                                                                                                              uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
+                                                                                                                        destFolder:toFolderName];
+        [opMove start:^(NSError* error, NSDictionary* destUids) {
+            if (!error && destUids) {
+                CCMLog(@"Email copied to folder!");
+                [UidEntry deleteUidEntry:uidE];
+                UidEntry* newUidE = [uidE copy];
+                newUidE.folder = to;
+                newUidE.sonMsgId = uidE.sonMsgId;
+                newUidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
+                [self addUid:uidE];
             } else {
                 [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
                 CCMLog(@"Error copying email to folder:%@", error);
@@ -420,24 +457,15 @@
     }
 }
 
-//+(void) deleteMsgId:(NSString*)msg_id fromfolder:(NSInteger)from
-//{
-//    return [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:from msgId:msg_id]];
-//}
-
 +(void) deleteUidEntry:(UidEntry*)uidE
 {
     if (uidE.pk == 0) {
         CCMLog(@"Email doesn't look synced in folder, so deleting it might not work");
     }
     
-    [self removeFromFolderUid:uidE];
-    
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
     
-    Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
-    
-    if ([networkReachability currentReachabilityStatus] != NotReachable) {
+    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
         MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
@@ -464,11 +492,6 @@
     } else {
         [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
     }
-}
-
-+(void) deleteAllfromAccount:(NSInteger)accountN
-{
-    [self removeFromAccount:accountN];
 }
 
 -(UidEntry*) copyWithZone:(NSZone*)zone

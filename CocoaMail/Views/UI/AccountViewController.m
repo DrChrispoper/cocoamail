@@ -11,6 +11,7 @@
 #import "EditCocoaButtonView.h"
 #import "Accounts.h"
 #import "CocoaButton.h"
+#import "CocoaMail-Swift.h"
 
 
 @interface AccountViewController () <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate>
@@ -318,17 +319,27 @@
         else if ([directAction isEqualToString:@"EDIT_CODE"]) {
         }
         else if ([directAction isEqualToString:@"DELETE"]) {
-            if ([[Accounts sharedInstance] deleteAccount:self.account]) {
-
-                [ViewController refreshCocoaButton];
+            [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
+            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"account.deleting-restarting", @"HUD Message: Deleting...")];
+            [[PKHUD sharedHUD] show];
+            
+            NSInteger idx = self.account.idx;
+            
+            [[Accounts sharedInstance] deleteAccount:self.account completed:^{
                 
-                if ([Accounts sharedInstance].accountsCount>1) {
+                [AppSettings setAccountDeleted:YES accountIndex:idx];
+                
+                exit(0);
+
+                //[ViewController refreshCocoaButton];
+                
+                /*if ([Accounts sharedInstance].accountsCount>1) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
                 }
                 else {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-                }
-            }
+                }*/
+            }];
         }
         
         if (reload.count > 0) {

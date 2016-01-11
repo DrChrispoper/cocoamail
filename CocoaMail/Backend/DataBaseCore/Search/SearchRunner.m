@@ -82,7 +82,7 @@ static SearchRunner * searchSingleton = nil;
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
         NSInteger accountNum = [AppSettings numForData:accountIndex];
-
+        
         for (NSNumber* dbNum in dbNums) {
             if (self.cancelled) {
                 [subscriber sendCompleted];
@@ -233,6 +233,58 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
+-(RACSignal*) performDeleteAccount:(NSInteger)accountIndex
+{
+    return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
+        NSMutableArray* uidsInGroups;
+        
+        [UidEntry cleanBeforeDeleteinAccount:accountIndex];
+        
+        while (true) {
+            uidsInGroups = [UidEntry getUidEntriesinAccount:accountIndex andDelete:YES];
+            
+            if (uidsInGroups.count == 0) {
+                break;
+            }
+            else {
+                CCMLog(@"Deleting Batch");
+                
+                for (NSArray* pagedUids in uidsInGroups) {
+                    NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
+                    
+                    if (self.cancelled) {
+                        CCMLog(@"Cancel");
+                        [subscriber sendCompleted];
+                        
+                        return [RACDisposable disposableWithBlock:^{}];
+                    }
+                    
+                    NSMutableString* query = [NSMutableString string];
+                    [query appendString:kQueryDelete];
+                    
+                    for (UidEntry* p in pagedUids) {
+                        [query appendFormat:@"%@ OR ", p.msgId];
+                    }
+                    
+                    query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-4)]];
+                    [query appendFormat:@"'"];
+                    
+                    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+                    
+                    [queue inDatabase:^(FMDatabase* db) {
+                        [db executeUpdate:query];
+                    }];
+                }
+            }
+        }
+        
+        [subscriber sendCompleted];
+        
+        return [RACDisposable disposableWithBlock:^{
+        }];
+    }];
+}
+
 -(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccount:(NSInteger)accountIndex from:(Email*)email
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
@@ -257,7 +309,7 @@ static SearchRunner * searchSingleton = nil;
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
             //CCMLog(@"Account:%ld Searching in Folder:%@ with count:%lu", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], (long)pagedUids.count);
-
+            
             if (self.cancelled) {
                 CCMLog(@"Cancel");
                 [subscriber sendCompleted];
@@ -321,6 +373,11 @@ static SearchRunner * searchSingleton = nil;
     self.cancelled = NO;
     
     return [self searchForSignal:[self performAllSearch]];
+}
+
+-(RACSignal*) deleteEmailsInAccount:(NSInteger)accountIndex
+{
+    return [self searchForSignal:[self performDeleteAccount:accountIndex]];
 }
 
 -(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex

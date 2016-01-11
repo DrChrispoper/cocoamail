@@ -20,6 +20,7 @@
 -(RACSignal*) search:(NSString*)searchText inAccount:(NSInteger)accountIndex;
 -(RACSignal*) senderSearch:(Person*)person inAccount:(NSInteger)accountIndex;
 
+-(RACSignal*) deleteEmailsInAccount:(NSInteger)accountIndex;
 -(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex;
 -(RACSignal*) threadSearch:(NSString*)thread inAccount:(NSInteger)accountIndex;
 -(RACSignal*) allEmailsSearch;

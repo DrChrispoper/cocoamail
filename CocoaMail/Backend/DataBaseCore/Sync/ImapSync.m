@@ -17,6 +17,7 @@
 #import <libextobjc/EXTScope.h>
 #import <Google/SignIn.h>
 #import "ViewController.h"
+#import <Instabug/Instabug.h>
 
 @interface ImapSync ()
 
@@ -24,6 +25,7 @@
 @property (nonatomic, strong) MCOIMAPOperation* imapCheckOp;
 @property (nonatomic) BOOL isConnecting;
 @property (nonatomic) BOOL isWaitingForOAuth;
+@property (nonatomic) BOOL isCanceled;
 
 
 @end
@@ -199,6 +201,11 @@ static NSArray * sharedServices = nil;
         return [RACDisposable disposableWithBlock:^{
         }];
     }];
+}
+
+-(void) cancel
+{
+    self.isCanceled = YES;
 }
 
 -(void) saveCachedData
@@ -672,6 +679,7 @@ static NSArray * sharedServices = nil;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
+
     BOOL isInBackground = UIApplicationStateBackground == [UIApplication sharedApplication].applicationState;
     
     if (folder == -1) {
@@ -699,14 +707,17 @@ static NSArray * sharedServices = nil;
     if ([[AppSettings identifier:self.currentAccountIndex] isEqualToString:@"gmail"]) {
         requestKind |= MCOIMAPMessagesRequestKindGmailThreadID;
     }
-    
+        
     @weakify(self);
     
-    return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
+    return [RACSignal startLazilyWithScheduler:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground] block:^(id<RACSubscriber> subscriber) {
         @strongify(self);
         // get list of all folders
         
-        if (![ImapSync isNetworkAvailable]) {
+        if (self.isCanceled) {
+            [subscriber sendCompleted];
+        }
+        else if (![ImapSync isNetworkAvailable]) {
             [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
         }
         else if (currentFolder == -1) {
@@ -767,6 +778,10 @@ static NSArray * sharedServices = nil;
                                 [subscriber sendError:error];
                                 return;
                             }
+                            if (self.isCanceled) {
+                                [subscriber sendCompleted];
+                                return;
+                            }
                             
                             int batchsize = 20;
                             
@@ -819,6 +834,10 @@ static NSArray * sharedServices = nil;
                                 NSInteger __block count = messages.count;
                                 
                                 for (MCOIMAPMessage* msg in messages) {
+                                    if (self.isCanceled) {
+                                        [subscriber sendCompleted];
+                                        return;
+                                    }
                                     
                                     NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountIndex:self.currentAccountIndex];
                                     NSString* folderPath = folderState[@"folderPath"];
@@ -913,32 +932,61 @@ static NSArray * sharedServices = nil;
                                     
                                     NSMutableArray* atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count + msg.htmlInlineAttachments.count];
                                     
-                                    for (MCOIMAPPart* part in msg.attachments) {
-                                        Attachment* at = [[Attachment alloc]init];
-                                        at.mimeType = part.mimeType;
-                                        at.msgId = email.msgId;
-                                        at.fileName = part.filename;
-                                        if ([at.fileName isEqualToString:@""]) {
-                                            at.fileName = [NSString stringWithFormat:@"No name - %@",email.subject];
+                                    for (MCOAbstractPart* part in msg.attachments) {
+                                        if([part isKindOfClass:[MCOIMAPPart class]]) {
+                                            MCOIMAPPart* imapPart = (MCOIMAPPart*)part;
+
+                                            Attachment* at = [[Attachment alloc]init];
+                                            at.mimeType = part.mimeType;
+                                            at.msgId = email.msgId;
+                                            at.fileName = part.filename;
+                                            if ([at.fileName isEqualToString:@""]) {
+                                                at.fileName = [NSString stringWithFormat:@"No name - %@",email.subject];
+                                            }
+                                            at.partID = imapPart.partID;
+                                            at.size = imapPart.size;
+                                            at.contentID = @"";
+                                            [atts addObject:at];
                                         }
-                                        at.partID = part.partID;
-                                        at.size = part.size;
-                                        at.contentID = @"";
-                                        [atts addObject:at];
+                                        else if([part isKindOfClass:[MCOIMAPMultipart class]]) {
+                                            MCOIMAPMultipart* imapParts = (MCOIMAPMultipart*)part;
+                                            
+                                            NSMutableString* string = [NSMutableString new];
+                                            
+                                            for (MCOIMAPPart* imapPart in imapParts.parts) {
+                                                [string appendString:imapPart.filename];
+                                            }
+                                            
+                                            [Instabug reportBugWithComment:[NSString stringWithFormat:@"The inline attachment in msg is Multipart %lu, subject:%@; parts:%@", (long)imapParts.partType ,msg.header.subject, string] screenshot:nil];                                        }
                                     }
                                     
-                                    for (MCOIMAPPart* part in msg.htmlInlineAttachments) {
-                                        Attachment* at = [[Attachment alloc]init];
-                                        at.mimeType = part.mimeType;
-                                        at.msgId = email.msgId;
-                                        at.fileName = part.filename;
-                                        if ([at.fileName isEqualToString:@""]) {
-                                            at.fileName = part.contentID;
+                                    for (MCOAbstractPart* part in msg.htmlInlineAttachments) {
+                                        if([part isKindOfClass:[MCOIMAPPart class]]) {
+                                            MCOIMAPPart* imapPart = (MCOIMAPPart*)part;
+
+                                            Attachment* at = [[Attachment alloc]init];
+                                            at.mimeType = part.mimeType;
+                                            at.msgId = email.msgId;
+                                            at.fileName = part.filename;
+                                            if ([at.fileName isEqualToString:@""]) {
+                                                at.fileName = part.contentID;
+                                            }
+                                            at.partID = imapPart.partID;
+                                            at.size = imapPart.size;
+                                            at.contentID = part.contentID;
+                                            [atts addObject:at];
                                         }
-                                        at.partID = part.partID;
-                                        at.size = part.size;
-                                        at.contentID = part.contentID;
-                                        [atts addObject:at];
+                                        else if([part isKindOfClass:[MCOIMAPMultipart class]]) {
+                                            MCOIMAPMultipart* imapParts = (MCOIMAPMultipart*)part;
+                                            
+                                            NSMutableString* string = [NSMutableString new];
+                                            
+                                            for (MCOIMAPPart* imapPart in imapParts.parts) {
+                                                [string appendString:imapPart.filename];
+                                            }
+                                            
+                                            [Instabug reportBugWithComment:[NSString stringWithFormat:@"The inline attachment in msg is Multipart %lu, subject:%@; parts:%@", (long)imapParts.partType ,msg.header.subject, string] screenshot:nil];
+                                        }
                                     }
                                     
                                     email.attachments = atts;
@@ -999,9 +1047,6 @@ static NSArray * sharedServices = nil;
                 }
             }];
         }
-        
-        return [RACDisposable disposableWithBlock:^{
-        }];
     }];
 }
 
@@ -1028,22 +1073,27 @@ static NSArray * sharedServices = nil;
 }
 -(void) writeFinishedFolderState:(SyncManager*)sm emailCount:(NSInteger)count withAccountIndex:(NSInteger)accountIndex andFolder:(NSInteger)folder
 {
+    if (![AppSettings isAccountDeleted:accountIndex]) {
+
     // used by fetchFrom to write the finished state for this round of syncing to disk
     NSMutableDictionary* syncState = [sm retrieveState:folder accountIndex:accountIndex];
     syncState[@"emailCount"] = @(count);
     
     [sm persistState:syncState forFolderNum:folder accountIndex:accountIndex];
+    }
 }
 
 -(void) writeFinishedFolderState:(SyncManager*)sm lastEnded:(NSInteger)lastEIndex withAccountIndex:(NSInteger)accountIndex andFolder:(NSInteger)folder
 {
     // used by fetchFrom to write the finished state for this round of syncing to disk
+    if (![AppSettings isAccountDeleted:accountIndex]) {
     NSMutableDictionary* syncState = [sm retrieveState:folder accountIndex:accountIndex];
     syncState[@"lastended"] = @(lastEIndex);
     syncState[@"fullsynced"] = @(lastEIndex == 1);
     
     [sm persistState:syncState forFolderNum:folder accountIndex:accountIndex];
     [[[Accounts sharedInstance] getAccount:accountIndex] showProgress];
+    }
 }
 
 -(void) runUpToDateCachedTest:(NSArray*)emails

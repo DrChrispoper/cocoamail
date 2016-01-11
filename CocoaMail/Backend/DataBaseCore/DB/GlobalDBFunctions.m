@@ -40,12 +40,12 @@
 +(void) tableCheck
 {
     // NOTE: need to change dbGlobalTableVersion every time we change the schema
-    if ([AppSettings globalDBVersion] < 1) {
+    //if ([AppSettings globalDBVersion] < 1) {
         [UidEntry tableCheck];
         [CCMAttachment tableCheck];
         [CachedAction tableCheck];
-        [AppSettings setGlobalDBVersion:1];
-    }	
+    //    [AppSettings setGlobalDBVersion:1];
+    //}
 }
 
 
