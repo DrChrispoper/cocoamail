@@ -84,8 +84,6 @@
     
     self.sendButton = send;
     
-    self.sendButton.enabled = NO;
-    
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
@@ -139,9 +137,7 @@
     
     for (Mail *mail in self.mailsWithAttachment) {
         for (Attachment* at in mail.attachments) {
-            if (at.data) {
-                [atts addObject:at];
-            }
+            [atts addObject:at];
         }
     }
     
@@ -154,7 +150,6 @@
 
 -(void) downloaded:(Attachment*)att
 {
-    self.sendButton.enabled = YES;
 }
 
 
@@ -177,10 +172,6 @@
 {
     Mail* m = self.mailsWithAttachment[indexPath.section];
     Attachment* at = m.attachments[indexPath.row];
-    
-    if (at.data) {
-        self.sendButton.enabled = YES;
-    }
     
     NSString* reuseID = @"kAttchCellID";
     

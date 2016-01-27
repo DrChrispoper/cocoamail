@@ -41,8 +41,14 @@ break;\
 }\
 };\
 \
-$(document).ready(function() {\
+$(document).on('pagecreate',function(){\
 window.location.href = \"ready://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
+});\
+jQuery(window).load(function() {\
+window.location.href = \"newHeight://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
+});\
+$(document).on('mobileinit', function () {\
+$.mobile.ignoreContentEnabled=true;\
 });\
 \
 $.mobile.loading().hide();\
@@ -64,6 +70,9 @@ word-wrap: break-word;\
 -webkit-text-size-adjust:none;\
 -webkit-nbsp-mode: space;\
 }\
+div.ui-page {\
+min-height: 0px !important;\
+}\
 \
 pre {\
 white-space: pre-wrap;\
@@ -79,7 +88,8 @@ white-space: pre-wrap;\
     NSString*  _html;
     __weak id <MCOMessageViewDelegate> _delegate;
     UIView* _loadingView;
-    BOOL _hasResized;
+    BOOL _loaded;
+    BOOL _zooming;
 }
 
 @synthesize delegate = _delegate;
@@ -89,15 +99,19 @@ white-space: pre-wrap;\
     self = [super initWithFrame:frame];
     
     if(self) {
-        _hasResized = NO;
-        _webView = [[UIWebView alloc] initWithFrame:[self bounds]];
-        _webView.scalesPageToFit = NO;
+        _loaded = NO;
+        _zooming = NO;
+        _webView = [[UIWebView alloc] initWithFrame:CGRectMake([self bounds].origin.x, [self bounds].origin.y, [self bounds].size.width, 1)];
+        _webView.scalesPageToFit = YES;
         _webView.scrollView.bounces = false;
         _webView.dataDetectorTypes = UIDataDetectorTypeLink;
         
         _webView.scrollView.scrollsToTop = NO;
         _webView.scrollView.delegate = self;
         
+        _webView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
+        _webView.scrollView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
+
         [_webView setDelegate:self];
         
         _loadingView = [[UIView alloc]initWithFrame:[self bounds]];
@@ -169,17 +183,20 @@ white-space: pre-wrap;\
 {
     NSString * content = _html;
     
-    content = [content stringByReplacingOccurrencesOfString:@" height=\"100%\"" withString:@"?"];
-    content = [content stringByReplacingOccurrencesOfString:@" height: 100%" withString:@"?"];
-    content = [content stringByReplacingOccurrencesOfString:@" min-height:100%" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"height=\"100%\"" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"height: 100%" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"height:100%" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"min-height:100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nheight=\"100%\"" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nheight: 100%" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"\nheight:100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nmin-height:100%" withString:@"?"];
     
     if (content == nil) {
         [_webView loadHTMLString:@"" baseURL:nil];
         return;
     }
+    
     NSMutableString * html = [NSMutableString string];
     
     NSURL * jsURL = [[NSBundle mainBundle] URLForResource:@"jquery" withExtension:@"js"];
@@ -191,15 +208,15 @@ white-space: pre-wrap;\
     BOOL haveMeta = ([content rangeOfString:@"<meta"].location != NSNotFound);
     BOOL haveTable = ([content rangeOfString:@"<table"].location != NSNotFound);
     
-    if (haveQuote) {
+    /*if (haveQuote) {
         _webView.scalesPageToFit = NO;
     }
     else {
         _webView.scalesPageToFit = (haveMeta || haveStyle || haveTable);
-    }
+    }*/
     
     [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
-     @"<body>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'>"
+     @"<body data-enhance='false'>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'>"
      @"</iframe></html>", [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle, content];
     [_webView loadHTMLString:html baseURL:nil];
 }
@@ -268,7 +285,18 @@ white-space: pre-wrap;\
         
         urlString = [urlString substringFromIndex:2];
         
-        [self.delegate openLongURL:[NSURL URLWithString:urlString]];
+        if ([urlString containsString:@"http"]) {
+            NSMutableString* correctURL = [NSMutableString stringWithString:urlString];
+            
+            if ([urlString containsString:@"https"]) {
+                [correctURL insertString:@":" atIndex:5];
+            }
+            else {
+                [correctURL insertString:@":" atIndex:4];
+            }
+            
+            [self.delegate openLongURL:[NSURL URLWithString:correctURL]];
+        }
         
         return false;
     }
@@ -280,6 +308,15 @@ white-space: pre-wrap;\
     else if (navigationType == UIWebViewNavigationTypeOther) {
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            
+            CCMLog(@"ready:%f",contentHeight);
+
+            BOOL notCool = NO;
+            
+            if (contentHeight == 1) {
+                contentHeight = [self bounds].size.height;
+                notCool = YES;
+            }
             
             if (_webView.scrollView.contentSize.height > 0) {
             if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
@@ -294,14 +331,61 @@ white-space: pre-wrap;\
             }
             }
             
+            CCMLog(@"ready:%f",contentHeight);
+            
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
             _webView.frame = fr;
             
+            _webView.scrollView.showsVerticalScrollIndicator = false;
+            
+            if (!notCool) {
+                _webView.scrollView.contentSize = _webView.frame.size;
+            }
+
             [self.delegate webViewLoaded:_webView];
             
             [_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
 
+            
+            
+            return NO;
+        }
+        else if ([[url scheme] isEqualToString:@"newHeight"]) {
+            float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+
+            BOOL notCool = NO;
+            
+            if (contentHeight == 1) {
+                contentHeight = [self bounds].size.height;
+                notCool = YES;
+            }
+            
+            if (_webView.scrollView.contentSize.height > 0) {
+                if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
+                    contentHeight = _webView.scrollView.contentSize.height;
+                }
+                else {
+                    if (contentHeight > _webView.scrollView.contentSize.height) {
+                        contentHeight = _webView.scrollView.contentSize.height;
+                    }
+                }
+            }
+            
+            CCMLog(@"newHeight:%f",contentHeight);
+            
+            CGRect fr = _webView.frame;
+            fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
+            _webView.frame = fr;
+            
+            if (!notCool) {
+                _webView.scrollView.contentSize = _webView.frame.size;
+            }
+
+            [self.delegate webViewLoaded:_webView];
+            
+            _loaded = YES;
+            
             return NO;
         }
     }
@@ -325,34 +409,55 @@ white-space: pre-wrap;\
     return request;
 }
 
-- (void) scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
 {
+    _zooming = YES;
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    if (!_zooming && scrollView.contentOffset.y != 0) {
+        [self.delegate scrollTo:CGPointMake(0, scrollView.contentOffset.y)];
+    }
+}
+
+- (void) scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    if (_loaded) {
     CGFloat scrollHeight = scrollView.contentSize.height;
     
-    if (!_hasResized && scrollHeight > _webView.frame.size.height) {
+    if (scrollHeight > _webView.frame.size.height) {
         CGRect fr = _webView.frame;
         fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight);
         _webView.frame = fr;
         
+        //scrollView.contentSize = _webView.frame.size;
+        [scrollView setContentSize:CGSizeMake(scrollView.contentSize.width, _webView.frame.size.height)];
+
         [self.delegate webViewLoaded:_webView];
-        _hasResized = YES;
+    }
     }
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(nullable UIView *)view atScale:(CGFloat)scale
 {
-    CGFloat scrollHeight = scrollView.contentSize.height;
+    _zooming = NO;
     
+    CGFloat scrollHeight = scrollView.contentSize.height;
+    CGFloat scrollWidth = scrollView.contentSize.width;
+
     if (scale < 1) {
-        CGRect fr = _webView.frame;
-        fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight * scale);
-        _webView.frame = fr;
+        scrollHeight = scrollHeight*scale;
+    }
+    
+    CGRect fr = _webView.frame;
+    fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight);
+    _webView.frame = fr;
         
-        [self.delegate webViewLoaded:_webView];
-    }
-    if (scale > 1) {
-        _hasResized = NO;
-    }
+    [self.delegate webViewLoaded:_webView];
+    
+    [scrollView setContentSize:CGSizeMake(scrollWidth, _webView.frame.size.height)];
+    [scrollView setContentOffset:CGPointMake(0, 0)];
 }
 
 @end

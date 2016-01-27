@@ -56,6 +56,8 @@
 
 #define kCREATE_FIRST_ACCOUNT_NOTIFICATION @"kCREATE_FIRST_ACCOUNT_NOTIFICATION"
 
+#define kQUICK_ACTION_NOTIFICATION @"kQUICK_ACTION_NOTIFICATION"
+
 typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 
 
@@ -75,6 +77,8 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 +(void) temporaryHideCocoaButton:(BOOL)hide;
 
 -(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
+
+//+ (void)check3DTouch;
 
 
 @end

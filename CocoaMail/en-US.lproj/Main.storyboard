@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="Ah7-4n-0Wa">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="Ah7-4n-0Wa">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9049"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9529"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -18,7 +18,6 @@
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="acC-Vn-i4i">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="20"/>
-                                <animations/>
                                 <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="20" id="JX7-oY-Wjf"/>
@@ -26,11 +25,9 @@
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="P9O-J9-tSL">
                                 <rect key="frame" x="0.0" y="20" width="600" height="580"/>
-                                <animations/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                         </subviews>
-                        <animations/>
                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="P9O-J9-tSL" firstAttribute="top" secondItem="cIm-e0-J51" secondAttribute="bottom" id="0nx-1d-tmF"/>
@@ -57,6 +54,72 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="lrm-kH-fPn" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1343" y="64"/>
+        </scene>
+        <!--Preview View Controller-->
+        <scene sceneID="GBM-aN-iIp">
+            <objects>
+                <viewController storyboardIdentifier="PreviewView" id="AVp-Tc-KBJ" customClass="PreviewViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="anF-QM-9Cm"/>
+                        <viewControllerLayoutGuide type="bottom" id="ztO-8i-tgm"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="cUg-7N-Uoi">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Preview View" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="n6x-8v-4gO">
+                                <rect key="frame" x="161" y="252" width="278" height="96"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="278" id="OWP-eg-cJG"/>
+                                    <constraint firstAttribute="width" constant="278" id="zW3-Nt-jRj"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                                <variation key="default">
+                                    <mask key="constraints">
+                                        <exclude reference="OWP-eg-cJG"/>
+                                    </mask>
+                                </variation>
+                                <variation key="heightClass=compact">
+                                    <mask key="constraints">
+                                        <include reference="OWP-eg-cJG"/>
+                                        <exclude reference="zW3-Nt-jRj"/>
+                                    </mask>
+                                </variation>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" red="0.40000000600000002" green="0.80000001190000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="n6x-8v-4gO" firstAttribute="centerY" secondItem="cUg-7N-Uoi" secondAttribute="centerY" id="KMj-B9-4pX"/>
+                            <constraint firstItem="n6x-8v-4gO" firstAttribute="centerX" secondItem="cUg-7N-Uoi" secondAttribute="centerX" id="VtD-zV-gx2"/>
+                            <constraint firstItem="n6x-8v-4gO" firstAttribute="centerX" secondItem="cUg-7N-Uoi" secondAttribute="centerX" id="bEm-97-78z"/>
+                            <constraint firstItem="n6x-8v-4gO" firstAttribute="top" secondItem="anF-QM-9Cm" secondAttribute="bottom" constant="232" id="ce2-qh-2Ti"/>
+                            <constraint firstItem="n6x-8v-4gO" firstAttribute="centerY" secondItem="cUg-7N-Uoi" secondAttribute="centerY" id="rrW-po-3LQ"/>
+                        </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="KMj-B9-4pX"/>
+                                <exclude reference="bEm-97-78z"/>
+                            </mask>
+                        </variation>
+                        <variation key="heightClass=compact">
+                            <mask key="constraints">
+                                <include reference="KMj-B9-4pX"/>
+                                <exclude reference="VtD-zV-gx2"/>
+                                <include reference="bEm-97-78z"/>
+                                <exclude reference="ce2-qh-2Ti"/>
+                                <exclude reference="rrW-po-3LQ"/>
+                            </mask>
+                        </variation>
+                    </view>
+                    <connections>
+                        <outlet property="label" destination="n6x-8v-4gO" id="g6F-Fh-Si4"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fXF-nC-ebT" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3231" y="394"/>
         </scene>
     </scenes>
 </document>

@@ -20,6 +20,8 @@
 
 @property (nonatomic, weak) UISwitch* badgeSwitch;
 
+@property (nonatomic, weak) UISwitch* syncSwitch;
+
 @end
 
 @implementation SettingsViewController
@@ -121,11 +123,13 @@
     
     NSString* tNotif = NSLocalizedString(@"settings-view.menu.notifications", @"Notifications");
     NSString* tBadge = NSLocalizedString(@"settings-view.menu.display-badge-count", @"Display badge count");
+    NSString* tData = NSLocalizedString(@"settings-view.menu.data-sync", @"Full Sync over Data");
     NSString* tSwipe = NSLocalizedString(@"settings-view.menu.quick-swipe", @"Quick Swipe");
     
     NSArray* displays = @[
                           @{TEXT: tSwipe, ACTION : kSETTINGS_SWIPE_NOTIFICATION},
                           @{TEXT: tBadge, DACTION : @"BADGE_COUNT"},
+                          @{TEXT: tData, DACTION : @"DATA_SYNC"},
                           @{TEXT: tNotif, ACTION : kSETTINGS_NOTIF_NOTIFICATION}
                         ];
     
@@ -235,6 +239,14 @@
             [s setOn:[AppSettings badgeCount]];
             self.badgeSwitch = s;
         }
+        else if ([action isEqualToString:@"DATA_SYNC"]) {
+            UISwitch* s = [[UISwitch alloc] init];
+            s.onTintColor = [UIGlobal standardBlue];
+            [s addTarget:self action:@selector(_switchSync:) forControlEvents:UIControlEventValueChanged];
+            cell.accessoryView = s;
+            [s setOn:[AppSettings canSyncOverData]];
+            self.syncSwitch = s;
+        }
         else if ([action isEqualToString:@"NAV_BAR_BLUR"]) {
             cell.accessoryType = ([Accounts sharedInstance].navBarBlurred) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
         }
@@ -303,6 +315,10 @@
             [self.badgeSwitch setOn:!self.badgeSwitch.on animated:YES];
             [self _switchBadge:self.badgeSwitch];
         }
+        else if ([directAction isEqualToString:@"DATA_SYNC"]) {
+            [self.syncSwitch setOn:!self.syncSwitch.on animated:YES];
+            [self _switchBadge:self.syncSwitch];
+        }
         else if ([directAction isEqualToString:@"NAV_BAR_BLUR"]) {
             [Accounts sharedInstance].navBarBlurred = YES;
             
@@ -357,6 +373,11 @@
 -(void) _switchBadge:(UISwitch*)sender
 {
     [AppSettings setBadgeCount:![AppSettings badgeCount]];
+}
+
+-(void) _switchSync:(UISwitch*)sender
+{
+    [AppSettings setSyncOverData:![AppSettings canSyncOverData]];
 }
 
 @end

@@ -25,6 +25,7 @@
 
 +(NSArray*) systemFolderIcons;
 +(NSString*) userFolderIcon;
++(NSString*) userFolderPadIcon;
 
 @property (nonatomic) BOOL navBarBlurred;
 

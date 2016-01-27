@@ -51,11 +51,11 @@
 
 -(void) setupWithDelegate:(id<ConversationCellDelegate>)delegate
 {
-
+    
     self.backgroundColor = [UIColor clearColor];
     self.selectionStyle = UITableViewCellSelectionStyleNone;
     self.delegate = delegate;
-
+    
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
     UIView* back = nil;
@@ -72,7 +72,7 @@
     inIVL.clipsToBounds = YES;
     self.backViewL = inIVL;
     self.backViewL.alpha = 0.f;
-
+    
     UIImageView* inIVR = [[UIImageView alloc] initWithImage:rBack];
     inIVR.frame = CGRectMake(screenBounds.size.width - 150 - 8 , 0 , 150, 89);
     inIVR.tintColor = accountColor;
@@ -83,7 +83,7 @@
     self.backViewR.alpha = 0.f;
     
     
-    UIImageView* arch = [self.delegate imageViewForQuickSwipeAction];    
+    UIImageView* arch = [self.delegate imageViewForQuickSwipeAction];
     CGRect fa = arch.frame;
     fa.origin.x = 8;
     fa.origin.y = 28;
@@ -92,7 +92,7 @@
     [inIVL addSubview:arch];
     self.leftAction = arch;
     
-
+    
     UIImageView* sel = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"swipe_select"]];
     CGRect fs = sel.frame;
     fs.origin.x = inIVR.bounds.size.width - 8 - 30;
@@ -122,13 +122,26 @@
         sepWidth = iv.bounds.size.width;
     }
     self.baseView = back;
-
     
-    UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
-    lpgr.minimumPressDuration = 0.01;
+    //UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
+    //lpgr.minimumPressDuration = 0.01;
+    //[self.contentView addGestureRecognizer:lpgr];
+    
+    //lpgr.delegate = self;
+    
+    
+    UITapGestureRecognizer* tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
+    //lpgr.minimumPressDuration = 0.01;
+    [self.contentView addGestureRecognizer:tap];
+    
+    tap.delegate = self;
+    
+    UIPanGestureRecognizer* lpgr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_pan:)];
+    //lpgr.minimumPressDuration = 0.01;
     [self.contentView addGestureRecognizer:lpgr];
     
     lpgr.delegate = self;
+    
     
     [self.contentView addSubview:back];
     
@@ -151,7 +164,7 @@
     t.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [back addSubview:t];
     self.title = t;
-
+    
     
     UILabel* h = [[UILabel alloc] initWithFrame:CGRectMake(back.bounds.size.width - 68 - moreRightSpace, 0, 60, 45)];
     h.textAlignment = NSTextAlignmentRight;
@@ -190,7 +203,6 @@
         self.favori.hidden = YES;
     }
     
-    
 }
 
 -(BOOL) gestureRecognizer:(UIGestureRecognizer*)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer*)otherGestureRecognizer
@@ -228,20 +240,14 @@
     [self.delegate cellIsUnselected:self];
 }
 
--(void) _press:(UILongPressGestureRecognizer*)lpgr
+-(void) _press:(UITapGestureRecognizer*)lpgr
 {
     const CGPoint pos = [lpgr locationInView:lpgr.view];
     const NSInteger tagFavSelected = 972;
     
-    BOOL back = false;
-    
     switch (lpgr.state) {
-        case UIGestureRecognizerStateBegan:
-            self.panBasePos = pos;
-            self.leftAction.hidden = true;
-            self.panStartDate = [NSDate date];
-            
-            
+        case UIGestureRecognizerStatePossible:
+        {
             // tap fav
             CGRect bigger = CGRectInset(self.favori.frame, -10, -10);
             
@@ -261,6 +267,118 @@
                     }
                 }
             }
+            break;
+        }
+        case UIGestureRecognizerStateEnded:
+        {
+            CGRect bigger = CGRectInset(self.favori.frame, -10, -10);
+            
+            if (CGRectContainsPoint(bigger, pos)) {
+                self.favori.tag = tagFavSelected;
+                self.favori.highlighted = !self.favori.highlighted;
+            }
+            
+            // tap attachment
+            if (self.attachment.hidden == NO) {
+                
+                if (![self.delegate isPresentingDrafts]) {
+                    bigger = CGRectInset(self.attachment.frame, -10, -10);
+                    
+                    if (CGRectContainsPoint(bigger, pos)) {
+                        self.attachment.highlighted = true;
+                    }
+                }
+            }
+
+            // tav fav
+            if (self.favori.tag == tagFavSelected) {
+                
+                [self.conversation toggleFav];
+                
+                self.favori.tag = 0;
+            } // tap attachment
+            else if (self.attachment.highlighted) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
+                                                                  userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
+                
+                self.attachment.highlighted = false;
+            }
+            else {
+                // tap user badge
+                CGRect bigger = CGRectInset(self.badge.frame, -10, -10);
+                
+                if (CGRectContainsPoint(bigger, pos)) {
+                    
+                    Person* person;
+                    
+                    if ([[Accounts sharedInstance] getPersonID:[self conversation].accountIdx] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
+                        person = [[Persons sharedInstance] getPersonID:[[[self mail].toPersonID firstObject] integerValue]];
+                    }
+                    else {
+                        person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
+                    }
+                    
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
+                    return;
+                }
+                
+                // tap cell
+                
+                UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
+                overView.backgroundColor = [UIColor lightGrayColor];
+                overView.alpha = 0.f;
+                overView.layer.cornerRadius = 20.f;
+                overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+                
+                [self.baseView addSubview:overView];
+                
+                [UIView animateWithDuration:0.1
+                                 animations:^{
+                                     overView.alpha = 0.8f;
+                                 }
+                                 completion:^(BOOL fini){
+                                     [UIView animateWithDuration:0.1
+                                                      animations:^{
+                                                          overView.alpha = 0.0f;
+                                                      }
+                                                      completion:^(BOOL fini){
+                                                          [overView removeFromSuperview];
+                                                          [self.delegate unselectAll];
+                                                          
+                                                          if ([self.delegate isPresentingDrafts]) {
+                                                              [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION
+                                                                                                                  object:nil
+                                                                                                                userInfo:@{kPRESENT_MAIL_KEY:[self.conversation firstMail]}];
+                                                          }
+                                                          else {
+                                                              [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
+                                                                                                                  object:nil
+                                                                                                                userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
+                                                          }
+                                                          
+                                                      }];
+                                 }];
+            }
+            
+        }
+        default:
+            break;
+    }
+}
+
+-(void) _pan:(UIPanGestureRecognizer*)lpgr
+{
+    const CGPoint pos = [lpgr locationInView:lpgr.view];
+    const NSInteger tagFavSelected = 972;
+    
+    BOOL back = false;
+    
+    switch (lpgr.state) {
+        case UIGestureRecognizerStateBegan:
+            self.panBasePos = pos;
+            self.leftAction.hidden = true;
+            self.panStartDate = [NSDate date];
+
             break;
             
         case UIGestureRecognizerStateChanged:
@@ -332,7 +450,7 @@
             else {
                 frame.origin.x = 8;
                 frame.size.width += delta;
-
+                
                 CGFloat pourc = -(delta / 40.f);
                 
                 if (pourc > 1.f) {
@@ -375,101 +493,9 @@
         case UIGestureRecognizerStateEnded:
         {
             UIPanGestureRecognizer* tpgr = [self.delegate tableViewPanGesture];
-
-            BOOL otherIsStopped = (tpgr.state == UIGestureRecognizerStatePossible || tpgr.state == UIGestureRecognizerStateFailed);
             
-            tpgr.enabled = NO;
+            //BOOL otherIsStopped = (tpgr.state == UIGestureRecognizerStatePossible || tpgr.state == UIGestureRecognizerStateFailed);
             
-            if (otherIsStopped) {
-                
-                // tav fav
-                if (self.favori.tag == tagFavSelected) {
-                    
-                    /*if (self.favori.isHighlighted) {
-                        [[Accounts sharedInstance].accounts[self.conversation.accountIdx] moveConversation:self.conversation from:decodeFolderTypeWith([[self.conversation.foldersType anyObject] integerValue]) to:FolderTypeWith(FolderTypeFavoris, 0)];
-                    }*/
-                    
-                    [self.conversation toggleFav];
-
-                    self.favori.tag = 0;
-                    back = true;
-                } // tap attachment
-                else if (self.attachment.highlighted) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
-                                                                      userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
-                    
-                    self.attachment.highlighted = false;
-                    back = true;
-                }
-                else if ([self.panStartDate timeIntervalSinceNow]>-0.8) {
-                    if (fabs(pos.x - self.panBasePos.x)<8) {
-                        if (fabs(pos.y - self.panBasePos.y)<8) {
-                            
-                            // tap user badge
-                           // if (![self.delegate isPresentingDrafts]) {
-                                
-                                CGRect bigger = CGRectInset(self.badge.frame, -10, -10);
-                                
-                                if (CGRectContainsPoint(bigger, pos)) {
-                                    
-                                    Person* person;
-                                    
-                                    if ([[Accounts sharedInstance] getPersonID:[self conversation].accountIdx] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
-                                        person = [[Persons sharedInstance] getPersonID:[[[self mail].toPersonID firstObject] integerValue]];
-                                    }
-                                    else {
-                                        person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
-                                    }
-                                    
-                                    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
-                                    return;
-                                }
-                            //}
-                            
-                            // tap cell
-                            //Doing it in conversation view
-                            /*if (![self.delegate isPresentingDrafts] && !self.mail.isRead) {
-                                [self.mail toggleRead];
-                            }*/
-                            
-                            UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
-                            overView.backgroundColor = [UIColor lightGrayColor];
-                            overView.alpha = 0.f;
-                            overView.layer.cornerRadius = 20.f;
-                            overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-                            
-                            [self.baseView addSubview:overView];
-                            
-                            [UIView animateWithDuration:0.1
-                                             animations:^{
-                                                 overView.alpha = 0.8f;
-                                             }
-                                             completion:^(BOOL fini){
-                                                 [UIView animateWithDuration:0.1
-                                                                  animations:^{
-                                                                      overView.alpha = 0.0f;
-                                                                  }
-                                                                  completion:^(BOOL fini){
-                                                                      [overView removeFromSuperview];
-                                                                      [self.delegate unselectAll];
-                                                                      
-                                                                      if ([self.delegate isPresentingDrafts]) {
-                                                                          [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION
-                                                                                                                              object:nil
-                                                                                                                            userInfo:@{kPRESENT_MAIL_KEY:[self.conversation firstMail]}];                                                                          
-                                                                      }
-                                                                      else {
-                                                                          [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
-                                                                                                                              object:nil
-                                                                                                                            userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
-                                                                      }
-                                                                      
-                                                                  }];
-                                             }];
-                        }
-                    }
-                }
-            }
             tpgr.enabled = YES;
         }
         case UIGestureRecognizerStateCancelled:
@@ -494,7 +520,7 @@
               initialSpringVelocity:0.1
                             options:UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-
+                             
                              if (self.dontGoBack == NO) {
                                  const CGFloat limite = -[self _limiteRightSwipe];
                                  self.currentSwipedPosition = ((delta<limite)) ? limite : 0.f;
@@ -504,29 +530,29 @@
                          }
                          completion:nil];
         
-            if (doAction) {
-
-                if (userEndAction) {
-                    
-                    QuickSwipeType idxQuickSwipe = [self quickSwipeType];
-                    
-                    if (idxQuickSwipe == QuickSwipeMark) {
-                        Mail* m = [self mail];
-                        [m toggleRead];
-                        [self fillWithConversation:self.conversation isSelected:false];
-                    }
-                    
-                    [self.delegate leftActionDoneForCell:self];
+        if (doAction) {
+            
+            if (userEndAction) {
+                
+                QuickSwipeType idxQuickSwipe = [self quickSwipeType];
+                
+                if (idxQuickSwipe == QuickSwipeMark) {
+                    Mail* m = [self mail];
+                    [m toggleRead];
+                    [self fillWithConversation:self.conversation isSelected:false isDebugMode:NO];
                 }
+                
+                [self.delegate leftActionDoneForCell:self];
+            }
+        }
+        else {
+            if (self.currentSwipedPosition<0) {
+                [self _cellIsSelected];
             }
             else {
-                if (self.currentSwipedPosition<0) {
-                    [self _cellIsSelected];
-                }
-                else {
-                    [self _cellIsUnselected];
-                }
+                [self _cellIsUnselected];
             }
+        }
         
     }
     
@@ -543,7 +569,7 @@
     return idxQuickSwipe;
 }
 
--(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected
+-(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected isDebugMode:(BOOL)debugMode
 {
     self.conversation = conv;
     Mail* mail = [self mail];
@@ -555,16 +581,39 @@
         self.title.text = [mail.content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     }
     
+    if (debugMode) {
+        NSMutableString* folders = [NSMutableString string];
+        NSInteger accountIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
+        for (UidEntry* uid in mail.email.uids) {
+            [folders appendString:[AppSettings folderDisplayName:uid.folder forAccountIndex:accountIndex]];
+        }
+        self.title.text = folders;
+    }
+    
     Person* p = nil;
     
     //If it is a reply show the first receipient
-    if ([[Accounts sharedInstance] getPersonID:conv.accountIdx] == mail.fromPersonID) {
+    NSInteger meID = [[Accounts sharedInstance] getPersonID:conv.accountIdx];
+    if (meID == mail.fromPersonID) {
         if (!mail.toPersonID || mail.toPersonID.count == 0) {
             p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
             self.name.text = @"Draft";
         }
         else {
-            p = [[Persons sharedInstance] getPersonID:[[mail.toPersonID firstObject] integerValue]];
+            NSInteger toID = -999;
+            
+            for (Mail* mail in conv.mails) {
+                if (mail.fromPersonID != meID) {
+                    toID = mail.fromPersonID;
+                    break;
+                }
+            }
+            
+            if (toID == -999) {
+                toID = [[mail.toPersonID firstObject] integerValue];
+            }
+            
+            p = [[Persons sharedInstance] getPersonID:toID];
             self.name.text = [NSString stringWithFormat:@"↩︎%@",p.name];
         }
     }
@@ -581,7 +630,7 @@
         
         self.name.text = name;
     }
-
+    
     [self.badge.subviews.firstObject removeFromSuperview];
     [self.badge addSubview:[p badgeView]];
     
@@ -627,7 +676,7 @@
         }
     }
     
-
+    
     // selection
     self.currentSwipedPosition = (selected) ? -[self _limiteRightSwipe] : 0.f;
     [self _applyStableFrame];

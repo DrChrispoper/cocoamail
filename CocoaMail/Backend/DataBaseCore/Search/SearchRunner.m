@@ -303,7 +303,7 @@ static SearchRunner * searchSingleton = nil;
             uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccount:accountIndex];
         }
         
-        CCMLog(@"Account:%ld Searching in Folder:%@ from:%@", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], email.subject);
+        //CCMLog(@"Account:%ld Searching in Folder:%@ from:%@", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], email.subject);
         
         for (NSArray* pagedUids in uidsInGroups) {
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;

@@ -23,6 +23,7 @@
 
 +(void) tableCheck;
 +(BOOL) addUid:(UidEntry*)uid_entry;
++(BOOL) updateNewUID:(UidEntry*)uid_entry;
 +(BOOL) removeFromFolderUid:(UidEntry*)uid_entry;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
@@ -41,12 +42,14 @@
 /// Mark as deleted in the origin folder. Expunge origin folder.
 +(void) deleteUidEntry:(UidEntry*)uidE;
 
++(void) copy:(UidEntry*)uidE toFolder:(NSInteger)to;
+
 /// Add Flag
-+(BOOL) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
-+(BOOL) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
++(void) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
++(void) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
 /// Remove Flag
-+(BOOL) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
-+(BOOL) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
++(void) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
++(void) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
 
 +(NSArray*) dbNumsInAccount:(NSInteger)accountIndex;
 

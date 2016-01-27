@@ -19,7 +19,8 @@
 
 +(void) tableCheck;
 +(BOOL) addAction:(CachedAction*)action;
-+(BOOL) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)actionIndex toFolder:(NSInteger)folder;
++(CachedAction*) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)actionIndex toFolder:(NSInteger)folder;
++(void) updateActionUID:(UidEntry*)uidEntry;
 +(BOOL) removeAction:(CachedAction*)action;
 +(NSMutableArray*) getActions;
 +(NSMutableArray*) getActionsForAccount:(NSInteger)account;

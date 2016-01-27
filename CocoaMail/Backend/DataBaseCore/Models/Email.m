@@ -201,10 +201,6 @@
         }
     }
     
-    if (self.uids.count == 0) {
-        CCMLog(@"Email not in DB yet");
-    }
-
     return nil;
 }
 
@@ -445,7 +441,13 @@
         newEmail.subject = self.subject;
         newEmail.body = self.body;
         newEmail.attachments = self.attachments;
-        newEmail.uids = self.uids;
+        
+        NSMutableArray* uds = [[NSMutableArray alloc] initWithCapacity:self.uids.count];
+        for (UidEntry* ud in self.uids) {
+            [uds addObject:[ud copy]];
+        }
+        
+        newEmail.uids = uds;
         newEmail.accountNum = self.accountNum;
     }
     
@@ -456,15 +458,21 @@
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    NSInteger accountndex = [AppSettings indexForAccount:self.accountNum];
-    CCMLog(@"Move from folder %@ to %@", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:accountndex],  [AppSettings folderDisplayName:toFolderIdx forAccountIndex:accountndex]);
+    NSInteger accountIndex = [AppSettings indexForAccount:self.accountNum];
+    
+    CCMLog(@"Move from folder %@ to %@", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:accountIndex],  [AppSettings folderDisplayName:toFolderIdx forAccountIndex:accountIndex]);
+    
     if ([self uidEWithFolder:fromFolderIdx]) {
-        if ([self uidEWithFolder:toFolderIdx]) {
+        if (([AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeAll] == fromFolderIdx && [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeDeleted] != toFolderIdx) || [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeFavoris] == toFolderIdx) {
+            [UidEntry copy:[self uidEWithFolder:fromFolderIdx] toFolder:toFolderIdx];
+        }
+        else if ([self uidEWithFolder:toFolderIdx]) {
             [UidEntry deleteUidEntry:[self uidEWithFolder:fromFolderIdx]];
         }
         else {
             [UidEntry move:[self uidEWithFolder:fromFolderIdx] toFolder:toFolderIdx];
         }
+        
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
     }
 }
@@ -473,7 +481,6 @@
 {
     for (UidEntry* uidE in _uids) {
         [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
-        //[UidEntry moveMsgId:self.msgId inFolder:uidE.folder toFolder:];
     }
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
@@ -493,6 +500,8 @@
     NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
     [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     
+    [nextOpUp waitUntilFinished];
+
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }
 
@@ -509,6 +518,8 @@
     
     NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
     [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+    
+    [nextOpUp waitUntilFinished];
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
 }

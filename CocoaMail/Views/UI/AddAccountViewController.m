@@ -136,7 +136,26 @@
 
     NSThread* driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
     [driverThread start];
-    return;
+
+    if ([AppSettings numAccounts] == 0){
+        UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
+                                                                    message:NSLocalizedString(@"ask-to-sync-data", @"We do some extra sync, can we use data?")
+                                                             preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction* yesAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"YES", @"YES") style:UIAlertActionStyleDefault
+                                                             handler:^(UIAlertAction* aa) {
+                                                                 [AppSettings setSyncOverData:YES];
+                                                                }];
+        
+        UIAlertAction* noAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"NO", @"NO") style:UIAlertActionStyleCancel
+                                                             handler:^(UIAlertAction* aa) {
+                                                                 [AppSettings setSyncOverData:NO];
+                                                             }];
+        [ac addAction:yesAction];
+        [ac addAction:noAction];
+        
+        [[ViewController mainVC] presentViewController:ac animated:YES completion:nil];
+    }
 }
 
 -(void) loadIt
@@ -552,7 +571,7 @@
             [AppSettings setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature") accountIndex:newAccountIndex];
                 
             [AppSettings setBadgeCount:0];
-            [AppSettings setNotifications:YES];
+            [AppSettings setNotifications:YES accountIndex:newAccountIndex];
             [[Accounts sharedInstance] setCurrentAccountIdx:newAccountIndex];
             
             if (newAccountIndex == 0) {

@@ -43,6 +43,7 @@
 -(void) linkToAccount:(Account*)account;
 
 -(UIView*) badgeView;
+-(UIImageView*) badgeViewImage:(CGSize)size;
 
 +(Person*) createWithName:(NSString*)name email:(NSString*)mail icon:(UIImage*)icon codeName:(NSString*)codeName;
 

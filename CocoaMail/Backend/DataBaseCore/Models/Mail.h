@@ -55,8 +55,8 @@
 @interface Conversation : NSObject
 
 @property (nonatomic, strong, readonly) NSMutableArray* mails;
-@property (nonatomic, strong, readonly) NSMutableSet* foldersType;
 
+-(NSMutableSet*) foldersType;
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;

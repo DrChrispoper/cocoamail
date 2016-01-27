@@ -20,14 +20,13 @@
 @interface ConversationTableViewCell : UITableViewCell
 
 -(void) setupWithDelegate:(id<ConversationCellDelegate>)delegate;
--(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected;
+-(void) fillWithConversation:(Conversation*)conv isSelected:(BOOL)selected isDebugMode:(BOOL)debugMode;
 
 -(NSString*) currentID;
 
 -(void) animatedClose;
 
 -(BOOL) isReplyAll;
-
 
 @end
 
@@ -40,6 +39,7 @@
 -(void) cellIsUnselected:(ConversationTableViewCell*)cell;
 
 -(void) unselectAll;
+
 
 // datasource
 -(UIPanGestureRecognizer*) tableViewPanGesture;

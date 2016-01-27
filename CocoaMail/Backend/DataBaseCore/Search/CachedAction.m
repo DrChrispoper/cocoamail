@@ -38,8 +38,10 @@
         
         if ([result next]) {
             success = true;
+            [result close];
             return;
         }
+        
         [result close];
         
         success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder,dbNum) VALUES (?,?,?,?,?,?);",
@@ -55,14 +57,33 @@
     return success;
 }
 
-+(BOOL) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)pActionIndex toFolder:(NSInteger)folder
++(CachedAction*) addActionWithUid:(UidEntry*)uidEntry actionIndex:(NSInteger)pActionIndex toFolder:(NSInteger)folder
 {
     CachedAction* cA = [[CachedAction alloc]init];
     cA.uid = uidEntry;
     cA.actionIndex = pActionIndex;
     cA.toFolder = folder;
     
-    return [CachedAction addAction:cA];
+    [CachedAction addAction:cA];
+    
+    return cA;
+}
+
++(void) updateActionUID:(UidEntry*)uidEntry
+{
+    CacheDBAccessor* databaseManager = [CacheDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"UPDATE cached_actions SET uid = ? WHERE uid = 0 AND folder = ? AND account = ? ;",
+                    @(uidEntry.uid),
+                    @(uidEntry.folder),
+                    @(uidEntry.account)];
+    }];
+    
+    NSMutableArray* acts = [CachedAction getActionsForAccount:uidEntry.account];
+    for (CachedAction* act in acts) {
+        [act doAction];
+    }
 }
 
 +(BOOL) removeAction:(CachedAction*)action
@@ -139,6 +160,10 @@
 
 -(void) doAction
 {
+    if (self.uid.uid == 0) {
+        return;
+    }
+    
     switch (self.actionIndex) {
         case 0:
             [UidEntry move:self.uid toFolder:self.toFolder];
@@ -152,6 +177,9 @@
             break;
         case 3:
             [UidEntry removeFlag:MCOMessageFlagFlagged to:self.uid];
+            break;
+        case 4:
+            [UidEntry copy:self.uid toFolder:self.toFolder];
             break;
         default:
             break;

@@ -117,10 +117,11 @@ static NSDateFormatter * s_df_hour = nil;
         [[builder header] setReferences:@[self.fromMail.email.getSonID]];
         [[builder header] setInReplyTo: @[self.fromMail.email.msgId]];
         
-        Person* from = [[Persons sharedInstance] getPersonID:self.fromMail.fromPersonID];
-        NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
+        //Not adding the Yuk! :D
+        //Person* from = [[Persons sharedInstance] getPersonID:self.fromMail.fromPersonID];
+        //NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
         
-        [builder setHTMLBody:[NSString stringWithFormat:@"%@<br/>%@ %@ :<br/><br/>%@<br/>",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
+        //[builder setHTMLBody:[NSString stringWithFormat:@"%@<br/>%@ %@ :<br/><br/>%@<br/>",self.content, from.name, wrote, self.fromMail.email.htmlBody]];
     }
     
     [[builder header] setSubject:self.title];
@@ -303,7 +304,6 @@ static NSDateFormatter * s_df_hour = nil;
     
     if (self) {
         _mails = [[NSMutableArray alloc]initWithCapacity:1];
-        _foldersType = [[NSMutableSet alloc]initWithCapacity:1];
     }
     
     return self;
@@ -364,14 +364,6 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) addMail:(Mail*)mail
 {
-    for (UidEntry* uid in mail.email.uids) {
-        //if (uid.account != kActiveAccount) {
-        //    CCMLog(@"WTF: %@",uid.msgId);
-        //}
-        CCMFolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccountIndex:[AppSettings indexForAccount:uid.account]];
-        [self.foldersType addObject:@(encodeFolderTypeWith(Fuser))];
-    }
-    
     for (Mail* tmpMail in self.mails) {
         if ([tmpMail isEqualToMail:mail]) {
             return;
@@ -408,16 +400,11 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    BOOL hasEmailInFolder = NO;
-    
     for (Mail* m in self.mails) {
-        if ([m.email uidEWithFolder:fromFolderIdx]) {
-            hasEmailInFolder = YES;
-        }
         [m.email moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
     }
     
-    NSAssert(hasEmailInFolder, @"Oups moving from:%@ to:%@ but no emails in conversation", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:[self accountIdx]],[AppSettings folderDisplayName:toFolderIdx forAccountIndex:[self accountIdx]]);
+    [self foldersType];
 }
 
 -(void) trash
@@ -425,6 +412,8 @@ static NSDateFormatter * s_df_hour = nil;
     for (Mail* m in self.mails) {
         [m.email trash];
     }
+    
+    [self foldersType];
 }
 
 -(BOOL) isEqualToConversation:(Conversation*)conv
@@ -451,6 +440,22 @@ static NSDateFormatter * s_df_hour = nil;
     }
     
     return [self isEqualToConversation:(Conversation*)object];
+}
+
+-(NSMutableSet*) foldersType
+{
+    NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
+    
+    for (Mail* mail in self.mails) {
+        mail.email.uids = [UidEntry getUidEntriesWithMsgId:mail.email.msgId];
+        
+        for (UidEntry* uid in mail.email.uids) {
+            CCMFolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccountIndex:[AppSettings indexForAccount:uid.account]];
+            [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+        }
+    }
+    
+    return tempFodles;
 }
 
 @end

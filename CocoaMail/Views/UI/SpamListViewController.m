@@ -210,7 +210,7 @@
         [cell setupWithDelegate:self];
     }
     
-    [cell fillWithConversation:conv isSelected:NO];
+    [cell fillWithConversation:conv isSelected:NO isDebugMode:NO];
     
     return cell;
 }

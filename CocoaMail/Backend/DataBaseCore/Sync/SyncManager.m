@@ -88,6 +88,9 @@ static SyncManager * singleton = nil;
     NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
 
     for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+        
+        [ImapSync runInboxUnread:accountIndex];
+        
         NSInteger folder = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:FolderTypeInbox];
         [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:folder fromStart:YES fromAccount:NO]]];
     }

@@ -23,6 +23,10 @@
 -(void) reFetch:(BOOL)forceRefresh;
 -(void) removeConversationList:(NSArray*)convs;
 
+@property (nonatomic, weak) UITableView* table;
+@property (nonatomic, strong) NSMutableArray* convByDay;
+@property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
+
 @end
 
 @protocol MailListDelegate

@@ -13,7 +13,6 @@
 #import "ViewController.h"
 #import "PullToRefresh.h"
 
-
 @interface InViewController : UIViewController
 
 @property (nonatomic, weak) WhiteBlurNavBar* navBar;
@@ -33,6 +32,7 @@
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView;
 -(void) scrollViewDidEndDragging:(UIScrollView*)scrollView willDecelerate:(BOOL)decelerate;
 
+//- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion;
 
 @end
 

@@ -27,6 +27,8 @@
 
 -(BOOL) application:(UIApplication*)application willFinishLaunchingWithOptions:(NSDictionary*)launchOptions
 {
+    BOOL shouldPerformAdditionalDelegateHandling = TRUE;
+    
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     [Instabug setIntroMessageEnabled:NO];
     // First, create an action
@@ -34,6 +36,19 @@
     
     // Second, create a category and tie those actions to it (only the one action for now)
     UIMutableUserNotificationCategory *inviteCategory = [self createCategory:@[acceptAction]];
+    
+    application.applicationSupportsShakeToEdit = YES;
+    
+    UIApplicationShortcutItem* shortcutItem = launchOptions[UIApplicationLaunchOptionsShortcutItemKey];
+    
+    if (shortcutItem) {
+        self.launchedShortcutItem = shortcutItem;
+        
+        // This will block "performActionForShortcutItem:completionHandler" from being called.
+        shouldPerformAdditionalDelegateHandling = FALSE;
+    }
+    
+    [self createItemsWithIcons];
     
     // Third, register those settings with our new notification category
     [self registerSettings:inviteCategory];
@@ -47,7 +62,7 @@
     
     [self registerGoogleSignIn];
     
-    return YES;
+    return shouldPerformAdditionalDelegateHandling;
 }
 
 -(BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
@@ -59,28 +74,13 @@
 
 - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
 {
-    CCMLog(@"Two");
-
     for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         [[ImapSync sharedServices:accountIndex] saveCachedData];
     }
     
     if (notification && application.applicationState == 1) {
-        NSNumber *index = [notification.userInfo objectForKey:@"index"];
-        NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
-        Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
-        
-        CCMLog(@"Opening email:%@", [conversation firstMail].title);
-        CCMLog(@"Application state:%ld", (long)application.applicationState);
-        
-        [[ImapSync sharedServices:accountIndex] saveCachedData];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
-                                                            object:nil
-                                                          userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
-        
+        self.launchedNotification = notification;
     }
-    
-
 }
 
 -(void) applicationWillTerminate:(UIApplication*)application
@@ -109,6 +109,42 @@
         for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
             [[ImapSync sharedServices:accountIndex] saveCachedData];
         }
+        
+        if (self.launchedShortcutItem) {
+            UIApplicationShortcutItem* shortCut = self.launchedShortcutItem ;
+            [self handleShortcut:shortCut];
+            
+            self.launchedShortcutItem = nil;
+        }
+        else if (self.launchedNotification) {
+            UILocalNotification* notification = self.launchedNotification;
+            
+            NSNumber *index = [notification.userInfo objectForKey:@"index"];
+            NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+            
+            Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
+            
+            [conversation foldersType];
+            
+            CCMLog(@"Opening email:%@", [conversation firstMail].title);
+            
+            Accounts* A = [Accounts sharedInstance];
+            [[A currentAccount] releaseContent];
+            A.currentAccountIdx = accountIndex;
+            [[A currentAccount] connect];
+            
+            [ViewController refreshCocoaButton];
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
+                                                                object:nil
+                                                              userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
+            
+
+            
+            self.launchedNotification = nil;
+        }
     } else {
         [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     }
@@ -124,10 +160,6 @@
         [(ViewController*)self.window.rootViewController refreshWithCompletionHandler:^(BOOL didReceiveNewPosts) {
             if (didReceiveNewPosts) {
                 completionHandler(UIBackgroundFetchResultNewData);
-            
-                if ([AppSettings badgeCount] == 1) {
-                    [UIApplication sharedApplication].applicationIconBadgeNumber = 1;
-                }
             } else {
                 completionHandler(UIBackgroundFetchResultNoData);
             }
@@ -147,7 +179,7 @@
         NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
         Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
         
-        CCMLog(@"Email in account:%d (%d)", [[conversation firstMail].email.uids[0] account], [conversation firstMail].email.accountNum);
+        CCMLog(@"Email in account:%ld (%ld)", (long)[[conversation firstMail].email.uids[0] account], (long)[conversation firstMail].email.accountNum);
 
         [[[Accounts sharedInstance] getAccount:accountIndex] moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
     }
@@ -305,6 +337,80 @@ didSignInForUser:(GIDGoogleUser*)user
     NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
+}
+
+# pragma mark - Springboard Shortcut Items (dynamic)
+
+- (void)createItemsWithIcons {
+    
+    // create some system icons
+    UIApplicationShortcutIcon *loveIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeFavorite];
+    UIApplicationShortcutIcon *mailIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeMail];
+    UIApplicationShortcutIcon *searchIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeSearch];
+    UIApplicationShortcutIcon *composeIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeCompose];
+
+    // icons with my own images
+    //UIApplicationShortcutIcon *icon1 = [UIApplicationShortcutIcon iconWithTemplateImageName:@"iCon1"];
+    
+    // create several (dynamic) shortcut items
+    UIMutableApplicationShortcutItem *itemLove = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.fav" localizedTitle:@"Favoris" localizedSubtitle:nil icon:loveIcon userInfo:nil];
+    
+    UIMutableApplicationShortcutItem *itemMail = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.inbox" localizedTitle:@"Inbox" localizedSubtitle:nil icon:mailIcon userInfo:nil];
+    
+    UIMutableApplicationShortcutItem *item3 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.search" localizedTitle:@"Search" localizedSubtitle:nil icon:searchIcon userInfo:nil];
+    
+    UIMutableApplicationShortcutItem *item4 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.compose" localizedTitle:@"Compose" localizedSubtitle:nil icon:composeIcon userInfo:nil];
+    
+    // add all items to an array
+    NSArray *items = @[item4, item3, itemLove, itemMail];
+    
+    // add this array to the potentially existing static UIApplicationShortcutItems
+    [UIApplication sharedApplication].shortcutItems = items;
+}
+
+- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler
+{
+    // react to shortcut item selections
+    completionHandler([self handleShortcut:shortcutItem]);
+    
+}
+
+-(BOOL) handleShortcut:(UIApplicationShortcutItem*)shortcutItem
+{
+    NSLog(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
+    
+    if ([shortcutItem.type isEqualToString:@"com.fav"]) {
+        CCMFolderType type = FolderTypeWith(FolderTypeFavoris, 0);
+        [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
+        NSNumber* encodedType = @(encodeFolderTypeWith(type));
+        [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
+    }
+    else if ([shortcutItem.type isEqualToString:@"com.inbox"]) {
+        CCMFolderType type = FolderTypeWith(FolderTypeInbox, 0);
+        [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
+        NSNumber* encodedType = @(encodeFolderTypeWith(type));
+        [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
+    }
+    else if ([shortcutItem.type isEqualToString:@"com.search"]) {
+        [self _search];
+        //[AppSettings setOpen:1];
+    }
+    else if ([shortcutItem.type isEqualToString:@"com.compose"]) {
+        [self _editMail];
+        //[AppSettings setOpen:2];
+    }
+    
+    return YES;
+}
+
+-(void) _editMail
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil];
+}
+
+-(void) _search
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_SEARCH_NOTIFICATION object:nil];
 }
 
 @end

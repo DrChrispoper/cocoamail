@@ -358,7 +358,7 @@ static NSString * currentFileName = nil;
         }
     }
     
-    if ([self.rootViewDelegate respondsToSelector:@selector(dropboxBrowser:didDownloadFile:didOverwriteFile:)]) {
+    if ([self.rootViewDelegate respondsToSelector:@selector(gdriveExplorer:didDownloadFile:didOverwriteFile:)]) {
         [self.rootViewDelegate gdriveExplorer:self didDownloadFile:currentFileName didOverwriteFile:isLocalFileOverwritten];
     }
     

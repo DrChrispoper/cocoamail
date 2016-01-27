@@ -13,46 +13,86 @@
 #import "SyncManager.h"
 #import <Instabug/Instabug.h>
 
+static AppSettings * singleton = nil;
+
+
 @implementation AppSettings
 
-+(void) setBadgeCount:(NSInteger)y
+@synthesize badgeCount = _badgeCount;
+
++(AppSettings*) getSingleton
+{
+    @synchronized(self) {
+        if (singleton == nil) {
+            NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+
+            singleton = [[self alloc] init];
+            singleton.badgeCount = [[defaults objectForKey:@"badgecount_preference"] integerValue];
+        }
+    }
+    
+    return singleton;
+}
+
+
+
+-(void) setBadgeCount:(NSInteger)y
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	[defaults setObject:@(y) forKey:@"badgecount_preference"];
     
-    /*NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-    if (store) {
-        [store setObject:@(y) forKey:@"badgecount_preference"];
-        [store synchronize];
-    }*/
+    [AppSettings getSingleton].badgeCount = y;
     
     [AppSettings setInboxUnread:[AppSettings inboxUnread:0] accountIndex:0];
 }
 
-+(NSInteger) badgeCount
+-(NSInteger) badgeCount
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 	
     return [[defaults objectForKey:@"badgecount_preference"] integerValue];
 }
 
-+(void) setNotifications:(BOOL)y
++(void) setCache:(NSSet*)y
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-	[defaults setObject:@(y) forKey:@"notifications_preference"];
-    
-    /*NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-    if (store) {
-        [store setObject:@(y) forKey:@"notifications_preference"];
-        [store synchronize];
-    }*/
+    [defaults setObject:[y allObjects] forKey:@"cache"];
 }
 
-+(BOOL) notifications
++(NSArray*) cache
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    
-    return [defaults boolForKey:@"notifications_preference"];
+    return [defaults arrayForKey:@"cache"];
+}
+
++(void) setSyncOverData:(BOOL)y
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:y forKey:@"sync_over_data"];
+}
+
++(BOOL) canSyncOverData
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    return [defaults boolForKey:@"sync_over_data"];
+}
+
++(void) setOpen:(NSInteger)view
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@(view) forKey:@"open_view"];
+}
+
++(BOOL) openSearch
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    return [[defaults objectForKey:@"open_view"] integerValue] == 1;
+}
+
++(BOOL) openCompose
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    return [[defaults objectForKey:@"open_view"] integerValue] == 2;
 }
 
 +(NSArray*) defaultColors
@@ -83,9 +123,9 @@
     }*/
 }
 
-+(NSInteger) draftCount
++(uint32_t) draftCount
 {
-    NSInteger count = [[[NSUserDefaults standardUserDefaults] objectForKey:@"drafts_preference"] integerValue];
+    uint32_t count = [[[NSUserDefaults standardUserDefaults] objectForKey:@"drafts_preference"] unsignedIntegerValue];
     
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(count + 1) forKey:@"drafts_preference"];
@@ -225,13 +265,6 @@
 {
     NSInteger num = [AppSettings numAccounts] - [AppSettings numDelAccounts];
     
-    if (num == 0) {
-        if ([AppSettings numDelAccounts] == 0 && [SyncManager getSingleton].syncStates.count > 0) {
-            [Instabug reportBugWithComment:@"There seems to be an issue with NSUserDefaults" screenshot:nil];
-            exit(0);
-        }
-    }
-    
     return num;
 }
 
@@ -240,6 +273,17 @@
 	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults]; 
 	NSInteger numAccts = [[defaults objectForKey:@"num_accounts"] integerValue];
 	
+    if (numAccts == 0) {
+        if ([AppSettings numDelAccounts] == 0) {
+            [Instabug reportBugWithComment:@"There seems to be an issue with NSUserDefaults" screenshot:nil];
+            
+            NSUserDefaults* defaults2 = [NSUserDefaults standardUserDefaults];
+            NSInteger numAccts2 = [[defaults2 objectForKey:@"num_accounts"] integerValue];
+            
+            return numAccts2;
+        }
+    }
+    
     return numAccts;
 }
 
@@ -479,9 +523,28 @@
     }*/
 }
 
++(void) setNotifications:(BOOL)y accountIndex:(NSInteger)accountIndex
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@(y) forKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    
+    /*NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+     if (store) {
+     [store setObject:@(y) forKey:@"notifications_preference"];
+     [store synchronize];
+     }*/
+}
+
++(BOOL) notifications:(NSInteger)accountIndex
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    
+    return [defaults boolForKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+}
+
 +(NSString*) signature:(NSInteger)accountIndex
 {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat: @"Signature_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"Signature_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
 }
 
 +(void) setSignature:(NSString*)y accountIndex:(NSInteger)accountIndex
@@ -758,6 +821,20 @@
     }*/
 }
 
++(NSNumber*) lastFolderIndex
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber* folderNum = [defaults objectForKey:[NSString stringWithFormat:@"lastFolder"]];
+    
+    return folderNum;
+}
+
++(void) setLastFolderIndex:(NSNumber*)folderNum
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:folderNum forKey:[NSString stringWithFormat:@"lastFolder"]];
+}
+
 +(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex
 {
     [AppSettings setUsername:accountVal.username accountIndex:accountIndex];
@@ -805,7 +882,7 @@
             badge += [AppSettings inboxUnread:index];
         }
     }
-    
+        
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
 }
 

@@ -14,12 +14,12 @@
 #import "SyncManager.h"
 #import "Mail.h"
 #import "ImapSync.h"
+#import "StringUtil.h"
 
 
 @interface FolderViewController () <UITableViewDataSource, UITableViewDelegate>
 {
     CRefreshCompletionHandler _completionHandler;
-    NSMutableSet* _cachedEmailIDs;
     BOOL _isBackgroundFetching;
 }
 
@@ -47,7 +47,7 @@
     item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:settingsBtn];
     
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:currentAccount.userMail];
-
+    
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
@@ -72,12 +72,10 @@
     [self.view addSubview:table];
     
     [self setupNavBarWith:item overMainScrollView:table];
-
-    table.dataSource = self;
-    table.delegate = self;    
-    self.table = table;
     
-    _cachedEmailIDs = [[NSMutableSet alloc] initWithCapacity:1];
+    table.dataSource = self;
+    table.delegate = self;
+    self.table = table;
     
     if (currentAccount && !currentAccount.isAllAccounts) {
         [ImapSync runInboxUnread:currentAccount.idx];
@@ -87,7 +85,7 @@
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    
+        
     if ([AppSettings numActiveAccounts] !=  0) {
         [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccountIdx];
     }
@@ -195,13 +193,12 @@
             f.size.height = 23;
             f.origin.x = cell.frame.size.width - 16 - f.size.width;
             counter.frame = f;
-
-            [cell addSubview:counter];
             
+            [cell addSubview:counter];
         }
     }
     else {
-
+        
         imageName = [Accounts userFolderIcon];
         NSArray* subfolder = [cac userFolders][indexPath.row];
         
@@ -212,6 +209,7 @@
         if (indentation) {
             NSRange rangeofSub = [text rangeOfString:@"/"];
             text = [text substringFromIndex:rangeofSub.location + 1];
+            imageName = [Accounts userFolderPadIcon];
         }
         
         NSString* reuseID = @"kCellAccountPerso";
@@ -224,7 +222,7 @@
         
         cell.separatorInset = UIEdgeInsetsMake(0, 53 + 27 * indentation, 0, 0);
     }
-
+    
     cell.textLabel.text = text;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
@@ -264,7 +262,7 @@
         type.type = FolderTypeUser;
         type.idx = indexPath.row;
     }
-
+    
     [[[Accounts sharedInstance] currentAccount] setCurrentFolder:type];
     NSNumber* encodedType = @(encodeFolderTypeWith(type));
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
@@ -279,68 +277,54 @@
     
     BOOL __block hasNewEmail = NO;
     
-    if (!_isBackgroundFetching) {
-        _isBackgroundFetching = YES;
-    [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email* email) {
-        if (![_cachedEmailIDs containsObject:email.msgId]) {
-            hasNewEmail = YES;
-            CCMLog(@"Adding emails in cache: %@", email.subject);
-
-            [_cachedEmailIDs addObject:email.msgId];
-            
-            Conversation* conv = [[Conversation alloc] init];
-            [conv addMail:[Mail mail:email]];
-            NSUInteger index = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
-            
-            BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
-            
-            if (isUnread && [AppSettings notifications]) {
-                UILocalNotification* localNotification = [[UILocalNotification alloc] init];
-                localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
-                NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
-                localNotification.alertBody = alertText;
-                localNotification.timeZone = [NSTimeZone defaultTimeZone];
-                localNotification.userInfo = @{@"index":@(index),
-                                               @"accountNum":@(email.accountNum)};
-                localNotification.category = @"MAIL_CATEGORY";
-                
-                [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-            }
-        }
-    } error:^(NSError* error) {
-        _isBackgroundFetching = NO;
-        _completionHandler(hasNewEmail);
-    } completed:^{
-        _isBackgroundFetching = NO;
-        _completionHandler(hasNewEmail);
-    }];
-    }
+    NSDate *fetchStart = [NSDate date];
+    
+    //if (!_isBackgroundFetching) {
+        //_isBackgroundFetching = YES;
+        [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
+         subscribeNext:^(Email* email) {
+             hasNewEmail = YES;
+         } error:^(NSError* error) {
+             NSDate *fetchEnd = [NSDate date];
+             NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
+             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             
+             //_isBackgroundFetching = NO;
+             _completionHandler(hasNewEmail);
+         } completed:^{
+             NSDate *fetchEnd = [NSDate date];
+             NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
+             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             
+             //_isBackgroundFetching = NO;
+             _completionHandler(hasNewEmail);
+         }];
+    //}
 }
 
 - (void)storeChanged:(NSNotification*)notification
 {
     /*NSDictionary *userInfo = [notification userInfo];
-    NSNumber *reason = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey];
-    
-    if (reason) {
-        NSInteger reasonValue = [reason integerValue];
-        NSLog(@"storeChanged with reason %ld", (long)reasonValue);
-        
-        if ((reasonValue == NSUbiquitousKeyValueStoreServerChange) ||
-            (reasonValue == NSUbiquitousKeyValueStoreInitialSyncChange)) {
-            
-            NSArray *keys = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
-            NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-            NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-            
-            for (NSString *key in keys) {
-                id value = [store objectForKey:key];
-                [userDefaults setObject:value forKey:key];
-                NSLog(@"storeChanged updated value for %@",key);
-            }
-        }
-    }*/
+     NSNumber *reason = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangeReasonKey];
+     
+     if (reason) {
+     NSInteger reasonValue = [reason integerValue];
+     NSLog(@"storeChanged with reason %ld", (long)reasonValue);
+     
+     if ((reasonValue == NSUbiquitousKeyValueStoreServerChange) ||
+     (reasonValue == NSUbiquitousKeyValueStoreInitialSyncChange)) {
+     
+     NSArray *keys = [userInfo objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
+     NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+     
+     for (NSString *key in keys) {
+     id value = [store objectForKey:key];
+     [userDefaults setObject:value forKey:key];
+     NSLog(@"storeChanged updated value for %@",key);
+     }
+     }
+     }*/
 }
 
 @end

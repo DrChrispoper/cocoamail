@@ -8,7 +8,6 @@
 
 #import "InViewController.h"
 
-
 @interface InViewController ()
 
 @property (nonatomic, strong) PullToRefresh* pullToRefresh;
@@ -120,6 +119,14 @@
 {
     [self.pullToRefresh scrollViewDidEndDragging:scrollView];
 }
+
+/*- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion
+{
+    CCMLog(@"InViewController");
+    [[ViewController mainVC] presentViewController:viewControllerToPresent animated:flag completion:completion];
+
+//    [[ViewController mainVC] presentViewController:viewControllerToPresent animated:flag completion:completion];
+}*/
 
 @end
 

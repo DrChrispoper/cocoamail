@@ -26,12 +26,12 @@
 #import "AppSettings.h"
 #import <Google/SignIn.h>
 #import "DropboxBrowserViewController.h"
+#import "PreviewViewController.h"
 
 #import <Instabug/Instabug.h>
 
 @interface ViewController () <CocoaButtonDatasource, GIDSignInUIDelegate>
 
-@property (weak, nonatomic) IBOutlet UIView* blackStatusBar;
 @property (weak, nonatomic) IBOutlet UIView* contentView;
 
 @property (nonatomic, strong) NSMutableArray* viewControllers;
@@ -46,6 +46,7 @@
 
 @property (nonatomic, strong) InViewController* nextVC;
 
+@property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
 
 @end
 
@@ -86,7 +87,6 @@ static ViewController * s_self;
     
     s_self = self;
     
-    self.blackStatusBar.backgroundColor = [UIColor whiteColor];
     self.contentView.backgroundColor = [UIColor whiteColor];
     
     self.contentView.clipsToBounds = YES;
@@ -137,16 +137,13 @@ static ViewController * s_self;
     UIView* nextView;
     
     if ([Accounts sharedInstance].accountsCount !=  1) {
-        //[[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue) ];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;
     
         self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
     }
     else {
-        /*AddAccountViewController* addView = [[AddAccountViewController alloc] init];
-        addView.firstRunMode = YES;*/
         f.view.frame = self.contentView.bounds;
         nextView = f.view;
         
@@ -156,9 +153,8 @@ static ViewController * s_self;
     [self _manageCocoaButton:[f haveCocoaButton]];
     
     [self.contentView addSubview:nextView];
-
-    [self setupNavigation];
     
+    [self setupNavigation];
     
     UIView* border = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, self.view.frame.size.height)];
     border.backgroundColor = [UIColor clearColor];
@@ -179,6 +175,15 @@ static ViewController * s_self;
     [borderN addGestureRecognizer:pgrN];
     
     [self.view addSubview:borderN];
+    
+    if ([AppSettings openSearch]) {
+        [AppSettings setOpen:0];
+        [self _search];
+    }
+    else if ([AppSettings openCompose]) {
+        [AppSettings setOpen:0];
+        [self _editMail];
+    }
 }
 
 -(void) _createShadowViewOverAnimCurrentView
@@ -631,7 +636,6 @@ static ViewController * s_self;
         [self _animatePushVC:f];
     }];
     
-    
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -825,6 +829,20 @@ static ViewController * s_self;
         
         [lastView removeFromSuperview];
     }];
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:kQUICK_ACTION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
+        IBGLog(kQUICK_ACTION_NOTIFICATION);
+        
+        BOOL inFolders = self.viewControllers.count == 1;
+        
+        if (!inFolders) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+        }
+        else {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:[notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE]}];
+        }
+        
+    }];
 }
 
 -(void) _animatePushVC:(InViewController*)nextVC
@@ -976,7 +994,7 @@ static ViewController * s_self;
         CCMFolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccountIndex:[A currentAccountIdx]];
         [[A currentAccount] releaseContent];
         A.currentAccountIdx = button.tag;
-        
+
         if (folder.type != FolderTypeUser) {
             [[A currentAccount] setCurrentFolder:folder];
         }
@@ -1098,6 +1116,5 @@ static ViewController * s_self;
         }
     }
 }
-
 
 @end

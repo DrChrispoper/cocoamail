@@ -12,6 +12,7 @@
 #import "Accounts.h"
 #import <AddressBook/AddressBook.h>
 #import "MyLabel.h"
+#import "UIView+RenderViewToImage.h"
 
 
 @interface Persons ()
@@ -248,6 +249,68 @@
 -(void) linkToAccount:(Account*)account
 {
     self.userAccount = account;
+}
+
+-(UIImageView*) badgeViewImage:(CGSize)size
+{
+    UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+
+    if (self.userAccount || self.image == nil) {
+        
+        MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+        perso.backgroundColor = [UIGlobal noImageBadgeColor];
+        
+        if (self.userAccount != nil) {
+            perso.backgroundColor = self.userAccount.userColor;
+        }
+        
+        perso.isColorLocked = YES;
+        
+        perso.text = self.codeName;
+        perso.textAlignment = NSTextAlignmentCenter;
+        perso.textColor = [UIColor whiteColor];
+        perso.layer.cornerRadius = 16.5;
+        perso.layer.masksToBounds = YES;
+        perso.font = [UIFont systemFontOfSize:12];
+        
+        UIImage *imageFromLabel;
+        CGSize size = perso.frame.size;
+        UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+        [perso.layer renderInContext:UIGraphicsGetCurrentContext()];
+        imageFromLabel = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        
+        iv.image = imageFromLabel;
+    }
+    else {
+        if ([self isFakePerson]) {
+            if (self.email == nil) {
+                // fake dot person
+                iv.image = [self.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                iv.tintColor = [UIGlobal noImageBadgeColor];
+            }
+            else {
+                // cocoamail person
+                iv.image = self.image;
+                iv.contentMode = UIViewContentModeScaleAspectFit;
+                
+                iv.backgroundColor = [UIColor colorWithRed:1. green:.69 blue:.0 alpha:1.];
+                iv.layer.cornerRadius = 16.5;
+                iv.layer.masksToBounds = YES;
+                
+                return iv;
+            }
+        }
+        else {
+            iv.image = self.image;
+        }
+    }
+
+    iv.contentMode = UIViewContentModeScaleAspectFill;
+    iv.layer.cornerRadius = 16.5;
+    iv.layer.masksToBounds = YES;
+    
+    return iv;
 }
 
 -(UIView*) badgeView

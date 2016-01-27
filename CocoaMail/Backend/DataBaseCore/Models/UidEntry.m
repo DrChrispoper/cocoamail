@@ -15,6 +15,7 @@
 #import "Reachability.h"
 #import "CachedAction.h"
 #import "EmailProcessor.h"
+#import <Instabug/Instabug.h>
 
 @implementation UidEntry
 
@@ -79,6 +80,26 @@
             [result close];
         }
     }];
+    
+    return success;
+}
+
++(BOOL) updateNewUID:(UidEntry*)uid_entry
+{
+    __block BOOL success = FALSE;
+    UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
+    
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        success =  [db executeUpdate:@"UPDATE uid_entry SET uid = ? WHERE msg_id = ? AND folder = ?;",
+                    uid_entry.msgId,
+                    @(uid_entry.folder + 1000 * uid_entry.account)];
+        
+    }];
+    
+    if ([self getUidEntriesWithMsgId:uid_entry.msgId].count == 0) {
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(removeEmail:) object:uid_entry];
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+    }
     
     return success;
 }
@@ -248,7 +269,7 @@
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ? ORDER BY uid DESC LIMIT 50", @(folderNum + 1000 * accountNum)];
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE folder = ? ORDER BY uid DESC LIMIT 200", @(folderNum + 1000 * accountNum)];
         
         NSMutableArray* tmpUids = [[NSMutableArray alloc] init];
 
@@ -295,17 +316,18 @@
             NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
 
             if (folderNum != [AppSettings importantFolderNumforAccountIndex:kActiveAccountIndex forBaseFolder:FolderTypeAll]) {
-                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c)"
+                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder = %@ "
+                //[query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c) "
                          "OR t.folder != %@ "
                          "AND t.son_msg_id IN (SELECT c.msg_id FROM uid_entry c WHERE c.folder = %@)",
-                 uidE.uid, folderAccount, folderAccount, folderAccount];
+                  uidE.uid, folderAccount, folderAccount, folderAccount];
             }
             else {
                 NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
                 [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder LIKE %@ ", uidE.uid, folder];
             }
         
-        [query appendString:@" ORDER BY uid DESC LIMIT 150"];
+        [query appendString:@" ORDER BY uid DESC"];
         
         results = [db executeQuery:query];
         
@@ -314,12 +336,18 @@
         while ([results next]) {
             UidEntry* uid = [UidEntry resToUidEntry:results];
             
+            
             if (![dbNums containsObject:@(uid.dbNum)]) {
                 [dbNums addObject:@(uid.dbNum)];
                 [uids addObject:[NSMutableArray new]];
             }
             
             [tmpUids addObject:uid];
+                
+            if (tmpUids.count > 200) {
+                [results close];
+                break;
+            }
         }
         
         NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
@@ -415,25 +443,27 @@
     return uidEntry;
 }
 
-+(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
+
++(void) copy:(UidEntry*)uidE toFolder:(NSInteger)to
 {
     //No Important folder at Index
     if (to == -1) {
-        CCMLog(@"Email not synced in folder, so can't move it");
+        IBGLog(@"Email not synced in folder, so can't move it");
         return ;
     }
     
-    if (uidE.pk == 0) {
-        CCMLog(@"Moving cached email?");
-    }
-    
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
-
+    
     NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
     NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
     
-    [self removeFromFolderUid:uidE];
-
+    CachedAction* action = [CachedAction addActionWithUid:uidE actionIndex:4 toFolder:to];
+    
+    UidEntry* newUidE = [uidE copy];
+    newUidE.uid = 0;
+    newUidE.folder = to;
+    [self addUid:newUidE];
+    
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
         MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:fromFolderName
                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
@@ -441,19 +471,62 @@
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
                 CCMLog(@"Email copied to folder!");
-                [UidEntry deleteUidEntry:uidE];
-                UidEntry* newUidE = [uidE copy];
-                newUidE.folder = to;
-                newUidE.sonMsgId = uidE.sonMsgId;
+                
+                [CachedAction removeAction:action];
+                
                 newUidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
-                [self addUid:uidE];
+                [self updateNewUID:newUidE];
+                [CachedAction updateActionUID:newUidE];
             } else {
-                [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
                 CCMLog(@"Error copying email to folder:%@", error);
             }
         }];
-    } else {
-        [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
+    }
+}
+
++(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
+{
+    //No Important folder at Index
+    if (to == -1) {
+        IBGLog(@"Email not synced in folder, so can't move it");
+        return ;
+    }
+    
+    NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
+    
+    NSString* fromFolderName = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex];
+    NSString* toFolderName = [AppSettings folderServerName:to forAccountIndex:accountIndex];
+    
+    [self removeFromFolderUid:uidE];
+    
+    CachedAction* action = [CachedAction addActionWithUid:uidE actionIndex:0 toFolder:to];
+    
+    UidEntry* newUidE = [uidE copy];
+    newUidE.uid = 0;
+    newUidE.folder = to;
+    [self addUid:newUidE];
+    
+    if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
+        MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:accountIndex].imapSession copyMessagesOperationWithFolder:fromFolderName
+                                                                                                                              uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
+                                                                                                                        destFolder:toFolderName];
+        [opMove start:^(NSError* error, NSDictionary* destUids) {
+            if (!error && destUids) {
+                CCMLog(@"Email copied to folder!");
+                
+                [CachedAction removeAction:action];
+                
+                [UidEntry deleteUidEntry:uidE];
+                
+                newUidE.uid = [destUids[@(uidE.uid)] unsignedIntValue];
+                [self updateNewUID:newUidE];
+                [CachedAction updateActionUID:newUidE];
+            } else {
+                [self removeFromFolderUid:uidE];
+                
+                CCMLog(@"Error copying email to folder:%@", error);
+            }
+        }];
     }
 }
 
@@ -465,6 +538,8 @@
     
     NSInteger accountIndex = [AppSettings indexForAccount:uidE.account];
     
+    CachedAction* action = [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
+
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] != NotReachable) {
         MCOIMAPOperation* op = [[ImapSync sharedServices:accountIndex].imapSession storeFlagsOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:accountIndex]
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
@@ -480,17 +555,18 @@
                         CCMLog(@"Error expunging folder:%@", error);
                     }
                     else {
+                        [CachedAction removeAction:action];
                         CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
                     }
                 }];
             }
             else {
+                [self removeFromFolderUid:uidE];
+
                 CCMLog(@"Error updating the deleted flags:%@", error);
-                [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
             }
         }];
     } else {
-        [CachedAction addActionWithUid:uidE actionIndex:1 toFolder:-1];
     }
 }
 
@@ -511,19 +587,22 @@
     return copy;
 }
 
-+(BOOL) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder
++(void) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder
 {
     return [UidEntry addFlag:flag to:[self getUidEntryWithFolder:folder msgId:msg_id]];
 }
 
-+(BOOL) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
++(void) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
 {
-    __block BOOL success = false;
 
     if (uidE.pk == 0) {
         CCMLog(@"Email not synced in folder, so can't add flag");
-        
-        return true;
+        return ;
+    }
+    
+    CachedAction* action;
+    if (flag & MCOMessageFlagFlagged) {
+        action = [CachedAction addActionWithUid:uidE actionIndex:2 toFolder:-1];
     }
     
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
@@ -536,38 +615,37 @@
         [op start:^(NSError* error) {
             if (!error) {
                 CCMLog(@"Added flag!");
-                success = true;
+                if (action) {
+                    [CachedAction removeAction:action];
+                }
+                if ((flag & MCOMessageFlagFlagged)) {
+                    [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris]];
+                }
             }
             else {
                 CCMLog(@"Error adding flag email:%@", error);
             }
         }];
-    } else {
-        if (flag & MCOMessageFlagFlagged) {
-            [CachedAction addActionWithUid:uidE actionIndex:2 toFolder:-1];
-        }
     }
-    
-    if (success & (flag & MCOMessageFlagFlagged)) {
-        [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris]];
-    }
-    
-    return success;
 }
 
-+(BOOL) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder
++(void) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder
 {
     return [UidEntry removeFlag:flag to:[self getUidEntryWithFolder:folder msgId:msg_id]];
 }
 
-+(BOOL) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
++(void) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
 {
-    __block BOOL success = false;
-
     if (uidE.pk == 0) {
         CCMLog(@"Email not synced in folder, so can't remove flag");
         
-        return true;
+        return ;
+    }
+    
+    CachedAction* action;
+
+    if (flag & MCOMessageFlagFlagged) {
+        action = [CachedAction addActionWithUid:uidE actionIndex:3 toFolder:-1];
     }
     
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
@@ -580,24 +658,18 @@
         [op start:^(NSError* error) {
             if (!error) {
                 CCMLog(@"Removed flag!");
-                success = true;
+                if (action) {
+                    [CachedAction removeAction:action];
+                }
+                if ((flag & MCOMessageFlagFlagged)) {
+                    [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris] msgId:uidE.msgId]];
+                }
             }
             else {
                 CCMLog(@"Error removing flag:%@", error);
             }
         }];
     }
-    else {
-        if (flag & MCOMessageFlagFlagged) {
-            [CachedAction addActionWithUid:uidE actionIndex:3 toFolder:-1];
-        }
-    }
-    
-    if (success & (flag & MCOMessageFlagFlagged)) {
-        [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:uidE.account] forBaseFolder:FolderTypeFavoris] msgId:uidE.msgId]];
-    }
-    
-    return success;
 }
 
 

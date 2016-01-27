@@ -129,7 +129,7 @@
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
 
     if (![self.searchBar.text isEqualToString:@""]) {
-        [self reFetch];
+        [self reFetch:NO];
     }
     
     [self _keyboardNotification:YES];
@@ -251,7 +251,20 @@
     NSMutableArray* current;
     
     if (word.length <= 2 || self.lastSearchLength >= word.length) {
-        NSArray* alls = [[[Accounts sharedInstance] currentAccount] getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)];
+        NSMutableArray* alls = [[NSMutableArray alloc] init];
+        
+        if (kisActiveAccountAll) {
+            for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+                Account* a = [[Accounts sharedInstance] getAccount:idx];
+                [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+                
+            }
+        }
+        else {
+            Account* a = [[Accounts sharedInstance] currentAccount];
+            [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+        }
+        
         current = [alls mutableCopy];
     }
     else {
@@ -267,6 +280,9 @@
     self.lastSearchLength = word.length;
     
     NSMutableSet* peopleIn = [[NSMutableSet alloc] init];
+    
+    NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
+    [current sortUsingDescriptors:@[sortByDate]];
     
     NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
     
@@ -381,7 +397,7 @@
     return false;
 }
 
-- (void)reFetch
+- (void)reFetch:(BOOL)force
 {
     [self.searchQueue addOperationWithBlock:^{
         //self.lastSearchLength = self.searchBar.text.length;

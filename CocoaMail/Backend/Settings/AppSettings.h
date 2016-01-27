@@ -13,15 +13,24 @@
 
 @interface AppSettings : NSObject
 
+@property (nonatomic) NSInteger badgeCount;
+
 //Global Settings
-+(void) setBadgeCount:(NSInteger)y;
-+(NSInteger) badgeCount;
-+(void) setNotifications:(BOOL)y;
-+(BOOL) notifications;
+
++(void) setCache:(NSSet*)y;
++(NSArray*) cache;
+
++(void) setSyncOverData:(BOOL)y;
++(BOOL) canSyncOverData;
+
++(void) setOpen:(NSInteger)view;
++(BOOL) openSearch;
++(BOOL) openCompose;
+
 +(NSArray*) defaultColors;
 +(QuickSwipeType) quickSwipe;
 +(void) setQuickSwipe:(QuickSwipeType)quickswipetype;
-+(NSInteger) draftCount;
++(uint32_t) draftCount;
 // Data about accounts
 +(NSInteger) accountIndexForEmail:(NSString*)email;
 +(NSInteger) indexForAccount:(NSInteger)accountNum;
@@ -77,6 +86,9 @@
 +(BOOL) isUsingOAuth:(NSInteger)accountIndex;
 
 //Account Other Settings
++(void) setNotifications:(BOOL)y accountIndex:(NSInteger)accountIndex;
++(BOOL) notifications:(NSInteger)accountIndex;
+
 +(NSString*) signature:(NSInteger)accountIndex;
 +(void) setSignature:(NSString*)y accountIndex:(NSInteger)accountIndex;
 
@@ -108,6 +120,9 @@
 +(void) setDefaultAccountIndex:(NSInteger)accountIndex;
 +(NSInteger) lastAccountIndex;
 +(void) setLastAccountIndex:(NSInteger)accountIndex;
+
++(NSNumber*) lastFolderIndex;
++(void) setLastFolderIndex:(NSNumber*)accountIndex;
 
 // in-store sales
 +(BOOL) premiumPurchased;

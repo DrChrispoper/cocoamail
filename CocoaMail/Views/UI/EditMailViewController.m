@@ -20,6 +20,7 @@
 #import "MCOMessageView.h"
 #import "CocoaMail-Swift.h"
 #import "CCMStatus.h"
+#import <QuickLook/QuickLook.h>
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -43,7 +44,9 @@ typedef enum : NSUInteger {
 @end
 
 @interface EditMailViewController () <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, ExpendableBadgeDelegate,
-UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate>
+UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate, CCMAttachmentViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate>{
+    NSArray* _activityItems;
+}
 
 @property (nonatomic, readwrite, strong) UINavigationController* navControllerForBrowseSDK;
 
@@ -73,6 +76,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
 
 @property (nonatomic) BOOL isSending;
+@property (nonatomic) NSInteger isDownloading;
 
 @end
 
@@ -97,6 +101,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if (self.mail == nil) {
         self.mail = [Mail newMailFormCurrentAccount];
     }
+    
+    self.isDownloading = 0;
     
 //    self.view.backgroundColor = [UIGlobal standardLightGrey];
     self.view.backgroundColor = [UIColor whiteColor];
@@ -395,6 +401,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _send
 {
+    if (self.isDownloading != 0) {
+        [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
+        [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString stringWithFormat:@"Still downloading attachments (%ld)",(long)self.isDownloading]];
+        [[PKHUD sharedHUD] show];
+        [[PKHUD sharedHUD] hideAfterDelay:2.0];
+        return;
+    }
+    
     self.mail.title = self.subjectTextView.text;
     NSMutableString* bodyContent = [NSMutableString stringWithString:self.bodyTextView.text];
     
@@ -747,7 +761,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) webViewLoaded:(UIWebView*)webView
 {
-    UIView* oldView = [self.contentView viewWithTag:ContentOld];
+    //UIView* oldView = [self.contentView viewWithTag:ContentOld];
 
     [self _fixContentSize];
 }
@@ -860,26 +874,67 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSInteger idx = 0;
     
-    for (Attachment* a in attachs) {
-        
+    for (Attachment* att in attachs) {
         
         AttachmentView* av = [[AttachmentView alloc] initWithWidth:WIDTH leftMarg:2];
         CGRect f = av.frame;
         f.origin.y = posY;
         av.frame = f;
+        av.delegate = self;
+        att.image = nil;
         
-        [av fillWith:a];
+        [av fillWith:att];
         [av buttonActionType:AttachmentViewActionDelete];
         [av addActionTarget:self selector:@selector(_delAttach:) andTag:idx];
         
         [v addSubview:av];
-       
+        
+        if(!att.data){
+            UidEntry* uidE = [[UidEntry getUidEntriesWithMsgId:att.msgId] firstObject];
+            MCOIMAPFetchContentOperation*  op =
+            [[ImapSync sharedServices:self.selectedAccount.idx].imapSession
+             fetchMessageAttachmentOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:self.selectedAccount.idx]
+             uid:uidE.uid
+             partID:att.partID
+             encoding:MCOEncodingBase64];
+            
+            op.progress = ^(unsigned int current, unsigned int maximum){
+                CCMLog(@"%u, %u", current,maximum);
+            };
+            
+            self.isDownloading++;
+            
+            [op start:^(NSError*  error, NSData*  partData) {
+                self.isDownloading--;
+                if(error){
+                    CCMLog(@"%@",error);
+                    return;
+                }
+                att.data = partData;
+                [Attachment updateData:att];
+                [self _updateAttachView];
+            }];
+            
+        }
+        
         idx++;
         posY += stepY;
     }
     
     return v;
     
+}
+
+-(void) openURL:(NSURL*)url
+{
+    QLPreviewController* previewController = [[QLPreviewController alloc]init];
+    previewController.delegate = self;
+    previewController.dataSource = self;
+    previewController.currentPreviewItemIndex = 0;
+    
+    _activityItems = @[url];
+    
+    [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
 }
 
 -(void) _delAttach:(UIButton*)b
@@ -889,6 +944,27 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     self.mail.attachments = attachs;
     
     [self _updateAttachView];
+}
+
+-(void) downloaded:(Attachment*)att{}
+-(void) shareAttachment:(Attachment*)att{}
+
+#pragma mark - QLPreviewControllerDataSource
+
+-(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
+{
+    return _activityItems.count;
+}
+
+-(id) previewController:(QLPreviewController*)previewController previewItemAtIndex:(NSInteger)index
+{
+    return _activityItems[index];
+}
+
+-(void) previewControllerWillDismiss:(QLPreviewController*)controller
+{
+    //    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    //    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 #pragma mark - cc view
@@ -1270,6 +1346,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     cell.detailTextLabel.text = p.email;
     cell.textLabel.text = p.name;
     
+    cell.imageView.image = [p badgeViewImage:CGSizeMake(44, 44)].image;
+
+    cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
+    cell.imageView.layer.cornerRadius = 22;
+    cell.imageView.layer.masksToBounds = YES;
+    
     return cell;
 }
 
@@ -1294,8 +1376,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     }
     else {
         NSMutableArray* olds = [self.mail.toPersonID mutableCopy];
-        [olds addObject:@(idxPerson)];
-        self.mail.toPersonID = olds;
+        if (!CFArrayContainsValue ( (__bridge CFArrayRef)olds, CFRangeMake(0, olds.count), (CFNumberRef)@(idxPerson) )) {
+            [olds addObject:@(idxPerson)];
+        }
+        self.mail.toPersonID = olds ;
     }
     
     [self _createCCcontent];
@@ -1414,7 +1498,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             }
             else {
                 NSMutableArray* olds = [self.mail.toPersonID mutableCopy];
-                [olds addObject:@(idxPerson)];
+                if (!CFArrayContainsValue ( (__bridge CFArrayRef)olds, CFRangeMake(0, olds.count), (CFNumberRef)@(idxPerson) )) {
+                    [olds addObject:@(idxPerson)];
+                }
                 self.mail.toPersonID = olds;
             }
             
@@ -1459,7 +1545,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         attach.image = img;
         
         attach.fileName = [NSString stringWithFormat:@"IMG_%lu.JPEG", (unsigned long)self.mail.attachments.count];
-        attach.data = UIImageJPEGRepresentation(img, 0);
+        attach.data = UIImageJPEGRepresentation(img, 1);
         attach.size = [attach.data length];
         
         if (self.mail.attachments == nil) {
@@ -1471,6 +1557,11 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             self.mail.attachments = ma;
         }
         [self _updateAttachView];
+        
+        [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
+        [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
+        [[PKHUD sharedHUD] show];
+        [[PKHUD sharedHUD] hideAfterDelay:2.0];
         
         [picker popViewControllerAnimated:YES];
     }
@@ -1524,12 +1615,23 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didLoadShareLink:(NSString*)link
 {
     [self.bodyTextView replaceRange:self.bodyTextView.selectedTextRange withText:[NSString stringWithFormat:@"\n%@",link]];
+    
+    [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
+    [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
+    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    
     [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2];
 }
 
 /// Sent to the delegate if there was an error creating or loading share link
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToLoadShareLinkWithError:(NSError*)error
 {
+    [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
+    [PKHUD sharedHUD].contentView = [[PKHUDErrorView alloc]init];
+    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    
     [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2];
 }
 
@@ -1555,6 +1657,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [ma addObject:attach];
         self.mail.attachments = ma;
     }
+    
+    [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
+    [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
+    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    
     [self _updateAttachView];
 }
 

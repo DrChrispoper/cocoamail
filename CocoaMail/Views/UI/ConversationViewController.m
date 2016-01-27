@@ -17,6 +17,8 @@
 #import <QuickLook/QuickLook.h>
 #import "StringUtil.h"
 #import "ImapSync.h"
+#import "ARSafariActivity.h"
+
 @import SafariServices;
 
 @class SingleMailView;
@@ -29,6 +31,7 @@
 -(void) openWebURL:(NSURL*)url;
 -(void) openLongURL:(NSURL*)url;
 -(void) shareAttachment:(Attachment*)att;
+-(void) scrollTo:(CGPoint)offset;
 
 @end
 
@@ -43,6 +46,7 @@
 @property (nonatomic, strong) NSMutableArray* allMailViews;
 
 @property (nonatomic) CCMFolderType folder;
+@property (nonatomic) CGPoint contentOffset;
 
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 
@@ -79,6 +83,8 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
+    self.contentOffset = CGPointMake(0,0);
+    
     Persons* p = [Persons sharedInstance];
     
     if (p.idxMorePerson == 0) {
@@ -114,6 +120,8 @@
 {
     [super viewDidAppear:animated];
     
+    self.contentOffset = CGPointMake(0,0);
+
     [self refreshAttachments];
     //TODO:TODO? :)
     //[[CocoaButton sharedButton] enterLevel:2];
@@ -275,8 +283,9 @@
         self.contentView.frame = ctF;
     }
     
-    
     self.scrollView.contentSize = self.contentView.frame.size;
+    
+    [self.scrollView setContentOffset:self.contentOffset];
 }
 
 -(void) openURL:(NSURL*)url
@@ -317,7 +326,8 @@
 
 -(void) openLongURL:(NSURL*)url
 {
-    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[[url absoluteString], url] applicationActivities:nil];
+    ARSafariActivity *safariActivity = [[ARSafariActivity alloc] init];
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:@[safariActivity]];
     [self.view.window.rootViewController presentViewController:activityViewController
                                                       animated:YES
                                                     completion:nil];
@@ -339,6 +349,12 @@
     }
     
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
+}
+
+-(void) scrollTo:(CGPoint)offset
+{
+    self.contentOffset = offset;
+    [self.scrollView setContentOffset:offset];
 }
 
 #pragma mark - QLPreviewControllerDataSource
@@ -449,12 +465,12 @@
     [b4 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
     
     if (self.folder.type==FolderTypeDeleted) {
-        [b4 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateNormal];
-        [b4 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateHighlighted];
+        [b4 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
+        [b4 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
     }
     else if (self.folder.type==FolderTypeAll) {
-        [b2 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateNormal];
-        [b2 setImage:[UIImage imageNamed:@"swipe_inbox"] forState:UIControlStateHighlighted];
+        [b2 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
+        [b2 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
     }
     
     return @[b1, b2, b3, b4];
@@ -676,16 +692,18 @@
         
         //TODO:For now they are all html
         /*if (![mail.email.body containsString:@"http"]) {
+         
             UILabel* text = [[UILabel alloc] initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
             text.text = texte;
             text.font = textFont;
             text.numberOfLines = 0;
             text.textAlignment = NSTextAlignmentJustified;
             [inIV addSubview:text];
+         
         }
         else {*/
             if (!self.htmlView) {
-                self.height = size.height = 100;
+                self.height = size.height;// = 100;
                 MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
                 [view setMail:mail];
                 view.delegate = self;
@@ -969,6 +987,11 @@
 -(void) openLongURL:(NSURL*)url
 {
     [self.delegate openLongURL:url];
+}
+
+-(void) scrollTo:(CGPoint)offset
+{
+    [self.delegate scrollTo:offset];
 }
 
 -(void) webViewLoaded:(UIWebView*)webView

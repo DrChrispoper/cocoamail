@@ -29,6 +29,6 @@
 -(void) openWebURL:(NSURL*)url;
 -(void) openLongURL:(NSURL*)url;
 -(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock;
-
+-(void) scrollTo:(CGPoint)offset;
 
 @end
