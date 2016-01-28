@@ -41,8 +41,8 @@ static SyncManager * singleton = nil;
 	if (self = [super init]) {
 		//Get the persistent state
 		self.syncStates = [NSMutableArray arrayWithCapacity:2];
-		for (NSInteger i = 0; i < [AppSettings numAccounts]+1; i++) {
-			if ([AppSettings isAccountNumDeleted:i]) {
+		for (NSInteger i = 0; i < [[AppSettings getSingleton] numAccounts]+1; i++) {
+			if (i == 0 || [[AppSettings getSingleton] isAccountNumDeleted:i]) {
 				[self.syncStates addObject:[NSMutableDictionary dictionaryWithCapacity:1]];
 			}
             else {
@@ -119,14 +119,14 @@ static SyncManager * singleton = nil;
 
 -(NSInteger) folderCount:(NSInteger)accountIndex
 {
-    NSArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
+    NSArray* folderStates = self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
 	
     return [folderStates count];
 }
 
 -(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex
 {
-    NSArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
+    NSArray* folderStates = self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
 	
 	if (folderNum >= [folderStates count]) {
 		return nil;
@@ -137,7 +137,7 @@ static SyncManager * singleton = nil;
 
 -(void) addAccountState
 {
-	NSInteger numAccounts = [AppSettings numAccounts] + 1;
+	NSInteger numAccounts = [[AppSettings getSingleton] numAccounts] + 1;
 	
     NSMutableDictionary* props = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"2", @"__version", [NSMutableArray array], FOLDER_STATES_KEY, nil];
     
@@ -159,23 +159,23 @@ static SyncManager * singleton = nil;
 		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
 	}
 	
-	[AppSettings addAccount];
+	[[AppSettings getSingleton] addAccount];
 }
 
 -(void) addFolderState:(NSDictionary*)data accountIndex:(NSInteger)accountIndex
 {
-	[self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY] addObject:data];
+	[self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY] addObject:data];
 	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[AppSettings numForData:accountIndex]]];
+	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[[AppSettings getSingleton] numAccountForIndex:accountIndex]]];
 	
-    if (![self.syncStates[[AppSettings numForData:accountIndex]] writeToFile:filePath atomically:YES]) {
+    if (![self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]] writeToFile:filePath atomically:YES]) {
 		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
 	}
 }
 
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex
 {
-	NSArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
+	NSArray* folderStates = self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
 	
 	if (folderNum >= [folderStates count]) {
 		return YES;
@@ -188,27 +188,27 @@ static SyncManager * singleton = nil;
 
 -(void) markFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex
 {
-	NSMutableArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
+	NSMutableArray* folderStates = self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
 	
 	NSMutableDictionary* y = folderStates[folderNum];
 	y[@"deleted"] = @YES;
 	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[AppSettings numForData:accountIndex]]];
+	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[[AppSettings getSingleton] numAccountForIndex:accountIndex]]];
 	
-    if (![self.syncStates[[AppSettings numForData:accountIndex]] writeToFile:filePath atomically:YES]) {
+    if (![self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]] writeToFile:filePath atomically:YES]) {
 		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
 	}
 }
 
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex
 {
-	NSMutableArray* folderStates = self.syncStates[[AppSettings numForData:accountIndex]][FOLDER_STATES_KEY];
+	NSMutableArray* folderStates = self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
 	
 	folderStates[folderNum] = data;
 	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[AppSettings numForData:accountIndex]]];
+	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)[[AppSettings getSingleton] numAccountForIndex:accountIndex]]];
     
-    if (![self.syncStates[[AppSettings numForData:accountIndex]] writeToFile:filePath atomically:YES]) {
+    if (![self.syncStates[[[AppSettings getSingleton] numAccountForIndex:accountIndex]] writeToFile:filePath atomically:YES]) {
 		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
 	}
 }

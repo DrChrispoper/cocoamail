@@ -150,6 +150,10 @@
 
 -(void) downloaded:(Attachment*)att
 {
+    NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+    [att.data writeToFile:filePath atomically:YES];
+    NSURL* URL = [NSURL fileURLWithPath:filePath];
+    [self openURL:URL];
 }
 
 

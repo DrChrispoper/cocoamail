@@ -251,13 +251,13 @@
     self.userAccount = account;
 }
 
--(UIImageView*) badgeViewImage:(CGSize)size
+-(UIImageView*) badgeViewImage
 {
-    UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+    UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
 
     if (self.userAccount || self.image == nil) {
         
-        MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height)];
+        MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
         perso.backgroundColor = [UIGlobal noImageBadgeColor];
         
         if (self.userAccount != nil) {
@@ -303,10 +303,10 @@
         }
         else {
             iv.image = self.image;
+            iv.contentMode = UIViewContentModeScaleAspectFit;
         }
     }
 
-    iv.contentMode = UIViewContentModeScaleAspectFill;
     iv.layer.cornerRadius = 16.5;
     iv.layer.masksToBounds = YES;
     

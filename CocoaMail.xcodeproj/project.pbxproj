@@ -75,6 +75,7 @@
 		273EA08C1BA18221009AC691 /* MCOMessageViewScript.js in Resources */ = {isa = PBXBuildFile; fileRef = 273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */; };
 		2747697C1C48F9DD00BF04DE /* PreviewViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2747697B1C48F9DD00BF04DE /* PreviewViewController.m */; };
 		2770B9791C19DF2E008F7784 /* MCOCIDURLProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2770B9781C19DF2E008F7784 /* MCOCIDURLProtocol.mm */; };
+		277606A21C5A257000C4A71E /* ContactsTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 277606A11C5A257000C4A71E /* ContactsTableViewCell.m */; };
 		2777380B1B8B03830030F299 /* Accounts.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380A1B8B03830030F299 /* Accounts.m */; };
 		2777380E1B8B03A40030F299 /* MailListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380D1B8B03A40030F299 /* MailListViewController.m */; };
 		27781AFE1B8DC55D00BDE682 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27781AFD1B8DC55D00BDE682 /* Images.xcassets */; };
@@ -451,6 +452,8 @@
 		2747697B1C48F9DD00BF04DE /* PreviewViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreviewViewController.m; sourceTree = "<group>"; };
 		2770B9771C19DF2E008F7784 /* MCOCIDURLProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCOCIDURLProtocol.h; sourceTree = "<group>"; };
 		2770B9781C19DF2E008F7784 /* MCOCIDURLProtocol.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MCOCIDURLProtocol.mm; sourceTree = "<group>"; };
+		277606A01C5A257000C4A71E /* ContactsTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactsTableViewCell.h; sourceTree = "<group>"; };
+		277606A11C5A257000C4A71E /* ContactsTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContactsTableViewCell.m; sourceTree = "<group>"; };
 		277738091B8B03830030F299 /* Accounts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Accounts.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		2777380A1B8B03830030F299 /* Accounts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Accounts.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		2777380C1B8B03A40030F299 /* MailListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MailListViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -1072,6 +1075,8 @@
 				270BD8391C05FA9E001ED16D /* Editor */,
 				27818C311BABF22500D26D1A /* EditMailViewController.h */,
 				27818C321BABF22500D26D1A /* EditMailViewController.m */,
+				277606A01C5A257000C4A71E /* ContactsTableViewCell.h */,
+				277606A11C5A257000C4A71E /* ContactsTableViewCell.m */,
 			);
 			name = Compose;
 			sourceTree = "<group>";
@@ -1852,6 +1857,7 @@
 				27818C591BABF22500D26D1A /* NotificationViewController.m in Sources */,
 				27818C501BABF22500D26D1A /* ContactsViewController.m in Sources */,
 				273EA08B1BA18221009AC691 /* MCOMessageView.mm in Sources */,
+				277606A21C5A257000C4A71E /* ContactsTableViewCell.m in Sources */,
 				27818C4D1BABF22500D26D1A /* ConversationTableViewCell.m in Sources */,
 				271D4D981B84758E00D19373 /* CachedAction.m in Sources */,
 				27818C541BABF22500D26D1A /* DefaultAccountViewController.m in Sources */,

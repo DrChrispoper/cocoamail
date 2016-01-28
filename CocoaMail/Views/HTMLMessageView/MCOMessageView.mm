@@ -156,7 +156,7 @@ white-space: pre-wrap;\
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
         [uidsIS addIndex:uidE.uid];
         
-        NSInteger accountIdx = [AppSettings indexForAccount:mail.email.accountNum];
+        NSInteger accountIdx = [[AppSettings getSingleton] indexForAccount:mail.email.accountNum];
         
         NSString* folderPath = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIdx];
         
@@ -203,12 +203,12 @@ white-space: pre-wrap;\
     NSURL * jsMobileURL = [[NSBundle mainBundle] URLForResource:@"jquerymobile" withExtension:@"js"];
     NSURL * jsLongURL = [[NSBundle mainBundle] URLForResource:@"jquerylong" withExtension:@"js"];
 
-    BOOL haveStyle = ([content rangeOfString:@"<style"].location != NSNotFound);
+    /*BOOL haveStyle = ([content rangeOfString:@"<style"].location != NSNotFound);
     BOOL haveQuote = ([content rangeOfString:@"<blockquote"].location != NSNotFound);
     BOOL haveMeta = ([content rangeOfString:@"<meta"].location != NSNotFound);
     BOOL haveTable = ([content rangeOfString:@"<table"].location != NSNotFound);
     
-    /*if (haveQuote) {
+    if (haveQuote) {
         _webView.scalesPageToFit = NO;
     }
     else {
@@ -309,7 +309,7 @@ white-space: pre-wrap;\
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
             
-            CCMLog(@"ready:%f",contentHeight);
+            //CCMLog(@"ready:%f",contentHeight);
 
             BOOL notCool = NO;
             
@@ -331,7 +331,7 @@ white-space: pre-wrap;\
             }
             }
             
-            CCMLog(@"ready:%f",contentHeight);
+            //CCMLog(@"ready:%f",contentHeight);
             
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
@@ -347,8 +347,6 @@ white-space: pre-wrap;\
             
             [_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
 
-            
-            
             return NO;
         }
         else if ([[url scheme] isEqualToString:@"newHeight"]) {
@@ -372,7 +370,7 @@ white-space: pre-wrap;\
                 }
             }
             
-            CCMLog(@"newHeight:%f",contentHeight);
+            //CCMLog(@"newHeight:%f",contentHeight);
             
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);

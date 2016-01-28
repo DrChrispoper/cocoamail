@@ -175,15 +175,6 @@ static ViewController * s_self;
     [borderN addGestureRecognizer:pgrN];
     
     [self.view addSubview:borderN];
-    
-    if ([AppSettings openSearch]) {
-        [AppSettings setOpen:0];
-        [self _search];
-    }
-    else if ([AppSettings openCompose]) {
-        [AppSettings setOpen:0];
-        [self _editMail];
-    }
 }
 
 -(void) _createShadowViewOverAnimCurrentView
@@ -1115,6 +1106,14 @@ static ViewController * s_self;
             return;
         }
     }
+}
+
+-(BOOL) shouldAutorotate{
+    return YES;
+}
+
+-(UIInterfaceOrientationMask) supportedInterfaceOrientations{
+    return UIInterfaceOrientationMaskPortrait;
 }
 
 @end

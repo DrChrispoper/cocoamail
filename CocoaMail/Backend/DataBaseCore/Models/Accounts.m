@@ -46,10 +46,11 @@
     
     dispatch_once(&once, ^{
         sharedInstance = [[self alloc] init];
-        sharedInstance.quickSwipeType = [AppSettings quickSwipe];
+        sharedInstance.quickSwipeType = [[AppSettings getSingleton] quickSwipe];
         sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];
         sharedInstance.localFetchQueue = [NSOperationQueue new];
         [sharedInstance.localFetchQueue setMaxConcurrentOperationCount:1];
+        [sharedInstance.localFetchQueue setQualityOfService:NSQualityOfServiceUserInitiated];
         
         /*sharedInstance.accountColors = @[[UIColor colorWithRed:0.01f green:0.49f blue:1.f alpha:1.f],
          [UIColor colorWithRed:0.44f green:0.02f blue:1.f alpha:1.f],
@@ -140,17 +141,23 @@
 
 -(void) runLoadData
 {
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:self.currentAccountIdx]
+         subscribeNext:^(Email* email) {
+             [self sortEmail:email];
+         }
+         completed:^{
+             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 [self.currentAccount.mailListSubscriber reFetch:YES];
+             }];
+         }];
+    }];
+    
+    
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Email* email) {
-             if (email.accountNum == 0) {
-                 CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
-                 NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
-                 [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
-             }
-             else {
-                 [self.accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
-             }
+             [self sortEmail:email];
          }
          completed:^{
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -165,22 +172,35 @@
              }];
          }];
     }];
+
+}
+
+-(void) sortEmail:(Email*)email
+{
+    if (email.accountNum == 0) {
+        CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+    }
+    else {
+        [self.accounts[[[AppSettings getSingleton] indexForAccount:email.accountNum]] insertRows:email];
+    }
 }
 
 -(void) deliverUpdate:(NSArray<Email*>*)emails
 {
-    [self.accounts[[AppSettings indexForAccount:[emails firstObject].accountNum]] deliverUpdate:emails];
+    [self.accounts[[[AppSettings getSingleton] indexForAccount:[emails firstObject].accountNum]] deliverUpdate:emails];
 }
 
 -(void) deliverDelete:(NSArray<Email*>*)emails
 {
-    [self.accounts[[AppSettings indexForAccount:[emails firstObject].accountNum]] deliverDelete:emails];
+    [self.accounts[[[AppSettings getSingleton] indexForAccount:[emails firstObject].accountNum]] deliverDelete:emails];
 }
 
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 {
     [[ImapSync sharedServices:account.idx] cancel];
-
+    
     if ([AppSettings lastAccountIndex] == account.idx) {
         [AppSettings setLastAccountIndex:[AppSettings numActiveAccounts]];
     }
@@ -195,30 +215,30 @@
     [AppSettings setIdentifier:@"" accountIndex:account.idx];
     
     /*[[SearchRunner getSingleton] cancel];
-    
-    [[[SearchRunner getSingleton] deleteEmailsInAccount:account.idx]
+     
+     [[[SearchRunner getSingleton] deleteEmailsInAccount:account.idx]
      subscribeNext:^(Email* email) {}
      completed:^{*/
-         NSMutableArray* tmp = [self.accounts mutableCopy];
-         NSInteger removeIdx = [tmp indexOfObject:account];
-         
-         if (removeIdx != NSNotFound) {
-             [ImapSync deleted];
-             
-             [tmp removeObjectAtIndex:removeIdx];
-             self.accounts = tmp;
-             
-             if (self.currentAccountIdx >= removeIdx && self.currentAccountIdx>0) {
-                 self.currentAccountIdx--;
-             }
-             
-             if (self.defaultAccountIdx >= removeIdx && self.defaultAccountIdx>0) {
-                 self.defaultAccountIdx--;
-             }
-         }
-         
-         completedBlock();
-     //}];
+    NSMutableArray* tmp = [self.accounts mutableCopy];
+    NSInteger removeIdx = [tmp indexOfObject:account];
+    
+    if (removeIdx != NSNotFound) {
+        [ImapSync deleted];
+        
+        [tmp removeObjectAtIndex:removeIdx];
+        self.accounts = tmp;
+        
+        if (self.currentAccountIdx >= removeIdx && self.currentAccountIdx>0) {
+            self.currentAccountIdx--;
+        }
+        
+        if (self.defaultAccountIdx >= removeIdx && self.defaultAccountIdx>0) {
+            self.defaultAccountIdx--;
+        }
+    }
+    
+    completedBlock();
+    //}];
 }
 
 -(Account*) getAccount:(NSInteger)accountIndex
@@ -291,7 +311,7 @@
 -(void) setQuickSwipeType:(QuickSwipeType)quickSwipeType
 {
     _quickSwipeType = quickSwipeType;
-    [AppSettings setQuickSwipe:quickSwipeType];
+    [[AppSettings getSingleton] setQuickSwipe:quickSwipeType];
 }
 
 -(Account*) currentAccount
@@ -406,9 +426,24 @@
     }
     self.userFoldersContent = arrayU;
     
-    self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeInbox];
+    self.currentFolderType = decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue);
+    
+    if (self.currentFolderType.type == FolderTypeUser) {
+        NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[self.currentFolderType.idx][0];
+        NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
+        for (int i = 0; i < names.count; i++) {
+            if ([name isEqualToString:names[i]]) {
+                self.currentFolderIdx = i;
+                break;
+            }
+        }
+    } else {
+        self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:self.currentFolderType.type];
+    }
+    
+
     //[self connect];
-    [self localFetchMore:NO];
+    //[self localFetchMore:NO];
 }
 
 -(void) connect
@@ -530,7 +565,7 @@
                 }
             }
             
-            if (set.count == 10 || (tmpEmailCount < 10 && set.count == tmpEmailCount)) {
+            if (set.count == 50 || (tmpEmailCount < 50 && set.count == tmpEmailCount)) {
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                     [self.mailListSubscriber reFetch:YES];
                 }];
@@ -940,7 +975,7 @@
     [_localFetchQueue cancelAllOperations];
     
     [AppSettings setLastFolderIndex:@(encodeFolderTypeWith(folder))];
-
+    
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
@@ -1017,7 +1052,7 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
-    if ([AppSettings isAccountNumDeleted:email.accountNum]) {
+    if ([[AppSettings getSingleton] isAccountNumDeleted:email.accountNum]) {
         return;
     }
     
@@ -1065,7 +1100,11 @@
          subscribeNext:^(Email* email) {
          }
          error:^(NSError* error) {
-             CCMLog(@"Error: %@", error.localizedDescription);
+             
+             if (error.code != 9002 && error.code != 9001) {
+                 CCMLog(@"Error: %@", error.localizedDescription);
+             }
+             
              _isSyncing = NO;
              
              if (error.code == 9002 && [Accounts sharedInstance].currentAccountIdx == self.idx) {
@@ -1097,7 +1136,10 @@
          }
          error:^(NSError* error) {
              _isSyncing = NO;
-             CCMLog(@"Error account %ld : %@", (long)self.idx, error.localizedDescription);
+             
+             if (error.code != 9002 && error.code != 9001) {
+                 CCMLog(@"Error: %@", error.localizedDescription);
+             }
              
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                  if (error.code == 9001) {
@@ -1156,6 +1198,7 @@
                                      }];
                 
                 if (![ImapSync canFullSync]){
+                    _runningUpToDateTest = NO;
                     return;
                 }
                 
@@ -1401,7 +1444,7 @@
              subscribeNext:^(Email* email) {
                  more = YES;
                  
-                 [[Accounts sharedInstance].accounts[[AppSettings indexForAccount:email.accountNum]] insertRows:email];
+                 [[Accounts sharedInstance].accounts[[[AppSettings getSingleton] indexForAccount:email.accountNum]] insertRows:email];
                  if (batch-- == 0) {
                      batch = refBatch;
                      [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1415,7 +1458,7 @@
                  _isLoadingMore = NO;
                  
                  if (!more) {
-                     //_hasLoadedAllLocal = YES;
+                     _hasLoadedAllLocal = YES;
                  }
                  
                  [self runTestData];
@@ -1452,7 +1495,10 @@
                  new++;
                  [self insertRows:email];
              } error:^(NSError* error) {
-                 CCMLog(@"Error: %@", error.localizedDescription);
+                 
+                 if (error.code != 9002 && error.code != 9001) {
+                     CCMLog(@"Error: %@", error.localizedDescription);
+                 }
                  
                  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                      [ViewController animateCocoaButtonRefresh:NO];

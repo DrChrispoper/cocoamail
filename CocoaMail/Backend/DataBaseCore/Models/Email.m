@@ -392,7 +392,7 @@
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
         [uidsIS addIndex:uidE.uid];
         
-        MCOIMAPFetchMessagesOperation* op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession fetchMessagesOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]] requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS];
+        MCOIMAPFetchMessagesOperation* op = [[ImapSync sharedServices:[[AppSettings getSingleton] indexForAccount:uidE.account]].imapSession fetchMessagesOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[[AppSettings getSingleton] indexForAccount:uidE.account]] requestKind:MCOIMAPMessagesRequestKindHeaders uids:uidsIS];
 
         [op start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
             if (!error) {
@@ -458,7 +458,7 @@
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    NSInteger accountIndex = [AppSettings indexForAccount:self.accountNum];
+    NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:self.accountNum];
     
     CCMLog(@"Move from folder %@ to %@", [AppSettings folderDisplayName:fromFolderIdx forAccountIndex:accountIndex],  [AppSettings folderDisplayName:toFolderIdx forAccountIndex:accountIndex]);
     
@@ -480,7 +480,7 @@
 -(void) trash
 {
     for (UidEntry* uidE in _uids) {
-        [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[AppSettings indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
+        [UidEntry move:uidE toFolder:[AppSettings importantFolderNumforAccountIndex:[[AppSettings getSingleton] indexForAccount:self.accountNum] forBaseFolder:FolderTypeDeleted]];
     }
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgId];
@@ -532,6 +532,5 @@
         }
     }];
 }
-
 
 @end

@@ -583,7 +583,7 @@
     
     if (debugMode) {
         NSMutableString* folders = [NSMutableString string];
-        NSInteger accountIndex = [AppSettings indexForAccount:self.mail.email.accountNum];
+        NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:self.mail.email.accountNum];
         for (UidEntry* uid in mail.email.uids) {
             [folders appendString:[AppSettings folderDisplayName:uid.folder forAccountIndex:accountIndex]];
         }

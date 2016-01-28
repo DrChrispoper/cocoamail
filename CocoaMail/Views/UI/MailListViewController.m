@@ -26,9 +26,10 @@
 #import "PreviewViewController.h"
 #import "ConversationViewController.h"
 #import "MailListViewController+UIViewControllerPreviewing.h"
+#import "UIScrollView+EmptyDataSet.h"
 
 
-@interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate>
+@interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate>
 
 @property (nonatomic, strong) NSMutableArray<NSMutableIndexSet*>* indexSet;
 
@@ -45,6 +46,7 @@
 @property (nonatomic) BOOL longPressOnCocoabutton;
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 @property (nonatomic) BOOL isDebugMode;
+@property (nonatomic) BOOL initialLoading;
 
 @end
 
@@ -62,7 +64,8 @@ static NSInteger pageCount = 15;
     self.countBeforeLoadMore = 0;
     self.indexCount = 0;
     self.isDebugMode = NO;
-    
+    self.initialLoading = YES;
+
     return self;
 }
 
@@ -211,6 +214,8 @@ static NSInteger pageCount = 15;
     
     table.dataSource = self;
     table.delegate = self;
+    table.emptyDataSetSource = self;
+    table.emptyDataSetDelegate = self;
     self.table = table;
     
     UIView* headerView = [[UIView alloc] init];
@@ -1202,6 +1207,70 @@ static NSInteger pageCount = 15;
     
     self.pageIndex++;
     [self.table reloadData];
+    self.initialLoading = NO;
+}
+
+#pragma mark - EmptyDataSet
+
+- (UIImage *)imageForEmptyDataSet:(UIScrollView *)scrollView
+{
+    return [UIImage imageNamed:@"cocoamail"];
+}
+
+- (CAAnimation *)imageAnimationForEmptyDataSet:(UIScrollView *)scrollView
+{
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath: @"transform"];
+    
+    animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DIdentity];
+    animation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeRotation(M_PI_2, 0.0, 0.0, 1.0)];
+    
+    animation.duration = 0.25;
+    animation.cumulative = YES;
+    animation.repeatCount = MAXFLOAT;
+    
+    return animation;
+}
+
+- (NSAttributedString *)titleForEmptyDataSet:(UIScrollView *)scrollView
+{
+    NSString *text = self.initialLoading?@"Loading...":@"Go get some cocoa!";
+    
+    NSDictionary *attributes = @{NSFontAttributeName: [UIFont boldSystemFontOfSize:18.0f],
+                                 NSForegroundColorAttributeName: [UIColor darkGrayColor]};
+    
+    return [[NSAttributedString alloc] initWithString:text attributes:attributes];
+}
+
+- (NSAttributedString *)descriptionForEmptyDataSet:(UIScrollView *)scrollView
+{
+    NSString *text = self.initialLoading?@"":@"No more emails.";
+    
+    NSMutableParagraphStyle *paragraph = [NSMutableParagraphStyle new];
+    paragraph.lineBreakMode = NSLineBreakByWordWrapping;
+    paragraph.alignment = NSTextAlignmentCenter;
+    
+    NSDictionary *attributes = @{NSFontAttributeName: [UIFont systemFontOfSize:14.0f],
+                                 NSForegroundColorAttributeName: [UIColor lightGrayColor],
+                                 NSParagraphStyleAttributeName: paragraph};
+    
+    return [[NSAttributedString alloc] initWithString:text attributes:attributes];
+}
+
+/*- (NSAttributedString *)buttonTitleForEmptyDataSet:(UIScrollView *)scrollView forState:(UIControlState)state
+{
+    NSDictionary *attributes = @{NSFontAttributeName: [UIFont boldSystemFontOfSize:17.0f]};
+    
+    return [[NSAttributedString alloc] initWithString:@"All mail" attributes:attributes];
+}*/
+
+- (BOOL) emptyDataSetShouldAllowImageViewAnimate:(UIScrollView *)scrollView
+{
+    return YES;
+}
+
+- (BOOL)emptyDataSetShouldDisplay:(UIScrollView *)scrollView
+{
+    return YES;
 }
 
 @end

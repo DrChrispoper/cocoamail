@@ -102,9 +102,9 @@ static NSArray * sharedServices = nil;
         ImapSync* sharedService = [ImapSync sharedServices:accountIndex];
         
         /*[sharedService.imapSession setConnectionLogger:^(void*  connectionID, MCOConnectionLogType type, NSData*  data) {
-         if(type != MCOConnectionLogTypeReceived && type != MCOConnectionLogTypeSent){
-         CCMLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-         }
+         //if(type != MCOConnectionLogTypeReceived && type != MCOConnectionLogTypeSent){
+         NSLog(@"Type:%lu %@",(long)type, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+         //}
          }];*/
         
         if (sharedService.connected) {
@@ -131,10 +131,10 @@ static NSArray * sharedServices = nil;
                             sharedService.imapSession.connectionType = [AppSettings imapEnc:sharedService.currentAccountIndex];
                             sharedService.imapSession.maximumConnections = 6;
                             
-                            CCMLog(@"Loggin with new OAuth");
+                            NSLog(@"Loggin with new OAuth");
                         }
                         
-                        CCMLog(@"Loggin with OAuth with token:%@", [AppSettings oAuth:sharedService.currentAccountIndex]);
+                        NSLog(@"Loggin with OAuth with token:%@", [AppSettings oAuth:sharedService.currentAccountIndex]);
                         
                         sharedService.isWaitingForOAuth = NO;
                         
@@ -147,9 +147,9 @@ static NSArray * sharedServices = nil;
                             sharedService.isConnecting = NO;
                             
                             if (error) {
-                                CCMLog(@"error:%@ loading oauth account:%ld %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
+                                NSLog(@"error:%@ loading oauth account:%ld %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
                                 if (![GIDSignIn sharedInstance].currentUser.authentication) {
-                                    CCMLog(@"Resign & refresh token");
+                                    NSLog(@"Resign & refresh token");
                                     sharedService.isWaitingForOAuth = YES;
                                     [[GIDSignIn sharedInstance] signOut];
                                     [[GIDSignIn sharedInstance] signIn];
@@ -160,7 +160,7 @@ static NSArray * sharedServices = nil;
                                 }
                             }
                             else {
-                                CCMLog(@"Account:%ld check OK", (long)sharedService.currentAccountIndex);
+                                NSLog(@"Account:%ld check OK", (long)sharedService.currentAccountIndex);
                                 sharedService.connected = YES;
                                 [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:YES];
                                 [sharedService checkForCachedActions];
@@ -181,10 +181,10 @@ static NSArray * sharedServices = nil;
                         if (error) {
                             sharedService.connected = NO;
                             [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:NO];
-                            CCMLog(@"error:%@ loading account:%ld %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
+                            NSLog(@"error:%@ loading account:%ld %@", error,(long)sharedService.currentAccountIndex, [AppSettings username:sharedService.currentAccountIndex]);
                         }
                         else {
-                            CCMLog(@"Account:%ld CONNECTED", (long)sharedService.currentAccountIndex);
+                            NSLog(@"Account:%ld CONNECTED", (long)sharedService.currentAccountIndex);
                             sharedService.connected = YES;
                             [[[Accounts sharedInstance] getAccount:accountIndex] setConnected:YES];
                             [sharedService checkForCachedActions];
@@ -218,8 +218,6 @@ static NSArray * sharedServices = nil;
     
     NSURL* someURL = [[NSURL alloc] initFileURLWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:@"cache"]];
     [[[NSArray alloc]init] writeToURL:someURL atomically:YES];
-    
-    [AppSettings setCache:[[NSSet alloc]init]];
     
     if (self.cachedData) {
         for (Email* email in self.cachedData) {
@@ -333,12 +331,12 @@ static NSArray * sharedServices = nil;
                         }
                         email.datetime = msg.header.receivedDate;
                         email.msgId = msg.header.messageID;
-                        email.accountNum = [AppSettings numForData:self.currentAccountIndex];
+                        email.accountNum = [[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex];
                         
                         UidEntry* uid_entry = [[UidEntry alloc]init];
                         uid_entry.uid = msg.uid;
                         uid_entry.folder = currentFolder;
-                        uid_entry.account = [AppSettings numForData:self.currentAccountIndex];
+                        uid_entry.account = [[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex];
                         uid_entry.msgId = email.msgId;
                         uid_entry.dbNum = [EmailProcessor dbNumForDate:email.datetime];
                         
@@ -544,12 +542,12 @@ static NSArray * sharedServices = nil;
                         }
                         email.datetime = msg.header.receivedDate;
                         email.msgId = msg.header.messageID;
-                        email.accountNum = [AppSettings numForData:self.currentAccountIndex];
+                        email.accountNum = [[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex];
                         
                         UidEntry* uid_entry = [[UidEntry alloc]init];
                         uid_entry.uid = msg.uid;
                         uid_entry.folder = currentFolder;
-                        uid_entry.account = [AppSettings numForData:self.currentAccountIndex];
+                        uid_entry.account = [[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex];
                         uid_entry.msgId = email.msgId;
                         uid_entry.dbNum = [EmailProcessor dbNumForDate:email.datetime];
                         
@@ -925,7 +923,7 @@ static NSArray * sharedServices = nil;
                                     }
                                     email.datetime = msg.header.receivedDate;
                                     email.msgId = msg.header.messageID;
-                                    email.accountNum = [AppSettings numForData:self.currentAccountIndex];
+                                    email.accountNum = [[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex];
                                     UidEntry* uid_entry = [[UidEntry alloc]init];
                                     uid_entry.uid = msg.uid;
                                     uid_entry.folder = currentFolder;
@@ -1152,7 +1150,7 @@ static NSArray * sharedServices = nil;
                 
                 [self.cachedData addObject:newE];
                 [eIds addObject:newE.msgId];
-                [AppSettings setCache:eIds];
+                [AppSettings getSingleton].cache = [eIds allObjects];
                 
                 NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:newE.uids[0]];
                 [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
@@ -1160,7 +1158,7 @@ static NSArray * sharedServices = nil;
                 
                 Conversation* conv = [[Conversation alloc] init];
                 [conv addMail:[Mail mail:email]];
-                NSUInteger index = [[[Accounts sharedInstance] getAccount:[AppSettings indexForAccount:email.accountNum]] addConversation:conv];
+                NSUInteger index = [[[Accounts sharedInstance] getAccount:[[AppSettings getSingleton] indexForAccount:email.accountNum]] addConversation:conv];
                 
                 BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
                 
@@ -1193,7 +1191,7 @@ static NSArray * sharedServices = nil;
 
 -(NSMutableSet *) emailIDs
 {
-    return [NSMutableSet setWithArray:[AppSettings cache]];
+    return [NSMutableSet setWithArray:[[AppSettings getSingleton] cache]];
 }
 
 -(void) writeFinishedFolderState:(SyncManager*)sm emailCount:(NSInteger)count withAccountIndex:(NSInteger)accountIndex andFolder:(NSInteger)folder
@@ -1307,7 +1305,7 @@ static NSArray * sharedServices = nil;
         }
     }
     
-    CCMLog(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.currentAccountIndex);
+    NSLog(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.currentAccountIndex);
     
     if (uidsIS.count == 0) {
         completedBlock(nil, nil);
@@ -1327,19 +1325,19 @@ static NSArray * sharedServices = nil;
              return;
          }
          
-         MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags uids:uidsIS];
+         MCOIMAPFetchMessagesOperation* op = [[ImapSync sharedServices:self.currentAccountIndex].imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags uids:uidsIS];
          
          [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
              
              if (error) {
-                 CCMLog(@"error testing emails in %@, %@", path, error);
+                 NSLog(@"error testing emails in %@, %@", path, error);
                  completedBlock(delDatas, upDatas);
                  return;
              }
              
              
              
-             CCMLog(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.currentAccountIndex);
+             NSLog(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.currentAccountIndex);
              
              EmailProcessor* ep = [EmailProcessor getSingleton];
              
@@ -1369,14 +1367,14 @@ static NSArray * sharedServices = nil;
              }
              
              if (delDatas.count > 0) {
-                 CCMLog(@"Delete %lu emails", (unsigned long)delDatas.count);
+                 //NSLog(@"Delete %lu emails", (unsigned long)delDatas.count);
                  NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[delDatas,@(folderIdx)] forKeys:@[@"datas",@"folderIdx"]];
                  NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeFromFolderWrapper:) object:data];
                  [ep.operationQueue addOperation:nextOp];
              }
              
              if (upDatas.count > 0) {
-                 CCMLog(@"Update %lu emails", (unsigned long)upDatas.count);
+                 //NSLog(@"Update %lu emails", (unsigned long)upDatas.count);
                  NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(updateFlag:) object:upDatas];
                  [ep.operationQueue addOperation:nextOp];
              }
@@ -1389,7 +1387,7 @@ static NSArray * sharedServices = nil;
 
 -(void) checkForCachedActions
 {
-    NSMutableArray* cachedActions = [CachedAction getActionsForAccount:[AppSettings numForData:self.currentAccountIndex]];
+    NSMutableArray* cachedActions = [CachedAction getActionsForAccount:[[AppSettings getSingleton] numAccountForIndex:self.currentAccountIndex]];
     
     for (CachedAction* cachedAction in cachedActions) {
         [cachedAction doAction];
@@ -1409,7 +1407,7 @@ static NSArray * sharedServices = nil;
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    return [AppSettings canSyncOverData] || (networkStatus == ReachableViaWiFi);
+    return [[AppSettings getSingleton] canSyncOverData] || (networkStatus == ReachableViaWiFi);
 }
 
 +(void) runInboxUnread:(NSInteger)accountIndex

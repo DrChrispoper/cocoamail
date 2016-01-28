@@ -116,7 +116,7 @@
     NSString* tAccount = NSLocalizedString(@"signature-view.header-section", @"EDIT SIGNATURE");
     NSDictionary* Paccounts = @{TITLE:tAccount, CONTENT:infos};
     
-    if (![AppSettings premiumPurchased]) {
+    if (![[AppSettings getSingleton] premiumPurchased]) {
         NSString* tDelete = NSLocalizedString(@"signature-view.unlock-button", @"Unlock CocoaMail");
         NSDictionary* PDelete = @{TITLE:@"", CONTENT:@[@{TEXT:tDelete, DACTION : @"UNLOCK"}]};
         
@@ -224,7 +224,7 @@
         tf.font = [UIFont systemFontOfSize:16];
         tf.delegate = self;
         
-        if (![AppSettings premiumPurchased]) {
+        if (![[AppSettings getSingleton] premiumPurchased]) {
             [tf setEditable:NO];
             [tf setAlpha:0.5];
         }
@@ -290,7 +290,7 @@
         NSArray* reload = nil;
         
         if ([directAction isEqualToString:@"UNLOCK"]) {
-            [AppSettings setPremiumPurchased];
+            [[AppSettings getSingleton] setPremiumPurchased:YES];
             [self _prepareTable];
             [self.table reloadData];
         }

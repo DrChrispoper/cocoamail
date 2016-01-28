@@ -21,6 +21,7 @@
 #import "CocoaMail-Swift.h"
 #import "CCMStatus.h"
 #import <QuickLook/QuickLook.h>
+#import "ContactsTableViewCell.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -277,17 +278,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _back
 {
-    NSInteger subjectLength = self.subjectTextView.text.length;
     NSString* body = [[self.bodyTextView.text stringByReplacingOccurrencesOfString:[AppSettings signature:self.selectedAccount.idx] withString:@""] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSInteger bodyLength = body.length;
     
-    BOOL haveSomething = subjectLength > 0
-    || bodyLength > 0
+    BOOL haveSomething = bodyLength > 0
     || [self.mail.attachments count] > 0 ;
     
-    if (self.mail.fromMail) {
+    /*if (self.mail.fromMail) {
         haveSomething = [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0 ;
-    }
+    }*/
     
     if (!self.isSending && haveSomething) {
         
@@ -305,7 +304,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       
                                                                       //If draft exists delete and create new
                                                                       if (self.mail.email.msgId) {
-                                                                          [[Accounts sharedInstance].accounts[[AppSettings indexForAccount:self.mail.email.accountNum]] deleteDraft:self.mail];
+                                                                          [[Accounts sharedInstance].accounts[[[AppSettings getSingleton] indexForAccount:self.mail.email.accountNum]] deleteDraft:self.mail];
                                                                       }
                                                                       
                                                                       NSMutableString* bodyContent = [NSMutableString stringWithString:self.mail.content];
@@ -358,9 +357,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       
                                                                       if (self.mail.email.uids.count == 0) {
                                                                           UidEntry* uidE = [[UidEntry alloc]init];
-                                                                          uidE.account = [AppSettings numForData:self.selectedAccount.idx];
+                                                                          uidE.account = [[AppSettings getSingleton] numAccountForIndex:self.selectedAccount.idx];
                                                                           uidE.folder = [AppSettings importantFolderNumforAccountIndex:self.selectedAccount.idx forBaseFolder:FolderTypeDrafts];
-                                                                          uidE.uid = [AppSettings draftCount];
+                                                                          uidE.uid = [[AppSettings getSingleton] draftCount];
                                                                           uidE.msgId = [NSString stringWithFormat:@"%i",-uidE.uid];
                                                                           uidE.dbNum = [EmailProcessor dbNumForDate:self.mail.email.datetime];
                                                                           uidE.sonMsgId = @"0";
@@ -384,7 +383,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Delete", @"Delete") style:UIAlertActionStyleDestructive
                                                               handler:^(UIAlertAction* aa) {
-                                                                  [[Accounts sharedInstance].accounts[[AppSettings indexForAccount:self.mail.email.accountNum]] deleteDraft:self.mail];
+                                                                  [[Accounts sharedInstance].accounts[[[AppSettings getSingleton] indexForAccount:self.mail.email.accountNum]] deleteDraft:self.mail];
                                                               }];
         [ac addAction:cancelAction];
         
@@ -423,7 +422,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         transfertContent = [NSString stringWithFormat:@"<br /><br />%@",self.mail.transferContent];
     }
     
-    if ([AppSettings premiumPurchased]) {
+    if ([[AppSettings getSingleton] premiumPurchased]) {
         self.mail.content = [NSString stringWithFormat:@"%@ %@", bodyContent, transfertContent];
     }
     else {
@@ -629,7 +628,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [bdView addSubview:tv];
     tv.text = @"\n\n";
     
-    if ([AppSettings premiumPurchased]) {
+    if ([[AppSettings getSingleton] premiumPurchased]) {
         tv.text = [NSString stringWithFormat:@"\n\n%@",[AppSettings signature:self.selectedAccount.idx]];
     }
     
@@ -638,7 +637,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
    
     self.bodyTextView = tv;
     
-    if (![AppSettings premiumPurchased]) {
+    if (![[AppSettings getSingleton] premiumPurchased]) {
         UILabel* signature = [[UILabel alloc] initWithFrame:CGRectMake(8, bdView.frame.size.height-28 , WIDTH-16, 20)];
         signature.textColor = [UIGlobal noImageBadgeColor];
         signature.backgroundColor = [UIColor whiteColor];
@@ -704,12 +703,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         oldView.backgroundColor = [UIColor whiteColor];
         
         
-        MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
+        /*MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
         [view setMail:self.mail.fromMail];
         //view.delegate = self;
-        [oldView addSubview:view];
+        [oldView addSubview:view];*/
         
-        /*UITextView* oldtv = [[UITextView alloc] initWithFrame:CGRectMake(10, 4, WIDTH-20, 50)];
+        UITextView* oldtv = [[UITextView alloc] initWithFrame:CGRectMake(10, 4, WIDTH-20, 50)];
         oldtv.textColor = [UIColor blackColor];
         oldtv.backgroundColor = [UIColor clearColor];
         oldtv.font = [UIFont systemFontOfSize:15];
@@ -720,26 +719,34 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         Person* from = [[Persons sharedInstance] getPersonID:self.mail.fromMail.fromPersonID];
         NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
         
-        NSString* oldcontent = [NSString stringWithFormat:@"\n%@ %@ :\n\n%@\n", from.name, wrote, self.mail.fromMail.content];
-        oldtv.text = oldcontent;
+        //NSString* oldcontent = [NSString stringWithFormat:@"\n%@ %@ :\n\n%@\n", from.name, wrote, self.mail.fromMail.content];
         
-        [oldtv sizeToFit];*/
+        NSMutableString* bodyContent = [NSMutableString stringWithString:[self.mail.fromMail.content substringToIndex:MIN(144,self.mail.fromMail.content.length)]];
+        
+        NSRange bodyrange;
+        while((bodyrange = [bodyContent rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]]).location != NSNotFound) {
+            [bodyContent replaceCharactersInRange:bodyrange withString:@" "];
+        }
+        
+        oldtv.text = [NSString stringWithFormat:@"%@ %@ :\n%@...", from.name, wrote, bodyContent];
+        
+        [oldtv sizeToFit];
 
         CGRect f = oldView.frame;
-        f.size.height = view.frame.size.height + 20;
+        f.size.height = oldtv.frame.size.height + 20;
         oldView.frame = f;
 
         
         UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
         UIImageView* iv = [[UIImageView alloc] initWithImage:[rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
         
-        CGRect ivf = view.frame;
+        CGRect ivf = oldtv.frame;
         ivf.origin.x -= 2;
         ivf.size.width += 4;
         ivf.size.height += 6;
         iv.frame = ivf;
         iv.tintColor = [UIGlobal standardLightGrey];
-        [oldView insertSubview:iv belowSubview:view];
+        [oldView insertSubview:iv belowSubview:oldtv];
         
         [contentView addSubview:oldView];
         oldView.tag = ContentOld;
@@ -1161,12 +1168,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) textViewDidChange:(UITextView*)textView
 {
     const CGFloat currentHeight = textView.frame.size.height;
-    const CGFloat next = textView.contentSize.height;
+    const CGFloat next = ceilf([textView sizeThatFits:textView.frame.size].height);
+    
     /*
     if (textView == self.subjectTextView) {
         [self _manageSendButton];
     }
     */
+    
     if (currentHeight != next) {
         
         CGFloat delta = next - currentHeight;
@@ -1337,20 +1346,16 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSString* reuseID = @"kPersonCellID";
     
-    UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
+    ContactsTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
     
     if (cell==nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseID];
+        cell = [[ContactsTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseID];
     }
     
     cell.detailTextLabel.text = p.email;
     cell.textLabel.text = p.name;
     
-    cell.imageView.image = [p badgeViewImage:CGSizeMake(44, 44)].image;
-
-    cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
-    cell.imageView.layer.cornerRadius = 22;
-    cell.imageView.layer.masksToBounds = YES;
+    cell.imageView.image = [p badgeViewImage].image;
     
     return cell;
 }

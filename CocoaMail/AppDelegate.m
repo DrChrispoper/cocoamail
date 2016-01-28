@@ -120,7 +120,7 @@
             UILocalNotification* notification = self.launchedNotification;
             
             NSNumber *index = [notification.userInfo objectForKey:@"index"];
-            NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+            NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
             
             Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
             
@@ -176,7 +176,7 @@
         NSLog(@"Delete Cached Email");
         
         NSNumber *index = [notification.userInfo objectForKey:@"index"];
-        NSInteger accountIndex = [AppSettings indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+        NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
         Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
         
         CCMLog(@"Email in account:%ld (%ld)", (long)[[conversation firstMail].email.uids[0] account], (long)[conversation firstMail].email.accountNum);
@@ -393,11 +393,9 @@ didSignInForUser:(GIDGoogleUser*)user
     }
     else if ([shortcutItem.type isEqualToString:@"com.search"]) {
         [self _search];
-        //[AppSettings setOpen:1];
     }
     else if ([shortcutItem.type isEqualToString:@"com.compose"]) {
         [self _editMail];
-        //[AppSettings setOpen:2];
     }
     
     return YES;
@@ -412,5 +410,6 @@ didSignInForUser:(GIDGoogleUser*)user
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_SEARCH_NOTIFICATION object:nil];
 }
+
 
 @end

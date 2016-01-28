@@ -327,7 +327,7 @@
             
             [[Accounts sharedInstance] deleteAccount:self.account completed:^{
                 
-                [AppSettings setAccountDeleted:YES accountIndex:idx];
+                [[AppSettings getSingleton] setAccountDeleted:YES accountIndex:idx];
                 
                 exit(0);
 

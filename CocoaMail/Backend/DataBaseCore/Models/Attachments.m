@@ -424,8 +424,8 @@
             
             UidEntry* uidE = uidEs[0];
             
-            NSString* folderName = [AppSettings folderServerName:uidE.folder forAccountIndex:[AppSettings indexForAccount:uidE.account]];
-            self.op = [[ImapSync sharedServices:[AppSettings indexForAccount:uidE.account]].imapSession fetchMessageAttachmentOperationWithFolder:folderName
+            NSString* folderName = [AppSettings folderServerName:uidE.folder forAccountIndex:[[AppSettings getSingleton] indexForAccount:uidE.account]];
+            self.op = [[ImapSync sharedServices:[[AppSettings getSingleton] indexForAccount:uidE.account]].imapSession fetchMessageAttachmentOperationWithFolder:folderName
                                                                                                                 uid:uidE.uid
                                                                                                              partID:att.partID
                                                                                                            encoding:MCOEncodingBase64];

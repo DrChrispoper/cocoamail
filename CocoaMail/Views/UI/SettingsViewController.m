@@ -236,7 +236,7 @@
             s.onTintColor = [UIGlobal standardBlue];
             [s addTarget:self action:@selector(_switchBadge:) forControlEvents:UIControlEventValueChanged];
             cell.accessoryView = s;
-            [s setOn:[AppSettings badgeCount]];
+            [s setOn:[[AppSettings getSingleton] badgeCount]];
             self.badgeSwitch = s;
         }
         else if ([action isEqualToString:@"DATA_SYNC"]) {
@@ -244,7 +244,7 @@
             s.onTintColor = [UIGlobal standardBlue];
             [s addTarget:self action:@selector(_switchSync:) forControlEvents:UIControlEventValueChanged];
             cell.accessoryView = s;
-            [s setOn:[AppSettings canSyncOverData]];
+            [s setOn:[[AppSettings getSingleton] canSyncOverData]];
             self.syncSwitch = s;
         }
         else if ([action isEqualToString:@"NAV_BAR_BLUR"]) {
@@ -372,12 +372,12 @@
 
 -(void) _switchBadge:(UISwitch*)sender
 {
-    [AppSettings setBadgeCount:![AppSettings badgeCount]];
+    [[AppSettings getSingleton] setBadgeCount:![[AppSettings getSingleton] badgeCount]];
 }
 
 -(void) _switchSync:(UISwitch*)sender
 {
-    [AppSettings setSyncOverData:![AppSettings canSyncOverData]];
+    [[AppSettings getSingleton] setCanSyncOverData:![[AppSettings getSingleton] canSyncOverData]];
 }
 
 @end

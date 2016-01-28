@@ -13,42 +13,37 @@
 
 @interface AppSettings : NSObject
 
-@property (nonatomic) NSInteger badgeCount;
-
 //Global Settings
-
-+(void) setCache:(NSSet*)y;
-+(NSArray*) cache;
-
-+(void) setSyncOverData:(BOOL)y;
-+(BOOL) canSyncOverData;
-
-+(void) setOpen:(NSInteger)view;
-+(BOOL) openSearch;
-+(BOOL) openCompose;
-
+@property (nonatomic) NSInteger badgeCount;
+@property (nonatomic, strong) NSArray* cache;
+@property (nonatomic) BOOL canSyncOverData;
 +(NSArray*) defaultColors;
-+(QuickSwipeType) quickSwipe;
-+(void) setQuickSwipe:(QuickSwipeType)quickswipetype;
-+(uint32_t) draftCount;
+@property (nonatomic) QuickSwipeType quickSwipe;
+@property (nonatomic) uint32_t draftCount;
+@property (nonatomic) BOOL premiumPurchased;
+@property (nonatomic) NSInteger globalDBVersion;
+
+@property (nonatomic) NSInteger numAccounts;
+@property (nonatomic, strong) NSMutableArray* accountListStateDeleted;
+
+@property (nonatomic, strong) NSMutableArray<NSNumber*>* accountNums;
+
++(AppSettings*) getSingleton;
+
 // Data about accounts
 +(NSInteger) accountIndexForEmail:(NSString*)email;
-+(NSInteger) indexForAccount:(NSInteger)accountNum;
+-(NSInteger) indexForAccount:(NSInteger)accountNum;
 
 +(NSInteger) numActiveAccounts;
 
-+(NSInteger) numAccounts;
-+(void) addAccount;
+-(void) addAccount;
 
 //For SyncManager
-+(BOOL) isAccountNumDeleted:(NSInteger)accountNum;
-+(NSInteger) numForData:(NSInteger)accountIndex;
-
-+(NSInteger) numDelAccounts;
-+(void) setNumDelAccounts:(NSInteger)value;
+-(BOOL) isAccountNumDeleted:(NSInteger)accountNum;
+-(NSInteger) numAccountForIndex:(NSInteger)accountIndex;
 
 +(BOOL) isAccountDeleted:(NSInteger)accountIndex;
-+(void) setAccountDeleted:(BOOL)value accountIndex:(NSInteger)accountIndex;
+-(void) setAccountDeleted:(BOOL)value accountIndex:(NSInteger)accountIndex;
 
 //Account Main Settings
 +(NSString*) identifier:(NSInteger)accountIndex;
@@ -61,7 +56,7 @@
 +(void) setPassword:(NSString*)password accountIndex:(NSInteger)accountIndex;
 
 //Account Server Settings
-+(MCOIMAPSession*) imapSession:(NSInteger)accountIndex;
++(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
 
 +(NSString*) imapServer:(NSInteger)accountIndex;
 +(void) setImapServer:(NSString*)y accountIndex:(NSInteger)accountIndex;
@@ -112,10 +107,7 @@
 +(NSArray*) allFoldersNameforAccountIndex:(NSInteger)accountIndex;
 +(NSArray*) allNonImportantFoldersNameforAccountIndex:(NSInteger)accountIndex;
 +(void) setFoldersName:(NSArray*)folders forAccountIndex:(NSInteger)accountIndex;
-//+(CCMFolderType)activeFolder;
-//+(void)setActiveFolder:(CCMFolderType)folder;
-//+(NSInteger)activeAccount;
-//+(void)setActiveAccount:(NSInteger)account;
+
 +(NSInteger) defaultAccountIndex;
 +(void) setDefaultAccountIndex:(NSInteger)accountIndex;
 +(NSInteger) lastAccountIndex;
@@ -123,13 +115,6 @@
 
 +(NSNumber*) lastFolderIndex;
 +(void) setLastFolderIndex:(NSNumber*)accountIndex;
-
-// in-store sales
-+(BOOL) premiumPurchased;
-+(void) setPremiumPurchased;
-
-+(void) firstFullSyncDone:(NSInteger)accountIndex;
-+(BOOL) isFirstFullSyncDone:(NSInteger)accountIndex;;
 
 +(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex;
 

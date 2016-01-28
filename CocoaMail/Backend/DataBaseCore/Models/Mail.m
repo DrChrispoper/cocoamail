@@ -260,12 +260,12 @@ static NSDateFormatter * s_df_hour = nil;
 
     if (allAccounts.currentAccount.isAllAccounts) {
         mail.fromPersonID = -(1 + [Accounts sharedInstance].defaultAccountIdx);
-        [mail.email setAccountNum:[AppSettings numForData:[Accounts sharedInstance].defaultAccountIdx]];
+        [mail.email setAccountNum:[[AppSettings getSingleton] numAccountForIndex:[Accounts sharedInstance].defaultAccountIdx]];
 
     }
     else {
         mail.fromPersonID = -(1 + [Accounts sharedInstance].currentAccountIdx);
-        [mail.email setAccountNum:[AppSettings numForData:[Accounts sharedInstance].currentAccountIdx]];
+        [mail.email setAccountNum:[[AppSettings getSingleton] numAccountForIndex:[Accounts sharedInstance].currentAccountIdx]];
     }
     
     return mail;
@@ -339,7 +339,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(NSInteger) accountIdx
 {
-    return [AppSettings indexForAccount:[self firstMail].email.accountNum];
+    return [[AppSettings getSingleton] indexForAccount:[self firstMail].email.accountNum];
 }
 
 -(void) toggleFav
@@ -450,7 +450,7 @@ static NSDateFormatter * s_df_hour = nil;
         mail.email.uids = [UidEntry getUidEntriesWithMsgId:mail.email.msgId];
         
         for (UidEntry* uid in mail.email.uids) {
-            CCMFolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccountIndex:[AppSettings indexForAccount:uid.account]];
+            CCMFolderType Fuser = [AppSettings typeOfFolder:uid.folder forAccountIndex:[[AppSettings getSingleton] indexForAccount:uid.account]];
             [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
         }
     }

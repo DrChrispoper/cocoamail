@@ -81,7 +81,7 @@ static SearchRunner * searchSingleton = nil;
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
-        NSInteger accountNum = [AppSettings numForData:accountIndex];
+        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
         
         for (NSNumber* dbNum in dbNums) {
             if (self.cancelled) {
@@ -133,7 +133,7 @@ static SearchRunner * searchSingleton = nil;
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         self.cancelled = NO;
         
-        NSInteger accountNum = [AppSettings numForData:accountIndex];
+        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
         
         NSMutableArray* uids = [UidEntry getUidEntriesWithThread:thread];
         
@@ -292,6 +292,8 @@ static SearchRunner * searchSingleton = nil;
         
         NSInteger realFolderNum = folderNum;
         
+        NSDate *fetchStart = [NSDate date];
+
         if ([Accounts sharedInstance].currentAccount.isAllAccounts) {
             realFolderNum = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:[Accounts sharedInstance].currentAccount.currentFolderType.type];
         }
@@ -303,12 +305,8 @@ static SearchRunner * searchSingleton = nil;
             uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccount:accountIndex];
         }
         
-        //CCMLog(@"Account:%ld Searching in Folder:%@ from:%@", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], email.subject);
-        
         for (NSArray* pagedUids in uidsInGroups) {
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
-            
-            //CCMLog(@"Account:%ld Searching in Folder:%@ with count:%lu", (long)accountIndex, [AppSettings folderDisplayName:realFolderNum forAccountIndex:accountIndex], (long)pagedUids.count);
             
             if (self.cancelled) {
                 CCMLog(@"Cancel");
@@ -326,9 +324,10 @@ static SearchRunner * searchSingleton = nil;
             
             query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-4)]];
             [query appendFormat:@"'"];
+
+            NSMutableArray* tmp = [pagedUids mutableCopy];
             
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
-            
             [queue inDatabase:^(FMDatabase* db) {
                 FMResultSet* results = [db executeQuery:query];
                 
@@ -339,6 +338,10 @@ static SearchRunner * searchSingleton = nil;
                 
                 while ([results next]) {
                     Email* email = [Email resToEmail:results];
+                    
+                    UidEntry* uidE = [email uidEWithFolder:realFolderNum];
+                    
+                    [tmp removeObject:uidE];
                     
                     if ([email isInMultipleAccounts]) {
                         Email* e = [email secondAccountDuplicate];
@@ -357,9 +360,18 @@ static SearchRunner * searchSingleton = nil;
                         break;
                     }
                 }
+                
+                for (UidEntry* p in tmp) {
+                    [UidEntry removeFromFolderUid:p];
+                }
+                
                 [results close];
             }];
         }
+        
+        NSDate *fetchEnd = [NSDate date];
+        NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
+        NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
         
         [subscriber sendCompleted];
         
@@ -413,7 +425,7 @@ static SearchRunner * searchSingleton = nil;
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
-        NSInteger accountNum = [AppSettings numForData:accountIndex];
+        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
         
         NSMutableString* query = [NSMutableString string];
         
