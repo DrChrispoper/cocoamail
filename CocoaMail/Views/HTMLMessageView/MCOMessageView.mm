@@ -10,6 +10,7 @@
 #import "AppSettings.h"
 #import "ImapSync.h"
 #import "EmailProcessor.h"
+#import "FindQuote.h"
 
 static NSString * mainJavascript = @"\
 var imageElements = function() {\
@@ -41,9 +42,6 @@ break;\
 }\
 };\
 \
-$(document).on('pagecreate',function(){\
-window.location.href = \"ready://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
-});\
 jQuery(window).load(function() {\
 window.location.href = \"newHeight://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
 });\
@@ -60,6 +58,20 @@ window.location.href = \"long://\" + e.target.href;\
 \
 $(\"a\").bind( 'taphold', longClickHandler);\
 $(document).on( 'taphold', \"div\", longClickHandler );\
+$(function(){\
+    $('div.expandContent').bind( \"tap\", tapHandler );\
+    function tapHandler( event ){\
+        $('div.showMe').slideToggle('fast', function() {\
+            window.location.href = \"showMore://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
+        });\
+        var text = $('div.expandContent').html();\
+        if (text == 'Show quoted text')\
+            text = 'Hide quoted text';\
+        else\
+            text = 'Show quoted text';\
+        $('div.expandContent').html(text);\
+    }\
+});\
 ";
 
 static NSString * mainStyle = @"\
@@ -77,6 +89,16 @@ min-height: 0px !important;\
 pre {\
 white-space: pre-wrap;\
 }\
+div.expandContent {\
+text-align: center;\
+font-size: 11px;\
+font-weight: bold;\
+padding: 3px 5px;\
+border-radius: 3px;\
+}\
+div.showMe {\
+padding-top: 20px;\
+}\
 ";
 
 @interface MCOMessageView () <UIScrollViewDelegate>
@@ -86,10 +108,13 @@ white-space: pre-wrap;\
 @implementation MCOMessageView {
     UIWebView*  _webView;
     NSString*  _html;
+    Mail*  _mail;
     __weak id <MCOMessageViewDelegate> _delegate;
     UIView* _loadingView;
     BOOL _loaded;
     BOOL _zooming;
+    BOOL _showAll;
+    CGFloat _showLessSize;
 }
 
 @synthesize delegate = _delegate;
@@ -99,8 +124,10 @@ white-space: pre-wrap;\
     self = [super initWithFrame:frame];
     
     if(self) {
+        self.isConversation = NO;
         _loaded = NO;
         _zooming = NO;
+        _showAll = NO;
         _webView = [[UIWebView alloc] initWithFrame:CGRectMake([self bounds].origin.x, [self bounds].origin.y, [self bounds].size.width, 1)];
         _webView.scalesPageToFit = YES;
         _webView.scrollView.bounces = false;
@@ -123,8 +150,10 @@ white-space: pre-wrap;\
         activityView.tag = 100;
         
         [_loadingView addSubview:activityView];
-        [_loadingView setHidden:YES];
-
+        //[_loadingView setHidden:YES];
+        
+        _showLessSize = 0;
+        
         [self addSubview:_webView];
         [self addSubview:_loadingView];
     }
@@ -148,9 +177,7 @@ white-space: pre-wrap;\
 -(void) setMail:(Mail *)mail
 {
     if (!mail.email.htmlBody || [mail.email.htmlBody isEqualToString:@""]) {
-        
-        CCMLog(@"No html");
-        [_loadingView setHidden:NO];
+        NSLog(@"Fetching html");
 
         UidEntry* uidE = [mail.email getUids][0];
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
@@ -168,13 +195,14 @@ white-space: pre-wrap;\
                      
                      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail.email];
                      [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-                     [_loadingView setHidden:YES];
+                     _mail = mail;
                      [self setHtml:mail.email.htmlBody];
                  }];
              }
          }];
     }
     else {
+        _mail = mail;
         [self setHtml:mail.email.htmlBody];
     }
 }
@@ -182,7 +210,7 @@ white-space: pre-wrap;\
 -(void) _refresh
 {
     NSString * content = _html;
-    
+
     content = [content stringByReplacingOccurrencesOfString:@"height=\"100%\"" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"height: 100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"height:100%" withString:@"?"];
@@ -203,21 +231,23 @@ white-space: pre-wrap;\
     NSURL * jsMobileURL = [[NSBundle mainBundle] URLForResource:@"jquerymobile" withExtension:@"js"];
     NSURL * jsLongURL = [[NSBundle mainBundle] URLForResource:@"jquerylong" withExtension:@"js"];
 
-    /*BOOL haveStyle = ([content rangeOfString:@"<style"].location != NSNotFound);
-    BOOL haveQuote = ([content rangeOfString:@"<blockquote"].location != NSNotFound);
-    BOOL haveMeta = ([content rangeOfString:@"<meta"].location != NSNotFound);
-    BOOL haveTable = ([content rangeOfString:@"<table"].location != NSNotFound);
-    
-    if (haveQuote) {
-        _webView.scalesPageToFit = NO;
+    if (self.isConversation) {
+        NSArray* res = [FindQuote quote_html:content];
+        NSString* split = res[0];
+        if (res.count == 2) {
+            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\">Show quoted text</div><div class=\"showMe\" style=\"display:none\">%@</div>", res[0], res[1]];
+        }
+        content = split;
     }
-    else {
-        _webView.scalesPageToFit = (haveMeta || haveStyle || haveTable);
-    }*/
+
+    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+     "<script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
+     "<body data-enhance='false'>%@</body>"
+     "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
+     [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
+     content];
     
-    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'><script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
-     @"<body data-enhance='false'>%@</body><iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'>"
-     @"</iframe></html>", [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle, content];
+    
     [_webView loadHTMLString:html baseURL:nil];
 }
 
@@ -302,14 +332,19 @@ white-space: pre-wrap;\
     }
     
     if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
-        [self.delegate openWebURL:url];
+        if ([url.absoluteString isEqualToString:@"#meaningful"]) {
+            [self _refresh];
+        }
+        else {
+            [self.delegate openWebURL:url];
+        }
         return NO;
     }
     else if (navigationType == UIWebViewNavigationTypeOther) {
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
             
-            //CCMLog(@"ready:%f",contentHeight);
+            [_loadingView setHidden:YES];
 
             BOOL notCool = NO;
             
@@ -331,8 +366,6 @@ white-space: pre-wrap;\
             }
             }
             
-            //CCMLog(@"ready:%f",contentHeight);
-            
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
             _webView.frame = fr;
@@ -352,6 +385,8 @@ white-space: pre-wrap;\
         else if ([[url scheme] isEqualToString:@"newHeight"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
 
+            [_loadingView setHidden:YES];
+
             BOOL notCool = NO;
             
             if (contentHeight == 1) {
@@ -370,8 +405,6 @@ white-space: pre-wrap;\
                 }
             }
             
-            //CCMLog(@"newHeight:%f",contentHeight);
-            
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
             _webView.frame = fr;
@@ -383,6 +416,26 @@ white-space: pre-wrap;\
             [self.delegate webViewLoaded:_webView];
             
             _loaded = YES;
+            
+            return NO;
+        }
+        else if ([[url scheme] isEqualToString:@"showMore"]) {
+            float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            
+            //ShowMore
+            if (_showLessSize == 0) {
+                _showLessSize = _webView.frame.size.height;
+            }
+            else if (_showLessSize < contentHeight) {
+                contentHeight = _showLessSize;
+                _showLessSize = 0;
+            }
+            
+            CGRect fr = _webView.frame;
+            fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
+            _webView.frame = fr;
+            
+            [self.delegate webViewLoaded:_webView];
             
             return NO;
         }
@@ -401,6 +454,7 @@ white-space: pre-wrap;\
 -(NSURLRequest*)webView:(UIWebView*)sender resource:(id)identifier willSendRequest:(NSURLRequest*)request redirectResponse:(NSURLResponse*)redirectResponse fromDataSource:(id)dataSource
 {
     if ([[[request URL] scheme] isEqualToString:@"x-mailcore-msgviewloaded"]) {
+        [_loadingView setHidden:YES];
         [self _loadImages];
     }
     
@@ -414,7 +468,7 @@ white-space: pre-wrap;\
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if (!_zooming && scrollView.contentOffset.y != 0) {
+    if (!_zooming && scrollView.contentOffset.y > 1) {
         [self.delegate scrollTo:CGPointMake(0, scrollView.contentOffset.y)];
     }
 }

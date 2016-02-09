@@ -292,8 +292,6 @@ static SearchRunner * searchSingleton = nil;
         
         NSInteger realFolderNum = folderNum;
         
-        NSDate *fetchStart = [NSDate date];
-
         if ([Accounts sharedInstance].currentAccount.isAllAccounts) {
             realFolderNum = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:[Accounts sharedInstance].currentAccount.currentFolderType.type];
         }
@@ -369,9 +367,9 @@ static SearchRunner * searchSingleton = nil;
             }];
         }
         
-        NSDate *fetchEnd = [NSDate date];
-        NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-        NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
+        //NSDate *fetchEnd = [NSDate date];
+        //NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
+        //NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
         
         [subscriber sendCompleted];
         

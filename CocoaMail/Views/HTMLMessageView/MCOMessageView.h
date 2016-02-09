@@ -17,7 +17,7 @@
 @property (nonatomic, copy) NSString* html;
 @property (nonatomic, copy) Mail* mail;
 @property (nonatomic, weak) id <MCOMessageViewDelegate> delegate;
-
+@property (nonatomic) BOOL isConversation;
 
 @end
 

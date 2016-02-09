@@ -582,12 +582,9 @@
     }
     
     if (debugMode) {
-        NSMutableString* folders = [NSMutableString string];
-        NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:self.mail.email.accountNum];
-        for (UidEntry* uid in mail.email.uids) {
-            [folders appendString:[AppSettings folderDisplayName:uid.folder forAccountIndex:accountIndex]];
+        if ([mail.email.htmlBody containsString:@"<blockquote"]) {
+            self.title.text = @"HAS BLOCKQUOTE";
         }
-        self.title.text = folders;
     }
     
     Person* p = nil;

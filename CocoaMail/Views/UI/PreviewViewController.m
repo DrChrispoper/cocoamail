@@ -11,6 +11,7 @@
 #import "MCOMessageView.h"
 #import "Accounts.h"
 #import "EmailProcessor.h"
+#import "ImapSync.h"
 
 @interface PreviewViewController () <MCOMessageViewDelegate>
 
@@ -181,6 +182,60 @@
 - (void)webViewLoaded:(UIWebView *)webView
 {
     
+}
+
+-(void) scrollTo:(CGPoint)offset
+{
+}
+
+-(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock
+{
+    BOOL found = NO;
+    
+    for (Mail* mail in self.conversation.mails) {
+        for (Attachment* att in mail.attachments) {
+            
+            if (att.isInline && [att.contentID isEqualToString:partID]) {
+                found = YES;
+                if(!att.data){
+                    UidEntry* uidE = [mail.email.uids firstObject];
+                    MCOIMAPFetchContentOperation*  op =
+                    [[ImapSync sharedServices:[self.conversation accountIdx]].imapSession
+                     fetchMessageAttachmentOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[self.conversation accountIdx]]
+                     uid:uidE.uid
+                     partID:att.partID
+                     encoding:MCOEncodingBase64];
+                    
+                    op.progress = ^(unsigned int current, unsigned int maximum){
+                        CCMLog(@"%u, %u", current,maximum);
+                    };
+                    
+                    [op start:^(NSError*  error, NSData*  partData) {
+                        if(error){
+                            CCMLog(@"%@",error);
+                            return;
+                        }
+                        att.data = partData;
+                        [Attachment updateData:att];
+                        
+                        completedBlock(att.data);
+                    }];
+                    
+                    break;
+                }
+                else {
+                    
+                    completedBlock(att.data);
+                    
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!found) {
+        completedBlock(nil);
+    }
 }
 
 @end

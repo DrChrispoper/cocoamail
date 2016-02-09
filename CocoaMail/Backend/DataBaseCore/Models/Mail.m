@@ -446,7 +446,9 @@ static NSDateFormatter * s_df_hour = nil;
 {
     NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
     
-    for (Mail* mail in self.mails) {
+    NSArray* tmp = [self.mails copy];
+    
+    for (Mail* mail in tmp) {
         mail.email.uids = [UidEntry getUidEntriesWithMsgId:mail.email.msgId];
         
         for (UidEntry* uid in mail.email.uids) {

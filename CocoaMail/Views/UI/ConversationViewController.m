@@ -18,6 +18,7 @@
 #import "StringUtil.h"
 #import "ImapSync.h"
 #import "ARSafariActivity.h"
+#import "FindQuote.h"
 
 @import SafariServices;
 
@@ -32,6 +33,7 @@
 -(void) openLongURL:(NSURL*)url;
 -(void) shareAttachment:(Attachment*)att;
 -(void) scrollTo:(CGPoint)offset;
+-(BOOL) isConversation;
 
 @end
 
@@ -248,6 +250,11 @@
     return self.conversation.mails[mailView.idxInConversation];
 }
 
+- (BOOL)isConversation
+{
+    return self.conversation.mails.count > 1;
+}
+
 /*-(void) makeConversationFav:(BOOL)isFav
 {
     //Account* ac = [[Accounts sharedInstance] currentAccount];
@@ -355,6 +362,11 @@
 {
     self.contentOffset = offset;
     [self.scrollView setContentOffset:offset];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    self.contentOffset = scrollView.contentOffset;
 }
 
 #pragma mark - QLPreviewControllerDataSource
@@ -584,7 +596,7 @@
 
 -(BOOL) cocoabuttonLongPress:(CocoaButton*)cocoabutton
 {
-    return NO;
+    return YES;
 }
 
 @end
@@ -690,9 +702,49 @@
         
         const CGFloat topBorder = 14.f;
         
-        //TODO:For now they are all html
-        /*if (![mail.email.body containsString:@"http"]) {
-         
+        
+
+            //NSString* texte = mail.email.body;
+            
+        
+            
+            //NSString* top = test[@"text_top"];
+            //if (![top isEqualToString:@""]) {
+
+            /*NSRange range = [texte rangeOfString:@"\n>"];
+            
+            if (range.location != NSNotFound) {
+                range.length = texte.length - range.location;
+                texte = [texte stringByReplacingCharactersInRange:range withString:@""];
+            }
+            else {
+                range = [texte rangeOfString:@"from:" options:NSCaseInsensitiveSearch];
+                if (range.location != NSNotFound) {
+                    range.length = texte.length - range.location;
+                    texte = [texte stringByReplacingCharactersInRange:range withString:@""];
+                }
+                else {
+                    range = [texte rangeOfString:@"von:" options:NSCaseInsensitiveSearch];
+                    if (range.location != NSNotFound) {
+                        range.length = texte.length - range.location;
+                        texte = [texte stringByReplacingCharactersInRange:range withString:@""];
+                    }
+                    else {
+                        range = [texte rangeOfString:@"de:" options:NSCaseInsensitiveSearch];
+                        if (range.location != NSNotFound) {
+                            range.length = texte.length - range.location;
+                            texte = [texte stringByReplacingCharactersInRange:range withString:@""];
+                        }
+                    }
+                }
+            }
+            }
+            else {
+                texte = top;
+            }
+            
+            size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
+
             UILabel* text = [[UILabel alloc] initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
             text.text = texte;
             text.font = textFont;
@@ -705,6 +757,7 @@
             if (!self.htmlView) {
                 self.height = size.height;// = 100;
                 MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
+                view.isConversation = [self.delegate isConversation];
                 [view setMail:mail];
                 view.delegate = self;
                 self.htmlView = view;

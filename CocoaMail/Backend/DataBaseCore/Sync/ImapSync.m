@@ -1305,7 +1305,7 @@ static NSArray * sharedServices = nil;
         }
     }
     
-    NSLog(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.currentAccountIndex);
+    //NSLog(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.currentAccountIndex);
     
     if (uidsIS.count == 0) {
         completedBlock(nil, nil);
@@ -1337,7 +1337,7 @@ static NSArray * sharedServices = nil;
              
              
              
-             NSLog(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.currentAccountIndex);
+             //NSLog(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.currentAccountIndex);
              
              EmailProcessor* ep = [EmailProcessor getSingleton];
              
@@ -1412,7 +1412,7 @@ static NSArray * sharedServices = nil;
 
 +(void) runInboxUnread:(NSInteger)accountIndex
 {
-    if (![ImapSync isNetworkAvailable] | ([Accounts sharedInstance].accountsCount == accountIndex)) {
+    if (![ImapSync isNetworkAvailable] | ([Accounts sharedInstance].accountsCount == accountIndex+1)) {
         return;
     }
     

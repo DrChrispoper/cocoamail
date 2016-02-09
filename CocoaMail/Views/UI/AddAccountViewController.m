@@ -300,14 +300,17 @@
         
         if ([action isEqualToString:@"EDIT_PASS"]) {
             tf.secureTextEntry = YES;
+            tf.returnKeyType = UIReturnKeyDone;
             self.password = tf;
         }
         else if ([action isEqualToString:@"EDIT_MAIL"]) {
             tf.keyboardType = UIKeyboardTypeEmailAddress;
+            tf.returnKeyType = UIReturnKeyNext;
             self.email = tf;
         }
         else {
             tf.autocapitalizationType = UITextAutocapitalizationTypeWords;
+            tf.returnKeyType = UIReturnKeyNext;
             self.username = tf;
         }
     }
@@ -402,6 +405,16 @@
 -(BOOL) textFieldShouldReturn:(UITextField*)textField
 {
     [textField resignFirstResponder];
+    
+    if (textField == self.username) {
+        [self.email becomeFirstResponder];
+    }
+    else if (textField == self.email) {
+        [self.password becomeFirstResponder];
+    }
+    else if (textField == self.password) {
+        [self _nextStep];
+    }
     
     return YES;
 }

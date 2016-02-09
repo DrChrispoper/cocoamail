@@ -141,17 +141,37 @@
 
 -(void) runLoadData
 {
+    if (!self.currentAccount.isAllAccounts) {
+
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:self.currentAccountIdx]
-         subscribeNext:^(Email* email) {
-             [self sortEmail:email];
-         }
-         completed:^{
-             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                 [self.currentAccount.mailListSubscriber reFetch:YES];
+        /*if (self.currentAccount.isAllAccounts) {
+            for (Account* a in [Accounts sharedInstance].accounts) {
+                if (!a.isAllAccounts) {
+                    [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:a.idx]
+                     subscribeNext:^(Email* email) {
+                         [self sortEmail:email];
+                     }
+                     completed:^{
+                         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                             [self.currentAccount.mailListSubscriber reFetch:YES];
+                         }];
+                     }];
+                }
+            }
+        }
+        else {*/
+            [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:self.currentAccountIdx]
+             subscribeNext:^(Email* email) {
+                 [self sortEmail:email];
+             }
+             completed:^{
+                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                     [self.currentAccount.mailListSubscriber reFetch:YES];
+                 }];
              }];
-         }];
+        //}
     }];
+    }
     
     
     [self.localFetchQueue addOperationWithBlock:^{
@@ -172,7 +192,7 @@
              }];
          }];
     }];
-
+    
 }
 
 -(void) sortEmail:(Email*)email
@@ -441,7 +461,7 @@
         self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:self.currentFolderType.type];
     }
     
-
+    
     //[self connect];
     //[self localFetchMore:NO];
 }
@@ -505,20 +525,20 @@
     [names addObject:NSLocalizedString(@"Inbox", @"Inbox")];
     [names addObject:NSLocalizedString(@"Favoris", @"Favoris")];
     
-    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSent] != -1) {
+    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSent] != -1) {
         [names addObject:NSLocalizedString(@"Sent", @"Sent")];
     }
     
-    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDrafts] != -1) {
+    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDrafts] != -1) {
         [names addObject:NSLocalizedString(@"Drafts", @"Drafts")];
     }
     [names addObject:NSLocalizedString(@"All emails", @"All emails")];
     
-    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDeleted] != -1) {
+    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDeleted] != -1) {
         [names addObject:NSLocalizedString(@"Deleted", @"Deleted")];
     }
     
-    if ([AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSpam] != -1) {
+    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSpam] != -1) {
         [names addObject:NSLocalizedString(@"Spam", @"Spam")];
     }
     
@@ -1010,7 +1030,7 @@
     NSInteger emailCount = 0;
     
     if (self.isAllAccounts) {
-        for (NSInteger accountIndex = 0; accountIndex < [Accounts sharedInstance].accountsCount; accountIndex++) {
+        for (NSInteger accountIndex = 0; accountIndex < [Accounts sharedInstance].accountsCount-1; accountIndex++) {
             
             for (int i = 0; i < [AppSettings allFoldersNameforAccountIndex:accountIndex].count; i++) {
                 NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:i accountIndex:accountIndex];
@@ -1399,7 +1419,6 @@
     //ServerSearch
     [[[[SyncManager getSingleton] searchText:searchString accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Email* email) {
-         CCMLog(@"Found email");
          [self insertRows:email];
      }
      error:^(NSError* error) {

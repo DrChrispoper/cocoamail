@@ -26,7 +26,6 @@
 
 - (UIViewController *)previewingContext:(id<UIViewControllerPreviewing>)previewingContext viewControllerForLocation:(CGPoint)location
 {
-    CCMLog(@"Preview");
     // check if we're not already displaying a preview controller (WebViewController is my preview controller)
     if ([self.presentedViewController isKindOfClass:[PreviewViewController class]]) {
         return nil;

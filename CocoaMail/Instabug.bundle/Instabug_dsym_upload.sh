@@ -43,7 +43,8 @@ fi
 echo "Instabug: found APP_TOKEN=${APP_TOKEN}"
 
 # Check internet connection
-if [ ! "`ping -c 1 api.instabug.com`" ]; then
+if [ "`curl -s https://api.instabug.com | grep status | grep -c OK`" != "1" ]; then
+  echo "ERROR connecting to api.instabug.com."
   exit 0
 fi
 

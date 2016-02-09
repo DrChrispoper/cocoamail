@@ -14,7 +14,7 @@
 #import "Attachments.h"
 #import "SearchRunner.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
-
+#import "ContactTableViewCell.h"
 
 @interface SearchViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, MailListDelegate>
 
@@ -23,7 +23,7 @@
 @property (nonatomic, strong) UISearchBar* searchBar;
 @property (nonatomic, strong) UIView* searchBarSupport;
 
-@property (nonatomic, strong) NSArray* searchResult;
+@property (nonatomic, strong) NSArray<NSArray*>* searchResult;
 @property (nonatomic) NSInteger lastSearchLength;
 
 @property (nonatomic, retain) NSOperationQueue* searchQueue;
@@ -168,13 +168,50 @@
 #define kCONTENT @"c"
 #define kSUBTEXT @"st"
 
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
+{
+    return 2;
+}
+
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return self.searchResult.count;
+    if (self.searchResult) {
+        return [self.searchResult[section] count];
+    }
+    else {
+        return 0;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath.section == 0) {
+        return 45;
+    }
+    else {
+        return 90;
+    }
 }
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
+    if (indexPath.section == 0) {
+        Person* p = self.searchResult[indexPath.section][indexPath.row];
+        
+        NSString* reuseID = @"kPersonCellID";
+        
+        ContactTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
+        
+        if (cell==nil) {
+            cell = [[ContactTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
+        }
+        
+        [cell fillWithPerson:p];
+
+        return cell;
+    }
+    else {
+        
     NSString* reuseID = @"kSearchCellID";
     
     SearchTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
@@ -183,7 +220,7 @@
         cell = [[SearchTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
     }
     
-    NSDictionary* dic = self.searchResult[indexPath.row];
+    NSDictionary* dic = self.searchResult[indexPath.section][indexPath.row];
     
     Conversation* c = [[Accounts sharedInstance] conversationForCI:dic[kCONTENT]];
     NSString* st = dic[kSUBTEXT];
@@ -191,6 +228,7 @@
     [cell fillWithConversation:c subText:st highlightWord:self.searchBar.text];
     
     return cell;
+    }
 }
 
 #pragma mark - Table Delegate
@@ -202,7 +240,7 @@
 
 -(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
 {
-    return (section == 0) ? 46 : CGFLOAT_MIN;
+    return (section == 0) ? 46 : 5;
 }
 
 -(UIView*) tableView:(UITableView*)tableView viewForHeaderInSection:(NSInteger)section
@@ -243,10 +281,10 @@
 
 -(void) _updateSearchResultWith:(NSString*)word
 {
-    /*if (word.length < 2) {
+    if (word.length == 0) {
         self.searchResult = nil;
-        return;
-    }*/
+        return ;
+    }
     
     NSMutableArray* current;
     
@@ -268,9 +306,9 @@
         current = [alls mutableCopy];
     }
     else {
-        NSMutableArray* currentContent = [NSMutableArray arrayWithCapacity:self.searchResult.count];
+        NSMutableArray* currentContent = [NSMutableArray arrayWithCapacity:[self.searchResult[1] count]];
         
-        for (NSDictionary* d in self.searchResult) {
+        for (NSDictionary* d in self.searchResult[1]) {
             [currentContent addObject:d[kCONTENT]];
         }
         
@@ -364,8 +402,25 @@
         }
     }
     
+    NSMutableArray* ppl = [[NSMutableArray alloc] init];
+    
+    if (word.length>0) {
+        
+        word = [word lowercaseString];
+        
+        for (Person* p in [[Persons sharedInstance] allPersons]) {
+            
+            if ([p.name rangeOfString:word options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                [ppl addObject:p];
+            }
+            else if ([p.email rangeOfString:word options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                [ppl addObject:p];
+            }
+        }
+    }
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        self.searchResult = next;
+        self.searchResult = [NSArray arrayWithObjects:ppl, next, nil];
         [self.table reloadData];
     }];
 }

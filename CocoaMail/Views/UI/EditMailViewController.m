@@ -562,6 +562,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
     [contentView addSubview:ccView];
     ccView.tag = ContentCC;
+    UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_focusText:)];
+    [ccView addGestureRecognizer:tgr];
     currentPosY += ccView.frame.size.height;
     
     
@@ -721,14 +723,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         //NSString* oldcontent = [NSString stringWithFormat:@"\n%@ %@ :\n\n%@\n", from.name, wrote, self.mail.fromMail.content];
         
-        NSMutableString* bodyContent = [NSMutableString stringWithString:[self.mail.fromMail.content substringToIndex:MIN(144,self.mail.fromMail.content.length)]];
+       /* NSMutableString* bodyContent = [NSMutableString stringWithString:[self.mail.fromMail.content substringToIndex:MIN(144,self.mail.fromMail.content.length)]];
         
         NSRange bodyrange;
         while((bodyrange = [bodyContent rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]]).location != NSNotFound) {
             [bodyContent replaceCharactersInRange:bodyrange withString:@" "];
-        }
+        }*/
         
-        oldtv.text = [NSString stringWithFormat:@"%@ %@ :\n%@...", from.name, wrote, bodyContent];
+        oldtv.text = [NSString stringWithFormat:@"%@ %@ :\n%@", from.name, wrote, self.mail.fromMail.content];
         
         [oldtv sizeToFit];
 
@@ -975,6 +977,11 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 }
 
 #pragma mark - cc view
+
+-(void) _focusText:(UITapGestureRecognizer*)tgr
+{
+    [self.toTextField becomeFirstResponder];
+}
 
 -(void) _createCCcontent
 {
