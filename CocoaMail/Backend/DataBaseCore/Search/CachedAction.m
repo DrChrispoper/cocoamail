@@ -17,7 +17,7 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
-        if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER, dbNum INTEGER)"]) {
+        if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS cached_actions (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, account INTEGER, action INTEGER, to_folder INTEGER, dbNum INTEGER, msg_id TEXT, son_msg_id TEXT)"]) {
             CCMLog(@"errorMessage = %@", db.lastErrorMessage);
         }
     }];
@@ -33,7 +33,7 @@
         FMResultSet* result = [db executeQuery:@"SELECT * FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?",
                                @(action.uid.uid),
                                @(action.uid.folder),
-                               @(action.uid.account),
+                               @(action.uid.accountNum),
                                @(action.actionIndex)];
         
         if ([result next]) {
@@ -44,13 +44,15 @@
         
         [result close];
         
-        success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder,dbNum) VALUES (?,?,?,?,?,?);",
+        success =  [db executeUpdate:@"INSERT INTO cached_actions (uid,folder,account,action,to_folder,dbNum,msg_id,son_msg_id) VALUES (?,?,?,?,?,?,?,?);",
                     @(action.uid.uid),
                     @(action.uid.folder),
-                    @(action.uid.account),
+                    @(action.uid.accountNum),
                     @(action.actionIndex),
                     @(action.toFolder),
-                    @(action.uid.dbNum)];
+                    @(action.uid.dbNum),
+                    action.uid.msgID,
+                    action.uid.sonMsgID];
         
     }];
     
@@ -77,10 +79,10 @@
         [db executeUpdate:@"UPDATE cached_actions SET uid = ? WHERE uid = 0 AND folder = ? AND account = ? ;",
                     @(uidEntry.uid),
                     @(uidEntry.folder),
-                    @(uidEntry.account)];
+                    @(uidEntry.accountNum)];
     }];
     
-    NSMutableArray* acts = [CachedAction getActionsForAccount:uidEntry.account];
+    NSMutableArray* acts = [CachedAction getActionsForAccount:uidEntry.accountNum];
     for (CachedAction* act in acts) {
         [act doAction];
     }
@@ -95,7 +97,7 @@
         success =  [db executeUpdate:@"DELETE FROM cached_actions WHERE uid = ? AND folder = ? AND account = ? AND action = ?;",
                     @(action.uid.uid),
                     @(action.uid.folder),
-                    @(action.uid.account),
+                    @(action.uid.accountNum),
                     @(action.actionIndex)];
     }];
     
@@ -119,8 +121,10 @@
             cachedA.uid = [[UidEntry alloc]init];
             cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
             cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
-            cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
+            cachedA.uid.accountNum = [[results objectForColumnName:@"account"] integerValue];
             cachedA.uid.dbNum = [results intForColumn:@"dbNum"];
+            cachedA.uid.msgID = [results objectForColumnName:@"msg_id"];
+            cachedA.uid.sonMsgID = [results objectForColumnName:@"son_msg_id"];
             [actions addObject:cachedA];
         }
         
@@ -147,8 +151,10 @@
             cachedA.uid = [[UidEntry alloc]init];
             cachedA.uid.uid = [[results objectForColumnName:@"uid"] unsignedIntValue];
             cachedA.uid.folder = [[results objectForColumnName:@"folder"] integerValue];
-            cachedA.uid.account = [[results objectForColumnName:@"account"] integerValue];
+            cachedA.uid.accountNum = [[results objectForColumnName:@"account"] integerValue];
             cachedA.uid.dbNum = [results intForColumn:@"dbNum"];
+            cachedA.uid.msgID = [results objectForColumnName:@"msg_id"];
+            cachedA.uid.sonMsgID = [results objectForColumnName:@"son_msg_id"];
 
             [actions addObject:cachedA];
         }

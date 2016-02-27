@@ -12,6 +12,9 @@
 #import "Accounts.h"
 #import "EmailProcessor.h"
 #import "ImapSync.h"
+#import "Flurry.h"
+#import "Conversation.h"
+#import "UserSettings.h"
 
 @interface PreviewViewController () <MCOMessageViewDelegate>
 
@@ -109,7 +112,7 @@
     [inIV addSubview:self.htmlView];
     
     if (person.isGeneric) {
-        n.text = mail.email.sender.displayName;;
+        n.text = mail.sender.displayName;;
     }
     else {
         n.text = person.name;
@@ -161,7 +164,7 @@
     }];
     
     UIPreviewAction *action3 = [UIPreviewAction actionWithTitle:NSLocalizedString(@"quick-swipe.archive", @"Archive") style:UIPreviewActionStyleDestructive handler:^(UIPreviewAction * _Nonnull action, UIViewController * _Nonnull previewViewController) {
-        Account* ac = [[Accounts sharedInstance] getAccount:self.conversation.accountIdx];
+        Account* ac = [[Accounts sharedInstance] account:self.conversation.user.accountIndex];
         
         SEL selector = NSSelectorFromString(@"deleteRow:");
         
@@ -169,7 +172,18 @@
             ((void (*)(id, SEL, Conversation*))[[EmailProcessor getSingleton].updateSubscriber methodForSelector:selector])([EmailProcessor getSingleton].updateSubscriber, selector,self.conversation);
         }
         
-        [ac moveConversation:self.conversation from:[AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccountIndex:kActiveAccountIndex] to:FolderTypeWith(FolderTypeAll, 0)];
+        CCMFolderType fromfolder = [[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
+        CCMFolderType tofolder = FolderTypeWith(FolderTypeAll, 0);
+        
+        NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
+                                       [self.conversation.user folderDisplayNameForType:fromfolder], @"from_Folder",
+                                       [self.conversation.user folderDisplayNameForType:tofolder], @"to_Folder",
+                                       @"3D_Touch", @"action_Location"
+                                       ,nil];
+        
+        [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+        
+        [ac moveConversation:self.conversation from:fromfolder to:tofolder updateUI:YES];
     }];
 
     // add them to an arrary
@@ -198,10 +212,10 @@
             if (att.isInline && [att.contentID isEqualToString:partID]) {
                 found = YES;
                 if(!att.data){
-                    UidEntry* uidE = [mail.email.uids firstObject];
+                    UidEntry* uidE = [mail.uids firstObject];
                     MCOIMAPFetchContentOperation*  op =
-                    [[ImapSync sharedServices:[self.conversation accountIdx]].imapSession
-                     fetchMessageAttachmentOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[self.conversation accountIdx]]
+                    [[ImapSync sharedServices:[self.conversation.user accountIndex]].imapSession
+                     fetchMessageAttachmentOperationWithFolder:[self.conversation.user folderServerName:uidE.folder]
                      uid:uidE.uid
                      partID:att.partID
                      encoding:MCOEncodingBase64];

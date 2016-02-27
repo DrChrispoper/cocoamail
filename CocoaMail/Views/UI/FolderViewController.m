@@ -10,7 +10,6 @@
 #import "AppSettings.h"
 #import "Accounts.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
-#import "Email.h"
 #import "SyncManager.h"
 #import "Mail.h"
 #import "ImapSync.h"
@@ -282,7 +281,7 @@
     //if (!_isBackgroundFetching) {
         //_isBackgroundFetching = YES;
         [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
              hasNewEmail = YES;
          } error:^(NSError* error) {
              NSDate *fetchEnd = [NSDate date];

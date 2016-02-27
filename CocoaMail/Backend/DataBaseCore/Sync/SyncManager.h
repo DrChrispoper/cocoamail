@@ -43,11 +43,11 @@
 //Update recorded state
 -(NSInteger) folderCount:(NSInteger)accountIndex;
 -(void) addAccountState;
--(void) addFolderState:(NSDictionary*)data accountIndex:(NSInteger)accountIndex;
--(BOOL) isFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
--(void) markFolderDeleted:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
--(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
--(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountIndex:(NSInteger)accountIndex;
+-(void) addFolderState:(NSDictionary*)data accountNum:(NSInteger)accountNum;
+-(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 
 
 @end

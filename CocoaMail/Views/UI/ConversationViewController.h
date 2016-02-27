@@ -7,9 +7,10 @@
 //
 
 #import "ViewController.h"
-#import "Mail.h"
 #import "CocoaButton.h"
+#import "InViewController.h"
 
+@class Conversation;
 
 @interface ConversationViewController : InViewController <CocoaButtonDatasource>
 

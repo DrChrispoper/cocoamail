@@ -10,7 +10,7 @@
 #import "sqlite3.h"
 
 @class Person;
-@class Email;
+@class Mail;
 
 @interface SearchRunner : NSObject {
 	NSOperationQueue* operationQueue;
@@ -21,7 +21,7 @@
 -(RACSignal*) senderSearch:(Person*)person inAccount:(NSInteger)accountIndex;
 
 -(RACSignal*) deleteEmailsInAccount:(NSInteger)accountIndex;
--(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex;
+-(RACSignal*) activeFolderSearch:(Mail*)email inAccount:(NSInteger)accountIndex;
 -(RACSignal*) threadSearch:(NSString*)thread inAccount:(NSInteger)accountIndex;
 -(RACSignal*) allEmailsSearch;
 

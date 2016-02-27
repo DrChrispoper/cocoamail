@@ -7,8 +7,8 @@
 //
 
 #import "ViewController.h"
-#import "Mail.h"
 
+@class Conversation;
 
 @interface AttachmentsViewController : InViewController
 

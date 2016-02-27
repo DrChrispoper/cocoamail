@@ -7,7 +7,7 @@
 //
 
 #import "AccountViewController.h"
-
+#import "UserSettings.h"
 #import "EditCocoaButtonView.h"
 #import "Accounts.h"
 #import "CocoaButton.h"
@@ -327,7 +327,7 @@
             
             [[Accounts sharedInstance] deleteAccount:self.account completed:^{
                 
-                [[AppSettings getSingleton] setAccountDeleted:YES accountIndex:idx];
+                [[AppSettings userWithIndex:idx] setDeleted:YES];
                 
                 exit(0);
 
@@ -380,7 +380,7 @@
         [self.account setName:textField.text];
     }
     else if (textField.tag == 1) {
-        [AppSettings setPassword:textField.text accountIndex:self.account.idx];
+        [self.account.user setPassword:textField.text];
     }
 }
 

@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "Mail.h"
 #import "ViewController.h"
+
+@class Conversation;
 
 @interface PreviewViewController : UIViewController
 

@@ -55,6 +55,8 @@
                               
                               // Thunderbird forward
                               @"Message transféré",
+                              
+                              @"Message d'origine",
                               ];
     });
     return _FORWARD_MESSAGES;

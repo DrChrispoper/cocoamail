@@ -11,6 +11,9 @@
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "FindQuote.h"
+#import <Instabug/Instabug.h>
+#import "Flurry.h"
+#import "UserSettings.h"
 
 static NSString * mainJavascript = @"\
 var imageElements = function() {\
@@ -79,8 +82,6 @@ body {\
 font-family: HelveticaNeue, Verdana;\
 font-size: 14px;\
 word-wrap: break-word;\
--webkit-text-size-adjust:none;\
--webkit-nbsp-mode: space;\
 }\
 div.ui-page {\
 min-height: 0px !important;\
@@ -115,9 +116,8 @@ padding-top: 20px;\
     BOOL _zooming;
     BOOL _showAll;
     CGFloat _showLessSize;
+    NSDate* _loadDate;
 }
-
-@synthesize delegate = _delegate;
 
 -(id) initWithFrame:(CGRect)frame
 {
@@ -129,6 +129,7 @@ padding-top: 20px;\
         _zooming = NO;
         _showAll = NO;
         _webView = [[UIWebView alloc] initWithFrame:CGRectMake([self bounds].origin.x, [self bounds].origin.y, [self bounds].size.width, 1)];
+        
         _webView.scalesPageToFit = YES;
         _webView.scrollView.bounces = false;
         _webView.dataDetectorTypes = UIDataDetectorTypeLink;
@@ -166,6 +167,13 @@ padding-top: 20px;\
     _webView = nil;
 }
 
+-(void) setBgrdColor:(UIColor*)color
+{
+    _webView.backgroundColor = color;
+    _webView.scrollView.backgroundColor = color;
+    [_webView setOpaque:NO];
+}
+
 -(void) setHtml:(NSString*)html
 {
     _html = html;
@@ -176,34 +184,40 @@ padding-top: 20px;\
 
 -(void) setMail:(Mail *)mail
 {
-    if (!mail.email.htmlBody || [mail.email.htmlBody isEqualToString:@""]) {
+    if (!mail.htmlBody || [mail.htmlBody isEqualToString:@""]) {
         NSLog(@"Fetching html");
 
-        UidEntry* uidE = [mail.email getUids][0];
+        if ([mail uids].count == 0) {
+            NSException* myE = [NSException exceptionWithName:@"EmailHasNoUID" reason:@"Showing email with no UidEntry" userInfo:nil];
+            [Instabug reportException:myE];
+            [self setHtml:@"An error appeared and has been reported."];
+            return;
+        }
+        
+        UidEntry* uidE = [mail uids][0];
+        
         MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
         [uidsIS addIndex:uidE.uid];
         
-        NSInteger accountIdx = [[AppSettings getSingleton] indexForAccount:mail.email.accountNum];
+        NSString* folderPath = [mail.user folderServerName:uidE.folder];
         
-        NSString* folderPath = [AppSettings folderServerName:uidE.folder forAccountIndex:accountIdx];
-        
-        [[[ImapSync sharedServices:accountIdx].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
+        [[[ImapSync sharedServices:mail.user.accountIndex].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
          start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
              if (messages.count > 0) {
-                 [[[ImapSync sharedServices:accountIdx].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
-                     mail.email.htmlBody = htmlString;
+                 [[[ImapSync sharedServices:mail.user.accountIndex].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                     mail.htmlBody = htmlString;
                      
-                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail.email];
+                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail];
                      [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
                      _mail = mail;
-                     [self setHtml:mail.email.htmlBody];
+                     [self setHtml:mail.htmlBody];
                  }];
              }
          }];
     }
     else {
         _mail = mail;
-        [self setHtml:mail.email.htmlBody];
+        [self setHtml:mail.htmlBody];
     }
 }
 
@@ -247,6 +261,10 @@ padding-top: 20px;\
      [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
      content];
     
+    NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
+                                   html, @"HTML_Content",nil];
+    
+    [Flurry logEvent:@"Email_Load_Time" withParameters:articleParams timed:YES];
     
     [_webView loadHTMLString:html baseURL:nil];
 }
@@ -300,7 +318,7 @@ padding-top: 20px;\
 
 -(void)partForContentID:(NSString*)partUniqueID completed:(void (^)(NSData * data))completedBlock
 {
-    [self.delegate partForUniqueID:partUniqueID completed:completedBlock];
+    [_delegate partForUniqueID:partUniqueID completed:completedBlock];
 }
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
@@ -325,7 +343,7 @@ padding-top: 20px;\
                 [correctURL insertString:@":" atIndex:4];
             }
             
-            [self.delegate openLongURL:[NSURL URLWithString:correctURL]];
+            [_delegate openLongURL:[NSURL URLWithString:correctURL]];
         }
         
         return false;
@@ -336,7 +354,7 @@ padding-top: 20px;\
             [self _refresh];
         }
         else {
-            [self.delegate openWebURL:url];
+            [_delegate openWebURL:url];
         }
         return NO;
     }
@@ -376,7 +394,7 @@ padding-top: 20px;\
                 _webView.scrollView.contentSize = _webView.frame.size;
             }
 
-            [self.delegate webViewLoaded:_webView];
+            [_delegate webViewLoaded:_webView];
             
             [_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
 
@@ -413,7 +431,11 @@ padding-top: 20px;\
                 _webView.scrollView.contentSize = _webView.frame.size;
             }
 
-            [self.delegate webViewLoaded:_webView];
+            [_delegate webViewLoaded:_webView];
+            
+            if (!_loaded) {
+                [Flurry endTimedEvent:@"Email_Load_Time" withParameters:nil];
+            }
             
             _loaded = YES;
             
@@ -435,7 +457,7 @@ padding-top: 20px;\
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
             _webView.frame = fr;
             
-            [self.delegate webViewLoaded:_webView];
+            [_delegate webViewLoaded:_webView];
             
             return NO;
         }
@@ -469,7 +491,7 @@ padding-top: 20px;\
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     if (!_zooming && scrollView.contentOffset.y > 1) {
-        [self.delegate scrollTo:CGPointMake(0, scrollView.contentOffset.y)];
+        [_delegate scrollTo:CGPointMake(0, scrollView.contentOffset.y)];
     }
 }
 
@@ -486,7 +508,7 @@ padding-top: 20px;\
         //scrollView.contentSize = _webView.frame.size;
         [scrollView setContentSize:CGSizeMake(scrollView.contentSize.width, _webView.frame.size.height)];
 
-        [self.delegate webViewLoaded:_webView];
+        [_delegate webViewLoaded:_webView];
     }
     }
 }
@@ -506,7 +528,7 @@ padding-top: 20px;\
     fr.size = CGSizeMake(_webView.frame.size.width, scrollHeight);
     _webView.frame = fr;
         
-    [self.delegate webViewLoaded:_webView];
+    [_delegate webViewLoaded:_webView];
     
     [scrollView setContentSize:CGSizeMake(scrollWidth, _webView.frame.size.height)];
     [scrollView setContentOffset:CGPointMake(0, 0)];

@@ -13,7 +13,6 @@
 @interface MailListViewController (UIViewControllerPreviewingDelegate)
 
 - (void)check3DTouch;
-- (void)Uncheck3DTouch;
 
 - (UIViewController *)previewingContext:(id<UIViewControllerPreviewing>)previewingContext viewControllerForLocation:(CGPoint)location;
 

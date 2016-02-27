@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "Mail.h"
+#import "InViewController.h"
 
 
 @interface EditMailViewController : InViewController

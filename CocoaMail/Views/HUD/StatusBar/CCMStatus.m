@@ -74,7 +74,7 @@
 
 +(void) dismiss
 {
-    [[CCMStatus sharedCCMStatus] dismiss];
+    [[CCMStatus sharedCCMStatus] dismissAfter:0];
 }
 
 #pragma mark - private
@@ -98,7 +98,7 @@
     }
 }
 
--(void) dismiss
+-(void) _dismiss
 {
     if (_messageQueue.count == 0) {
     [UIView animateWithDuration:0.5 animations:^{
@@ -138,7 +138,7 @@
 {
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        [self dismiss];
+        [self _dismiss];
     });
 }
 

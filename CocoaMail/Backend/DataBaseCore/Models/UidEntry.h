@@ -8,16 +8,16 @@
 
 #import <MailCore/MailCore.h>
 
-@class Email;
+@class Mail;
 
 @interface UidEntry : NSObject <NSCopying>
 
 @property (assign) NSInteger pk;
 @property (nonatomic, readwrite) uint32_t uid;
 @property (nonatomic, readwrite) NSInteger folder;
-@property (nonatomic, readwrite) NSInteger account;
-@property (nonatomic, readwrite,copy) NSString* msgId;
-@property (nonatomic, readwrite,copy) NSString* sonMsgId;
+@property (nonatomic, readwrite) NSInteger accountNum;
+@property (nonatomic, readwrite,copy) NSString* msgID;
+@property (nonatomic, readwrite,copy) NSString* sonMsgID;
 @property (nonatomic, readwrite) NSInteger dbNum;
 
 
@@ -29,9 +29,9 @@
 +(NSMutableArray*) getUidEntries;
 +(NSMutableArray*) getUidEntriesinAccount:(NSInteger)accountIndex andDelete:(BOOL)haveDeleted;
 +(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
-+(NSMutableArray*) getUidEntriesFrom:(Email*)email withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
-+(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgId:(NSString*)msgId;
-+(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgId;
++(NSMutableArray*) getUidEntriesFrom:(Mail*)email withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
++(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgID:(NSString*)msgID;
++(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgID;
 +(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 

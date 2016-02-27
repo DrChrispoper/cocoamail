@@ -50,7 +50,7 @@
     item.leftBarButtonItem = [self backButtonInNavBar];
     //item.backBarButtonItem
     
-    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:[self.conversation firstMail].title];
+    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:[self.conversation firstMail].subject];
     item.titleView = l;
     /*
     UIImageView* iv = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"attachment_off"]];
@@ -110,8 +110,8 @@
     NSMutableArray* res = [NSMutableArray arrayWithCapacity:self.conversation.mails.count];
     
     for (Mail* m in self.conversation.mails) {
-        if ([m haveAttachment]) {
-            [m.email fetchAllAttachments];
+        if ([m hasAttachments]) {
+            [m fetchAllAttachments];
             [res addObject:m];
         }
     }
@@ -129,7 +129,7 @@
 -(void) _openEdit
 {
     Mail* mail = [Mail newMailFormCurrentAccount];
-    mail.content = @"";
+    mail.body = @"";
 
     mail.toPersonID = nil;
     
@@ -260,7 +260,7 @@
     h.font = [UIFont systemFontOfSize:16];
     
     if (p.isGeneric) {
-        h.text = m.email.sender.displayName;;
+        h.text = m.sender.displayName;;
     }
     else {
         h.text = p.name;

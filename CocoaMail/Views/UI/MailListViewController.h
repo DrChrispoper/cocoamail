@@ -10,6 +10,7 @@
 #import "CocoaButton.h"
 #import "Persons.h"
 #import "Accounts.h"
+#import "InViewController.h"
 
 @protocol MailListDelegate;
 

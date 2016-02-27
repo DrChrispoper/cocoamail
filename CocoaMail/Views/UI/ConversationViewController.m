@@ -7,7 +7,6 @@
 //
 
 #import "ConversationViewController.h"
-
 #import "Persons.h"
 #import "Accounts.h"
 #import "MCOMessageView.h"
@@ -19,6 +18,9 @@
 #import "ImapSync.h"
 #import "ARSafariActivity.h"
 #import "FindQuote.h"
+#import "Flurry.h"
+#import "ViewController.h"
+#import "UserSettings.h"
 
 @import SafariServices;
 
@@ -59,7 +61,6 @@
 
 -(void) setupWithText:(Mail*)texte extended:(BOOL)extended;
 
-@property (nonatomic, strong) NSString* textContent;
 @property (nonatomic, strong) UIView* htmlView;
 @property (nonatomic, weak) id<SingleMailViewDelegate> delegate;
 
@@ -95,7 +96,7 @@
     }
     // TODO put it elsewhere
     
-    self.folder = [AppSettings typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx forAccountIndex:kActiveAccountIndex];
+    self.folder = [[AppSettings userWithIndex:kActiveFolderIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
 
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
@@ -105,16 +106,20 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
 
-    if ([self.conversation haveAttachment]) {
+    if ([self.conversation hasAttachments]) {
         UIButton* attach = [WhiteBlurNavBar navBarButtonWithImage:@"attachment_off" andHighlighted:@"attachment_on"];
         [attach addTarget:self action:@selector(_attach) forControlEvents:UIControlEventTouchUpInside];
         item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:attach];
     }
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:mail.title];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:mail.subject];
     
     [self _setup];
     
+    //self.scrollView.panGestureRecognizer.delegate = self;
+    
+    [self.scrollView.panGestureRecognizer requireGestureRecognizerToFail:[ViewController mainVC].customPGR];
+
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
@@ -142,7 +147,7 @@
 
 -(NSArray*) nextViewControllerInfos
 {
-    if ([self.conversation haveAttachment]) {
+    if ([self.conversation hasAttachments]) {
         return @[kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION, self.conversation];
     }
 
@@ -160,7 +165,7 @@
   
     // title
     UILabel* lbl = [[UILabel alloc] initWithFrame:self.view.bounds];
-    lbl.text = [self.conversation firstMail].title;
+    lbl.text = [self.conversation firstMail].subject;
     lbl.numberOfLines = 0;
     lbl.textColor = [UIColor whiteColor];
     lbl.lineBreakMode = NSLineBreakByWordWrapping;
@@ -369,6 +374,11 @@
     self.contentOffset = scrollView.contentOffset;
 }
 
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    [[ViewController mainVC] closeCocoaButtonIfNeeded];
+}
+
 #pragma mark - QLPreviewControllerDataSource
 
 -(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
@@ -481,8 +491,8 @@
         [b4 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
     }
     else if (self.folder.type==FolderTypeAll) {
-        [b2 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
-        [b2 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
+        [b2 setImage:[UIImage imageNamed:@"button_inbox_off"] forState:UIControlStateNormal];
+        [b2 setImage:[UIImage imageNamed:@"button_inbox_on"] forState:UIControlStateHighlighted];
     }
     
     return @[b1, b2, b3, b4];
@@ -495,15 +505,21 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    Account* ac = [[Accounts sharedInstance] getAccount:self.conversation.accountIdx];
-    
     SEL selector = NSSelectorFromString(@"deleteRow:");
     
     if ([EmailProcessor getSingleton].updateSubscriber != nil && [[EmailProcessor getSingleton].updateSubscriber respondsToSelector:selector]) {
         ((void (*)(id, SEL, Conversation*))[[EmailProcessor getSingleton].updateSubscriber methodForSelector:selector])([EmailProcessor getSingleton].updateSubscriber, selector,self.conversation);
     }
 
-    [ac moveConversation:self.conversation from:self.folder to:toFolder];
+    NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
+                                   [self.conversation.user folderDisplayNameForType:self.folder] , @"from_Folder",
+                                   [self.conversation.user folderDisplayNameForType:toFolder], @"to_Folder",
+                                   @"conversation", @"action_Location"
+                                   ,nil];
+    
+    [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+    
+    [self.conversation.user.linkedAccount moveConversation:self.conversation from:self.folder to:toFolder updateUI:YES];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
     
@@ -610,8 +626,6 @@
     Mail* mail = [self.delegate mailDisplayed:self];
     Person* person = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
     
-    self.textContent = pMail.content;
-    
     CGFloat WIDTH = self.bounds.size.width;
     
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(22, 30, 22, 30)];
@@ -691,72 +705,17 @@
     
     
     if (extended) {
-        //UIFont* textFont = [UIFont systemFontOfSize:16];
-        
-        //CGSize size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
+
         CGSize size = CGSizeMake(WIDTH - 30,  ([UIScreen mainScreen].bounds.size.height / 2));
 
         size.width = ceilf(size.width);
         size.height = ceilf(size.height);
-        //self.height = size.height;
         
         const CGFloat topBorder = 14.f;
-        
-        
 
-            //NSString* texte = mail.email.body;
-            
-        
-            
-            //NSString* top = test[@"text_top"];
-            //if (![top isEqualToString:@""]) {
-
-            /*NSRange range = [texte rangeOfString:@"\n>"];
-            
-            if (range.location != NSNotFound) {
-                range.length = texte.length - range.location;
-                texte = [texte stringByReplacingCharactersInRange:range withString:@""];
-            }
-            else {
-                range = [texte rangeOfString:@"from:" options:NSCaseInsensitiveSearch];
-                if (range.location != NSNotFound) {
-                    range.length = texte.length - range.location;
-                    texte = [texte stringByReplacingCharactersInRange:range withString:@""];
-                }
-                else {
-                    range = [texte rangeOfString:@"von:" options:NSCaseInsensitiveSearch];
-                    if (range.location != NSNotFound) {
-                        range.length = texte.length - range.location;
-                        texte = [texte stringByReplacingCharactersInRange:range withString:@""];
-                    }
-                    else {
-                        range = [texte rangeOfString:@"de:" options:NSCaseInsensitiveSearch];
-                        if (range.location != NSNotFound) {
-                            range.length = texte.length - range.location;
-                            texte = [texte stringByReplacingCharactersInRange:range withString:@""];
-                        }
-                    }
-                }
-            }
-            }
-            else {
-                texte = top;
-            }
-            
-            size = [texte boundingRectWithSize:CGSizeMake(WIDTH - 30, 5000) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:textFont} context:nil].size;
-
-            UILabel* text = [[UILabel alloc] initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
-            text.text = texte;
-            text.font = textFont;
-            text.numberOfLines = 0;
-            text.textAlignment = NSTextAlignmentJustified;
-            [inIV addSubview:text];
-         
-        }
-        else {*/
             if (!self.htmlView) {
                 self.height = size.height;// = 100;
-                MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
+                MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0/*8*/, 48.f + topBorder, size.width, size.height)];
                 view.isConversation = [self.delegate isConversation];
                 [view setMail:mail];
                 view.delegate = self;
@@ -768,8 +727,6 @@
             }
 
             [inIV addSubview:self.htmlView];
-        //}
-
         
         CGRect f = inIV.frame;
         f.size.height = 90 + size.height + topBorder * 2.f;
@@ -778,7 +735,7 @@
         height = f.size.height;
         
         if (person.isGeneric) {
-            n.text = mail.email.sender.displayName;;
+            n.text = mail.sender.displayName;;
         }
         else {
             n.text = person.name;
@@ -806,7 +763,7 @@
         }
     }
     else {
-        n.text = [pMail.content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        n.text = [pMail.body stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
     
     inIV.userInteractionEnabled = YES;
@@ -1091,10 +1048,10 @@
             if (att.isInline && [att.contentID isEqualToString:partID]) {
                 found = YES;
                 if(!att.data){
-                    UidEntry* uidE = [mail.email.uids firstObject];
+                    UidEntry* uidE = [mail.uids firstObject];
                     MCOIMAPFetchContentOperation*  op =
-                    [[ImapSync sharedServices:[conv accountIdx]].imapSession
-                     fetchMessageAttachmentOperationWithFolder:[AppSettings folderServerName:uidE.folder forAccountIndex:[conv accountIdx]]
+                    [[ImapSync sharedServices:[conv.user accountIndex]].imapSession
+                     fetchMessageAttachmentOperationWithFolder:[[conv user] folderServerName:uidE.folder]
                      uid:uidE.uid
                      partID:att.partID
                      encoding:MCOEncodingBase64];

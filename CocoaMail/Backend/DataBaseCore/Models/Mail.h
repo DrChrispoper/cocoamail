@@ -6,80 +6,99 @@
 //  Copyright (c) 2015 cocoasoft. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-
+#import <MailCore/MailCore.h>
+#import "FMDB.h"
+#import "UidEntry.h"
+#import "FMDatabase.h"
 #import "Attachments.h"
-#import "Email.h"
 
+@class UserSettings;
 
-@interface Mail : NSObject
+static NSString* kQueryAll = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id";
 
-@property (nonatomic) NSInteger fromPersonID;
-@property (nonatomic, strong) NSArray* toPersonID;
-@property (nonatomic, strong) NSString* title;
-@property (nonatomic, strong) NSString* content;
-@property (nonatomic, strong) NSString* transferContent;
+static NSString* kQueryAllMsgID = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id = ?";
 
-@property (nonatomic, strong) NSDate* date;
+static NSString* kQueryPk = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND email.pk = ? LIMIT 1;";
 
+static NSString* kQuerySearch = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email MATCH ? ORDER BY email.datetime DESC;";
+
+static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id MATCH '";
+
+static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
+
+@interface Mail : NSObject <NSCopying>
+
+@property (assign) NSInteger pk;
+
+@property (nonatomic, readwrite, strong) NSDate* datetime;
 @property (nonatomic, strong) NSString* day;
 @property (nonatomic, strong) NSString* hour;
 
-@property (nonatomic, strong) Email* email;
+@property (nonatomic, readwrite, strong) MCOAddress* sender;
+@property (nonatomic, readwrite, copy) NSArray* tos;
+@property (nonatomic, readwrite, copy) NSArray* ccs;
+@property (nonatomic, readwrite, copy) NSArray* bccs;
+@property (nonatomic) NSInteger fromPersonID;
+@property (nonatomic, strong) NSArray* toPersonID;
+@property (nonatomic, readwrite, strong) NSArray* toPersonIDs;
 
+@property (nonatomic, strong) NSString* transferContent;
 @property (nonatomic, strong) Mail* fromMail;
 
--(Mail*) replyMail:(BOOL)replyAll;
--(Mail*) transfertMail;
-+(Mail*) mail:(Email*)email;
--(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc;
+@property (nonatomic, readwrite, copy) NSString* htmlBody;
+@property (nonatomic, readwrite, copy) NSString* msgID;
+@property (nonatomic, readwrite) MCOMessageFlag flag;
 
--(NSArray*) attachments;
--(void) setAttachments:(NSArray*)attachments;
--(BOOL) haveAttachment;
+//search
+@property (nonatomic, readwrite, copy) NSString* subject;
+@property (nonatomic, readwrite, copy) NSString* body;
 
+//ToFetch
+@property (nonatomic, readwrite, copy) NSArray* attachments;
+@property (nonatomic, readwrite, copy) NSArray<UidEntry*>* uids;
+
+
+-(BOOL) hasAttachments;
+
+-(void) loadData;
+-(BOOL) existsLocally;
+-(UserSettings*) user;
+-(UidEntry*) uidEWithFolder:(NSInteger)folderNum;
+-(NSString*) sonID;
+-(BOOL) haveSonInFolder:(NSInteger)folderIdx;
+-(NSArray*) getSons;
+-(void) fetchAllAttachments;
+-(void) loadBody;
+-(BOOL) isInMultipleAccounts;
+-(Mail*) secondAccountDuplicate;
+
+-(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
+-(void) trash;
 -(BOOL) isFav;
 -(BOOL) isRead;
 -(void) toggleFav;
 -(void) toggleRead;
 
--(NSString*) mailID;
+-(Mail*) replyMail:(BOOL)replyAll;
+-(Mail*) transfertMail;
+-(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc;
+
+-(BOOL) isEqualToMail:(Mail*)mail;
+
++(void) tableCheck;
++(void) tableCheck:(FMDatabase*)db;
+
++(NSMutableArray*) getMails;
++(void) res:(FMResultSet*)result toMail:(Mail*)email;
++(Mail*) resToMail:(FMResultSet*)result;
+
++(void) clean:(Mail*)mail;
++(NSInteger) insertMail:(Mail*)mail;
++(void) updateMail:(Mail*)mail;
++(BOOL) removeMail:(NSString*)msgIdDel;
 
 +(NSInteger) isTodayOrYesterday:(NSString*)dateString;
 +(Mail*) newMailFormCurrentAccount;
 
-
 @end
 
-
-@interface Conversation : NSObject
-
-@property (nonatomic, strong, readonly) NSMutableArray* mails;
-
--(NSMutableSet*) foldersType;
--(NSDate*) latestDate;
--(Mail*) firstMail;
--(NSArray*) uidsWithFolder:(NSInteger)folder;
--(BOOL) isInInbox;
--(NSInteger) accountIdx;
--(void) toggleFav;
--(void) addMail:(Mail*)mail;
-
--(BOOL) haveAttachment;
--(BOOL) isFav;
-
--(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
--(void) trash;
-
-@end
-
-@interface ConversationIndex : NSObject
-
-@property (nonatomic) NSInteger index;
-@property (nonatomic) NSInteger account;
-
-+(ConversationIndex*) initWithIndex:(NSInteger)index Account:(NSInteger)account;
--(NSDate*) date;
--(NSDate*) day;
-
-@end

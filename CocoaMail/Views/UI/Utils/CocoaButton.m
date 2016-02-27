@@ -269,11 +269,15 @@
 
 -(void) forceCloseButton
 {
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+
     if ([self.datasource automaticCloseFor:self]==NO) {
         return;
     }
     
     [self _forceCloseButtonSkipDatasource];
+        
+    }];
 }
 
 -(void) forceCloseHorizontal

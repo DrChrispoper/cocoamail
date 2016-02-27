@@ -13,15 +13,11 @@
 
 - (void)check3DTouch
 {
-    // register for 3D Touch (if available)
-    if (self.traitCollection.forceTouchCapability == UIForceTouchCapabilityAvailable) {
-        self.previewingContext = [self registerForPreviewingWithDelegate:(id)self sourceView:self.table];
+    if ([self isForceTouchAvailable]) {
+        self.previewingContext =
+        [self registerForPreviewingWithDelegate:(id)self
+                                     sourceView:self.view];
     }
-}
-
-- (void)Uncheck3DTouch
-{
-    [self unregisterForPreviewingWithContext:self.previewingContext];
 }
 
 - (UIViewController *)previewingContext:(id<UIViewControllerPreviewing>)previewingContext viewControllerForLocation:(CGPoint)location
@@ -30,6 +26,10 @@
     if ([self.presentedViewController isKindOfClass:[PreviewViewController class]]) {
         return nil;
     }
+    
+    CGFloat offset = self.table.contentInset.top;
+    
+    location.y = location.y - offset;
     
     NSIndexPath *path = [self.table indexPathForRowAtPoint:location];
     
@@ -46,8 +46,12 @@
         previewController.indexPath = path;
         
         UITableViewCell* cell = [self.table cellForRowAtIndexPath:path];
+        //CGRect rect = [self.table rectForRowAtIndexPath:path];
+        CGRect frame = cell.frame;
         
-        previewingContext.sourceRect = cell.frame;
+        //frame.origin.y = frame.origin.y - offset;
+        
+        previewingContext.sourceRect = frame;
     
         return  previewController;
     }
@@ -64,7 +68,29 @@
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
 {
-    [self check3DTouch];
+    [super traitCollectionDidChange:previousTraitCollection];
+    if ([self isForceTouchAvailable]) {
+        if (!self.previewingContext) {
+            self.previewingContext =
+            [self registerForPreviewingWithDelegate:(id)self
+                                         sourceView:self.view];
+        }
+    } else {
+        if (self.previewingContext) {
+            [self unregisterForPreviewingWithContext:self.previewingContext];
+            self.previewingContext = nil;
+        }
+    }
+}
+
+- (BOOL)isForceTouchAvailable {
+    BOOL isForceTouchAvailable = NO;
+    if ([self.traitCollection respondsToSelector:
+         @selector(forceTouchCapability)]) {
+        isForceTouchAvailable = self.traitCollection
+        .forceTouchCapability == UIForceTouchCapabilityAvailable;
+    }
+    return isForceTouchAvailable;
 }
 
 @end

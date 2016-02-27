@@ -7,7 +7,7 @@
 //
 
 #import <MailCore/MailCore.h>
-#import "Email.h"
+#import "Mail.h"
 #import "UidEntry.h"
 
 
@@ -29,14 +29,14 @@
 +(EmailProcessor*) getSingleton;
 
 +(NSInteger) dbNumForDate:(NSDate*)date;
--(void) clean:(Email*)email;
--(void) removeEmail:(Email*)email;
+-(void) clean:(Mail*)email;
+-(void) removeEmail:(Mail*)email;
 -(void) updateFlag:(NSMutableArray*)datas;
 -(void) addToFolderWrapper:(UidEntry*)data;
 -(void) removeFromFolderWrapper:(NSDictionary*)data;
--(void) addEmailWrapper:(Email*)email;
--(void) addEmail:(Email*)email;
--(void) updateEmailWrapper:(Email*)email;
+-(void) addEmailWrapper:(Mail*)email;
+-(void) addEmail:(Mail*)email;
+-(void) updateEmailWrapper:(Mail*)email;
 
 
 @end

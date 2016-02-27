@@ -19,6 +19,7 @@
 #import "CCMAttachment.h"
 #import "StringUtil.h"
 #import "Accounts.h"
+#import "UserSettings.h"
 
 static SearchRunner * searchSingleton = nil;
 
@@ -70,7 +71,7 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) searchForSignal:(RACSignal*)signal
 {
-    return  [signal map:^(Email* email) {
+    return  [signal map:^(Mail* email) {
         return email;
     }];
 }
@@ -81,7 +82,7 @@ static SearchRunner * searchSingleton = nil;
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
-        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
+        NSInteger accountNum = [AppSettings numAccountForIndex:accountIndex];
         
         for (NSNumber* dbNum in dbNums) {
             if (self.cancelled) {
@@ -96,17 +97,17 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:kQuerySearch, query];
                 
                 while ([results next]) {
-                    Email* email = [Email resToEmail:results];
+                    Mail* email = [Mail resToMail:results];
                     
                     if ([email isInMultipleAccounts]) {
-                        Email* e = [email secondAccountDuplicate];
+                        Mail* e = [email secondAccountDuplicate];
                         
-                        if (e.accountNum == accountNum) {
+                        if (e.user.accountNum == accountNum) {
                             email = e;
                         }
                     }
                     
-                    if (email.accountNum == accountNum) {
+                    if (email.user.accountNum == accountNum) {
                         [subscriber sendNext:email];
                     }
                     
@@ -133,7 +134,7 @@ static SearchRunner * searchSingleton = nil;
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         self.cancelled = NO;
         
-        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
+        NSInteger accountNum = [AppSettings numAccountForIndex:accountIndex];
         
         NSMutableArray* uids = [UidEntry getUidEntriesWithThread:thread];
         
@@ -141,7 +142,7 @@ static SearchRunner * searchSingleton = nil;
         [query appendString:kQueryThread];
         
         for (UidEntry* p in uids) {
-            [query appendFormat:@"%@ OR ", p.msgId];
+            [query appendFormat:@"%@ OR ", p.msgID];
         }
         
         query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-3)]];
@@ -160,17 +161,17 @@ static SearchRunner * searchSingleton = nil;
                 
                 while ([results next]) {
                     CCMLog(@"Have One");
-                    Email* email = [Email resToEmail:results];
+                    Mail* email = [Mail resToMail:results];
                     
                     if ([email isInMultipleAccounts]) {
-                        Email* e = [email secondAccountDuplicate];
+                        Mail* e = [email secondAccountDuplicate];
                         
-                        if (e.accountNum == accountNum) {
+                        if (e.user.accountNum == accountNum) {
                             email = e;
                         }
                     }
                     
-                    if (email.accountNum == accountNum) {
+                    if (email.user.accountNum == accountNum) {
                         [subscriber sendNext:email];
                     }
                 }
@@ -207,15 +208,15 @@ static SearchRunner * searchSingleton = nil;
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
                     CCMLog(@"Checking table");
-                    [Email tableCheck:db];
+                    [Mail tableCheck:db];
                 }
                 
                 while ([results next]) {
-                    Email* email = [Email resToEmail:results];
+                    Mail* email = [Mail resToMail:results];
                     
                     if ([email isInMultipleAccounts]) {
                         allFound--;
-                        Email* secondEmail = [email secondAccountDuplicate];
+                        Mail* secondEmail = [email secondAccountDuplicate];
                         [subscriber sendNext:secondEmail];
                     }
                     
@@ -263,7 +264,7 @@ static SearchRunner * searchSingleton = nil;
                     [query appendString:kQueryDelete];
                     
                     for (UidEntry* p in pagedUids) {
-                        [query appendFormat:@"%@ OR ", p.msgId];
+                        [query appendFormat:@"%@ OR ", p.msgID];
                     }
                     
                     query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-4)]];
@@ -285,7 +286,7 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccount:(NSInteger)accountIndex from:(Email*)email
+-(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccount:(NSInteger)accountIndex from:(Mail*)email
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         NSMutableArray* uidsInGroups;
@@ -293,7 +294,7 @@ static SearchRunner * searchSingleton = nil;
         NSInteger realFolderNum = folderNum;
         
         if ([Accounts sharedInstance].currentAccount.isAllAccounts) {
-            realFolderNum = [AppSettings importantFolderNumforAccountIndex:accountIndex forBaseFolder:[Accounts sharedInstance].currentAccount.currentFolderType.type];
+            realFolderNum = [[AppSettings userWithIndex:accountIndex] importantFolderNumforBaseFolder:[Accounts sharedInstance].currentAccount.currentFolderType.type];
         }
         
         if (email) {
@@ -317,7 +318,7 @@ static SearchRunner * searchSingleton = nil;
             [query appendString:kQueryThread];
             
             for (UidEntry* p in pagedUids) {
-                [query appendFormat:@"%@ OR ", p.msgId];
+                [query appendFormat:@"%@ OR ", p.msgID];
             }
             
             query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-4)]];
@@ -331,23 +332,23 @@ static SearchRunner * searchSingleton = nil;
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
                     CCMLog(@"Checking table");
-                    [Email tableCheck:db];
+                    [Mail tableCheck:db];
                 }
                 
                 while ([results next]) {
-                    Email* email = [Email resToEmail:results];
+                    Mail* email = [Mail resToMail:results];
                     
                     UidEntry* uidE = [email uidEWithFolder:realFolderNum];
                     
                     [tmp removeObject:uidE];
                     
                     if ([email isInMultipleAccounts]) {
-                        Email* e = [email secondAccountDuplicate];
+                        Mail* e = [email secondAccountDuplicate];
                         
                         if (kisActiveAccountAll) {
                             [subscriber sendNext:e];
                         }
-                        else if (e.accountNum == kActiveAccountNum) {
+                        else if (e.user.accountNum == kActiveAccountNum) {
                             email = e;
                         }
                     }
@@ -390,7 +391,7 @@ static SearchRunner * searchSingleton = nil;
     return [self searchForSignal:[self performDeleteAccount:accountIndex]];
 }
 
--(RACSignal*) activeFolderSearch:(Email*)email inAccount:(NSInteger)accountIndex
+-(RACSignal*) activeFolderSearch:(Mail*)email inAccount:(NSInteger)accountIndex
 {
     self.cancelled = NO;
     
@@ -423,7 +424,7 @@ static SearchRunner * searchSingleton = nil;
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
-        NSInteger accountNum = [[AppSettings getSingleton] numAccountForIndex:accountIndex];
+        NSInteger accountNum = [AppSettings numAccountForIndex:accountIndex];
         
         NSMutableString* query = [NSMutableString string];
         
@@ -448,17 +449,17 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:queryString];
                 
                 while ([results next]) {
-                    Email* email = [Email resToEmail:results];
+                    Mail* email = [Mail resToMail:results];
                     
                     if ([email isInMultipleAccounts]) {
-                        Email* e = [email secondAccountDuplicate];
+                        Mail* e = [email secondAccountDuplicate];
                         
-                        if (e.accountNum == accountNum) {
+                        if (e.user.accountNum == accountNum) {
                             email = e;
                         }
                     }
                     
-                    if (email.accountNum == accountNum) {
+                    if (email.user.accountNum == accountNum) {
                         [subscriber sendNext:email];
                     }
                     

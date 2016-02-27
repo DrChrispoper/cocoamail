@@ -7,6 +7,7 @@
 //
 
 #import "InViewController.h"
+#import "InViewController+SGProgress.h"
 
 @interface InViewController ()
 
@@ -64,7 +65,7 @@
     
     [self.view addSubview:navBarSupport];
     self.navBar = navBar;
- 
+    
     self.navBar.frame = CGRectInset(self.navBar.frame, -3, 0);
     
     navBarSupport.backgroundColor = [UIColor whiteColor];
@@ -107,7 +108,7 @@
 
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
-    [self.navBar computeBlur];
+    //[self.navBar computeBlur];
     [self.pullToRefresh scrollViewDidScroll:scrollView];
     
     if (!scrollView.isDecelerating) {

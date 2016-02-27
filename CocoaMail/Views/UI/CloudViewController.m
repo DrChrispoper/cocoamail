@@ -8,13 +8,13 @@
 
 #import "CloudViewController.h"
 
-#import <Google/SignIn.h>
+//#import <Google/SignIn.h>
 #import <BoxBrowseSDK/BoxBrowseSDK.h>
 #import "DropboxBrowserViewController.h"
 #import "CocoaMail-Swift.h"
 
 
-@interface CloudViewController () <BOXFolderViewControllerDelegate, GIDSignInUIDelegate>
+@interface CloudViewController () <BOXFolderViewControllerDelegate/*, GIDSignInUIDelegate*/>
 
 @property (nonatomic, readwrite, strong) UINavigationController* navControllerForBrowseSDK;
 
@@ -44,7 +44,7 @@
      name:@"AuthNotification"
      object:nil];
     
-    [GIDSignIn sharedInstance].uiDelegate = self;
+    //[GIDSignIn sharedInstance].uiDelegate = self;
 
     UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 50, screenBounds.size.width, 120)];
     iv.contentMode = UIViewContentModeCenter;
@@ -155,9 +155,9 @@
         }
     }
     else if ([self.cloudServiceName isEqualToString:@"Google Drive"]) {
-        if (![[GIDSignIn sharedInstance] hasAuthInKeychain]) {
+        /*if (![[GIDSignIn sharedInstance] hasAuthInKeychain]) {
             [[GIDSignIn sharedInstance] signIn];
-        }
+        }*/
     }
     else if ([self.cloudServiceName isEqualToString:@"Box"]) {
         [BOXContentClient setClientID:@"tut475ti6ir0y715hx0gddn8vtkk91fh" clientSecret:@"ftiL9SaaR8ScITDpanlZg4whbbOkllNz"];

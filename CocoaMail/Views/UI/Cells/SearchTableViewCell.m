@@ -7,10 +7,11 @@
 //
 
 #import "SearchTableViewCell.h"
-
+#import "Conversation.h"
 #import "Mail.h"
 #import "Persons.h"
 #import "ViewController.h"
+#import "UIGlobal.h"
 
 
 @interface SearchTableViewCell ()
@@ -183,7 +184,6 @@ static NSDateFormatter * s_df_date = nil;
 
 -(void) fillWithConversation:(Conversation*)conv subText:(NSString*)subtext highlightWord:(NSString*)word
 {
-    
     if (self.baseView == nil) {
         [self setup];
     }
@@ -192,15 +192,15 @@ static NSDateFormatter * s_df_date = nil;
     
     Mail* mail = [self mail];
     
-    self.time.text = [s_df_date stringFromDate:mail.date];
-    self.attachment.hidden = ![conv haveAttachment];
+    self.time.text = [s_df_date stringFromDate:mail.datetime];
+    self.attachment.hidden = ![conv hasAttachments];
     
     Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
     
     NSString* mailFromName;
     
     if (p.isGeneric) {
-        mailFromName = mail.email.sender.displayName;;
+        mailFromName = mail.sender.displayName;;
     }
     else {
         mailFromName = p.name;
@@ -228,7 +228,7 @@ static NSDateFormatter * s_df_date = nil;
     }
     
 
-    NSString* subtextToDisplay = (subtext.length==0) ? mail.title : subtext;
+    NSString* subtextToDisplay = (subtext.length==0) ? mail.subject : subtext;
     
 
     NSRange rST = [subtextToDisplay rangeOfString:word options:NSCaseInsensitiveSearch];

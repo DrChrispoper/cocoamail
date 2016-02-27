@@ -7,20 +7,20 @@
 //
 
 #import "AddAccountViewController.h"
-
 #import "Accounts.h"
 #import "EditCocoaButtonView.h"
-
 #import <MailCore/MailCore.h>
-#import <Google/SignIn.h>
-
+//#import <Google/SignIn.h>
+#import "GTMOAuth2Authentication.h"
+#import "GTMOAuth2ViewControllerTouch.h"
+#import "GTMHTTPFetcher.h"
+#import "UserSettings.h"
 #import "SyncManager.h"
 #import "AppSettings.h"
 #import "Reachability.h"
 #import "GlobalDBFunctions.h"
 #import "ImapSync.h"
 #import "CocoaMail-Swift.h"
-
 
 @interface AddAccountViewController ()
 
@@ -31,7 +31,7 @@
 @end
 
 
-@interface AddAccountViewController () <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate,GIDSignInUIDelegate>
+@interface AddAccountViewController () <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate/*,GIDSignInUIDelegate*/>
 
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSArray* settings;
@@ -62,13 +62,13 @@
         item.leftBarButtonItem = [self backButtonInNavBar];
     }
     
-    [[NSNotificationCenter defaultCenter]
+    /*[[NSNotificationCenter defaultCenter]
      addObserver:self
      selector:@selector(receiveToggleAuthUINotification:)
      name:@"ToggleAuthUINotification"
-     object:nil];
+     object:nil];*/
     
-    [GIDSignIn sharedInstance].uiDelegate = self;
+    //[GIDSignIn sharedInstance].uiDelegate = self;
     
     NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
@@ -111,15 +111,16 @@
     UIButton* google = [[UIButton alloc] initWithFrame:CGRectMake(0, posYbutton, screenBounds.size.width, 70 + 45)];
     [google setImage:[UIImage imageNamed:@"signGoogle_on"] forState:UIControlStateNormal];
     [google setImage:[UIImage imageNamed:@"signGoogle_off"] forState:UIControlStateHighlighted];
-    [google addTarget:self action:@selector(_google:) forControlEvents:UIControlEventTouchUpInside];
+    [google addTarget:self action:@selector(_startOAuth2:) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:google];
     
-    for (Account* a in [Accounts sharedInstance].accounts) {
-        if (!a.isAllAccounts && [AppSettings isUsingOAuth:a.idx]) {
+    /*for (Account* a in [Accounts sharedInstance].accounts) {
+        if (!a.isAllAccounts && [a.user isUsingOAuth]) {
             google.hidden = YES;
         }
-    }
+    }*/
+    
     self.googleBtn = google;
 }
 
@@ -136,26 +137,6 @@
 
     NSThread* driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
     [driverThread start];
-
-    if ([[AppSettings getSingleton] numAccounts] == 0){
-        UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
-                                                                    message:NSLocalizedString(@"ask-to-sync-data", @"We do some extra sync, can we use data?")
-                                                             preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction* yesAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"YES", @"YES") style:UIAlertActionStyleDefault
-                                                             handler:^(UIAlertAction* aa) {
-                                                                 [[AppSettings getSingleton] setCanSyncOverData:YES];
-                                                                }];
-        
-        UIAlertAction* noAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"NO", @"NO") style:UIAlertActionStyleCancel
-                                                             handler:^(UIAlertAction* aa) {
-                                                                 [[AppSettings getSingleton] setCanSyncOverData:NO];
-                                                             }];
-        [ac addAction:yesAction];
-        [ac addAction:noAction];
-        
-        [[ViewController mainVC] presentViewController:ac animated:YES completion:nil];
-    }
 }
 
 -(void) loadIt
@@ -179,14 +160,76 @@
 
 -(void) _google:(UIButton*)sender
 {
-    [[GIDSignIn sharedInstance] signOut];
-    [[GIDSignIn sharedInstance] signIn];
+    //[[GIDSignIn sharedInstance] signOut];
+    //[[GIDSignIn sharedInstance] signIn];
 }
 
-- (void)signInWillDispatch:(GIDSignIn *)signIn error:(NSError *)error
+- (void) _startOAuth2:(UIButton*)sender
+{
+    /*GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:KEYCHAIN_ITEM_NAME
+                                                                                           clientID:CLIENT_ID
+                                                                                       clientSecret:CLIENT_SECRET];*/
+    
+    //if (![auth canAuthorize]) {
+    SEL selectorFinish = @selector(viewController:finishedWithAuth:error:);
+    SEL selectorButtonCancel = @selector(buttonCancelTapped:);
+    
+    UINavigationController *navController = [[UINavigationController alloc] init];
+    
+    UINavigationBar *navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, 320, 63)];
+    UINavigationItem *navigationItem = [[UINavigationItem alloc] initWithTitle:@"Gmail"];
+    UIBarButtonItem *barButtonItemCancel = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:selectorButtonCancel];
+    
+    [navigationItem setRightBarButtonItem:barButtonItemCancel];
+    [navigationBar setTranslucent:NO];
+    [navigationBar setItems:[NSArray arrayWithObjects: navigationItem,nil]];
+    
+    [navController.view addSubview:navigationBar];
+    
+        GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
+                                                                                                clientID:CLIENT_ID
+                                                                                            clientSecret:CLIENT_SECRET
+                                                                                        keychainItemName:KEYCHAIN_ITEM_NAME
+                                                                                                delegate:self
+                                                                                        finishedSelector:selectorFinish];
+    [navController addChildViewController:authViewController];
+    
+    [[ViewController mainVC] presentViewController:navController animated:YES completion:nil];
+
+    //}
+    //else {
+    //    [auth beginTokenFetchWithDelegate:self didFinishSelector:@selector(auth:finishedRefreshWithFetcher:error:)];
+    //}
+}
+
+- (void)buttonCancelTapped:(UIBarButtonItem *)sender {
+    [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
+}
+
+- (void)viewController:(GTMOAuth2ViewControllerTouch *)viewController finishedWithAuth:(GTMOAuth2Authentication *)authResult error:(NSError *)error {
+    [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
+
+    if (error != nil) {
+        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
+    }
+    else {
+        [self loadWithAuth:authResult];
+    }
+}
+
+- (void)auth:(GTMOAuth2Authentication *)authResult finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error {
+    if (error != nil) {
+        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
+    }
+    else {
+        [self loadWithAuth:authResult];
+    }
+}
+
+/*- (void)signInWillDispatch:(GIDSignIn *)signIn error:(NSError *)error
 {
     CCMLog(@"Remove Spinner");
-}
+}*/
 
 -(void) _hideKeyboard
 {
@@ -341,32 +384,21 @@
 
 -(void) _nextStep
 {
-
     if (self.step == 0) {
         
-        [self loadWithEmail:self.email.text pwd:self.password.text];
+        [self loadAccountWithUsername:self.email.text password:self.password.text oauth2Token:nil];
         
     }
     else {
         
         [[Accounts sharedInstance] addAccount:self.account];
 
-        //if ([Accounts sharedInstance].accounts.count==2) {
-            // it's the first account
         [Accounts sharedInstance].currentAccountIdx = self.account.idx;
-        
-        [self.account initContent];
         
         [ViewController refreshCocoaButton];
         
         [self.account connect];
         [self.account setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-        
-        /*}else if ([Accounts sharedInstance].accounts.count > 2) {
-            [Accounts sharedInstance].currentAccountIdx = self.account.accountIdx;
-            [self.account initContent];
-            [ViewController refreshCocoaButton];
-        }*/
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
@@ -432,7 +464,7 @@
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
 }
 
--(void) receiveToggleAuthUINotification:(NSNotification*)notification
+/*-(void) receiveToggleAuthUINotification:(NSNotification*)notification
 {
     if ([[notification name] isEqualToString:@"ToggleAuthUINotification"] && [notification userInfo][@"accessToken"]) {
 
@@ -451,13 +483,30 @@
     
         [self load];
     }
+}*/
+
+-(void) loadWithAuth:(GTMOAuth2Authentication *)auth
+{
+    self.email.text = [auth userEmail];
+    self.username.text = [auth userEmail];
+    self.password.text = @"";
+    
+    [self loadAccountWithUsername:[auth userEmail] password:nil oauth2Token:[auth accessToken]];
 }
 
--(void) loadWithEmail:(NSString*)username pwd:(NSString*)password
+- (void)loadAccountWithUsername:(NSString *)username
+                       password:(NSString *)password
+                    oauth2Token:(NSString *)oauth2Token
 {
     self.accountVal = [[MCOAccountValidator alloc]init];
     self.accountVal.username = username;
     self.accountVal.password = password;
+    
+    if (oauth2Token) {
+        self.accountVal.email = username;
+        self.accountVal.OAuth2Token = oauth2Token;
+    }
+    
     [self load];
 }
 
@@ -520,6 +569,9 @@
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.no-internet",@"Connection error. There seems to be not internet connection.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
             }
+            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
+                [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
+            }
             else {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
             }
@@ -529,11 +581,7 @@
 
 -(void) saveSettings
 {
-    CCMLog(@"2 - Start saving settings");
-    
-    NSInteger newAccountIndex = [Accounts sharedInstance].accountsCount - 1;
-    
-    CCMLog(@"3 - Start setting Folders");
+    CCMLog(@"2 - Start setting Folders");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.account-in-config", @"HUD Message: Account Configuration...")];
     [[PKHUD sharedHUD] show];
@@ -574,21 +622,23 @@
     
             [[SyncManager getSingleton] addAccountState];
             
-            [AppSettings setSettingsWithAccountVal:self.accountVal accountIndex:newAccountIndex];
-            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
+            UserSettings* user = [[AppSettings getSingleton] newUser];
+            
+            [AppSettings setSettingsWithAccountVal:self.accountVal accountIndex:user.accountIndex];
+            
+            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
 
             [ImapSync allSharedServices:imapSession];
 
-            [AppSettings setName:self.username.text accountIndex:newAccountIndex];
+            [user setName:self.username.text];
                 
-            [AppSettings setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature") accountIndex:newAccountIndex];
+            [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
                 
             [[AppSettings getSingleton] setBadgeCount:0];
-            [AppSettings setNotifications:YES accountIndex:newAccountIndex];
-            [[Accounts sharedInstance] setCurrentAccountIdx:newAccountIndex];
+            [AppSettings setNotifications:YES accountIndex:user.accountIndex];
             
-            if (newAccountIndex == 0) {
-                [AppSettings setDefaultAccountIndex:newAccountIndex];
+            if (user.accountIndex == 0) {
+                [AppSettings setDefaultAccountIndex:user.accountIndex];
             }
             
             NSMutableArray* flagedFolders = [[NSMutableArray alloc] init];
@@ -652,7 +702,7 @@
                                     [otherFolders addObject:folder];
                                 }
                             }
-                            [self finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccountIndex:newAccountIndex];
+                            [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccount:user];
                         }];
                     }
                     else {
@@ -663,19 +713,19 @@
                 }];
             }
             else {
-                [self finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccountIndex:newAccountIndex];
+                [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccount:user];
             }
         }];
     }];
 }
 
--(void) finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession newAccountIndex:(NSInteger)newAccountIndex
+-(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession newAccount:(UserSettings*)user
 {
     CCMLog(@"4 - Finish Folders");
     
     SyncManager* sm = [SyncManager getSingleton];
     
-    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:newAccountIndex]];
+    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
     NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
     NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
@@ -688,43 +738,43 @@
     
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeSent forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeDrafts forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeAll forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted forAccountIndex:newAccountIndex];
-    [AppSettings setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam forAccountIndex:newAccountIndex];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeFavoris];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSent];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDrafts];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeAll];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam];
     
     for (MCOIMAPFolder* folder in sortedFolders) {
 
         //Inbox
         if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
         } //Starred
         else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
         } //Sent
         else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
         } //Draft
         else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
         } //Archive
         else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path]) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
         } //Trash
         else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash)) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
         } //Spam
         else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam)) {
-            [AppSettings setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam forAccountIndex:newAccountIndex];
+            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
         
         NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:@"/"];
         [dispNamesFolders addObject:dispName];
         
-        NSDictionary* folderState = @{ @"accountNum" : @(newAccountIndex),
+        NSDictionary* folderState = @{ @"accountNum" : @(user.accountNum),
                                        @"folderDisplayName":dispName,
                                        @"folderPath":folder.path,
                                        @"deleted":@false,
@@ -733,38 +783,37 @@
                                        @"flags":@(folder.flags),
                                        @"emailCount":@(0)};
         
-        [sm addFolderState:folderState accountIndex:newAccountIndex];
+        [sm addFolderState:folderState accountNum:user.accountNum];
         
         MCOIMAPFolderInfoOperation* folderOp = [imapSession folderInfoOperation:folder.path];
         [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
             if (!error) {
-                NSMutableDictionary* syncState = [sm retrieveState:indexPath accountIndex:newAccountIndex];
+                NSMutableDictionary* syncState = [sm retrieveState:indexPath accountNum:user.accountNum];
                 syncState[@"emailCount"] = @([info messageCount]);
-                [sm persistState:syncState forFolderNum:indexPath accountIndex:newAccountIndex];
+                [sm persistState:syncState forFolderNum:indexPath accountNum:user.accountNum];
             }
         }];
         
         indexPath++;
     }
     
-    if ([AppSettings importantFolderNumforAccountIndex:newAccountIndex forBaseFolder:FolderTypeFavoris] == -1) {
-        [AppSettings setImportantFolderNum:[AppSettings importantFolderNumforAccountIndex:newAccountIndex forBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris forAccountIndex:newAccountIndex];
+    if ([user importantFolderNumforBaseFolder:FolderTypeFavoris] == -1) {
+        [user setImportantFolderNum:[user importantFolderNumforBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
-    [AppSettings setFoldersName:dispNamesFolders forAccountIndex:newAccountIndex];
+    [user setAllFolders:dispNamesFolders];
     
     CCMLog(@"5 - Go!");
     
     [[PKHUD sharedHUD] hideWithAnimated:NO];
     
     Account* ac = [Account emptyAccount];
+    ac.isAllAccounts = NO;
 
-    ac.userColor = [AppSettings defaultColors][newAccountIndex];
+    ac.userColor = [AppSettings defaultColors][user.accountIndex];
     
-    [AppSettings setColor:ac.userColor accountIndex:newAccountIndex];
-    ac.idx = newAccountIndex;
-    
-    BOOL added = NO;
+    [user setColor:ac.userColor];
+    ac.idx = user.accountIndex;
     
     NSString* mail = self.email.text;
     NSUInteger loc = [mail rangeOfString:@"@"].location;
@@ -774,43 +823,35 @@
         NSString* code = [[mail substringToIndex:3] uppercaseString];
         ac.codeName = code;
         Person* p = [Person createWithName:self.username.text email:mail icon:nil codeName:code];
-        added = YES;
         ac.person = p;
     }
     
+    ac.userMail = mail;
     
-    if (self.username.text.length>2) {
-        added = YES;
-    }
+    self.account = ac;
+    self.step = 1;
     
-    if (added) {
-        ac.userMail = mail;
-        //ac.userFolders = [AppSettings allNonImportantFoldersName:newAccountNum];
-        self.account = ac;
+    NSArray* tmpFolders = [user allNonImportantFoldersName];
+    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
         
-        self.step = 1;
-        NSArray* tmpFolders = [AppSettings allNonImportantFoldersNameforAccountIndex:newAccountIndex];
-        NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
-        
-        for (NSString* folderNames in tmpFolders) {
-            [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"]/"])]];
-        }
-        
-        ac.userFolders = foldersNIndent;
-        
-        EditCocoaButtonView* ecbv = [EditCocoaButtonView editCocoaButtonViewForAccount:self.account];
-        ecbv.frame = CGRectMake(0, 55, ecbv.frame.size.width, ecbv.frame.size.height);
-        [self.view addSubview:ecbv];
-        self.editCocoa = ecbv;
-        [ecbv becomeFirstResponder];
-        
-        UINavigationItem* item = [self.navBar.items firstObject];
-        NSString* title = NSLocalizedString(@"add-account-view.title-for-cocoa-button", @"Title: Your Cocoa button");
-        item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
-        [self.navBar setNeedsDisplay];
-        
-        self.googleBtn.hidden = YES;
+    for (NSString* folderNames in tmpFolders) {
+        [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"]/"])]];
     }
+        
+    ac.userFolders = foldersNIndent;
+    
+    EditCocoaButtonView* ecbv = [EditCocoaButtonView editCocoaButtonViewForAccount:self.account];
+    ecbv.frame = CGRectMake(0, 55, ecbv.frame.size.width, ecbv.frame.size.height);
+    [self.view addSubview:ecbv];
+    self.editCocoa = ecbv;
+    [ecbv becomeFirstResponder];
+        
+    UINavigationItem* item = [self.navBar.items firstObject];
+    NSString* title = NSLocalizedString(@"add-account-view.title-for-cocoa-button", @"Title: Your Cocoa button");
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
+    [self.navBar setNeedsDisplay];
+        
+    self.googleBtn.hidden = YES;
 }
 
 

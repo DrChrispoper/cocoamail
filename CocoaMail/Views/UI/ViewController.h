@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-
 #import "InViewController.h"
 
 #define kPRESENT_FOLDER_NOTIFICATION @"kPRESENT_FOLDER_NOTIFICATION"
@@ -63,7 +62,11 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 
 @interface ViewController : UIViewController
 
+@property (nonatomic, strong) UIPanGestureRecognizer* customPGR;
+
 +(ViewController*) mainVC;
+
+-(UIViewController*) topIVC;
 
 +(void) refreshCocoaButton;
 

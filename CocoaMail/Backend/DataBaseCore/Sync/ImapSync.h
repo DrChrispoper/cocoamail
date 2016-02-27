@@ -6,8 +6,7 @@
 //  Copyright (c) 2012 Christopher Hockley. All rights reserved.
 
 #import <MailCore/MailCore.h>
-#import "Email.h"
-#import "Accounts.h"
+#import "Persons.h"
 
 @class RACSignal;
 

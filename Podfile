@@ -1,6 +1,9 @@
 source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, ‘9.0’
 
+# ignore all warnings from all pods
+inhibit_all_warnings!
+
 pod 'pop', :git => 'https://github.com/facebook/pop.git'
 pod 'ReactiveCocoa', '~> 2.3'
 pod 'FMDB'
@@ -10,3 +13,4 @@ pod 'Google-API-Client/Drive', '~> 1.0'
 pod 'box-ios-browse-sdk'
 pod 'Google/SignIn'
 pod 'DZNEmptyDataSet'
+pod 'Flurry-iOS-SDK/FlurrySDK'

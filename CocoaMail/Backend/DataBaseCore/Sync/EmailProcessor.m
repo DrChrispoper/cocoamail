@@ -88,7 +88,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	
 	[[EmailDBAccessor sharedManager] setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:fileName]];
 	
-    [Email tableCheck];
+    [Mail tableCheck];
 }
 
 +(NSInteger) folderCountLimit
@@ -107,9 +107,9 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	return dbNum;
 }
 
--(void) _switchDBForEmail:(Email*)email
+-(void) _switchDBForMail:(Mail*)mail
 {
-    [self _switchToDBNum:[EmailProcessor dbNumForDate:email.datetime]];
+    [self _switchToDBNum:[EmailProcessor dbNumForDate:mail.datetime]];
 }
 
 -(void) _switchToDBNum:(NSInteger)dbNum
@@ -132,21 +132,21 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	[UidEntry addUid:data];
 }
 
--(void)clean:(Email *)email
+-(void)clean:(Mail *)mail
 {
-    [self _switchDBForEmail:email];
-    [Email clean:email];
+    [self _switchDBForMail:mail];
+    [Mail clean:mail];
 }
 
--(void) updateFlag:(NSMutableArray*)datas
+-(void) updateFlag:(NSMutableArray<Mail*>*)datas
 {
     if (self.shuttingDown) {
         return;
     }
     
-    for (Email* email in datas) {
-        [self _switchDBForEmail:email];
-        [Email updateEmail:email];
+    for (Mail* mail in datas) {
+        [self _switchDBForMail:mail];
+        [Mail updateMail:mail];
     }
     
     SEL selector = NSSelectorFromString(@"deliverUpdate:");
@@ -158,17 +158,17 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) removeFromFolderWrapper:(NSDictionary*)data
 {
-    [self removeFromFolder:data[@"datas"] folderIndex:[data[@"folderIdx"] integerValue]];
+    [self _removeFromFolder:data[@"datas"] folderIndex:[data[@"folderIdx"] integerValue]];
 }
 
--(void) removeFromFolder:(NSArray*)datas folderIndex:(NSInteger)folderIdx
+-(void) _removeFromFolder:(NSArray<Mail*>*)datas folderIndex:(NSInteger)folderIdx
 {
     if (self.shuttingDown) {
         return;
     }
     
-	for (Email* email in datas) {
-        [UidEntry removeFromFolderUid:[email uidEWithFolder:folderIdx]];
+	for (Mail* mail in datas) {
+        [UidEntry removeFromFolderUid:[mail uidEWithFolder:folderIdx]];
     }
     
     SEL selector = NSSelectorFromString(@"deliverDelete:");
@@ -178,14 +178,14 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	}
 }
 
--(void) updateEmailWrapper:(Email*)email
+-(void) updateEmailWrapper:(Mail*)mail
 {
     if (self.shuttingDown) {
         return;
     }
     
-    [self _switchDBForEmail:email];
-    [Email updateEmail:email];
+    [self _switchDBForMail:mail];
+    [Mail updateMail:mail];
 }
 
 -(void) removeEmail:(UidEntry*)uid_entry
@@ -195,37 +195,37 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
     [self _switchToDBNum:uid_entry.dbNum];
-    [Email removeEmail:uid_entry.msgId];
+    [Mail removeMail:uid_entry.msgID];
 }
 
--(void) addEmailWrapper:(Email*)email
+-(void) addEmailWrapper:(Mail*)mail
 {
 	// Note that there should be no parallel accesses to addEmailWrapper
-	[self addEmail:email];
-    [self addAttachments:email.attachments];
+	[self addEmail:mail];
+    [self addAttachments:mail.attachments];
 }
 
--(void) addEmail:(Email*)email
+-(void) addEmail:(Mail*)mail
 {
     if (self.shuttingDown) {
         return;
     }
     
-    [self _switchDBForEmail:email];
+    [self _switchDBForMail:mail];
     
-    UidEntry* uidE = email.uids[0];
+    UidEntry* uidE = mail.uids[0];
     
-    if ([Email insertEmail:email] != -1) {
+    if ([Mail insertMail:mail] != -1) {
         [UidEntry addUid:uidE];
     }
     else {
-        email.uids = nil;
+        mail.uids = nil;
         
-        if (![email existsLocally]) {
+        if (![mail existsLocally]) {
             [UidEntry addUid:uidE];
         }
         
-        email.uids = @[uidE];
+        mail.uids = @[uidE];
 
         CCMLog(@"Trying to add Duplicate");
     }

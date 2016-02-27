@@ -8,10 +8,10 @@
 
 #import "SpamListViewController.h"
 #import "ConversationTableViewCell.h"
-#import "Email.h"
 #import "Mail.h"
 #import "Persons.h"
 #import "AppSettings.h"
+#import "Conversation.h"
 
 @interface SpamListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate>
 
@@ -93,8 +93,8 @@
     for (NSString* key in self.spamPics) {
         Mail* mail = [Mail newMailFormCurrentAccount];
         
-        mail.title = key;
-        mail.content = @"";
+        mail.subject = key;
+        mail.body = @"";
         
         for (NSString* kkey in self.spamPics[key]) {
             for (NSString* domain in self.spamPics[key][kkey]) {

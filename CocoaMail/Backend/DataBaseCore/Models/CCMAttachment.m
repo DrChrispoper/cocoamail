@@ -20,17 +20,17 @@
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         for (CCMAttachment* at in atts) {
-            FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? AND file_name = ?", at.msgId, at.fileName];
+            FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? AND file_name = ?", at.msgID, at.fileName];
 
             if (!results.next) {
                 [results close];
                 if (!at.data) {
                     [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,partID,contentID) VALUES (?,?,?,?,?,?);",
-                     at.fileName, @(at.size), at.mimeType, at.msgId, at.partID, at.contentID];
+                     at.fileName, @(at.size), at.mimeType, at.msgID, at.partID, at.contentID];
                 }
                 else {
                     [db executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
-                     at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
+                     at.fileName, @(at.size), at.mimeType, at.msgID, at.data, at.partID, at.contentID];
                 }
             }
             else {
@@ -49,7 +49,7 @@
     
         for (CCMAttachment* at in atts) {
             [database executeUpdate:@"INSERT INTO attachments (file_name,size,mime_type,msg_id,data,partID,contentID) VALUES (?,?,?,?,?,?,?);",
-             at.fileName, @(at.size), at.mimeType, at.msgId, at.data, at.partID, at.contentID];
+             at.fileName, @(at.size), at.mimeType, at.msgID, at.data, at.partID, at.contentID];
         }
     
     [database close];
@@ -88,7 +88,7 @@
             }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
-            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.msgID = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
             attachment.contentID = [results stringForColumn:@"contentID"];
@@ -100,7 +100,7 @@
     return attachments;
 }
 
-+(NSMutableArray*) getAttachmentsWithMsgId:(NSString*)msgId
++(NSMutableArray*) getAttachmentsWithMsgID:(NSString*)msgID
 {
     
     NSMutableArray* attachments = [[NSMutableArray alloc] init];
@@ -108,7 +108,7 @@
     AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? ", msgId];
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? ", msgID];
         
         while ([results next]) {
             Attachment* attachment = [[Attachment alloc] init];
@@ -120,7 +120,7 @@
             }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
-            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.msgID = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
             attachment.contentID = [results stringForColumn:@"contentID"];
@@ -132,7 +132,7 @@
     return attachments;
 }
 
-+(NSMutableArray*) getAttachmentsWithMsgId:(NSString*)msgId isInline:(BOOL)isInline
++(NSMutableArray*) getAttachmentsWithMsgID:(NSString*)msgID isInline:(BOOL)isInline
 {
     NSMutableArray* attachments = [[NSMutableArray alloc] init];
     
@@ -142,10 +142,10 @@
         FMResultSet* results;
         
         if (isInline) {
-            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID <> ''", msgId];
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID <> ''", msgID];
         }
         else {
-            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID = ''", msgId];
+            results = [db executeQuery:@"SELECT * FROM attachments WHERE msg_id = ? and contentID = ''", msgID];
         }
         
         while ([results next]) {
@@ -158,7 +158,7 @@
             }
             attachment.size = [results intForColumn:@"size"];
             attachment.mimeType = [results stringForColumn:@"mime_type"];
-            attachment.msgId = [results stringForColumn:@"msg_id"];
+            attachment.msgID = [results stringForColumn:@"msg_id"];
             attachment.data = [results dataForColumn:@"data"];
             attachment.partID = [results stringForColumn:@"partID"];
             attachment.contentID = [results stringForColumn:@"contentID"];
@@ -174,7 +174,7 @@
 {
     AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?", attachment.data, attachment.msgId, attachment.partID];
+        [db executeUpdate:@"UPDATE attachments set data = ? WHERE msg_id = ? AND partID = ?", attachment.data, attachment.msgID, attachment.partID];
     }];
 }
 

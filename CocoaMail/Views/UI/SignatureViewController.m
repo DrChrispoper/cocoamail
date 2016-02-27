@@ -9,6 +9,7 @@
 #import "SignatureViewController.h"
 #import "AppSettings.h"
 #import "Accounts.h"
+#import "UserSettings.h"
 
 @interface SignatureViewController () <UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
 
@@ -109,7 +110,7 @@
 -(void) _prepareTable
 {
     NSArray* infos = @[
-                       @{TEXT: @"", TEXT_2 : [AppSettings signature:self.account.idx], DACTION : @"EDIT_SIG"}
+                       @{TEXT: @"", TEXT_2 : self.account.user.signature, DACTION : @"EDIT_SIG"}
                        ];
     
     
@@ -146,7 +147,7 @@
 {
     [self _keyboardNotification:NO];
 
-    [AppSettings setSignature:self.signature.text accountIndex:self.account.idx];
+    [self.account.user setSignature:self.signature.text];
 
     self.table.delegate = nil;
     self.table.dataSource = nil;
@@ -315,7 +316,7 @@
 -(void) textFieldDidEndEditing:(UITextField*)textField
 {
     if (textField.tag == 0) {
-        [AppSettings setSignature:textField.text accountIndex:self.account.idx];
+        [self.account.user setSignature:textField.text];
     }
 }
 

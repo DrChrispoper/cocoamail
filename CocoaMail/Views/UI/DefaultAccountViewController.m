@@ -80,7 +80,7 @@
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    Account* a = [[Accounts sharedInstance] getAccount:indexPath.row];
+    Account* a = [[Accounts sharedInstance] account:indexPath.row];
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     

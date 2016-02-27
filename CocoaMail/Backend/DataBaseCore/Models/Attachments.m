@@ -7,7 +7,7 @@
 //
 
 #import "Attachments.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 #import "ViewController.h"
 #import "CCMAttachment.h"
@@ -22,6 +22,10 @@
 -(NSString*) stringSize
 {
     double convertedValue = self.size;
+    
+    if (self.size == 0) {
+        return @"Link";
+    }
     
     int multiplyFactor = 0;
     
@@ -414,7 +418,7 @@
     
     if ([networkReachability currentReachabilityStatus] == ReachableViaWiFi) {
         if (!att.data) {
-            NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgId];
+            NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgID];
             
             if (uidEs.count == 0 || ((UidEntry*)uidEs[0]).pk == 0) {
                 CCMLog(@"Can't find the uid of Attachment");
@@ -424,8 +428,10 @@
             
             UidEntry* uidE = uidEs[0];
             
-            NSString* folderName = [AppSettings folderServerName:uidE.folder forAccountIndex:[[AppSettings getSingleton] indexForAccount:uidE.account]];
-            self.op = [[ImapSync sharedServices:[[AppSettings getSingleton] indexForAccount:uidE.account]].imapSession fetchMessageAttachmentOperationWithFolder:folderName
+            UserSettings* user = [AppSettings userWithNum:uidE.accountNum];
+            
+            NSString* folderName = [user folderServerName:uidE.folder];
+            self.op = [[ImapSync sharedServices:user.accountIndex].imapSession fetchMessageAttachmentOperationWithFolder:folderName
                                                                                                                 uid:uidE.uid
                                                                                                              partID:att.partID
                                                                                                            encoding:MCOEncodingBase64];

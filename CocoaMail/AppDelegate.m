@@ -7,21 +7,20 @@
 //
 
 #import "AppDelegate.h"
-
 #import "MailListViewController.h"
-
 #import "AppSettings.h"
 #import "EmailProcessor.h"
 #import "SearchRunner.h"
 #import "ImapSync.h"
 #import "DateUtil.h"
 #import "CCMStatus.h"
-
 #import "GlobalDBFunctions.h"
-
 #import "Reachability.h"
 #import <DropboxSDK/DropboxSDK.h>
 #import <Instabug/Instabug.h>
+#import "Flurry.h"
+#import "UserSettings.h"
+
 
 @implementation AppDelegate
 
@@ -31,6 +30,9 @@
     
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     [Instabug setIntroMessageEnabled:NO];
+    
+    [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
+    
     // First, create an action
     UIMutableUserNotificationAction *acceptAction = [self createAction];
     
@@ -60,7 +62,7 @@
     
     [Accounts sharedInstance];
     
-    [self registerGoogleSignIn];
+    //[self registerGoogleSignIn];
     
     return shouldPerformAdditionalDelegateHandling;
 }
@@ -119,18 +121,17 @@
         else if (self.launchedNotification) {
             UILocalNotification* notification = self.launchedNotification;
             
-            NSNumber *index = [notification.userInfo objectForKey:@"index"];
-            NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
+            ConversationIndex *cIndex = [notification.userInfo objectForKey:@"cIndex"];
             
-            Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
+            Conversation* conversation = [cIndex.user.linkedAccount getConversationForIndex:cIndex.index];
             
             [conversation foldersType];
             
-            CCMLog(@"Opening email:%@", [conversation firstMail].title);
+            CCMLog(@"Opening email:%@", [conversation firstMail].subject);
             
             Accounts* A = [Accounts sharedInstance];
             [[A currentAccount] releaseContent];
-            A.currentAccountIdx = accountIndex;
+            A.currentAccountIdx = cIndex.user.accountIndex;
             [[A currentAccount] connect];
             
             [ViewController refreshCocoaButton];
@@ -175,13 +176,20 @@
         // handle it
         NSLog(@"Delete Cached Email");
         
-        NSNumber *index = [notification.userInfo objectForKey:@"index"];
-        NSInteger accountIndex = [[AppSettings getSingleton] indexForAccount:[[notification.userInfo objectForKey:@"accountNum"] integerValue]];
-        Conversation* conversation = [[[Accounts sharedInstance] getAccount:accountIndex] getConversationForIndex:[index integerValue]];
+        ConversationIndex *convIndex = [notification.userInfo objectForKey:@"cIndex"];
+        Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
         
-        CCMLog(@"Email in account:%ld (%ld)", (long)[[conversation firstMail].email.uids[0] account], (long)[conversation firstMail].email.accountNum);
+        CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
 
-        [[[Accounts sharedInstance] getAccount:accountIndex] moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0)];
+        [convIndex.user.linkedAccount moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
+        
+        NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
+                                       @"INBOX", @"from_Folder",
+                                       [convIndex.user folderDisplayNameForType:FolderTypeWith(FolderTypeDeleted, 0)], @"to_Folder",
+                                       @"lock_screen", @"action_Location"
+                                       ,nil];
+        
+        [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
     }
     
     // Call this when you're finished
@@ -190,9 +198,9 @@
 
 -(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
 {
-    if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
+    /*if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
         return YES;
-    }
+    }*/
     
     if ([[DBSession sharedSession] handleOpenURL:url]) {
         NSDictionary* statusText = @{@"cloudServiceName":@"Dropbox"};
@@ -246,7 +254,7 @@
     return NO;
 }
 
--(void) signIn:(GIDSignIn*)signIn
+/*-(void) signIn:(GIDSignIn*)signIn
 didSignInForUser:(GIDGoogleUser*)user
      withError:(NSError*)error
 {
@@ -279,7 +287,7 @@ didSignInForUser:(GIDGoogleUser*)user
     else {
         CCMLog(@"Erorr signing in %@",error.localizedDescription);
     }
-}
+}*/
 
 #pragma mark - Notifications
 
@@ -326,7 +334,7 @@ didSignInForUser:(GIDGoogleUser*)user
 
 #pragma mark - Google Sign In
 
--(void) registerGoogleSignIn
+/*-(void) registerGoogleSignIn
 {
     NSString* driveScope = @"https://mail.google.com/";
     NSArray* currentScopes = [GIDSignIn sharedInstance].scopes;
@@ -337,7 +345,7 @@ didSignInForUser:(GIDGoogleUser*)user
     NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
-}
+}*/
 
 # pragma mark - Springboard Shortcut Items (dynamic)
 

@@ -18,19 +18,21 @@
 #import "SearchViewController.h"
 #import "SignatureViewController.h"
 #import "SpamListViewController.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 #import "CocoaButton.h"
 #import "SearchRunner.h"
 #import "EmailProcessor.h"
 #import "AppSettings.h"
-#import <Google/SignIn.h>
+//#import <Google/SignIn.h>
 #import "DropboxBrowserViewController.h"
 #import "PreviewViewController.h"
+#import "InViewController.h"
+#import "EditMailViewController.h"
 
 #import <Instabug/Instabug.h>
 
-@interface ViewController () <CocoaButtonDatasource, GIDSignInUIDelegate>
+@interface ViewController () <CocoaButtonDatasource/*, GIDSignInUIDelegate*/>
 
 @property (weak, nonatomic) IBOutlet UIView* contentView;
 
@@ -57,6 +59,15 @@ static ViewController * s_self;
 +(ViewController*) mainVC
 {
     return s_self;
+}
+
+-(InViewController*) topIVC
+{
+    InViewController* ivc =  [[ViewController mainVC].viewControllers lastObject];
+    if ([ivc isKindOfClass:EditMailViewController.class]) {
+        ivc = [ViewController mainVC].viewControllers[[ViewController mainVC].viewControllers.count - 2];
+    }
+    return ivc;
 }
 
 +(void) presentAlertWIP:(NSString*)message
@@ -91,7 +102,7 @@ static ViewController * s_self;
     
     self.contentView.clipsToBounds = YES;
     
-    [GIDSignIn sharedInstance].uiDelegate = self;
+    //[GIDSignIn sharedInstance].uiDelegate = self;
     
     [[[Accounts sharedInstance] currentAccount] connect];
     
@@ -150,19 +161,21 @@ static ViewController * s_self;
         self.viewControllers = [NSMutableArray arrayWithObjects:f, nil];
     }
     
-    [self _manageCocoaButton:[f haveCocoaButton]];
+    [self _manageCocoaButton:YES];
     
     [self.contentView addSubview:nextView];
     
     [self setupNavigation];
     
-    UIView* border = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, self.view.frame.size.height)];
+    UIView* border = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, self.view.frame.size.height)];
     border.backgroundColor = [UIColor clearColor];
     border.userInteractionEnabled = YES;
     border.autoresizingMask = UIViewAutoresizingFlexibleHeight;
     
     UIPanGestureRecognizer* pgr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panBack:)];
     [border addGestureRecognizer:pgr];
+    
+    self.customPGR = pgr;
     
     [self.view addSubview:border];
     
@@ -705,7 +718,7 @@ static ViewController * s_self;
         }
         
         if (self.viewControllers.count>2) {
-            MailListViewController* f = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
+            MailListViewController* f = [[MailListViewController alloc] initWithFolder:[[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:kActiveFolderIndex]];
             [self.viewControllers replaceObjectAtIndex:1 withObject:f];
         }
         
@@ -807,7 +820,7 @@ static ViewController * s_self;
         }
         else {
             [[[Accounts sharedInstance] currentAccount] cancelSearch];
-            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[AppSettings typeOfFolder:kActiveFolderIndex forAccountIndex:kActiveAccountIndex]];
+            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:kActiveFolderIndex]];
             inbox.view.frame = self.contentView.bounds;
             nextView = inbox.view;
             
@@ -982,7 +995,7 @@ static ViewController * s_self;
     [self.cocoaButton closeHorizontalButton:button refreshCocoaButtonAndDo:^{
         
         Accounts* A = [Accounts sharedInstance];
-        CCMFolderType folder = [AppSettings typeOfFolder:[A currentAccount].currentFolderIdx forAccountIndex:[A currentAccountIdx]];
+        CCMFolderType folder = [[A currentAccount].user typeOfFolder:[A currentAccount].currentFolderIdx];
         [[A currentAccount] releaseContent];
         A.currentAccountIdx = button.tag;
 

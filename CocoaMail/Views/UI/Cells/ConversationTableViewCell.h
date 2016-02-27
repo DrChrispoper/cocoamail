@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-#import "Mail.h"
+@class Conversation;
 
 #define kMAIL_CELL_ID @"kMAIL_CELL_ID"
 #define kCONVERSATION_CELL_ID @"kCONVERSATION_CELL_ID"

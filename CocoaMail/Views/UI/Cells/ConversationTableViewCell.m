@@ -7,7 +7,7 @@
 //
 
 #import "ConversationTableViewCell.h"
-
+#import "UserSettings.h"
 #import "ViewController.h"
 #import "Accounts.h"
 #import "CocoaButton.h"
@@ -216,7 +216,7 @@
 
 -(NSString*) currentID
 {
-    return [self.conversation firstMail].mailID;
+    return [self.conversation firstMail].msgID;
 }
 
 -(Mail*) mail
@@ -311,7 +311,7 @@
                     
                     Person* person;
                     
-                    if ([[Accounts sharedInstance] getPersonID:[self conversation].accountIdx] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
+                    if ([[Accounts sharedInstance] getPersonID:[self conversation].user.accountIndex] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
                         person = [[Persons sharedInstance] getPersonID:[[[self mail].toPersonID firstObject] integerValue]];
                     }
                     else {
@@ -574,23 +574,17 @@
     self.conversation = conv;
     Mail* mail = [self mail];
     
-    if (![mail.title isEqualToString:@""]) {
-        self.title.text = mail.title;
+    if (![mail.subject isEqualToString:@""]) {
+        self.title.text = mail.subject;
     }
     else {
-        self.title.text = [mail.content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-    }
-    
-    if (debugMode) {
-        if ([mail.email.htmlBody containsString:@"<blockquote"]) {
-            self.title.text = @"HAS BLOCKQUOTE";
-        }
+        self.title.text = [mail.body stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     }
     
     Person* p = nil;
     
     //If it is a reply show the first receipient
-    NSInteger meID = [[Accounts sharedInstance] getPersonID:conv.accountIdx];
+    NSInteger meID = [[Accounts sharedInstance] getPersonID:conv.user.accountIndex];
     if (meID == mail.fromPersonID) {
         if (!mail.toPersonID || mail.toPersonID.count == 0) {
             p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
@@ -619,7 +613,7 @@
         NSString* name;
         
         if (p.isGeneric) {
-            name = mail.email.sender.displayName;;
+            name = mail.sender.displayName;;
         }
         else {
             name = p.name;
@@ -632,7 +626,7 @@
     [self.badge addSubview:[p badgeView]];
     
     self.time.text = mail.hour;
-    self.attachment.hidden = ![conv haveAttachment];
+    self.attachment.hidden = ![conv hasAttachments];
     
     self.favori.highlighted = conv.isFav;
     

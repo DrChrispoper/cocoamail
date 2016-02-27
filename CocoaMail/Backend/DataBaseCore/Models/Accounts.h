@@ -6,12 +6,11 @@
 //  Copyright (c) 2015 cocoasoft. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import "Persons.h"
 #import "Mail.h"
 #import "AppSettings.h"
 #import "MailListViewController.h"
+#import "Conversation.h"
 
 @class Conversation;
 @class Account;
@@ -39,7 +38,7 @@
 
 -(Account*) currentAccount;
 -(NSArray*) accounts;
--(Account*) getAccount:(NSInteger)accountIndex;
+-(Account*) account:(NSInteger)accountIndex;
 -(NSInteger) accountsCount;
 -(void) addAccount:(Account*)account;
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
@@ -55,6 +54,7 @@
 @property (nonatomic, strong) NSString* userMail;
 @property (nonatomic, strong) UIColor* userColor;
 @property (nonatomic) NSInteger idx;
+-(UserSettings*) user;
 
 @property (nonatomic, strong) NSArray* userFolders;
 @property (nonatomic) NSInteger currentFolderIdx;
@@ -80,12 +80,12 @@
 -(NSInteger) favorisCount;
 -(NSInteger) draftCount;
 
--(void) insertRows:(Email*)email;
+-(void) insertRows:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
--(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
--(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo;
+-(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
+-(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 // return NO if not removed from form folder, YES if really removed
 -(void) star:(BOOL)add conversation:(Conversation*)conversation;
 
@@ -98,8 +98,9 @@
 -(void) deleteDraft:(Mail*)mail;
 
 -(NSArray*) systemFolderNames;
--(void) deliverUpdate:(NSArray<Email*>*)emails;
--(void) deliverDelete:(NSArray<Email*>*)emails;
+-(void) deliverUpdate:(NSArray<Mail*>*)emails;
+-(void) deliverDelete:(NSArray<Mail*>*)emails fromFolder:(CCMFolderType)folderFrom;
+-(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom;
 
 -(void) doPersonSearch:(Person*)person;
 -(void) doTextSearch:(NSString*)searchString;

@@ -8,7 +8,7 @@
 
 #import "GlobalDBFunctions.h"
 #import "StringUtil.h"
-#import "Email.h"
+#import "Mail.h"
 #import "CCMAttachment.h"
 #import "UidEntry.h"
 #import "CachedAction.h"

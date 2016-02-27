@@ -55,7 +55,6 @@
             [scrollView addSubview:av];
             
             self.pullToRefresh = av;
-            
         }
         
         self.pullToRefresh.hidden = NO;

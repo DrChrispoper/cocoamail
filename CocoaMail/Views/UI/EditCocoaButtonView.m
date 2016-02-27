@@ -7,7 +7,7 @@
 //
 
 #import "EditCocoaButtonView.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 #import "AppSettings.h"
 
@@ -52,7 +52,7 @@
     [ccv updateForAccount:self.account];
     ccv.tapColor = ^(UIColor* color) {
         self.account.userColor = color;
-        [AppSettings setColor:color accountIndex:self.account.idx];
+        [self.account.user setColor:color];
         
         if (self.cocobuttonUpdated != nil) {
             self.cocobuttonUpdated();
@@ -66,6 +66,7 @@
     tf.textAlignment = NSTextAlignmentCenter;
     tf.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
     tf.autocorrectionType = UITextAutocorrectionTypeNo;
+    tf.clearButtonMode = UITextFieldViewModeUnlessEditing;
     tf.text = self.account.codeName;
     tf.delegate = self;
     [self addSubview:tf];
@@ -134,7 +135,6 @@
     NSInteger wantedIdx = 0;
     
     for (UIColor* color in allColors) {
-        
         if (CGColorEqualToColor(color.CGColor, accColor.CGColor)) {
             wantedIdx = [allColors indexOfObject:color];
         }

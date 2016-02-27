@@ -19,6 +19,8 @@
 @property (nonatomic, weak) id <MCOMessageViewDelegate> delegate;
 @property (nonatomic) BOOL isConversation;
 
+-(void) setBgrdColor:(UIColor*)color;
+
 @end
 
 @protocol MCOMessageViewDelegate <NSObject>

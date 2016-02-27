@@ -13,6 +13,8 @@
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "CCMStatus.h"
+#import "InViewController+SGProgress.h"
+#import "UserSettings.h"
 
 @interface Accounts()
 
@@ -64,13 +66,17 @@
         
         if ([AppSettings numActiveAccounts] > 0) {
             
-            for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
-                //NSInteger accountIndex = [AppSettings numAccountForIndex:i];
-                Account* a = [self _createAccountMail:[AppSettings username:accountIndex]
-                                                color:[AppSettings color:accountIndex]
-                                                 code:[AppSettings initials:accountIndex]
-                                                 name:[AppSettings name:accountIndex]
-                                                  idx:accountIndex];
+            for (UserSettings* user in [AppSettings getSingleton].users) {
+            //for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
+                if (user.isDeleted) {
+                    continue;
+                }
+                
+                Account* a = [self _createAccountMail:user.username
+                                                color:user.color
+                                                 code:user.initials
+                                                 name:user.name
+                                                  idx:user.accountIndex];
                 [a initContent];
                 [accounts addObject:a];
             }
@@ -100,10 +106,8 @@
     ac.userColor = color;
     ac.codeName = code;
     
-    //ac.currentFolder = FolderTypeWith(FolderTypeInbox,0);
-    
     //Folders Indentation?
-    NSArray* tmpFolders = [AppSettings allNonImportantFoldersNameforAccountIndex:ac.idx];
+    NSArray* tmpFolders = [ac.user allNonImportantFoldersName];
     
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
     
@@ -144,24 +148,8 @@
     if (!self.currentAccount.isAllAccounts) {
 
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        /*if (self.currentAccount.isAllAccounts) {
-            for (Account* a in [Accounts sharedInstance].accounts) {
-                if (!a.isAllAccounts) {
-                    [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:a.idx]
-                     subscribeNext:^(Email* email) {
-                         [self sortEmail:email];
-                     }
-                     completed:^{
-                         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                             [self.currentAccount.mailListSubscriber reFetch:YES];
-                         }];
-                     }];
-                }
-            }
-        }
-        else {*/
             [[[SearchRunner getSingleton] activeFolderSearch:nil inAccount:self.currentAccountIdx]
-             subscribeNext:^(Email* email) {
+             subscribeNext:^(Mail* email) {
                  [self sortEmail:email];
              }
              completed:^{
@@ -169,14 +157,13 @@
                      [self.currentAccount.mailListSubscriber reFetch:YES];
                  }];
              }];
-        //}
     }];
     }
     
     
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
              [self sortEmail:email];
          }
          completed:^{
@@ -195,26 +182,26 @@
     
 }
 
--(void) sortEmail:(Email*)email
+-(void) sortEmail:(Mail*)email
 {
-    if (email.accountNum == 0) {
+    if (!email.user) {
         CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
         NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
         [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     }
     else {
-        [self.accounts[[[AppSettings getSingleton] indexForAccount:email.accountNum]] insertRows:email];
+        [self.accounts[email.user.accountIndex] insertRows:email];
     }
 }
 
--(void) deliverUpdate:(NSArray<Email*>*)emails
+-(void) deliverUpdate:(NSArray<Mail*>*)emails
 {
-    [self.accounts[[[AppSettings getSingleton] indexForAccount:[emails firstObject].accountNum]] deliverUpdate:emails];
+    [self.accounts[[emails firstObject].user.accountIndex] deliverUpdate:emails];
 }
 
--(void) deliverDelete:(NSArray<Email*>*)emails
+-(void) deliverDelete:(NSArray<Mail*>*)emails fromFolder:(CCMFolderType)folderFrom
 {
-    [self.accounts[[[AppSettings getSingleton] indexForAccount:[emails firstObject].accountNum]] deliverDelete:emails];
+    [self.accounts[[emails firstObject].user.accountIndex] deliverDelete:emails fromFolder:folderFrom];
 }
 
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
@@ -229,15 +216,15 @@
         [AppSettings setDefaultAccountIndex:[AppSettings numActiveAccounts]];
     }
     
-    [AppSettings setUsername:@"" accountIndex:account.idx];
-    [AppSettings setPassword:@"" accountIndex:account.idx];
-    [AppSettings setOAuth:@"" accountIndex:account.idx];
-    [AppSettings setIdentifier:@"" accountIndex:account.idx];
+    [account.user setUsername:@""];
+    [account.user setPassword:@""];
+    [account.user setOAuth:@""];
+    [account.user setIdentifier:@""];
     
     /*[[SearchRunner getSingleton] cancel];
      
      [[[SearchRunner getSingleton] deleteEmailsInAccount:account.idx]
-     subscribeNext:^(Email* email) {}
+     subscribeNext:^(Mail* email) {}
      completed:^{*/
     NSMutableArray* tmp = [self.accounts mutableCopy];
     NSInteger removeIdx = [tmp indexOfObject:account];
@@ -261,7 +248,7 @@
     //}];
 }
 
--(Account*) getAccount:(NSInteger)accountIndex
+-(Account*) account:(NSInteger)accountIndex
 {
     if (accountIndex < self.accounts.count) {
         return self.accounts[accountIndex];
@@ -300,16 +287,18 @@
     [[Persons sharedInstance] registerPersonWithNegativeID:account.person];
     [account.person linkToAccount:account];
     
-    NSInteger currentIdx = self.currentAccountIdx;
+    [account initContent];
+    
+    //NSInteger currentIdx = self.currentAccountIdx;
     NSMutableArray* tmp = [self.accounts mutableCopy];
     NSInteger putIdx = tmp.count - 1;
     
     [tmp insertObject:account atIndex:putIdx];
     self.accounts = tmp;
     
-    if (putIdx>=currentIdx) {
-        self.currentAccountIdx++;
-    }
+    /*if (putIdx >= currentIdx) {
+        self.currentAccountIdx = currentIdx + 1;
+    }*/
 }
 
 -(NSInteger) defaultAccountIdx
@@ -365,7 +354,7 @@
 
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex
 {
-    return [[self.accounts[conversationIndex.account] conversations] objectAtIndex:conversationIndex.index];
+    return [[self.accounts[conversationIndex.user.accountIndex] conversations] objectAtIndex:conversationIndex.index];
 }
 
 @end
@@ -379,6 +368,7 @@
     BOOL _isSyncingCurrentFolder;
     NSMutableArray* _drafts;
     NSMutableArray* _lastEmails;
+    UIBackgroundTaskIdentifier _backgroundUpdateTask;
 }
 
 @end
@@ -397,7 +387,7 @@
 -(void) setName:(NSString*)name
 {
     self.person.name = name;
-    [AppSettings setName:name accountIndex:self.idx];
+    [self.user setName:name];
 }
 
 -(NSString*) codeName
@@ -408,7 +398,12 @@
 -(void) setCodeName:(NSString*)codeName
 {
     self.person.codeName = codeName;
-    [AppSettings setInitials:codeName accountIndex:self.idx];
+    [self.user setInitials:codeName];
+}
+
+-(UserSettings*) user
+{
+    return [AppSettings userWithIndex:self.idx];
 }
 
 -(void) initContent
@@ -425,7 +420,7 @@
     _lastEmails = [[NSMutableArray alloc]initWithCapacity:7+self.userFolders.count];
     
     for (int index = 0; index < 7+self.userFolders.count ; index++) {
-        [_lastEmails addObject:[[Email alloc]init]];
+        [_lastEmails addObject:[[Mail alloc]init]];
     }
     
     _isSyncing = NO;
@@ -449,8 +444,8 @@
     self.currentFolderType = decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue);
     
     if (self.currentFolderType.type == FolderTypeUser) {
-        NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[self.currentFolderType.idx][0];
-        NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
+        NSString* name = self.userFolders[self.currentFolderType.idx][0];
+        NSArray* names = [self.user allFolders];
         for (int i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]) {
                 self.currentFolderIdx = i;
@@ -458,7 +453,7 @@
             }
         }
     } else {
-        self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:self.currentFolderType.type];
+        self.currentFolderIdx = [self.user importantFolderNumforBaseFolder:self.currentFolderType.type];
     }
     
     
@@ -525,20 +520,20 @@
     [names addObject:NSLocalizedString(@"Inbox", @"Inbox")];
     [names addObject:NSLocalizedString(@"Favoris", @"Favoris")];
     
-    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSent] != -1) {
+    if (self.isAllAccounts || [self.user importantFolderNumforBaseFolder:FolderTypeSent] != -1) {
         [names addObject:NSLocalizedString(@"Sent", @"Sent")];
     }
     
-    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDrafts] != -1) {
+    if (self.isAllAccounts || [self.user importantFolderNumforBaseFolder:FolderTypeDrafts] != -1) {
         [names addObject:NSLocalizedString(@"Drafts", @"Drafts")];
     }
     [names addObject:NSLocalizedString(@"All emails", @"All emails")];
     
-    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeDeleted] != -1) {
+    if (self.isAllAccounts || [self.user importantFolderNumforBaseFolder:FolderTypeDeleted] != -1) {
         [names addObject:NSLocalizedString(@"Deleted", @"Deleted")];
     }
     
-    if (self.isAllAccounts || [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:FolderTypeSpam] != -1) {
+    if (self.isAllAccounts || [self.user importantFolderNumforBaseFolder:FolderTypeSpam] != -1) {
         [names addObject:NSLocalizedString(@"Spam", @"Spam")];
     }
     
@@ -576,7 +571,7 @@
         [set addIndex:idx];
         if (encodeFolderTypeWith(type) == encodeFolderTypeWith(self.currentFolderType)) {
             
-            NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:self.currentFolderType forAccountIndex:self.idx] accountIndex:self.idx];
+            NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:self.currentFolderType] accountNum:self.user.accountNum];
             NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
             
             if (set.count == 20) {
@@ -657,7 +652,7 @@
     [_aMS enumerateObjectsAtIndexes:set
                             options:0
                          usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop){
-                             [res addObject:[ConversationIndex initWithIndex:idx Account:self.idx]];
+                             [res addObject:[ConversationIndex initWithIndex:idx user:self.user]];
                          }];
     
     
@@ -669,7 +664,7 @@
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
-    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:[AppSettings identifier:self.idx]];
+    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
     
     NSArray* smtpServicesArray = accountProvider.smtpServices;
     MCONetService* service = smtpServicesArray[0];
@@ -677,8 +672,8 @@
     MCOSMTPSession* smtpSession = [[MCOSMTPSession alloc] init];
     smtpSession.hostname = service.hostname ;
     smtpSession.port = service.port;
-    smtpSession.username = [AppSettings username:self.idx];
-    smtpSession.password = [AppSettings password:self.idx];
+    smtpSession.username = self.user.username;
+    smtpSession.password = self.user.password;
     smtpSession.connectionType = service.connectionType;
     
     CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
@@ -686,7 +681,19 @@
     NSData* rfc822Data = [mail rfc822DataWithAccountIdx:self.idx isBcc:isBcc];
     
     MCOSMTPSendOperation* sendOperation = [smtpSession sendOperationWithData:rfc822Data];
-    [sendOperation start:^(NSError* error) {
+    
+    //[(InViewController*)[[ViewController mainVC] topIVC] showSGProgressWithDuration:2.0 andTintColor:[AppSettings color:self.idx] andTitle:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...")];
+
+    sendOperation.progress = ^(unsigned int current, unsigned int maximum){
+        [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:((long)(current*100)/maximum) andTintColor:self.user.color];
+    };
+
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+        [self beginBackgroundUpdateTask];
+        
+        [sendOperation start:^(NSError* error) {
         
         if (error) {
             
@@ -704,7 +711,7 @@
                 [vc presentViewController:ac animated:YES completion:nil];
             }
             
-            CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
+            CCMLog(@"%@ Error sending email:%@", self.user.username, error);
             
             if (smtpServicesArray.count == 2) {
                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...") dismissAfter:2];
@@ -715,8 +722,8 @@
                 smtpSessionAux.hostname = serviceAux.hostname ;
                 smtpSessionAux.port = serviceAux.port;
                 smtpSessionAux.connectionType = serviceAux.connectionType;
-                smtpSessionAux.username = [AppSettings username:self.idx];
-                smtpSessionAux.password = [AppSettings password:self.idx];
+                smtpSessionAux.username = self.user.username;
+                smtpSessionAux.password = self.user.password;
                 
                 CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
                 
@@ -736,27 +743,33 @@
                             
                             [vc presentViewController:ac animated:YES completion:nil];
                         }
-                        CCMLog(@"%@ Error sending email:%@", [AppSettings username:self.idx], error);
+                        CCMLog(@"%@ Error sending email:%@", self.user.username, error);
                         [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2];
+                        [self endBackgroundUpdateTask];
                     }
                     else {
-                        CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
+                        CCMLog(@"%@ Successfully sent email!", self.user.username);
                         [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.") dismissAfter:2];
                         [self deleteDraft:mail];
+                        [self endBackgroundUpdateTask];
                     }
                 }];
                 
             }
             else {
                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2];
+                [self endBackgroundUpdateTask];
             }
         }
         else {
-            CCMLog(@"%@ Successfully sent email!", [AppSettings username:self.idx]);
+            CCMLog(@"%@ Successfully sent email!", self.user.username);
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")  dismissAfter:2];
             [self deleteDraft:mail];
+            [self endBackgroundUpdateTask];
         }
     }];
+        
+    });
     
     /*if ([self.drafts containsObject:mail]) {
      [self.drafts removeObject:mail];
@@ -771,6 +784,19 @@
     //[self _addIdx:index inArray:FolderTypeWith(FolderTypeSent, 0)];
 }
 
+- (void) beginBackgroundUpdateTask
+{
+    _backgroundUpdateTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+        [self endBackgroundUpdateTask];
+    }];
+}
+
+- (void) endBackgroundUpdateTask
+{
+    [[UIApplication sharedApplication] endBackgroundTask: _backgroundUpdateTask];
+    _backgroundUpdateTask = UIBackgroundTaskInvalid;
+}
+
 -(void) deleteDraft:(Mail*)mail
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
@@ -778,7 +804,7 @@
     CCMFolderType folderFrom = FolderTypeWith(FolderTypeDrafts, 0);
     CCMFolderType folderTo = FolderTypeWith(FolderTypeDeleted, 0);
     
-    [mail.email moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
+    [mail moveFromFolder:[self.user numFolderWithFolder:folderFrom] ToFolder:[self.user numFolderWithFolder:folderTo]];
     
     NSMutableIndexSet* setFrom = self.systemFoldersContent[FolderTypeDrafts];
     
@@ -791,26 +817,30 @@
     [setFrom removeIndex:idx];
     
     if (encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType)) {
-        [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx Account:self.idx]]];
+        [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx user:self.user]]];
     }
 }
 
--(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
+-(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
-    return [self moveConversation:[self.allsMails objectAtIndex:index] from:folderFrom to:folderTo];
+    return [self moveConversation:[self.allsMails objectAtIndex:index] from:folderFrom to:folderTo updateUI:updateUI];
 }
 
--(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo
+-(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
     if (idx == NSNotFound) {
-        CCMLog(@"Conversation:%@ not found",[conversation firstMail].title);
+        CCMLog(@"Conversation:%@ not found",[conversation firstMail].subject);
         return FALSE;
     }
     
@@ -868,7 +898,7 @@
             return NO;
     }
     
-    /*if (folderFrom.type == FolderTypeDrafts && [[conversation firstMail].email.msgId integerValue] <= 0) {
+    /*if (folderFrom.type == FolderTypeDrafts && [[conversation firstMail].email.msgID integerValue] <= 0) {
      [self deleteDraft:[conversation firstMail]];
      
      return YES;
@@ -878,7 +908,7 @@
         [conversation trash];
     }
     else {
-        [conversation moveFromFolder:[AppSettings numFolderWithFolder:folderFrom forAccountIndex:self.idx] ToFolder:[AppSettings numFolderWithFolder:folderTo forAccountIndex:self.idx]];
+        [conversation moveFromFolder:[self.user numFolderWithFolder:folderFrom] ToFolder:[self.user numFolderWithFolder:folderTo]];
     }
     
     if (remove) {
@@ -893,8 +923,8 @@
             setTest = self.systemFoldersContent[folderFrom.type];
         }
         
-        if (encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType)) {
-            [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx Account:self.idx]]];
+        if (updateUI && encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType)) {
+            [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx user:self.user]]];
         }
     }
     else {
@@ -908,6 +938,8 @@
 
 -(void) star:(BOOL)add conversation:(Conversation*)conversation
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     NSMutableArray* tmp = [self.allsMails mutableCopy];
@@ -944,8 +976,8 @@
     NSInteger count = 0;
     
     if (!self.isAllAccounts) {
-        if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx]) {
-            count = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+        if ([self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)] != [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+            count = [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)] accountNum:self.user.accountNum][@"emailCount"] integerValue];
         }
         else {
             count = [self getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
@@ -954,8 +986,8 @@
     else {
         for (Account* a in [Accounts sharedInstance].accounts) {
             if (!a.isAllAccounts) {
-                if ([AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:a.idx] != [AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:a.idx]) {
-                    count += [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0) forAccountIndex:a.idx] accountIndex:a.idx][@"emailCount"] integerValue];
+                if ([self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)] != [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+                    count += [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)] accountNum:a.user.accountNum][@"emailCount"] integerValue];
                 }
                 else {
                     count += [a getConversationsForFolder:FolderTypeWith(FolderTypeFavoris, 0)].count;
@@ -972,12 +1004,12 @@
     NSInteger count = 0;
     
     if (!self.isAllAccounts) {
-        count = [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0) forAccountIndex:self.idx] accountIndex:self.idx][@"emailCount"] integerValue];
+        count = [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0)] accountNum:self.user.accountNum][@"emailCount"] integerValue];
     }
     else {
         for (Account* a in [Accounts sharedInstance].accounts) {
             if (!a.isAllAccounts) {
-                count +=  [[[SyncManager getSingleton] retrieveState:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0) forAccountIndex:a.idx] accountIndex:a.idx][@"emailCount"] integerValue];
+                count +=  [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0)] accountNum:a.user.accountNum][@"emailCount"] integerValue];
             }
         }
     }
@@ -998,7 +1030,7 @@
     
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-        NSArray* names = [AppSettings allFoldersNameforAccountIndex:self.idx];
+        NSArray* names = [self.user allFolders];
         for (int i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]) {
                 self.currentFolderIdx = i;
@@ -1017,7 +1049,7 @@
             }
         }
         else {
-            self.currentFolderIdx = [AppSettings importantFolderNumforAccountIndex:self.idx forBaseFolder:folder.type];
+            self.currentFolderIdx = [self.user importantFolderNumforBaseFolder:folder.type];
             [self refreshCurrentFolder];
             [self localFetchMore:NO];
         }
@@ -1026,7 +1058,7 @@
 
 -(void) showProgress
 {
-    NSInteger syncCount = 0;
+    /*NSInteger syncCount = 0;
     NSInteger emailCount = 0;
     
     if (self.isAllAccounts) {
@@ -1065,23 +1097,23 @@
     
     if (percentage > 0 && percentage < 99) {
         [CCMStatus showStatus:[NSString stringWithFormat:NSLocalizedString(@"status-bar-message.account-progress-sync", @"%@ %ld%% synced"), self.person.codeName, percentage]  dismissAfter:2];
-    }
+    }*/
 }
 
--(void) insertRows:(Email*)email
+-(void) insertRows:(Mail*)email
 {
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
-    if ([[AppSettings getSingleton] isAccountNumDeleted:email.accountNum]) {
+    if ([email.user isDeleted]) {
         return;
     }
     
-    if ((![[email getSonID] isEqualToString:@""] & ![[email getSonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email getSonID]]) {
+    if ((![[email sonID] isEqualToString:@""] & ![[email sonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email sonID]]) {
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
             
-            if ([[[conv firstMail].email getSonID] isEqualToString:[email getSonID]]) {
-                [conv addMail:[Mail mail:email]];
+            if ([[[conv firstMail] sonID] isEqualToString:[email sonID]]) {
+                [conv addMail:email];
                 [self _addCon:idx toFoldersContent:conv.foldersType];
                 return;
             }
@@ -1089,8 +1121,8 @@
     }
     else {
         Conversation* conv = [[Conversation alloc]init];
-        [conv addMail:[Mail mail:email]];
-        [_convIDs addObject:[email getSonID]];
+        [conv addMail:email];
+        [_convIDs addObject:[email sonID]];
         [self addConversation:conv];
     }
 }
@@ -1117,7 +1149,7 @@
         _isSyncing = YES;
         
         [[[SyncManager getSingleton] refreshImportantFolder:folder accountIndex:self.idx]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
          }
          error:^(NSError* error) {
              
@@ -1151,7 +1183,7 @@
     if (!_isSyncing && !_isSyncingCurrentFolder) {
         _isSyncing = YES;
         [[[[SyncManager getSingleton] syncFoldersAccountIndex:self.idx] deliverOn:[RACScheduler scheduler]]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
              //[self insertRows:email];
          }
          error:^(NSError* error) {
@@ -1222,7 +1254,7 @@
                     return;
                 }
                 
-                [[ImapSync sharedServices:self.idx] runUpToDateTest:resAll folderIndex:[AppSettings numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0) forAccountIndex:self.idx] completed:^(NSArray *dels, NSArray *ups) {
+                [[ImapSync sharedServices:self.idx] runUpToDateTest:resAll folderIndex:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)] completed:^(NSArray *dels, NSArray *ups) {
                     _runningUpToDateTest = NO;
                     
                     [self.mailListSubscriber removeConversationList:nil];
@@ -1265,18 +1297,20 @@
     }
 }
 
--(void) deliverUpdate:(NSArray <Email*>*)emails
+-(void) deliverUpdate:(NSArray <Mail*>*)emails
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
-    for (Email* email in emails) {
+    for (Mail* email in emails) {
         BOOL found = NO;
         
         for (Conversation* conv in self.allsMails) {
             for (Mail* m in conv.mails) {
-                if ([m.email.msgId isEqualToString:email.msgId]) {
+                if ([m.msgID isEqualToString:email.msgID]) {
                     
-                    m.email.flag = email.flag;
+                    m.flag = email.flag;
                     
                     found = YES;
                     break;
@@ -1294,28 +1328,30 @@
     }
 }
 
--(void) deliverDelete:(NSArray*)emails
+-(void) deliverDelete:(NSArray*)emails fromFolder:(CCMFolderType)folderFrom
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     NSMutableArray* idxs = [[NSMutableArray alloc]initWithCapacity:emails.count];
     
     NSMutableIndexSet* currentSet = nil;
     
-    if (self.currentFolderType.type == FolderTypeUser) {
-        currentSet = self.userFoldersContent[self.currentFolderType.idx];
+    if (folderFrom.type == FolderTypeUser) {
+        currentSet = self.userFoldersContent[folderFrom.idx];
     }
     else {
-        currentSet = self.systemFoldersContent[self.currentFolderType.type];
+        currentSet = self.systemFoldersContent[folderFrom.type];
     }
     
-    for (Email* email in emails) {
+    for (Mail* email in emails) {
         BOOL found = NO;
         NSInteger index = 0;
         
         for (; !found && index < self.allsMails.count; index++) {
             for (Mail* m in ((Conversation* )self.allsMails[index]).mails) {
-                if ([m.email.msgId isEqualToString:email.msgId]) {
+                if ([m.msgID isEqualToString:email.msgID]) {
                     found = YES;
                     break;
                 }
@@ -1328,17 +1364,9 @@
             CCMLog(@"Error Conversation to delete not found");
         }
         else {
-            
             if ([currentSet containsIndex:index]) {
-                [idxs addObject:[ConversationIndex initWithIndex:index Account:self.idx]];
-            }
-            
-            for (NSMutableIndexSet* set in self.systemFoldersContent) {
-                [set removeIndex:index];
-            }
-            
-            for (NSMutableIndexSet* set in self.userFoldersContent) {
-                [set removeIndex:index];
+                [idxs addObject:[ConversationIndex initWithIndex:index user:self.user]];
+                [currentSet removeIndex:index];
             }
         }
     }
@@ -1346,8 +1374,33 @@
     [self.mailListSubscriber removeConversationList:idxs];
 }
 
+
+-(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom
+{
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
+    NSMutableIndexSet* currentSet = nil;
+    
+    if (self.currentFolderType.type == FolderTypeUser) {
+        currentSet = self.userFoldersContent[self.currentFolderType.idx];
+    }
+    else {
+        currentSet = self.systemFoldersContent[self.currentFolderType.type];
+    }
+    
+    if ([currentSet containsIndex:index]) {
+        NSLog(@"Index %ld was still in set",(long)index);
+        [currentSet removeIndex:index];
+        return YES;
+    }
+    
+    return NO;
+}
+
 -(void) doPersonSearch:(Person*)person
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     NSInteger refBatch = 5;
@@ -1356,7 +1409,7 @@
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] senderSearch:person inAccount:self.idx]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
              [self insertRows:email];
              if (batch-- == 0) {
                  batch = refBatch;
@@ -1374,7 +1427,7 @@
     
     //ServerSearch
     [[[[SyncManager getSingleton] searchPerson:person accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email* email) {
+     subscribeNext:^(Mail* email) {
          [self insertRows:email];
      }
      error:^(NSError* error) {
@@ -1392,6 +1445,8 @@
 
 -(void) doTextSearch:(NSString*)searchString
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     NSInteger refBatch = 5;
@@ -1400,7 +1455,7 @@
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] search:searchString inAccount:self.idx]
-         subscribeNext:^(Email* email) {
+         subscribeNext:^(Mail* email) {
              [self insertRows:email];
              if (batch-- == 0) {
                  batch = refBatch;
@@ -1418,7 +1473,7 @@
     
     //ServerSearch
     [[[[SyncManager getSingleton] searchText:searchString accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email* email) {
+     subscribeNext:^(Mail* email) {
          [self insertRows:email];
      }
      error:^(NSError* error) {
@@ -1436,7 +1491,6 @@
 
 -(void) localFetchMore:(BOOL)loadMore
 {
-    
     if (self.isAllAccounts) {
         for (Account* a in [Accounts sharedInstance].accounts) {
             if (!self.isAllAccounts) {
@@ -1460,10 +1514,11 @@
         
         [_localFetchQueue addOperationWithBlock:^{
             [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil inAccount:self.idx]
-             subscribeNext:^(Email* email) {
+             subscribeNext:^(Mail* email) {
                  more = YES;
                  
-                 [[Accounts sharedInstance].accounts[[[AppSettings getSingleton] indexForAccount:email.accountNum]] insertRows:email];
+                 [[Accounts sharedInstance].accounts[email.user.accountIndex] insertRows:email];
+                 
                  if (batch-- == 0) {
                      batch = refBatch;
                      [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1510,7 +1565,7 @@
             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.checking-email", @"Checking for new emails") dismissAfter:2];
             
             [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES accountIndex:self.idx] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
-             subscribeNext:^(Email* email) {
+             subscribeNext:^(Mail* email) {
                  new++;
                  [self insertRows:email];
              } error:^(NSError* error) {
@@ -1591,6 +1646,8 @@
 
 -(void) syncCurrentFolder
 {
+    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+
     NSAssert(!self.isAllAccounts, @"Should not be called by all Accounts");
     
     if (![ImapSync canFullSync]){
@@ -1598,7 +1655,7 @@
     }
     
     [[[[SyncManager getSingleton] syncActiveFolderFromStart:NO accountIndex:self.idx] deliverOn:[RACScheduler mainThreadScheduler]]
-     subscribeNext:^(Email* email) {
+     subscribeNext:^(Mail* email) {
          //[self insertRows:email];
      } error:^(NSError* error) {
          //CCMLog(@"Error: %@", error.localizedDescription);

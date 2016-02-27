@@ -293,7 +293,7 @@
         
         if (kisActiveAccountAll) {
             for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
-                Account* a = [[Accounts sharedInstance] getAccount:idx];
+                Account* a = [[Accounts sharedInstance] account:idx];
                 [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
                 
             }
@@ -331,8 +331,8 @@
         Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
         
         NSString* fromName = p.name;
-        NSString* title = mail.title;
-        NSString* content = mail.content;
+        NSString* title = mail.subject;
+        NSString* content = mail.body;
         
         if (!content){
             content = @"";
