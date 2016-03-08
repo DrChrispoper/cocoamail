@@ -42,7 +42,7 @@
 {
     [self.view.subviews.firstObject removeFromSuperview];
     
-    Person* person = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+    Person* person = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
     
     CGFloat WIDTH = self.view.bounds.size.width;
     
@@ -66,14 +66,14 @@
     CGFloat xPos = inIV.bounds.size.width - 33.f - 5.5;
     CGFloat step = 33.f + 1.f;
     
-    NSArray* subarray = mail.toPersonID;
+    NSArray* subarray = mail.toPersonIDs;
     
-    if (mail.toPersonID.count>3) {
+    if (mail.toPersonIDs.count>3) {
         NSRange r;
         r.length = 2;
-        r.location = mail.toPersonID.count - 2;
+        r.location = mail.toPersonIDs.count - 2;
         
-        NSMutableArray* tmp = [[mail.toPersonID subarrayWithRange:r] mutableCopy];
+        NSMutableArray* tmp = [[mail.toPersonIDs subarrayWithRange:r] mutableCopy];
         
         [tmp insertObject:@([Persons sharedInstance].idxMorePerson) atIndex:0];
         subarray = tmp;
@@ -81,7 +81,7 @@
     
     for (NSNumber* userID in subarray) {
         
-        Person* p = [[Persons sharedInstance] getPersonID:[userID integerValue]];
+        Person* p = [[Persons sharedInstance] getPersonWithID:[userID integerValue]];
         UIView* perso = [[UIView alloc] initWithFrame:CGRectMake(xPos, 5.5, 33, 33)];
         perso.backgroundColor = [UIColor clearColor];
         perso.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
@@ -166,12 +166,6 @@
     UIPreviewAction *action3 = [UIPreviewAction actionWithTitle:NSLocalizedString(@"quick-swipe.archive", @"Archive") style:UIPreviewActionStyleDestructive handler:^(UIPreviewAction * _Nonnull action, UIViewController * _Nonnull previewViewController) {
         Account* ac = [[Accounts sharedInstance] account:self.conversation.user.accountIndex];
         
-        SEL selector = NSSelectorFromString(@"deleteRow:");
-        
-        if ([EmailProcessor getSingleton].updateSubscriber != nil && [[EmailProcessor getSingleton].updateSubscriber respondsToSelector:selector]) {
-            ((void (*)(id, SEL, Conversation*))[[EmailProcessor getSingleton].updateSubscriber methodForSelector:selector])([EmailProcessor getSingleton].updateSubscriber, selector,self.conversation);
-        }
-        
         CCMFolderType fromfolder = [[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
         CCMFolderType tofolder = FolderTypeWith(FolderTypeAll, 0);
         
@@ -214,7 +208,7 @@
                 if(!att.data){
                     UidEntry* uidE = [mail.uids firstObject];
                     MCOIMAPFetchContentOperation*  op =
-                    [[ImapSync sharedServices:[self.conversation.user accountIndex]].imapSession
+                    [[ImapSync sharedServices:self.conversation.user].imapSession
                      fetchMessageAttachmentOperationWithFolder:[self.conversation.user folderServerName:uidE.folder]
                      uid:uidE.uid
                      partID:att.partID

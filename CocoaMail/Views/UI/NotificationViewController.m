@@ -7,7 +7,7 @@
 //
 
 #import "NotificationViewController.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 
 
@@ -86,7 +86,7 @@
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
     
-    cell.textLabel.text = a.userMail;
+    cell.textLabel.text = a.user.username;
     
     
     UIView* v = [a.person badgeView];
@@ -106,7 +106,7 @@
     s.onTintColor = [UIGlobal standardBlue];
     [s addTarget:self action:@selector(_switchBadge:) forControlEvents:UIControlEventValueChanged];
     cell.accessoryView = s;
-    [s setOn:[AppSettings notifications:indexPath.row] animated:NO];
+    [s setOn:[AppSettings notifications:a.user.accountNum] animated:NO];
     s.tag = indexPath.row;
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
@@ -116,7 +116,8 @@
 
 -(void) _switchBadge:(UISwitch*)s
 {
-    [AppSettings setNotifications:s.isOn accountIndex:s.tag];
+    UserSettings* user = [AppSettings userWithIndex:s.tag];
+    [AppSettings setNotifications:s.isOn accountNum:user.accountNum];
     [self.table reloadData];
 }
 

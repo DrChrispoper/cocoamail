@@ -12,7 +12,8 @@
 #import "Accounts.h"
 #import "CocoaButton.h"
 #import "Persons.h"
-
+#import "Draft.h"
+#import "NSDate+TimeAgo.h"
 
 @interface ConversationTableViewCell () <UIGestureRecognizerDelegate>
 
@@ -61,7 +62,7 @@
     UIView* back = nil;
     CGFloat sepWidth =  0.0;
     
-    UIColor* accountColor = [[Accounts sharedInstance] currentAccount].userColor;
+    UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
     
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView* inIVL = [[UIImageView alloc] initWithImage:rBack];
@@ -293,7 +294,9 @@
             // tav fav
             if (self.favori.tag == tagFavSelected) {
                 
-                [self.conversation toggleFav];
+                if (![[self.conversation firstMail].body isEqualToString:@"COCOAMAILSECRECTWEAPON"]) {
+                    [self.conversation toggleFav];
+                }
                 
                 self.favori.tag = 0;
             } // tap attachment
@@ -311,11 +314,11 @@
                     
                     Person* person;
                     
-                    if ([[Accounts sharedInstance] getPersonID:[self conversation].user.accountIndex] == [self mail].fromPersonID && [self mail].toPersonID && [self mail].toPersonID.count != 0){
-                        person = [[Persons sharedInstance] getPersonID:[[[self mail].toPersonID firstObject] integerValue]];
+                    if ([[Accounts sharedInstance] getPersonID:[self conversation].user.accountIndex] == [self mail].fromPersonID && [self mail].toPersonIDs && [self mail].toPersonIDs.count != 0){
+                        person = [[Persons sharedInstance] getPersonWithID:[[[self mail].toPersonIDs firstObject] integerValue]];
                     }
                     else {
-                        person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
+                        person = [[Persons sharedInstance] getPersonWithID:[self mail].fromPersonID];
                     }
                     
                     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
@@ -345,15 +348,17 @@
                                                           [overView removeFromSuperview];
                                                           [self.delegate unselectAll];
                                                           
-                                                          if ([self.delegate isPresentingDrafts]) {
+                                                          if (![[self.conversation firstMail].body isEqualToString:@"COCOAMAILSECRECTWEAPON"]) {
+                                                            if ([self.delegate isPresentingDrafts]) {
                                                               [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION
                                                                                                                   object:nil
-                                                                                                                userInfo:@{kPRESENT_MAIL_KEY:[self.conversation firstMail]}];
-                                                          }
-                                                          else {
+                                                                                                                userInfo:@{kPRESENT_MAIL_KEY:[[self.conversation firstMail] toDraft]}];
+                                                            }
+                                                            else {
                                                               [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                                                                                   object:nil
                                                                                                                 userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
+                                                            }
                                                           }
                                                           
                                                       }];
@@ -586,8 +591,8 @@
     //If it is a reply show the first receipient
     NSInteger meID = [[Accounts sharedInstance] getPersonID:conv.user.accountIndex];
     if (meID == mail.fromPersonID) {
-        if (!mail.toPersonID || mail.toPersonID.count == 0) {
-            p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+        if (!mail.toPersonIDs || mail.toPersonIDs.count == 0) {
+            p = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
             self.name.text = @"Draft";
         }
         else {
@@ -601,15 +606,15 @@
             }
             
             if (toID == -999) {
-                toID = [[mail.toPersonID firstObject] integerValue];
+                toID = [[mail.toPersonIDs firstObject] integerValue];
             }
             
-            p = [[Persons sharedInstance] getPersonID:toID];
+            p = [[Persons sharedInstance] getPersonWithID:toID];
             self.name.text = [NSString stringWithFormat:@"↩︎%@",p.name];
         }
     }
     else {
-        p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+        p = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
         NSString* name;
         
         if (p.isGeneric) {
@@ -625,7 +630,14 @@
     [self.badge.subviews.firstObject removeFromSuperview];
     [self.badge addSubview:[p badgeView]];
     
-    self.time.text = mail.hour;
+    NSDate* twelveHours = [[NSDate date] dateByAddingTimeInterval:- 60 * 60 * 12];
+
+    if ([mail.datetime compare:twelveHours] == NSOrderedDescending) {
+        self.time.text = [mail.datetime timeAgo];
+    }
+    else {
+        self.time.text = mail.hour;
+    }
     self.attachment.hidden = ![conv hasAttachments];
     
     self.favori.highlighted = conv.isFav;
@@ -633,7 +645,7 @@
     QuickSwipeType idxQuickSwipe = [self quickSwipeType];
     
     if (idxQuickSwipe == QuickSwipeReply) {
-        BOOL toMany = mail.toPersonID.count>1;
+        BOOL toMany = mail.toPersonIDs.count>1;
         self.leftAction.highlighted = toMany;
     }
     

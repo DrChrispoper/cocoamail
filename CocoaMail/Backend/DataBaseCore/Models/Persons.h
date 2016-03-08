@@ -17,11 +17,12 @@
 
 +(Persons*) sharedInstance;
 
--(Person*) getPersonID:(NSInteger)idx;
+-(Person*) getPersonWithID:(NSInteger)idx;
 
 -(void) registerPersonWithNegativeID:(Person*)p;
 
 -(NSInteger) addPerson:(Person*)person;
+-(NSInteger) indexForEmail:(NSString*)email;
 
 @property (nonatomic) NSInteger idxMorePerson;
 @property (nonatomic) NSInteger idxCocoaPerson;
@@ -44,6 +45,7 @@
 
 -(UIView*) badgeView;
 -(UIImageView*) badgeViewImage;
+-(UIView*) doubleBadgeView;
 
 +(Person*) createWithName:(NSString*)name email:(NSString*)mail icon:(UIImage*)icon codeName:(NSString*)codeName;
 

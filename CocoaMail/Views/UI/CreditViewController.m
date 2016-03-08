@@ -7,7 +7,7 @@
 //
 
 #import "CreditViewController.h"
-
+#import "Draft.H"
 #import "CocoaButton.h"
 #import "Mail.h"
 #import "Persons.h"
@@ -264,18 +264,19 @@
     switch (button.tag) {
         case 1:
         {
-            Mail* mail = [Mail newMailFormCurrentAccount];
+            Draft* draft = [Draft newDraftFormCurrentAccount];
             
             Persons* p = [Persons sharedInstance];
             
+            Person* more = [Person createWithName:nil email:@"support@cocoamail.com" icon:[UIImage imageNamed:@"cocoamail"] codeName:nil];
+
             if (p.idxCocoaPerson == 0) {
-                Person* more = [Person createWithName:nil email:@"support@cocoamail.com" icon:[UIImage imageNamed:@"cocoamail"] codeName:nil];
                 p.idxCocoaPerson = [p addPerson:more];
             }
             
-            mail.toPersonID = @[@(p.idxCocoaPerson)];
+            draft.toPersons = [NSMutableArray arrayWithArray:@[more.email]];
             
-            [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
             break;
         }
         case 2:

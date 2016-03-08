@@ -11,6 +11,7 @@
 #import "Persons.h"
 #import "Accounts.h"
 #import "InViewController.h"
+#import "AttachmentsViewController.h"
 
 @protocol MailListDelegate;
 
@@ -27,6 +28,7 @@
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSMutableArray* convByDay;
 @property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
+@property (nonatomic, weak) AttachmentsViewController* attachSubscriber;
 
 @end
 

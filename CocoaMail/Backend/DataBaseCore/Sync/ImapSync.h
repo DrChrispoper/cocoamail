@@ -9,7 +9,7 @@
 #import "Persons.h"
 
 @class RACSignal;
-
+@class UserSettings;
 
 @interface ImapSync : NSObject <MCOHTMLRendererIMAPDelegate>
 
@@ -17,10 +17,9 @@
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
 @property (nonatomic) BOOL connected;
 
-//+(ImapSync*) sharedServices;
-+(ImapSync*) sharedServices:(NSInteger)accountNum;
++(ImapSync*) sharedServices:(UserSettings*)user;
 +(NSArray*) allSharedServices:(MCOIMAPSession*)updated;
-+(RACSignal*) doLogin:(NSInteger)account;
++(RACSignal*) doLogin:(UserSettings*)user;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
@@ -28,8 +27,8 @@
 -(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups))completedBlock;
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
-+(void) deleted;
-+(void) runInboxUnread:(NSInteger)accountIndex;
++(void) deletedAndWait:(UserSettings*)deleteUser;
++(void) runInboxUnread:(UserSettings*)user;
 -(void) cancel;
 
 -(NSMutableSet*) emailIDs;

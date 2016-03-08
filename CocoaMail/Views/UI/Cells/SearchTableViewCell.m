@@ -149,7 +149,7 @@ static NSDateFormatter * s_df_date = nil;
     bigger = CGRectInset(self.badge.frame, -10, -10);
     
     if (CGRectContainsPoint(bigger, pos)) {
-        Person* person = [[Persons sharedInstance] getPersonID:[self mail].fromPersonID];
+        Person* person = [[Persons sharedInstance] getPersonWithID:[self mail].fromPersonID];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
         return;
     }
@@ -195,7 +195,7 @@ static NSDateFormatter * s_df_date = nil;
     self.time.text = [s_df_date stringFromDate:mail.datetime];
     self.attachment.hidden = ![conv hasAttachments];
     
-    Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+    Person* p = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
     
     NSString* mailFromName;
     

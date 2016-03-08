@@ -8,6 +8,7 @@
 
 #import "CCMConstants.h"
 #import "Accounts.h"
+#import <MailCore/Mailcore.h>
 
 #define USER_SETTINGS_FILE_NAME_TEMPLATE    @"user_settings_%lu"
 #define FOLDER_USER_SETTINGS_KEY		@"userSettings"
@@ -31,13 +32,13 @@
 @property UIColor* color;
 
 @property NSMutableArray* importantFolders;
-@property NSMutableArray* allFolders;
-
-@property NSUInteger accountNum;
-@property NSUInteger accountIndex;
+@property NSMutableArray* allFoldersDisplayNames;
 
 @property (getter = isDeleted) BOOL deleted;
 @property (getter = isAll) BOOL all;
+
+@property NSUInteger accountNum;
+-(NSUInteger) accountIndex;
 
 -(NSString*) password;
 -(void) setPassword:(NSString*)password;
@@ -59,5 +60,7 @@
 -(NSArray*) allNonImportantFoldersName;
 
 -(Account*) linkedAccount;
+
+-(MCOIMAPMessagesRequestKind) requestKind;
 
 @end

@@ -23,7 +23,7 @@
 
 @property (nonatomic, strong) NSOperationQueue* operationQueue;
 @property (nonatomic, strong) NSDateFormatter* dbDateFormatter;
-@property (nonatomic, strong) id updateSubscriber;
+//@property (nonatomic, strong) id updateSubscriber;
 @property (assign) volatile BOOL shuttingDown;
 
 +(EmailProcessor*) getSingleton;

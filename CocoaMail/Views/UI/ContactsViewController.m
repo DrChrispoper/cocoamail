@@ -29,7 +29,7 @@
     
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:[NSString stringWithFormat:@"%lu %@",(unsigned long)self.mail.toPersonID.count , NSLocalizedString(@"contacts-view.title", @"Contacts")]];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:[NSString stringWithFormat:@"%lu %@",(unsigned long)self.mail.toPersonIDs.count , NSLocalizedString(@"contacts-view.title", @"Contacts")]];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
@@ -60,13 +60,13 @@
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return self.mail.toPersonID.count;
+    return self.mail.toPersonIDs.count;
 }
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
 
-    Person* person = [[Persons sharedInstance] getPersonID:[self.mail.toPersonID[indexPath.row] integerValue]];
+    Person* person = [[Persons sharedInstance] getPersonWithID:[self.mail.toPersonIDs[indexPath.row] integerValue]];
     
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
@@ -106,7 +106,7 @@
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    Person* person = [[Persons sharedInstance] getPersonID:[self.mail.toPersonID[indexPath.row] integerValue]];    
+    Person* person = [[Persons sharedInstance] getPersonWithID:[self.mail.toPersonIDs[indexPath.row] integerValue]];
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
 }
 

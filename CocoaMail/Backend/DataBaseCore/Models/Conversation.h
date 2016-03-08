@@ -12,6 +12,7 @@
 @interface Conversation : NSObject
 
 @property (nonatomic, strong, readonly) NSMutableArray* mails;
+@property (nonatomic) BOOL isDraft;
 
 -(NSMutableSet*) foldersType;
 -(NSDate*) latestDate;

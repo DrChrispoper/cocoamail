@@ -15,7 +15,7 @@
 #import <MailCore/Mailcore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
-
+@class UserSettings;
 @class Person;
 
 @interface SyncManager : NSObject {    
@@ -32,16 +32,16 @@
 +(SyncManager*) getSingleton;
 
 //-(RACSignal*) refreshActiveFolder;
--(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart accountIndex:(NSInteger)accountIndex;
--(RACSignal*) syncFoldersAccountIndex:(NSInteger)accountIndex;
--(RACSignal*) refreshImportantFolder:(NSInteger)folder accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user;
+-(RACSignal*) syncFoldersUser:(UserSettings*)user;
+-(RACSignal*) refreshImportantFolder:(NSInteger)folder user:(UserSettings*)user;
 -(RACSignal*) syncInboxFoldersBackground;
 
--(RACSignal*) searchPerson:(Person*)person accountIndex:(NSInteger)accountIndex;
--(RACSignal*) searchText:(NSString*)text accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) searchPerson:(Person*)person user:(UserSettings*)user;
+-(RACSignal*) searchText:(NSString*)text user:(UserSettings*)user;
 
 //Update recorded state
--(NSInteger) folderCount:(NSInteger)accountIndex;
+-(NSInteger) folderCount:(NSInteger)accountNum;
 -(void) addAccountState;
 -(void) addFolderState:(NSDictionary*)data accountNum:(NSInteger)accountNum;
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;

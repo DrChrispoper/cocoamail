@@ -62,8 +62,8 @@
         CGFloat limite = -scrollView.contentInset.top - 60;
         CGFloat pourc = scrollView.contentOffset.y / limite;
         
-        if (pourc>1) {
-            pourc = 1.f;
+        if (pourc>1.1) {
+            pourc = 1.1f;
         }
         
         pourc = pourc * pourc;

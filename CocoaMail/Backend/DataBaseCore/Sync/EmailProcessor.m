@@ -18,6 +18,7 @@
 #import "CCMAttachment.h"
 #import "FMDatabase.h"
 #import "Accounts.h"
+#import "UserSettings.h"
 
 #define SECONDS_PER_DAY 86400.0 //24*3600
 #define FOLDER_COUNT_LIMIT 999 // maximum number of folders allowed
@@ -30,7 +31,6 @@ static EmailProcessor * singleton = nil;
 @synthesize dbDateFormatter;
 @synthesize operationQueue;
 @synthesize shuttingDown;
-@synthesize updateSubscriber;
 
 BOOL firstOne = YES; // caused effect: Don't endTransaction when we're just starting
 BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, don't wrap the first ADDS_PER_TRANSACTION calls into a transaction
@@ -138,22 +138,22 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     [Mail clean:mail];
 }
 
--(void) updateFlag:(NSMutableArray<Mail*>*)datas
+-(void) updateFlag:(NSMutableArray<Mail*>*)emails
 {
     if (self.shuttingDown) {
         return;
     }
     
-    for (Mail* mail in datas) {
+    for (Mail* mail in emails) {
         [self _switchDBForMail:mail];
         [Mail updateMail:mail];
     }
     
-    SEL selector = NSSelectorFromString(@"deliverUpdate:");
+    UserSettings* user  = [emails firstObject].user;
     
-    if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
-        ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
-	}
+    if (user && !user.isDeleted) {
+        [user.linkedAccount deliverUpdate:emails];
+    }
 }
 
 -(void) removeFromFolderWrapper:(NSDictionary*)data
@@ -161,21 +161,21 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     [self _removeFromFolder:data[@"datas"] folderIndex:[data[@"folderIdx"] integerValue]];
 }
 
--(void) _removeFromFolder:(NSArray<Mail*>*)datas folderIndex:(NSInteger)folderIdx
+-(void) _removeFromFolder:(NSArray<Mail*>*)emails folderIndex:(NSInteger)folderIdx
 {
     if (self.shuttingDown) {
         return;
     }
     
-	for (Mail* mail in datas) {
+	for (Mail* mail in emails) {
         [UidEntry removeFromFolderUid:[mail uidEWithFolder:folderIdx]];
     }
     
-    SEL selector = NSSelectorFromString(@"deliverDelete:");
+    UserSettings* user  = [emails firstObject].user;
     
-    if (self.updateSubscriber != nil && [self.updateSubscriber respondsToSelector:selector]) {
-        ((void (*)(id, SEL, NSArray*))[self.updateSubscriber methodForSelector:selector])(self.updateSubscriber, selector,datas);
-	}
+    if (user && !user.isDeleted) {
+        [user.linkedAccount deliverDelete:emails fromFolder:[user typeOfFolder:folderIdx]];
+    }
 }
 
 -(void) updateEmailWrapper:(Mail*)mail
@@ -226,8 +226,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         }
         
         mail.uids = @[uidE];
-
-        CCMLog(@"Trying to add Duplicate");
     }
 }
 

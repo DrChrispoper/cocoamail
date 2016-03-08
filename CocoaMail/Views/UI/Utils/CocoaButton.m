@@ -7,7 +7,7 @@
 //
 
 #import "CocoaButton.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 #import "ViewController.h"
 
@@ -94,7 +94,7 @@
     self.backgroundColor = [UIColor clearColor];
     
     UIView* background = [[UIView alloc] initWithFrame:self.bounds];
-    background.backgroundColor = cac.userColor;
+    background.backgroundColor = cac.user.color;
     background.layer.cornerRadius = 22;
     background.layer.masksToBounds = YES;
     [self addSubview:background];
@@ -113,7 +113,7 @@
     l.backgroundColor = [UIColor clearColor];
     l.textColor = [UIColor whiteColor];
     l.textAlignment = NSTextAlignmentCenter;
-    l.text = cac.codeName;
+    l.text = cac.user.initials;
     l.font = [UIFont systemFontOfSize:13];
     [self addSubview:l];
     self.nameView = l;
@@ -131,9 +131,9 @@
 -(void) updateColor
 {
     Account* cac = [[Accounts sharedInstance] currentAccount];
-    self.backView.backgroundColor = cac.userColor;
-    self.nameView.text = cac.codeName;
-    self.backViewAnim.backgroundColor = cac.userColor;
+    self.backView.backgroundColor = cac.user.color;
+    self.nameView.text = cac.user.initials;
+    self.backViewAnim.backgroundColor = cac.user.color;
 }
 
 -(void) enterLevel:(NSInteger)level
@@ -180,7 +180,7 @@
                                  [iv removeFromSuperview];
                              }
                              
-                             self.nameView.text = cac.codeName;
+                             self.nameView.text = cac.user.initials;
                          }];
                      }];
 

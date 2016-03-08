@@ -40,13 +40,28 @@ for (var i = 0; i < images.length; i++) {\
 var url = images[i].getAttribute('src');\
 if (url.indexOf(info.URLKey) == 0) {\
 images[i].setAttribute('src', info.InlineDataKey);\
+var width = images[i].style.width;\
+if (!width) {\
+images[i].style.width = \"100%\";\
+}\
 break;\
 }\
 }\
 };\
 \
+$.getDocHeight = function(){\
+return Math.max(\
+                $(document).height(),\
+                $(window).height(),\
+                /* For opera: */\
+                document.documentElement.clientHeight\
+                );\
+};\
+jQuery(document).ready(function(){\
+window.location.href = \"ready://\" + $.getDocHeight();\
+});\
 jQuery(window).load(function() {\
-window.location.href = \"newHeight://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
+window.location.href = \"newheight://\" + $.getDocHeight();\
 });\
 $(document).on('mobileinit', function () {\
 $.mobile.ignoreContentEnabled=true;\
@@ -68,10 +83,10 @@ $(function(){\
             window.location.href = \"showMore://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
         });\
         var text = $('div.expandContent').html();\
-        if (text == 'Show quoted text')\
+        if (text == '...')\
             text = 'Hide quoted text';\
         else\
-            text = 'Show quoted text';\
+            text = '...';\
         $('div.expandContent').html(text);\
     }\
 });\
@@ -91,11 +106,11 @@ pre {\
 white-space: pre-wrap;\
 }\
 div.expandContent {\
-text-align: center;\
 font-size: 11px;\
 font-weight: bold;\
 padding: 3px 5px;\
 border-radius: 3px;\
+background: #f0f0f0;\
 }\
 div.showMe {\
 padding-top: 20px;\
@@ -201,10 +216,10 @@ padding-top: 20px;\
         
         NSString* folderPath = [mail.user folderServerName:uidE.folder];
         
-        [[[ImapSync sharedServices:mail.user.accountIndex].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
+        [[[ImapSync sharedServices:mail.user].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
          start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
              if (messages.count > 0) {
-                 [[[ImapSync sharedServices:mail.user.accountIndex].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                 [[[ImapSync sharedServices:mail.user].imapSession htmlBodyRenderingOperationWithMessage:messages[0] folder:folderPath] start:^(NSString* htmlString, NSError* error) {
                      mail.htmlBody = htmlString;
                      
                      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:mail];
@@ -249,7 +264,7 @@ padding-top: 20px;\
         NSArray* res = [FindQuote quote_html:content];
         NSString* split = res[0];
         if (res.count == 2) {
-            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\">Show quoted text</div><div class=\"showMe\" style=\"display:none\">%@</div>", res[0], res[1]];
+            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\">...</div><div class=\"showMe\" style=\"display:none\">%@</div>", res[0], res[1]];
         }
         content = split;
     }
@@ -260,11 +275,6 @@ padding-top: 20px;\
      "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
      [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
      content];
-    
-    NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   html, @"HTML_Content",nil];
-    
-    [Flurry logEvent:@"Email_Load_Time" withParameters:articleParams timed:YES];
     
     [_webView loadHTMLString:html baseURL:nil];
 }
@@ -325,6 +335,8 @@ padding-top: 20px;\
 {
     NSURL *url = [request URL];
 
+    //NSLog(@"url:%@",url);
+    
     if ([[url scheme] isEqualToString:@"long"]) {
     
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
@@ -361,7 +373,7 @@ padding-top: 20px;\
     else if (navigationType == UIWebViewNavigationTypeOther) {
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
-            
+
             [_loadingView setHidden:YES];
 
             BOOL notCool = NO;
@@ -400,10 +412,12 @@ padding-top: 20px;\
 
             return NO;
         }
-        else if ([[url scheme] isEqualToString:@"newHeight"]) {
+        else if ([[url scheme] isEqualToString:@"newheight"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
 
             [_loadingView setHidden:YES];
+
+            _loaded = YES;
 
             BOOL notCool = NO;
             
@@ -432,12 +446,6 @@ padding-top: 20px;\
             }
 
             [_delegate webViewLoaded:_webView];
-            
-            if (!_loaded) {
-                [Flurry endTimedEvent:@"Email_Load_Time" withParameters:nil];
-            }
-            
-            _loaded = YES;
             
             return NO;
         }

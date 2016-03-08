@@ -71,44 +71,48 @@ static SyncManager * singleton = nil;
 
 #pragma mark Request sync
 
--(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
 }
 
--(RACSignal*) refreshImportantFolder:(NSInteger)pfolder accountIndex:(NSInteger)accountIndex;
+-(RACSignal*) refreshImportantFolder:(NSInteger)pfolder user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:[[AppSettings userWithIndex:accountIndex] importantFolderNumforBaseFolder:pfolder] fromStart:YES fromAccount:NO]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user importantFolderNumforBaseFolder:pfolder] fromStart:YES fromAccount:NO]];
 }
 
--(RACSignal*) syncFoldersAccountIndex:(NSInteger)accountIndex;
+-(RACSignal*) syncFoldersUser:(UserSettings*)user;
 {
-    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:-1 fromStart:NO fromAccount:YES]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:-1 fromStart:NO fromAccount:YES]];
 }
 
 -(RACSignal*) syncInboxFoldersBackground
 {
     NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
 
-    for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+    for (UserSettings* user in [AppSettings getSingleton].users) {
+        if (user.isDeleted) {
+            continue;
+        }
+    //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         
-        [ImapSync runInboxUnread:accountIndex];
+        [ImapSync runInboxUnread:user];
         
-        NSInteger folder = [[AppSettings userWithIndex:accountIndex] importantFolderNumforBaseFolder:FolderTypeInbox];
-        [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:accountIndex] runFolder:folder fromStart:YES fromAccount:NO]]];
+        NSInteger folder = [user importantFolderNumforBaseFolder:FolderTypeInbox];
+        [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:user] runFolder:folder fromStart:YES fromAccount:NO]]];
     }
     
     return [RACSignal merge:newEmailsSignalArray];
 }
 
--(RACSignal*) searchText:(NSString*)text accountIndex:(NSInteger)accountIndex
+-(RACSignal*) searchText:(NSString*)text user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchText:text]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runSearchText:text]];
 }
 
--(RACSignal*) searchPerson:(Person*)person accountIndex:(NSInteger)accountIndex
+-(RACSignal*) searchPerson:(Person*)person user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:accountIndex] runSearchPerson:person]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runSearchPerson:person]];
 }
 
 -(RACSignal*) emailForSignal:(RACSignal*)signal
@@ -120,9 +124,9 @@ static SyncManager * singleton = nil;
 
 #pragma	mark Update and retrieve syncState
 
--(NSInteger) folderCount:(NSInteger)accountIndex
+-(NSInteger) folderCount:(NSInteger)accountNum
 {
-    NSArray* folderStates = self.syncStates[[AppSettings numAccountForIndex:accountIndex]][FOLDER_STATES_KEY];
+    NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
 	
     return [folderStates count];
 }

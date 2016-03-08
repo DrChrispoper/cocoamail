@@ -92,9 +92,10 @@
     }
 }
 
--(void) viewWillAppear:(BOOL)animated
+-(void) viewDidAppear:(BOOL)animated
 {
-    [super viewWillAppear:animated];
+    [super viewDidAppear:animated];
+    
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
@@ -141,6 +142,7 @@
         }
         else {
             [[DBSession sharedSession] unlinkAll];
+            
             UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"cloud-services-view.alert-view.title.unlinked", @"Account Unlinked!")
                                                                                message:[NSString localizedStringWithFormat:alertViewString,self.cloudServiceName]
                                                                         preferredStyle:UIAlertControllerStyleAlert];

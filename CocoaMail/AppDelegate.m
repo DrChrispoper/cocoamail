@@ -20,6 +20,7 @@
 #import <Instabug/Instabug.h>
 #import "Flurry.h"
 #import "UserSettings.h"
+#import "Draft.h"
 
 
 @implementation AppDelegate
@@ -61,7 +62,8 @@
     [DBSession setSharedSession:dbSession];
     
     [Accounts sharedInstance];
-    
+    [[Accounts sharedInstance] getDrafts];
+
     //[self registerGoogleSignIn];
     
     return shouldPerformAdditionalDelegateHandling;
@@ -76,8 +78,12 @@
 
 - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
 {
-    for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-        [[ImapSync sharedServices:accountIndex] saveCachedData];
+    for (UserSettings* user in [AppSettings getSingleton].users) {
+        if (user.isDeleted) {
+            continue;
+        }
+    //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+        [[ImapSync sharedServices:user] saveCachedData];
     }
     
     if (notification && application.applicationState == 1) {
@@ -108,8 +114,12 @@
 -(void) applicationDidBecomeActive:(UIApplication*)application
 {
     if ([AppSettings numActiveAccounts] > 0) {
-        for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            [[ImapSync sharedServices:accountIndex] saveCachedData];
+        for (UserSettings* user in [AppSettings getSingleton].users) {
+            if (user.isDeleted) {
+                continue;
+            }
+        //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
+            [[ImapSync sharedServices:user] saveCachedData];
         }
         
         if (self.launchedShortcutItem) {
@@ -121,8 +131,11 @@
         else if (self.launchedNotification) {
             UILocalNotification* notification = self.launchedNotification;
             
-            ConversationIndex *cIndex = [notification.userInfo objectForKey:@"cIndex"];
+            NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
+            NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
+            UserSettings* user = [AppSettings userWithNum:accountNum];
             
+            ConversationIndex *cIndex = [ConversationIndex initWithIndex:index user:user];
             Conversation* conversation = [cIndex.user.linkedAccount getConversationForIndex:cIndex.index];
             
             [conversation foldersType];
@@ -130,7 +143,7 @@
             CCMLog(@"Opening email:%@", [conversation firstMail].subject);
             
             Accounts* A = [Accounts sharedInstance];
-            [[A currentAccount] releaseContent];
+            //[[A currentAccount] releaseContent];
             A.currentAccountIdx = cIndex.user.accountIndex;
             [[A currentAccount] connect];
             
@@ -176,16 +189,23 @@
         // handle it
         NSLog(@"Delete Cached Email");
         
-        ConversationIndex *convIndex = [notification.userInfo objectForKey:@"cIndex"];
+        NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
+        NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
+        UserSettings* user = [AppSettings userWithNum:accountNum];
+        
+        ConversationIndex *convIndex = [ConversationIndex initWithIndex:index user:user];
+        
         Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
         
         CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
 
         [convIndex.user.linkedAccount moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
         
+        NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
+        
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                        @"INBOX", @"from_Folder",
-                                       [convIndex.user folderDisplayNameForType:FolderTypeWith(FolderTypeDeleted, 0)], @"to_Folder",
+                                       toFolderString, @"to_Folder",
                                        @"lock_screen", @"action_Location"
                                        ,nil];
         
@@ -219,11 +239,13 @@
     NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:inboxPath error:nil];
     
     if (dirFiles.count > 0) {
-        Mail* mail = [Mail newMailFormCurrentAccount];
+        Draft* draft = [Draft newDraftFormCurrentAccount];
+        
         
         for (NSString* fileName in dirFiles) {
             Attachment* attach = [[Attachment alloc]init];
             attach.fileName = fileName;
+            attach.msgID = draft.msgID;
             
             NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
             
@@ -232,14 +254,14 @@
                 attach.size = [attach.data length];
             }
             
-            if (mail.attachments == nil) {
+            /*if (mail.attachments == nil) {
                 mail.attachments = @[attach];
             }
             else {
                 NSMutableArray* ma = [mail.attachments mutableCopy];
                 [ma addObject:attach];
                 mail.attachments = ma;
-            }
+            }*/
         }
         
         for (NSString* fileName in dirFiles) {
@@ -248,7 +270,7 @@
         }
 
         
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
     }
     // Add whatever other url handling code your app requires here
     return NO;

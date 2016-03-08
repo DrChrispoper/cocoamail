@@ -21,10 +21,11 @@
 #import "GlobalDBFunctions.h"
 #import "ImapSync.h"
 #import "CocoaMail-Swift.h"
+#import "OnePasswordExtension.h"
 
 @interface AddAccountViewController ()
 
-@property (nonatomic, strong) Account* account;
+@property (nonatomic, strong) UserSettings* user;
 @property (nonatomic, strong) MCOAccountValidator* accountVal;
 
 
@@ -39,6 +40,7 @@
 @property (nonatomic, weak) UITextField* username;
 @property (nonatomic, weak) UITextField* email;
 @property (nonatomic, weak) UITextField* password;
+@property (nonatomic, weak) UIButton* onePassword;
 
 @property (nonatomic, weak) EditCocoaButtonView* editCocoa;
 @property (nonatomic) NSInteger step;
@@ -72,6 +74,14 @@
     
     NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
+    
+    if ([[OnePasswordExtension sharedExtension] isAppExtensionAvailable]) {
+        UIButton* attach = [WhiteBlurNavBar navBarButtonWithImage:@"onepassword-navbar" andHighlighted:@"onepassword-navbar-light"];
+        [attach setHidden:NO];
+        [attach addTarget:self action:@selector(findLoginFrom1Password:) forControlEvents:UIControlEventTouchUpInside];
+        item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:attach];
+        self.onePassword = attach;
+    }
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
@@ -127,13 +137,13 @@
 -(void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    
-    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 }
 
 -(void) viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+
+    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 
     NSThread* driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
     [driverThread start];
@@ -176,7 +186,7 @@
     
     UINavigationController *navController = [[UINavigationController alloc] init];
     
-    UINavigationBar *navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, 320, 63)];
+    UINavigationBar *navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 63)];
     UINavigationItem *navigationItem = [[UINavigationItem alloc] initWithTitle:@"Gmail"];
     UIBarButtonItem *barButtonItemCancel = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:selectorButtonCancel];
     
@@ -386,19 +396,19 @@
 {
     if (self.step == 0) {
         
+        self.email.text = [self.email.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+        self.password.text = [self.password.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+
         [self loadAccountWithUsername:self.email.text password:self.password.text oauth2Token:nil];
         
     }
     else {
-        
-        [[Accounts sharedInstance] addAccount:self.account];
-
-        [Accounts sharedInstance].currentAccountIdx = self.account.idx;
+        [Accounts sharedInstance].currentAccountIdx = self.user.accountIndex;
         
         [ViewController refreshCocoaButton];
         
-        [self.account connect];
-        [self.account setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        [self.user.linkedAccount connect];
+        [self.user.linkedAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
@@ -619,28 +629,9 @@
                 
                 return ;
             }
-    
-            [[SyncManager getSingleton] addAccountState];
             
-            UserSettings* user = [[AppSettings getSingleton] newUser];
-            
-            [AppSettings setSettingsWithAccountVal:self.accountVal accountIndex:user.accountIndex];
-            
-            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
+            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.accountVal.identifier];
 
-            [ImapSync allSharedServices:imapSession];
-
-            [user setName:self.username.text];
-                
-            [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
-                
-            [[AppSettings getSingleton] setBadgeCount:0];
-            [AppSettings setNotifications:YES accountIndex:user.accountIndex];
-            
-            if (user.accountIndex == 0) {
-                [AppSettings setDefaultAccountIndex:user.accountIndex];
-            }
-            
             NSMutableArray* flagedFolders = [[NSMutableArray alloc] init];
             NSMutableArray* otherFolders = [[NSMutableArray alloc] init];
             MCOIMAPFolder*  __block inboxfolder;
@@ -702,7 +693,7 @@
                                     [otherFolders addObject:folder];
                                 }
                             }
-                            [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccount:user];
+                            [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession];
                         }];
                     }
                     else {
@@ -713,22 +704,52 @@
                 }];
             }
             else {
-                [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession newAccount:user];
+                [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession];
             }
         }];
     }];
 }
 
--(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession newAccount:(UserSettings*)user
+-(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
 {
-    CCMLog(@"4 - Finish Folders");
+    CCMLog(@"3 - Finish Folders");
     
-    SyncManager* sm = [SyncManager getSingleton];
+    //User Settings
+    UserSettings* user = [[AppSettings getSingleton] createNewUser];
+    [user setUsername:self.email.text];
+    [user setName:self.username.text];
+    [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
+    [user setColor: [AppSettings defaultColors][user.accountIndex]];
     
+    [AppSettings setNotifications:YES accountNum:user.accountNum];
+    
+    if (user.accountIndex == 0) {
+        [AppSettings setDefaultAccountNum:user.accountNum];
+    }
+    
+    NSString* mail = self.email.text;
+    NSUInteger loc = [mail rangeOfString:@"@"].location;
+    NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
+    
+    if (loc != NSNotFound && loc > 2 &&  locDot != NSNotFound && loc < locDot) {
+        NSString* code = [[mail substringToIndex:3] uppercaseString];
+        [user setInitials:code];
+    }
+    
+    [AppSettings setSettingsWithAccountVal:self.accountVal user:user];
+
+    //Account of User
+    Account* ac = [Account emptyAccount];
+    [ac setNewUser:user];
+    
+    ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
+    
+    //Folder Settings
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
     NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
     NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
+    
     [sortedFolders addObject:inboxfolder];
     [sortedFolders addObjectsFromArray:[flagedFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
     [sortedFolders addObjectsFromArray:[otherFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
@@ -738,14 +759,8 @@
     
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeFavoris];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSent];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDrafts];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeAll];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted];
-    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam];
-    
+    [[SyncManager getSingleton] addAccountState];
+
     for (MCOIMAPFolder* folder in sortedFolders) {
 
         //Inbox
@@ -771,7 +786,7 @@
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
         
-        NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:@"/"];
+        NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:[NSString stringWithFormat:@"%c",[folder delimiter]]];
         [dispNamesFolders addObject:dispName];
         
         NSDictionary* folderState = @{ @"accountNum" : @(user.accountNum),
@@ -783,14 +798,14 @@
                                        @"flags":@(folder.flags),
                                        @"emailCount":@(0)};
         
-        [sm addFolderState:folderState accountNum:user.accountNum];
+        [[SyncManager getSingleton] addFolderState:folderState accountNum:user.accountNum];
         
         MCOIMAPFolderInfoOperation* folderOp = [imapSession folderInfoOperation:folder.path];
         [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
             if (!error) {
-                NSMutableDictionary* syncState = [sm retrieveState:indexPath accountNum:user.accountNum];
+                NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:indexPath accountNum:user.accountNum];
                 syncState[@"emailCount"] = @([info messageCount]);
-                [sm persistState:syncState forFolderNum:indexPath accountNum:user.accountNum];
+                [[SyncManager getSingleton] persistState:syncState forFolderNum:indexPath accountNum:user.accountNum];
             }
         }];
         
@@ -801,46 +816,26 @@
         [user setImportantFolderNum:[user importantFolderNumforBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
-    [user setAllFolders:dispNamesFolders];
-    
-    CCMLog(@"5 - Go!");
-    
-    [[PKHUD sharedHUD] hideWithAnimated:NO];
-    
-    Account* ac = [Account emptyAccount];
-    ac.isAllAccounts = NO;
-
-    ac.userColor = [AppSettings defaultColors][user.accountIndex];
-    
-    [user setColor:ac.userColor];
-    ac.idx = user.accountIndex;
-    
-    NSString* mail = self.email.text;
-    NSUInteger loc = [mail rangeOfString:@"@"].location;
-    NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
-    
-    if (loc != NSNotFound && loc > 2 &&  locDot != NSNotFound && loc < locDot) {
-        NSString* code = [[mail substringToIndex:3] uppercaseString];
-        ac.codeName = code;
-        Person* p = [Person createWithName:self.username.text email:mail icon:nil codeName:code];
-        ac.person = p;
-    }
-    
-    ac.userMail = mail;
-    
-    self.account = ac;
-    self.step = 1;
+    [user setAllFoldersDisplayNames:dispNamesFolders];
     
     NSArray* tmpFolders = [user allNonImportantFoldersName];
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
-        
     for (NSString* folderNames in tmpFolders) {
-        [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"]/"])]];
+        [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"/"])]];
     }
-        
+    
     ac.userFolders = foldersNIndent;
     
-    EditCocoaButtonView* ecbv = [EditCocoaButtonView editCocoaButtonViewForAccount:self.account];
+    [[Accounts sharedInstance] addAccount:ac];
+    
+    CCMLog(@"4 - Go!");
+    
+    [[PKHUD sharedHUD] hideWithAnimated:NO];
+    
+    self.user = user;
+    self.step = 1;
+    
+    EditCocoaButtonView* ecbv = [EditCocoaButtonView editCocoaButtonViewForAccount:ac];
     ecbv.frame = CGRectMake(0, 55, ecbv.frame.size.width, ecbv.frame.size.height);
     [self.view addSubview:ecbv];
     self.editCocoa = ecbv;
@@ -852,8 +847,26 @@
     [self.navBar setNeedsDisplay];
         
     self.googleBtn.hidden = YES;
+    
+    [ImapSync allSharedServices:imapSession];
+    [user.linkedAccount connect];
 }
 
+
+-(void) findLoginFrom1Password:(id)sender
+{
+    [[OnePasswordExtension sharedExtension] findLoginForURLString:@"https://putcocoa.in" forViewController:self sender:sender completion:^(NSDictionary *loginDictionary, NSError *error) {
+        if (loginDictionary.count == 0) {
+            if (error.code != AppExtensionErrorCodeCancelledByUser) {
+                NSLog(@"Error invoking 1Password App Extension for find login: %@", error);
+            }
+            return;
+        }
+        
+        self.email.text = loginDictionary[AppExtensionUsernameKey];
+        self.password.text = loginDictionary[AppExtensionPasswordKey];
+    }];
+}
 
 @end
 

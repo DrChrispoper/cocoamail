@@ -178,6 +178,30 @@
     }];
 }
 
++(void) deleteAttachment:(NSString*)msgID fileName:(NSString*)fileName
+{
+    AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
+    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+        [db executeUpdate:@"DELETE attachments where msg_id = ? AND file_name = ?", msgID,fileName];
+    }];
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray* paths = NSSearchPathForDirectoriesInDomains (NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString* documentsDirectory = paths[0];
+    documentsDirectory = [documentsDirectory stringByAppendingPathComponent:@"AttachmentsCache"];
+    
+    NSError *error = nil;
+    for (NSString *file in [fm contentsOfDirectoryAtPath:documentsDirectory error:&error]) {
+        if ([file isEqualToString:fileName]) {
+            BOOL success = [fm removeItemAtPath:[NSString stringWithFormat:@"%@%@", documentsDirectory, file] error:&error];
+            if (!success || error) {
+                // it failed.
+            }
+        }
+    }
+}
+
+
 +(void) clearAttachments
 {
     AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];

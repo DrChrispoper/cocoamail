@@ -79,8 +79,9 @@
                 CMTime time = CMTimeMake(1, 60);
                 CGImageRef imgRef = [generate copyCGImageAtTime:time actualTime:NULL error:&err];
                 
-                CCMLog(@"err==%@, imageRef==%@", err, imgRef);
-                self.image = [[UIImage alloc] initWithCGImage:imgRef];
+                if (!err) {
+                    self.image = [[UIImage alloc] initWithCGImage:imgRef];
+                }
             }
             else {
                 self.image = [UIImage imageNamed:@"pj_video"];
@@ -241,7 +242,7 @@
             UIImage* img = [[UIImage imageNamed:@"delete_off"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
             [self.btn setImage:img forState:UIControlStateNormal];
             [self.btn setImage:nil forState:UIControlStateHighlighted];
-            self.btn.tintColor = [[Accounts sharedInstance] currentAccount].userColor;
+            self.btn.tintColor = [[Accounts sharedInstance] currentAccount].user.color;
             self.internalState = -1;
             break;
         }
@@ -416,7 +417,7 @@
 {
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     
-    if ([networkReachability currentReachabilityStatus] == ReachableViaWiFi) {
+    if ([networkReachability currentReachabilityStatus] != NotReachable) {
         if (!att.data) {
             NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgID];
             
@@ -431,7 +432,7 @@
             UserSettings* user = [AppSettings userWithNum:uidE.accountNum];
             
             NSString* folderName = [user folderServerName:uidE.folder];
-            self.op = [[ImapSync sharedServices:user.accountIndex].imapSession fetchMessageAttachmentOperationWithFolder:folderName
+            self.op = [[ImapSync sharedServices:user].imapSession fetchMessageAttachmentOperationWithFolder:folderName
                                                                                                                 uid:uidE.uid
                                                                                                              partID:att.partID
                                                                                                            encoding:MCOEncodingBase64];

@@ -17,12 +17,12 @@
 	volatile BOOL cancelled;
 }
 
--(RACSignal*) search:(NSString*)searchText inAccount:(NSInteger)accountIndex;
--(RACSignal*) senderSearch:(Person*)person inAccount:(NSInteger)accountIndex;
+-(RACSignal*) search:(NSString*)searchText inAccountNum:(NSInteger)accountNum;
+-(RACSignal*) senderSearch:(Person*)person inAccountNum:(NSInteger)accountNum;
 
--(RACSignal*) deleteEmailsInAccount:(NSInteger)accountIndex;
--(RACSignal*) activeFolderSearch:(Mail*)email inAccount:(NSInteger)accountIndex;
--(RACSignal*) threadSearch:(NSString*)thread inAccount:(NSInteger)accountIndex;
+-(RACSignal*) deleteEmailsInAccountNum:(NSInteger)accountNum;
+-(RACSignal*) activeFolderSearch:(Mail*)email inAccountNum:(NSInteger)accountNum;
+-(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum;
 -(RACSignal*) allEmailsSearch;
 
 @property (assign) volatile BOOL cancelled; // flag for when we cancel a search op
@@ -31,6 +31,6 @@
 +(id) getSingleton;
 -(void) cancel;
 
-+(NSArray*) dbNumsInAccount:(NSInteger)accountIndex;
++(NSArray*) dbNumsInAccountNum:(NSInteger)accountNum;
 
 @end

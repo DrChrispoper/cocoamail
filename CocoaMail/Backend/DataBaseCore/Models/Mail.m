@@ -18,6 +18,8 @@
 #import "EmailDBAccessor.h"
 #import "ImapSync.h"
 #import "UserSettings.h"
+#import <Instabug/Instabug.h>
+#import "Draft.h"
 
 @implementation Mail {
     UserSettings* _user;
@@ -57,7 +59,7 @@ static NSDateFormatter * s_df_hour = nil;
     NSInteger currentAccountIndex = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
 
     if (replyAll) {
-        NSMutableArray* currents = [self.toPersonID mutableCopy];
+        NSMutableArray* currents = [self.toPersonIDs mutableCopy];
         
         if (currentAccountIndex != self.fromPersonID) {
             [currents addObject:@(self.fromPersonID)];
@@ -65,11 +67,11 @@ static NSDateFormatter * s_df_hour = nil;
         
         [currents removeObject:@(currentAccountIndex)];
         
-        mail.toPersonID = currents;
+        mail.toPersonIDs = currents;
     }
     else {
         if (currentAccountIndex != self.fromPersonID) {
-            mail.toPersonID = @[@(self.fromPersonID)];
+            mail.toPersonIDs = @[@(self.fromPersonID)];
         }
     }
     
@@ -85,10 +87,10 @@ static NSDateFormatter * s_df_hour = nil;
 -(Mail*) transfertMail
 {
     Mail* mail = [self replyMail:NO];
-    mail.toPersonID = nil;
+    mail.toPersonIDs = nil;
     mail.attachments = self.attachments;
     
-    Person* from = [[Persons sharedInstance] getPersonID:self.fromPersonID];
+    Person* from = [[Persons sharedInstance] getPersonWithID:self.fromPersonID];
     NSString* wrote = NSLocalizedString(@"compose-view.content.transfer", @"wrote");
     
     NSDateFormatter* s_df_dayFull = [[NSDateFormatter alloc] init];
@@ -124,8 +126,8 @@ static NSDateFormatter * s_df_hour = nil;
     
     NSMutableArray* to = [[NSMutableArray alloc] init];
     
-    for (NSNumber* personID in self.toPersonID) {
-        Person* p = [[Persons sharedInstance] getPersonID:[personID intValue]];
+    for (NSNumber* personID in self.toPersonIDs) {
+        Person* p = [[Persons sharedInstance] getPersonWithID:[personID intValue]];
         MCOAddress* newAddress = [MCOAddress addressWithMailbox:p.email];
         [to addObject:newAddress];
     }
@@ -256,22 +258,22 @@ static NSDateFormatter * s_df_hour = nil;
 
     NSMutableArray* ids = [[NSMutableArray alloc]initWithCapacity:tmp.count];
 
-    for (MCOAddress* address in tmp) {
-        NSString* name = address.displayName;
-    
+    for (MCOAddress* ad in tmp) {
+        
+        NSString* name = ad.displayName;
+        
         if (!name || [name isEqualToString:@""]) {
-            name = address.mailbox;
+            name = ad.mailbox;
         }
-    
+        
         NSString* codeName = [name uppercaseString];
         codeName = [codeName stringByReplacingOccurrencesOfString:@" " withString:@""];
         codeName = [codeName substringToIndex:(codeName.length < 3)?codeName.length:3];
-    
-    
-        [ids addObject:@([[Persons sharedInstance]indexForPerson:[Person createWithName:name email:address.mailbox icon:nil codeName:codeName]])];
+        
+        [ids addObject:@([[Persons sharedInstance] addPerson:[Person createWithName:name email:ad.mailbox icon:nil codeName:codeName]])];
     }
 
-    self.toPersonID = ids;
+    self.toPersonIDs = ids;
 }
 
 -(NSDate *)datetime
@@ -322,13 +324,13 @@ static NSDateFormatter * s_df_hour = nil;
     
     Accounts* allAccounts = [Accounts sharedInstance];
     
-    if (allAccounts.currentAccount.isAllAccounts) {
+    if (allAccounts.currentAccount.user.isAll) {
         mail.fromPersonID = -(1 + [Accounts sharedInstance].defaultAccountIdx);
         
         UidEntry* uid_entry = [[UidEntry alloc]init];
         uid_entry.uid = 0;
         //uid_entry.folder = currentFolder;
-        uid_entry.accountNum = [AppSettings numAccountForIndex:[Accounts sharedInstance].defaultAccountIdx];//self.currentUser.accountNum;
+        uid_entry.accountNum = [AppSettings userWithIndex:[Accounts sharedInstance].defaultAccountIdx].accountNum;//self.currentUser.accountNum;
         //uid_entry.msgID = email.msgID;
         //uid_entry.dbNum = [EmailProcessor dbNumForDate:email.datetime];
         
@@ -342,7 +344,7 @@ static NSDateFormatter * s_df_hour = nil;
         
         UidEntry* uid_entry = [[UidEntry alloc]init];
         uid_entry.uid = 0;
-        uid_entry.accountNum = [AppSettings numAccountForIndex:[Accounts sharedInstance].defaultAccountIdx];//self.currentUser.accountNum;
+        uid_entry.accountNum = [AppSettings userWithIndex:[Accounts sharedInstance].defaultAccountIdx].accountNum;//self.currentUser.accountNum;
         
         mail.uids = [NSMutableArray arrayWithArray:@[uid_entry]];
         
@@ -350,6 +352,220 @@ static NSDateFormatter * s_df_hour = nil;
     }
     
     return mail;
+}
+
++(Mail*) mailWithMCOIMAPMessage:(MCOIMAPMessage*)msg inFolder:(NSInteger)folder andAccount:(NSInteger)accountNum
+{
+    Mail* email = [[Mail alloc] init];
+    
+    if (!msg.header.from.displayName) {
+        msg.header.from = [MCOAddress addressWithDisplayName:[msg.header.from.mailbox componentsSeparatedByString:@"@"].firstObject mailbox:msg.header.from.mailbox];
+    }
+    
+    email.sender = msg.header.from;
+    email.subject = msg.header.subject;
+    
+    if (!email.subject) {
+        email.subject = @"";
+    }
+    
+    email.body = @"";
+    email.htmlBody = @"";
+    
+    email.datetime = msg.header.receivedDate;
+    email.msgID = msg.header.messageID;
+    
+    email.tos = msg.header.to;
+    
+    if (!email.tos) {
+        email.tos = [[NSArray alloc]init];
+    }
+    email.ccs = msg.header.cc;
+    
+    if (!email.ccs) {
+        email.ccs = [[NSArray alloc]init];
+    }
+    email.bccs = msg.header.bcc;
+    
+    if (!email.bccs) {
+        email.bccs = [[NSArray alloc]init];
+    }
+    email.flag = msg.flags;
+    
+    UidEntry* uid_entry = [[UidEntry alloc]init];
+    uid_entry.uid = msg.uid;
+    uid_entry.folder = folder;
+    uid_entry.accountNum = accountNum;
+    uid_entry.msgID = email.msgID;
+    uid_entry.dbNum = [EmailProcessor dbNumForDate:email.datetime];
+    
+    if (msg.gmailThreadID) {
+        uid_entry.sonMsgID = [NSString stringWithFormat:@"%llu", msg.gmailThreadID];
+    }
+    else if(msg.header.references) {
+        uid_entry.sonMsgID = msg.header.references[0];
+    }
+    else {
+        uid_entry.sonMsgID = @"0";
+    }
+    
+    email.uids = [[NSMutableArray arrayWithArray:email.uids] arrayByAddingObject:uid_entry];
+    
+    NSMutableArray* atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count + msg.htmlInlineAttachments.count];
+    
+    for (MCOAbstractPart* part in msg.attachments) {
+        if([part isKindOfClass:[MCOIMAPPart class]]) {
+            MCOIMAPPart* imapPart = (MCOIMAPPart*)part;
+            
+            Attachment* at = [[Attachment alloc]init];
+            at.mimeType = part.mimeType;
+            at.msgID = email.msgID;
+            at.fileName = part.filename;
+            if ([at.fileName isEqualToString:@""]) {
+                at.fileName = [NSString stringWithFormat:@"No name - %@",email.subject];
+            }
+            at.partID = imapPart.partID;
+            at.size = imapPart.size;
+            at.contentID = @"";
+            [atts addObject:at];
+        }
+        else if([part isKindOfClass:[MCOIMAPMultipart class]]) {
+            MCOIMAPMultipart* imapParts = (MCOIMAPMultipart*)part;
+            
+            NSMutableString* string = [NSMutableString new];
+            
+            for (MCOIMAPPart* imapPart in imapParts.parts) {
+                [string appendString:imapPart.filename];
+            }
+            
+            NSException* myException = [NSException
+                                        exceptionWithName:@"MultipartAttachmentFoundException"
+                                        reason:[NSString stringWithFormat:@"The inline attachment in msg is Multipart %lu, subject:%@; parts:%@", (long)imapParts.partType ,msg.header.subject, string]
+                                        userInfo:nil];
+            
+            [Instabug reportException:myException];
+        }
+    }
+    
+    for (MCOAbstractPart* part in msg.htmlInlineAttachments) {
+        if([part isKindOfClass:[MCOIMAPPart class]]) {
+            MCOIMAPPart* imapPart = (MCOIMAPPart*)part;
+            
+            Attachment* at = [[Attachment alloc]init];
+            at.mimeType = part.mimeType;
+            at.msgID = email.msgID;
+            at.fileName = part.filename;
+            if ([at.fileName isEqualToString:@""]) {
+                at.fileName = part.contentID;
+            }
+            at.partID = imapPart.partID;
+            at.size = imapPart.size;
+            at.contentID = part.contentID;
+            [atts addObject:at];
+        }
+        else if([part isKindOfClass:[MCOIMAPMultipart class]]) {
+            MCOIMAPMultipart* imapParts = (MCOIMAPMultipart*)part;
+            
+            NSMutableString* string = [NSMutableString new];
+            
+            for (MCOIMAPPart* imapPart in imapParts.parts) {
+                [string appendString:imapPart.filename];
+            }
+            
+            NSException* myException = [NSException
+                                        exceptionWithName:@"MultipartAttachmentFoundException"
+                                        reason:[NSString stringWithFormat:@"The inline attachment in msg is Multipart %lu, subject:%@; parts:%@", (long)imapParts.partType ,msg.header.subject, string]
+                                        userInfo:nil];
+            
+            [Instabug reportException:myException];
+        }
+    }
+    
+    email.attachments = atts;
+
+    return email;
+}
+
++(Mail*) mailWithDraft:(Draft*)draft
+{
+    Mail* email = [[Mail alloc] init];
+    
+    UserSettings* user = [AppSettings userWithNum:draft.accountNum];
+    
+    email.sender = [MCOAddress addressWithDisplayName:user.linkedAccount.person.name mailbox:user.linkedAccount.person.email];
+    email.subject = draft.subject;
+    
+    if (!email.subject) {
+        email.subject = @"";
+    }
+    
+    email.body = @"";
+    email.htmlBody = @"";
+    
+    email.datetime = draft.datetime;
+    email.msgID = draft.msgID;
+    
+    NSMutableArray* toMCOAdressS = [[NSMutableArray alloc] init];
+    
+    for (NSString* ad in draft.toPersons) {
+        [toMCOAdressS addObject:[MCOAddress addressWithMailbox:ad]];
+    }
+    
+    if (draft.isBcc) {
+        email.bccs = toMCOAdressS;
+    }
+    else {
+        email.tos = toMCOAdressS;
+    }
+    
+    if (!email.tos) {
+        email.tos = [[NSArray alloc]init];
+    }
+    
+    if (!email.ccs) {
+        email.ccs = [[NSArray alloc]init];
+    }
+    
+    if (!email.bccs) {
+        email.bccs = [[NSArray alloc]init];
+    }
+    
+    email.transferContent = draft.transferContent;
+    
+    if (draft.fromMailMsgID) {
+        NSArray* uids = [UidEntry getUidEntriesWithMsgId:draft.fromMailMsgID];
+    
+        for (UidEntry* e in uids) {
+            email.fromMail = [Mail getMailWithMsgId:e.msgID dbNum:e.dbNum];
+            break;
+        }
+    }
+    
+    if ([RX(@"^[0-9]+?$") isMatch:draft.msgID]) {
+
+        UidEntry* uid_entry = [[UidEntry alloc]init];
+        uid_entry.uid = 0;
+        uid_entry.folder = [user numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0)];
+        uid_entry.accountNum = draft.accountNum;
+        uid_entry.msgID = email.msgID;
+        uid_entry.dbNum = [EmailProcessor dbNumForDate:email.datetime];
+        
+        if (email.fromMail.sonID) {
+            uid_entry.sonMsgID = email.fromMail.sonID;
+        }
+        else {
+            uid_entry.sonMsgID = @"0";
+        }
+    
+        email.uids = [[NSMutableArray arrayWithArray:email.uids] arrayByAddingObject:uid_entry];
+    }
+    else {
+        email.uids = [UidEntry getUidEntriesWithMsgId:draft.msgID];
+    }
+
+    email.attachments = [draft attachments];
+    
+    return email;
 }
 
 -(BOOL) isEqualToMail:(Mail*)mail
@@ -382,7 +598,7 @@ static NSDateFormatter * s_df_hour = nil;
         FMResultSet* results = [db executeQuery:kQueryPk, @(self.pk)];
         
         if ([results next]) {
-            [Mail res:results toMail:self];
+            [Mail _res:results toMail:self];
         }
     }];
 }
@@ -525,7 +741,6 @@ static NSDateFormatter * s_df_hour = nil;
     
     self.uids = uidsOne;
     
-    emailTwo.user.accountNum = uidsTwo[0].accountNum;
     emailTwo.uids = uidsTwo;
     
     return emailTwo;
@@ -659,7 +874,7 @@ static NSDateFormatter * s_df_hour = nil;
     return success;
 }
 
-+(Mail*) getEmailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
++(Mail*) getMailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
 {
     __block Mail* mail = [[Mail alloc] init];
     
@@ -676,8 +891,6 @@ static NSDateFormatter * s_df_hour = nil;
         [results close];
     }];
     
-    
-    
     return mail;
 }
 
@@ -691,7 +904,10 @@ static NSDateFormatter * s_df_hour = nil;
         FMResultSet* results = [db executeQuery:kQueryAll];
         
         while ([results next]) {
-            [emails addObject:[Mail resToMail:results]];
+            Mail* m = [Mail resToMail:results];
+            if (m) {
+                [emails addObject:m];
+            }
         }
         
     }];
@@ -699,7 +915,7 @@ static NSDateFormatter * s_df_hour = nil;
     return emails;
 }
 
-+(void) res:(FMResultSet*)result toMail:(Mail*)mail
++(void) _res:(FMResultSet*)result toMail:(Mail*)mail
 {
     mail = [Mail resToMail:result];
 }
@@ -710,7 +926,6 @@ static NSDateFormatter * s_df_hour = nil;
     
     email.pk = [result intForColumnIndex:0];
     email.datetime = [result dateForColumnIndex:1];
-    //TODO:Change this later
     
     NSString* adrs = [result stringForColumnIndex:2];
     
@@ -732,40 +947,10 @@ static NSDateFormatter * s_df_hour = nil;
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
-    [email uids];
-    //[email isInMultipleAccounts];
-    
-    //TODO:Remove this later
-    if ([email.sender.mailbox isEqualToString:@"mailcore"] | [email.sender.mailbox isEqualToString:@"beta.things@shamed.chris"]) {
-        email.sender = [MCOAddress addressWithDisplayName:@"Bug" mailbox:@"beta.things@shamed.chris"];
-        
-        UidEntry* uidE = email.uids[0];
-        
-        MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
-        [uidsIS addIndex:uidE.uid];
-        
-        UserSettings* user = [AppSettings userWithNum:uidE.accountNum];
-        
-        MCOIMAPFetchMessagesOperation* op = [[ImapSync sharedServices:user.accountIndex].imapSession fetchMessagesOperationWithFolder:[user folderServerName:uidE.folder]
-                                                                                                                          requestKind:MCOIMAPMessagesRequestKindHeaders
-                                                                                                                                 uids:uidsIS];
-        
-        [op start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
-            if (!error) {
-                if (messages.count > 0) {
-                    MCOIMAPMessage* msg = messages[0];
-                    
-                    email.sender = msg.header.sender;
-                    
-                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:email];
-                    [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-                }
-            }
-        }];
-    }
-    
-    if (!email.user) {
-        CCMLog(@"Prout");
+    if (!email.user || email.user.isDeleted) {
+        [Mail clean:email];
+        CCMLog(@"Cleaning email");
+        return nil;
     }
     
     return email;
@@ -842,11 +1027,11 @@ static NSDateFormatter * s_df_hour = nil;
 -(void) toggleFav
 {
     if (!(self.flag & MCOMessageFlagFlagged)) {
-        [UidEntry addFlag:MCOMessageFlagFlagged toMsgId:self.msgID fromFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+        [UidEntry addFlag:MCOMessageFlagFlagged to:[self getFirstUIDE]];
         self.flag |= MCOMessageFlagFlagged;
     }
     else {
-        [UidEntry removeFlag:MCOMessageFlagFlagged toMsgId:self.msgID fromFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+        [UidEntry removeFlag:MCOMessageFlagFlagged to:[self getFirstUIDE]];
         self.flag = self.flag & ~MCOMessageFlagFlagged;
     }
     
@@ -861,11 +1046,11 @@ static NSDateFormatter * s_df_hour = nil;
 -(void) toggleRead
 {
     if (!(self.flag & MCOMessageFlagSeen)) {
-        [UidEntry addFlag:MCOMessageFlagSeen toMsgId:self.msgID fromFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+        [UidEntry addFlag:MCOMessageFlagSeen to:[self getFirstUIDE]];
         self.flag |= MCOMessageFlagSeen;
     }
     else {
-        [UidEntry removeFlag:MCOMessageFlagSeen toMsgId:self.msgID fromFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+        [UidEntry removeFlag:MCOMessageFlagSeen to:[self getFirstUIDE]];
         self.flag = self.flag & ~MCOMessageFlagSeen;
     }
     
@@ -879,13 +1064,37 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) clean:(Mail*)mail
 {
-    [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+    NSInteger dbNum = [EmailProcessor dbNumForDate:mail.datetime];
+
+    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:dbNum]]];
+
+    [queue inDatabase:^(FMDatabase* db) {
         if ([db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;", mail.msgID]) {
             CCMLog(@"Email cleaned");
         }
     }];
 }
 
+-(Draft*) toDraft
+{
+    Draft* draft = [[Draft alloc] init];
+    draft.accountNum = self.user.accountNum;
+    
+    for (NSNumber* n in self.toPersonIDs) {
+        Person* p = [[Persons sharedInstance] getPersonWithID:[n integerValue]];
+        [draft.toPersons addObject:p.email];
+    }
+    
+    draft.transferContent = self.transferContent;
+    draft.fromMailMsgID = self.fromMail.msgID;
+    draft.subject = self.subject;
+    draft.body = self.body;
+    draft.msgID = self.msgID;
+    
+    draft.datetime = self.datetime;//[NSDate date];
+    
+    return draft;
+}
 
 @end
 

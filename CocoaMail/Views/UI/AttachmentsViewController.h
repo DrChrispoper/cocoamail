@@ -14,5 +14,6 @@
 
 @property (nonatomic, strong) Conversation* conversation;
 
+-(void)reloadWithConversation:(Conversation*)conversation;
 
 @end

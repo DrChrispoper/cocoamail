@@ -114,7 +114,7 @@
 {
     NSArray* infos = @[
                        @{TEXT: NSLocalizedString(@"account-view.main-details.name",@"Name"), TEXT_2 : self.account.person.name, DACTION : @"EDIT_NAME"},
-                       @{TEXT: NSLocalizedString(@"account-view.main-details.address",@"Address"), TEXT_2 : self.account.userMail},
+                       @{TEXT: NSLocalizedString(@"account-view.main-details.address",@"Address"), TEXT_2 : self.account.user.username},
                        @{TEXT: NSLocalizedString(@"account-view.main-details.password",@"Password"), TEXT_2 : @"password", DACTION : @"EDIT_PASS"},
                        @{TEXT: NSLocalizedString(@"account-view.main-details.signature",@"Signature"), ACTION : kSETTINGS_ACCOUNT_SIGN_NOTIFICATION, OBJECT:self.account},
                        @{TEXT: NSLocalizedString(@"account-view.main-details.server-settings",@"Server settings"), ACTION : @"OPEN_SERVER"}
@@ -320,25 +320,25 @@
         }
         else if ([directAction isEqualToString:@"DELETE"]) {
             [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
-            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"account.deleting-restarting", @"HUD Message: Deleting...")];
+            [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"account.deleting", @"HUD Message: Deleting...")];
             [[PKHUD sharedHUD] show];
-            
-            NSInteger idx = self.account.idx;
             
             [[Accounts sharedInstance] deleteAccount:self.account completed:^{
                 
-                [[AppSettings userWithIndex:idx] setDeleted:YES];
-                
-                exit(0);
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
-                //[ViewController refreshCocoaButton];
+                [[PKHUD sharedHUD] hideAfterDelay:1.0];
+
+                [ViewController refreshCocoaButton];
                 
-                /*if ([Accounts sharedInstance].accountsCount>1) {
+                if ([Accounts sharedInstance].accountsCount>1) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
                 }
                 else {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-                }*/
+                }
+                    
+                }];
             }];
         }
         
@@ -377,7 +377,7 @@
 -(void) textFieldDidEndEditing:(UITextField*)textField
 {
     if (textField.tag == 0) {
-        [self.account setName:textField.text];
+        [self.account.user setName:textField.text];
     }
     else if (textField.tag == 1) {
         [self.account.user setPassword:textField.text];

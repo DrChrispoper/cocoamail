@@ -14,7 +14,7 @@
 #import "Mail.h"
 #import "ImapSync.h"
 #import "StringUtil.h"
-
+#import "UserSettings.h"
 
 @interface FolderViewController () <UITableViewDataSource, UITableViewDelegate>
 {
@@ -45,7 +45,7 @@
     [settingsBtn addTarget:self action:@selector(_settings) forControlEvents:UIControlEventTouchUpInside];
     item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:settingsBtn];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:currentAccount.userMail];
+    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:currentAccount.user.username];
     
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -76,8 +76,10 @@
     table.delegate = self;
     self.table = table;
     
-    if (currentAccount && !currentAccount.isAllAccounts) {
-        [ImapSync runInboxUnread:currentAccount.idx];
+    [self addPullToRefreshWithDelta:0];
+
+    if (currentAccount && !currentAccount.user.isAll) {
+        [ImapSync runInboxUnread:currentAccount.user];
     }
 }
 
@@ -86,7 +88,7 @@
     [super viewWillAppear:animated];
         
     if ([AppSettings numActiveAccounts] !=  0) {
-        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccountIdx];
+        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
     }
 }
 
@@ -150,7 +152,7 @@
         
         switch (indexPath.row) {
             case 0:
-                colorBubble = cac.userColor;
+                colorBubble = cac.user.color;
                 count = [cac unreadInInbox];
                 break;
             case 1:
@@ -205,10 +207,17 @@
         
         text = subfolder[0];
         
-        if (indentation) {
-            NSRange rangeofSub = [text rangeOfString:@"/"];
-            text = [text substringFromIndex:rangeofSub.location + 1];
+        NSArray<NSString*>* texts = [text componentsSeparatedByString:@"/"];
+        
+        text = [texts lastObject];
+        
+        if (![texts[0] containsString:@"[Gmail]"] && indentation) {
+            //NSRange rangeofSub = [text rangeOfString:@"/"];
+            //text = [text substringFromIndex:rangeofSub.location + 1];
             imageName = [Accounts userFolderPadIcon];
+        }
+        else {
+            indentation = 0;
         }
         
         NSString* reuseID = @"kCellAccountPerso";
@@ -225,7 +234,7 @@
     cell.textLabel.text = text;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
-    cell.imageView.tintColor = cac.userColor;
+    cell.imageView.tintColor = cac.user.color;
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
     

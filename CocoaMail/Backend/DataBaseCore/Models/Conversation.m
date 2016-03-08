@@ -73,7 +73,8 @@ static NSDateFormatter * s_df_hour = nil;
 -(void) toggleFav
 {
     BOOL isStarred = [self isFav];
-    
+    [self.user.linkedAccount star:!isStarred conversation:self];
+
     if(isStarred) {
         for (Mail* m in self.mails) {
             if ([m isFav]) {
@@ -84,9 +85,6 @@ static NSDateFormatter * s_df_hour = nil;
     else {
         [[self firstMail] toggleFav];
     }
-    
-    
-    [self.user.linkedAccount star:!isStarred conversation:self];
 }
 
 -(void) addMail:(Mail*)mail
@@ -175,6 +173,10 @@ static NSDateFormatter * s_df_hour = nil;
     
     NSArray* tmp = [self.mails copy];
     
+    if (self.isDraft) {
+        [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
+    }
+    else {
     for (Mail* mail in tmp) {
         mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
         
@@ -183,6 +185,9 @@ static NSDateFormatter * s_df_hour = nil;
             [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
         }
     }
+    }
+    
+
     
     return tempFodles;
 }

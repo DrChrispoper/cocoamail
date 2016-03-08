@@ -7,13 +7,13 @@
 //
 
 #import "ViewController.h"
-#import "Mail.h"
 #import "InViewController.h"
 
+@class Draft;
 
 @interface EditMailViewController : InViewController
 
-@property (nonatomic, strong) Mail* mail;
+@property (nonatomic, strong) Draft* draft;
 
 
 @end

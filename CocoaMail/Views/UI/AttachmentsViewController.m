@@ -7,7 +7,7 @@
 //
 
 #import "AttachmentsViewController.h"
-
+#import "Draft.h"
 #import "Persons.h"
 #import "Reachability.h"
 #import "Accounts.h"
@@ -120,6 +120,24 @@
     
 }
 
+
+-(void)reloadWithConversation:(Conversation*)conversation
+{
+    
+    NSMutableArray* res = [NSMutableArray arrayWithCapacity:conversation.mails.count];
+    
+    for (Mail* m in self.conversation.mails) {
+        if ([m hasAttachments]) {
+            [m fetchAllAttachments];
+            [res addObject:m];
+        }
+    }
+    
+    self.conversation = conversation;
+    self.mailsWithAttachment = res;
+    [self.table reloadData];
+}
+
 -(void) cleanBeforeGoingBack
 {
     self.table.delegate = nil;
@@ -128,24 +146,26 @@
 
 -(void) _openEdit
 {
-    Mail* mail = [Mail newMailFormCurrentAccount];
-    mail.body = @"";
+    Draft* draft = [Draft newDraftFormCurrentAccount];
+    //mail.body = @"";
 
-    mail.toPersonID = nil;
+    //mail.toPersonID = nil;
     
-    NSMutableArray* atts = [[NSMutableArray alloc] init];
+    //NSMutableArray* atts = [[NSMutableArray alloc] init];
     
     for (Mail *mail in self.mailsWithAttachment) {
         for (Attachment* at in mail.attachments) {
-            [atts addObject:at];
+            at.msgID = draft.msgID;
+            [CCMAttachment addAttachments:@[at]];
+            //[atts addObject:at];
         }
     }
     
-    mail.attachments = atts;
+    //mail.attachments = atts;
     
-    mail.fromMail = nil;
+    //mail.fromMail = nil;
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
 }
 
 -(void) downloaded:(Attachment*)att
@@ -227,7 +247,7 @@
     
     Mail* m = self.mailsWithAttachment[section];
     
-    Person* p = [[Persons sharedInstance] getPersonID:m.fromPersonID];
+    Person* p = [[Persons sharedInstance] getPersonWithID:m.fromPersonID];
 
     UIView* badge = [p badgeView];
     

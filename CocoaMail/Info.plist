@@ -430,9 +430,10 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>2.9.3</string>
+	<string>2.9.5</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
+		<string>org-appextension-feature-password-management</string>
 		<string>dbapi-2</string>
 		<string>com.example.foo</string>
 		<string>com.googleusercontent.apps.1234567890-abcdefghijklmnopqrstuvwxyz</string>

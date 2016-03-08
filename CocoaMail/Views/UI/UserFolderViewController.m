@@ -7,7 +7,7 @@
 //
 
 #import "UserFolderViewController.h"
-
+#import "UserSettings.h"
 
 @interface UserFolderViewController () <UITableViewDataSource, UITableViewDelegate>
 
@@ -101,7 +101,7 @@
     cell.textLabel.text = text;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
-    cell.imageView.tintColor = cac.userColor;
+    cell.imageView.tintColor = cac.user.color;
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
     

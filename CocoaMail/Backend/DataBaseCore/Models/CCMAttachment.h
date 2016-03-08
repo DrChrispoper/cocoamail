@@ -35,5 +35,6 @@
 -(BOOL) isInline;
 
 +(void) clearAttachments;
++(void) deleteAttachment:(NSString*)msgID fileName:(NSString*)fileName;
 
 @end

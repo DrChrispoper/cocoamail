@@ -7,7 +7,7 @@
 //
 
 #import "SettingsViewController.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 #import "CCMAttachment.h"
 
@@ -87,14 +87,14 @@
     for (Account* a in accounts) {
         idx++;
         
-        if ([a isAllAccounts]) {
+        if (a.user.isAll) {
             continue;
         }
         
-        [as addObject:@{BVIEW: [a.person badgeView], TEXT : a.userMail, ACTION : kSETTINGS_ACCOUNT_NOTIFICATION, OBJECT:a}];
+        [as addObject:@{BVIEW: [a.person badgeView], TEXT : a.user.username, ACTION : kSETTINGS_ACCOUNT_NOTIFICATION, OBJECT:a}];
         
         if (idx == [Accounts sharedInstance].defaultAccountIdx) {
-            [da addObject:@{BVIEW: [a.person badgeView], TEXT : a.userMail, ACTION : kSETTINGS_MAIN_ACCOUNT_NOTIFICATION}];
+            [da addObject:@{BVIEW: [a.person badgeView], TEXT : a.user.username, ACTION : kSETTINGS_MAIN_ACCOUNT_NOTIFICATION}];
         }
         
     }

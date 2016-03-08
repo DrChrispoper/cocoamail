@@ -7,7 +7,7 @@
 //
 
 #import "SearchViewController.h"
-
+#import "UserSettings.h"
 #import "SearchTableViewCell.h"
 #import "Accounts.h"
 #import "Mail.h"
@@ -328,7 +328,7 @@
         
         Mail* mail = [[[Accounts sharedInstance] conversationForCI:c] firstMail];
         
-        Person* p = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+        Person* p = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
         
         NSString* fromName = p.name;
         NSString* title = mail.subject;

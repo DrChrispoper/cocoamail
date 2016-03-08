@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "InViewController.h"
+#import "GTMOAuth2Authentication.h"
 
 #define kPRESENT_FOLDER_NOTIFICATION @"kPRESENT_FOLDER_NOTIFICATION"
 //#define kPRESENT_FOLDER_NAME @"kPRESENT_FOLDER_NAME"
@@ -82,6 +83,7 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 -(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
 
 //+ (void)check3DTouch;
+- (void)auth:(GTMOAuth2Authentication *)auth finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error;
 
 
 @end

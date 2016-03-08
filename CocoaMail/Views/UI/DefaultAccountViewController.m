@@ -7,7 +7,7 @@
 //
 
 #import "DefaultAccountViewController.h"
-
+#import "UserSettings.h"
 #import "Accounts.h"
 
 
@@ -85,7 +85,7 @@
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
     
     
-    cell.textLabel.text = a.userMail;
+    cell.textLabel.text = a.user.username;
     
     
     UIView* v = [a.person badgeView];

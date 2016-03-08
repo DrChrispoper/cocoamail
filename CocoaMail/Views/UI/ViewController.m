@@ -29,6 +29,7 @@
 #import "PreviewViewController.h"
 #import "InViewController.h"
 #import "EditMailViewController.h"
+#import "ImapSync.h"
 
 #import <Instabug/Instabug.h>
 
@@ -655,8 +656,17 @@ static ViewController * s_self;
             return;
         }
         IBGLog(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
+        
         AttachmentsViewController* f = [[AttachmentsViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
+        
+        InViewController* vc = [self.viewControllers lastObject];
+        
+        if ([vc isKindOfClass:[MailListViewController class]]) {
+            ((MailListViewController*)vc).attachSubscriber = f;
+        }
+        
+        
         [self _animatePushVC:f];
     }];
     
@@ -687,7 +697,7 @@ static ViewController * s_self;
         }
         IBGLog(kPRESENT_EDITMAIL_NOTIFICATION);
         EditMailViewController* f = [[EditMailViewController alloc] init];
-        f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
+        f.draft = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
     }];
     
@@ -827,7 +837,7 @@ static ViewController * s_self;
             self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
         }
         
-        [self _manageCocoaButton:[f haveCocoaButton]];
+        [self _manageCocoaButton:YES];
         
         [self.contentView insertSubview:nextView belowSubview:lastView];
         
@@ -1022,6 +1032,9 @@ static ViewController * s_self;
     NSInteger idx = 0;
     
     for (Account* a in alls) {
+        if (!a.user.isAll && a.user.isDeleted) {
+            continue;
+        }
         
         if (idx == currentAIdx) {
             idx++;
@@ -1030,8 +1043,8 @@ static ViewController * s_self;
         
         UIButton* b = [[UIButton alloc] initWithFrame:baseRect];
         
-        b.backgroundColor = a.userColor;
-        [b setTitle:a.codeName forState:UIControlStateNormal];
+        b.backgroundColor = a.user.color;
+        [b setTitle:a.user.initials forState:UIControlStateNormal];
         b.layer.cornerRadius = 22;
         b.layer.masksToBounds = YES;
         b.titleLabel.font = [UIFont systemFontOfSize:13];
@@ -1127,6 +1140,26 @@ static ViewController * s_self;
 
 -(UIInterfaceOrientationMask) supportedInterfaceOrientations{
     return UIInterfaceOrientationMaskPortrait;
+}
+
+#pragma mark - OAuth
+
+- (void)auth:(GTMOAuth2Authentication *)auth finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error
+{
+    if (!error) {
+        if ([auth accessToken]) {
+            UserSettings* user = [AppSettings userWithEmail:[auth userEmail]];
+            if (![[auth accessToken] isEqualToString:[user oAuth]]) {
+                [user setOAuth:[auth accessToken]];
+                [[ImapSync doLogin:user] subscribeError:^(NSError *error) {
+                    CCMLog(@"connection error");
+                } completed:^{}];
+            }
+        }
+    }
+    else {
+        CCMLog(@"Erorr signing in %@",error.description);
+    }
 }
 
 @end

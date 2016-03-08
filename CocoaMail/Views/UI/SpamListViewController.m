@@ -113,7 +113,7 @@
                 
                 
                 mail.fromPersonID = pIdx;
-                mail.toPersonID = @[@(pIdx)];
+                mail.toPersonIDs = @[@(pIdx)];
 
                 break;
             }

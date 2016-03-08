@@ -47,11 +47,11 @@
     self.backgroundColor = [UIColor whiteColor];
     
     ChooseColorView* ccv = [[ChooseColorView alloc] initWithFrame:CGRectMake(0, 11.f, self.bounds.size.width, 52.f)
-                                                  forAccountColor:self.account.userColor];
+                                                  forAccountColor:self.account.user.color];
     
     [ccv updateForAccount:self.account];
     ccv.tapColor = ^(UIColor* color) {
-        self.account.userColor = color;
+        self.account.user.color = color;
         [self.account.user setColor:color];
         
         if (self.cocobuttonUpdated != nil) {
@@ -67,7 +67,7 @@
     tf.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
     tf.autocorrectionType = UITextAutocorrectionTypeNo;
     tf.clearButtonMode = UITextFieldViewModeUnlessEditing;
-    tf.text = self.account.codeName;
+    tf.text = self.account.user.initials;
     tf.delegate = self;
     [self addSubview:tf];
     self.codename = tf;
@@ -91,7 +91,7 @@
     
     if (newText.length<4) {
         textField.text = [newText uppercaseString];
-        self.account.codeName = textField.text;
+        self.account.user.initials = textField.text;
         [self.color updateForAccount:self.account];
         
         if (self.cocobuttonUpdated != nil) {
@@ -226,7 +226,7 @@
 
 -(void) updateForAccount:(Account*)account
 {
-    self.codenameLbl.text = account.codeName;
+    self.codenameLbl.text = account.user.initials;
 }
 
 @end

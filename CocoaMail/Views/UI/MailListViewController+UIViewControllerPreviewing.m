@@ -16,7 +16,7 @@
     if ([self isForceTouchAvailable]) {
         self.previewingContext =
         [self registerForPreviewingWithDelegate:(id)self
-                                     sourceView:self.view];
+                                     sourceView:self.table];
     }
 }
 
@@ -27,14 +27,9 @@
         return nil;
     }
     
-    CGFloat offset = self.table.contentInset.top;
-    
-    location.y = location.y - offset;
-    
     NSIndexPath *path = [self.table indexPathForRowAtPoint:location];
     
     if (path) {
-        
         UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         PreviewViewController *previewController = [storyboard instantiateViewControllerWithIdentifier:@"PreviewView"];
         
@@ -46,10 +41,7 @@
         previewController.indexPath = path;
         
         UITableViewCell* cell = [self.table cellForRowAtIndexPath:path];
-        //CGRect rect = [self.table rectForRowAtIndexPath:path];
         CGRect frame = cell.frame;
-        
-        //frame.origin.y = frame.origin.y - offset;
         
         previewingContext.sourceRect = frame;
     
@@ -73,7 +65,7 @@
         if (!self.previewingContext) {
             self.previewingContext =
             [self registerForPreviewingWithDelegate:(id)self
-                                         sourceView:self.view];
+                                         sourceView:self.table];
         }
     } else {
         if (self.previewingContext) {

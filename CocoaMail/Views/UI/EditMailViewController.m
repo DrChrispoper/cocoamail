@@ -21,6 +21,9 @@
 #import "CCMStatus.h"
 #import <QuickLook/QuickLook.h>
 #import "ContactsTableViewCell.h"
+#import <AVFoundation/AVFoundation.h>
+#import "Draft.h"
+#import "RegExCategories.h"
 
 typedef enum : NSUInteger {
     ContentNone,
@@ -72,6 +75,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 @property (nonatomic, strong) Account* selectedAccount;
 @property (nonatomic, strong) NSMutableArray* viewsWithAccountTintColor;
+@property (nonatomic, strong) NSMutableArray* toPersonIDs;
 
 @property (nonatomic, strong) NSMutableArray* expandableBadges;
 
@@ -98,8 +102,17 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     [super viewDidLoad];
 
-    if (self.mail == nil) {
-        self.mail = [Mail newMailFormCurrentAccount];
+    if (self.draft == nil) {
+        self.draft = [Draft newDraftFormCurrentAccount];
+    }
+    
+    self.toPersonIDs = [[NSMutableArray alloc] init];
+
+    if (self.draft.toPersons.count > 0) {
+        for (NSString* ad in self.draft.toPersons) {
+            Persons* allp = [Persons sharedInstance];
+            [self.toPersonIDs addObject:@([allp indexForEmail:ad])];
+        }
     }
     
     self.isDownloading = 0;
@@ -121,32 +134,20 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     self.sendButton = send;
     
-    Accounts* allAccounts = [Accounts sharedInstance];
-    Account* ca = nil;
-    
-    if (self.mail.fromPersonID < 0) {
-        ca = [allAccounts account:-(1 + self.mail.fromPersonID)];
-    }
-    else {
-        ca = [allAccounts currentAccount];
-        
-        if (ca.isAllAccounts) {
-            ca = [allAccounts account:allAccounts.defaultAccountIdx];
-        }
-    }
+    Account* ca = [AppSettings userWithNum:self.draft.accountNum].linkedAccount;
     
     self.selectedAccount = ca;
     self.viewsWithAccountTintColor = [NSMutableArray arrayWithCapacity:20];
     
-    back.tintColor = [ca userColor];
-    send.tintColor = [ca userColor];
+    back.tintColor = ca.user.color;
+    send.tintColor = ca.user.color;
     
     [self.viewsWithAccountTintColor addObject:back];
     [self.viewsWithAccountTintColor addObject:send];
     
-    UILabel* titleView = [WhiteBlurNavBar titleViewForItemTitle:ca.userMail];
+    UILabel* titleView = [WhiteBlurNavBar titleViewForItemTitle:ca.user.username];
     
-    if (allAccounts.accountsCount>1) {
+    if ([Accounts sharedInstance].accountsCount>1) {
         
         titleView.userInteractionEnabled = YES;
         UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tapTitle:)];
@@ -171,6 +172,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [titleView addSubview:support];
         
     }
+    
     item.titleView = titleView;
     
     [self _setup];
@@ -187,8 +189,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     BOOL isReply = NO;
     
-    if (self.mail.fromMail) {
-        if (self.mail.toPersonID.count>0) {
+    if (self.draft.fromMailMsgID) {
+        if (self.draft.toPersons.count>0) {
             isReply = YES;
         }
     }
@@ -205,11 +207,16 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) viewWillAppear:(BOOL)animated
 {
+    [super viewWillAppear:animated];
+    
+    self.isSending = NO;
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
     [super viewDidAppear:animated];
     
     [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
-    
-    self.isSending = NO;
 }
 
 -(BOOL) haveCocoaButton
@@ -281,7 +288,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     NSInteger bodyLength = body.length;
     
     BOOL haveSomething = bodyLength > 0
-    || [self.mail.attachments count] > 0 ;
+    || [self.draft.attachments count] > 0 ;
     
     /*if (self.mail.fromMail) {
         haveSomething = [self.bodyTextView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0 ;
@@ -289,8 +296,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     if (!self.isSending && haveSomething) {
         
-        self.mail.subject = self.subjectTextView.text;
-        self.mail.body = self.bodyTextView.text;
+        self.draft.subject = self.subjectTextView.text;
+        self.draft.body = self.bodyTextView.text;
         
         UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
                                                                     message:NSLocalizedString(@"Save to drafts ?", @"Save to drafts ?")
@@ -299,56 +306,59 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Save", @"Save") style:UIAlertActionStyleDefault
                                                               handler:^(UIAlertAction* aa) {
                                                                   
-                                                                  if ([ImapSync sharedServices:self.selectedAccount.idx].connected) {
+                                                                  self.draft.isBcc = self.personsAreHidden;
+
+                                                                  NSMutableArray* to = [[NSMutableArray alloc] init];
+                                                                  
+                                                                  for (NSNumber* personID in self.toPersonIDs) {
+                                                                      Person* p = [[Persons sharedInstance] getPersonWithID:[personID intValue]];
+                                                                      //MCOAddress* newAddress = [MCOAddress addressWithDisplayName:p.name mailbox:p.email];
+                                                                      [to addObject:p.email];
+                                                                  }
+                                                                  
+                                                                  self.draft.toPersons = to;
+                                                                  
+                                                                  if ([ImapSync sharedServices:self.selectedAccount.user].connected) {
                                                                       
                                                                       //If draft exists delete and create new
-                                                                      if (self.mail.msgID) {
+                                                                      /*if (self.draft.msgID) {
                                                                           [[Accounts sharedInstance].accounts[self.mail.user.accountIndex] deleteDraft:self.mail];
-                                                                      }
+                                                                      }*/
                                                                       
-                                                                      NSMutableString* bodyContent = [NSMutableString stringWithString:self.mail.body];
+                                                                      NSMutableString* bodyContent = [NSMutableString stringWithString:self.draft.body];
                                                                       
                                                                       NSRange bodyrange;
                                                                       while((bodyrange = [bodyContent rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]]).location != NSNotFound) {
                                                                           [bodyContent replaceCharactersInRange:bodyrange withString:@"<br />"];
                                                                       }
                                                                       
-                                                                      self.mail.body = bodyContent;
+                                                                      self.draft.body = bodyContent;
                                                                       
-                                                                      NSData* rfc822Data = [self.mail rfc822DataWithAccountIdx:self.selectedAccount.idx isBcc:self.personsAreHidden];
+                                                                      NSData* rfc822Data = [self.draft rfc822DataTo:self.toPersonIDs];
                                                                       NSString* draftPath = [self.selectedAccount.user folderServerName:[self.selectedAccount.user importantFolderNumforBaseFolder:FolderTypeDrafts]];
                                                                       
-                                                                      MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.idx].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
+                                                                      MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.user].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
                                                                       [addOp start:^(NSError * error, uint32_t createdUID) {
                                                                           if (error == nil) {
+                                                                              if (![RX(@"^[0-9]+?$") isMatch:self.draft.msgID]) {
+                                                                                  [[Mail mailWithDraft:self.draft] trash];
+                                                                              }
                                                                               [self.selectedAccount refreshCurrentFolder];
+                                                                          }
+                                                                          else {
+                                                                              [self.draft save];
                                                                           }
                                                                       }];
                                                                   }
                                                                   else {
-                                                                      self.mail.datetime = [NSDate date];
+
+                                                                      //self.draft.sender = [MCOAddress addressWithDisplayName:self.selectedAccount.user.name mailbox:self.selectedAccount.user.username];
                                                                       
-                                                                      NSMutableArray* to = [[NSMutableArray alloc] init];
+                                                                      //self.mail.htmlBody = self.bodyTextView.text;
+                                                                      //self.draft.body = self.bodyTextView.text;
+                                                                      //self.draft.subject = self.subjectTextView.text;
                                                                       
-                                                                      for (NSNumber* personID in self.mail.toPersonID) {
-                                                                          Person* p = [[Persons sharedInstance] getPersonID:[personID intValue]];
-                                                                          MCOAddress* newAddress = [MCOAddress addressWithDisplayName:p.name mailbox:p.email];
-                                                                          [to addObject:newAddress];
-                                                                      }
-                                                                      
-                                                                      if (!self.personsAreHidden) {
-                                                                          self.mail.tos = to;
-                                                                      }
-                                                                      else {
-                                                                          self.mail.bccs = to;
-                                                                      }
-                                                                      
-                                                                      self.mail.sender = [MCOAddress addressWithDisplayName:self.selectedAccount.user.name mailbox:self.selectedAccount.user.username];
-                                                                      self.mail.htmlBody = self.bodyTextView.text;
-                                                                      self.mail.body = self.bodyTextView.text;
-                                                                      self.mail.subject = self.subjectTextView.text;
-                                                                      
-                                                                      if (self.mail.uids.count == 0) {
+                                                                      /*if (self.mail.uids.count == 0) {
                                                                           UidEntry* uidE = [[UidEntry alloc]init];
                                                                           uidE.accountNum = self.selectedAccount.user.accountNum;
                                                                           uidE.folder = [self.selectedAccount.user importantFolderNumforBaseFolder:FolderTypeDrafts];
@@ -366,17 +376,19 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       else {
                                                                           NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateEmailWrapper:) object:self.mail];
                                                                           [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-                                                                      }
+                                                                      }*/
                                                                       
-                                                                      [self.selectedAccount insertRows:self.mail];
+                                                                      //[self.selectedAccount insertRows:self.mail];
+                                                                      
+                                                                      [self.draft save];
                                                                   }
-                                                                  
                                                               }];
         [ac addAction:defaultAction];
         
         UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Delete", @"Delete") style:UIAlertActionStyleDestructive
                                                               handler:^(UIAlertAction* aa) {
-                                                                  [self.mail.user.linkedAccount deleteDraft:self.mail];
+                                                                  
+                                                                  [self.draft deleteDraft];
                                                               }];
         [ac addAction:cancelAction];
         
@@ -401,7 +413,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         return;
     }
     
-    self.mail.subject = self.subjectTextView.text;
+    self.draft.subject = self.subjectTextView.text;
     NSMutableString* bodyContent = [NSMutableString stringWithString:self.bodyTextView.text];
     
     NSRange bodyrange;
@@ -411,20 +423,22 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSString* transfertContent = @"";
     
-    if (![self.mail.transferContent isEqualToString:@""]) {
-        transfertContent = [NSString stringWithFormat:@"<br /><br />%@",self.mail.transferContent];
+    if (![self.draft.transferContent isEqualToString:@""]) {
+        transfertContent = [NSString stringWithFormat:@"<br /><br />%@",self.draft.transferContent];
     }
     
-    self.mail.body = bodyContent;
+    self.draft.body = bodyContent;
 
     if ([[AppSettings getSingleton] premiumPurchased]) {
-        self.mail.htmlBody = [NSString stringWithFormat:@"%@ %@", bodyContent, transfertContent];
+        self.draft.body = [NSString stringWithFormat:@"%@ %@", bodyContent, transfertContent];
     }
     else {
-        self.mail.htmlBody = [NSString stringWithFormat:@"%@<br />%@ %@", bodyContent, self.selectedAccount.user.signature, transfertContent];
+        self.draft.body = [NSString stringWithFormat:@"%@<br />%@ %@", bodyContent, self.selectedAccount.user.signature, transfertContent];
     }
     
-    [self.selectedAccount sendMail:self.mail bcc:self.personsAreHidden];
+    [self.draft save];
+    
+    [self.selectedAccount sendDraft:self.draft to:self.toPersonIDs];
     
     self.isSending = YES;
 
@@ -433,7 +447,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _manageSendButton
 {
-    self.sendButton.enabled = /*self.subjectTextView.text.length>0 &&*/ self.mail.toPersonID.count>0;
+    self.sendButton.enabled = /*self.subjectTextView.text.length>0 &&*/ self.toPersonIDs.count>0;
 }
 
 -(void) _keyboardNotification:(BOOL)listen
@@ -583,7 +597,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     addButton = [[UIButton alloc] initWithFrame:CGRectMake(WIDTH-46, 0, 45, 45)];
     addButton.backgroundColor = [UIColor whiteColor];
-    addButton.tintColor = [ca userColor];
+    addButton.tintColor = ca.user.color;
     [addButton addTarget:self action:@selector(_addAttach) forControlEvents:UIControlEventTouchUpInside];
     addButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     [subView addSubview:addButton];
@@ -661,14 +675,14 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     // last message
     
-    if (self.mail.transferContent) {
+    if (self.draft.transferContent) {
         UIView* oldView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 200)];
         oldView.backgroundColor = [UIColor whiteColor];
         
         
         MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
         [view setBgrdColor:[UIColor colorWithWhite:1. alpha:.0]];
-        [view setHtml:self.mail.transferContent];
+        [view setHtml:self.draft.transferContent];
 
         view.delegate = self;
         [oldView addSubview:view];
@@ -693,17 +707,17 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         oldView.tag = ContentOld;
     }
     else {
-        self.mail.transferContent = @"";
+        self.draft.transferContent = @"";
     }
     
-    if (self.mail.fromMail != nil) {
+    if (self.draft.fromMail != nil) {
         
         UIView* oldView = [[UIView alloc] initWithFrame:CGRectMake(0, currentPosY, WIDTH, 200)];
         oldView.backgroundColor = [UIColor whiteColor];
         
         MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, 200)];
         [view setBgrdColor:[UIColor colorWithWhite:1. alpha:.0]];
-        [view setMail:self.mail.fromMail];
+        [view setMail:self.draft.fromMail];
         
         view.delegate = self;
         [oldView addSubview:view];
@@ -731,7 +745,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [self _fillTitle];
     
-    if (self.mail.body.length > 0) {
+    if (self.draft.body.length > 0) {
         [self _fillBody];
     }
     
@@ -792,7 +806,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     CGFloat lastH = self.subjectTextView.frame.size.height;
 
-    self.subjectTextView.text = self.mail.subject;
+    self.subjectTextView.text = self.draft.subject;
     
     CGRect oneLineFrame = self.subjectTextView.frame;
     
@@ -816,7 +830,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     CGFloat lastH = self.bodyTextView.frame.size.height;
     
-    [self.bodyTextView setText:self.mail.body];
+    [self.bodyTextView setText:self.draft.body];
     
     CGRect fourLineFrame = self.bodyTextView.frame;
     
@@ -866,7 +880,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     UIImage* on = [[UIImage imageNamed:@"editmail_attachment_on"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 
-    if (self.mail.attachments.count==0) {
+    if (self.draft.attachments.count==0) {
         UIImage* off = [[UIImage imageNamed:@"editmail_attachment_off"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [self.attachButton setImage:off forState:UIControlStateNormal];
         [self.attachButton setImage:on forState:UIControlStateHighlighted];
@@ -880,7 +894,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(UIView*) _createAttachmentsView
 {
-    NSArray* attachs = self.mail.attachments;
+    NSArray* attachs = self.draft.attachments;
     
     if (attachs.count==0) {
         return nil;
@@ -914,7 +928,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         if(!att.data){
             UidEntry* uidE = [[UidEntry getUidEntriesWithMsgId:att.msgID] firstObject];
             MCOIMAPFetchContentOperation*  op =
-            [[ImapSync sharedServices:self.selectedAccount.idx].imapSession
+            [[ImapSync sharedServices:self.selectedAccount.user].imapSession
              fetchMessageAttachmentOperationWithFolder:[self.selectedAccount.user folderServerName:uidE.folder]
              uid:uidE.uid
              partID:att.partID
@@ -961,10 +975,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _delAttach:(UIButton*)b
 {
-    NSMutableArray* attachs = [self.mail.attachments mutableCopy];
+    NSMutableArray* attachs = [self.draft.attachments mutableCopy];
     Attachment* att = attachs[b.tag];
-    [attachs removeObjectAtIndex:b.tag];
-    self.mail.attachments = attachs;
+    //[attachs removeObjectAtIndex:b.tag];
+    
+    [CCMAttachment deleteAttachment:att.msgID fileName:att.fileName];
+    
+    //self.mail.attachments = attachs;
     
     if (att.size == 0) {
         NSString* link = [[NSString alloc] initWithData:att.data encoding:NSUTF8StringEncoding];
@@ -1004,13 +1021,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) _createCCcontent
 {
-    UIColor* currentAccountColor = self.selectedAccount.userColor;
+    UIColor* currentAccountColor = self.selectedAccount.user.color;
     
     UIView* ccView = [self.contentView viewWithTag:ContentCC];
     
     CGFloat delta = 0.f;
     
-    if (self.mail.toPersonID.count > 0) {
+    if (self.toPersonIDs.count > 0) {
         
         NSArray* alls = ccView.subviews;
         
@@ -1040,11 +1057,11 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         NSInteger idx = 0;
         
-        self.expandableBadges = [NSMutableArray arrayWithCapacity:self.mail.toPersonID.count];
+        self.expandableBadges = [NSMutableArray arrayWithCapacity:self.toPersonIDs.count];
         
-        for (NSNumber* val in self.mail.toPersonID) {
+        for (NSNumber* val in self.toPersonIDs) {
             NSInteger personID = [val integerValue];
-            Person* p = [[Persons sharedInstance] getPersonID:personID];
+            Person* p = [[Persons sharedInstance] getPersonWithID:personID];
             
             if (nextPosX + 33 + 8 >= self.view.frame.size.width) {
                 currentPosY+=45;
@@ -1110,9 +1127,9 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) removePersonAtIndex:(NSInteger)idx
 {
-    NSMutableArray* tmp = [self.mail.toPersonID mutableCopy];
+    NSMutableArray* tmp = [self.toPersonIDs mutableCopy];
     [tmp removeObjectAtIndex:idx];
-    self.mail.toPersonID = tmp;
+    self.toPersonIDs = tmp;
     
     [self _createCCcontent];
 }
@@ -1406,15 +1423,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     NSInteger idxPerson = [[Persons sharedInstance] indexForPerson:p];
     
-    if (self.mail.toPersonID.count<1) {
-        self.mail.toPersonID = @[@(idxPerson)];
+    if (self.toPersonIDs.count<1) {
+        self.toPersonIDs = [NSMutableArray arrayWithArray:@[@(idxPerson)]];
     }
     else {
-        NSMutableArray* olds = [self.mail.toPersonID mutableCopy];
+        NSMutableArray* olds = [self.toPersonIDs mutableCopy];
         if (!CFArrayContainsValue ( (__bridge CFArrayRef)olds, CFRangeMake(0, olds.count), (CFNumberRef)@(idxPerson) )) {
             [olds addObject:@(idxPerson)];
         }
-        self.mail.toPersonID = olds ;
+        self.toPersonIDs = olds ;
     }
     
     [self _createCCcontent];
@@ -1527,15 +1544,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             Person* p = [Person createWithName:mail email:mail icon:nil codeName:code];
             NSInteger idxPerson = [[Persons sharedInstance] addPerson:p];
             
-            if (self.mail.toPersonID.count<1) {
-                self.mail.toPersonID = @[@(idxPerson)];
+            if (self.toPersonIDs.count<1) {
+                self.toPersonIDs = [NSMutableArray arrayWithArray:@[@(idxPerson)]];
             }
             else {
-                NSMutableArray* olds = [self.mail.toPersonID mutableCopy];
+                NSMutableArray* olds = [self.toPersonIDs mutableCopy];
                 if (!CFArrayContainsValue ( (__bridge CFArrayRef)olds, CFRangeMake(0, olds.count), (CFNumberRef)@(idxPerson) )) {
                     [olds addObject:@(idxPerson)];
                 }
-                self.mail.toPersonID = olds;
+                self.toPersonIDs = olds;
             }
             
             added = YES;
@@ -1562,6 +1579,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         UIImagePickerController* imagePickerController = [[UIImagePickerController alloc] init];
         imagePickerController.sourceType = sourceType;
         imagePickerController.delegate = self;
+        [imagePickerController setMediaTypes:[UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera]];
         [[ViewController mainVC] presentViewController:imagePickerController animated:YES completion:nil];
     }
 }
@@ -1574,27 +1592,82 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         img = info[UIImagePickerControllerOriginalImage];
     }
     
+    if (img==nil) {
+        img = info[UIImagePickerControllerLivePhoto];
+    }
+    
     if (img != nil) {
         Attachment* attach = [[Attachment alloc] init];
-        attach.image = img;
-        
-        attach.fileName = [NSString stringWithFormat:@"IMG_%lu.JPEG", (unsigned long)self.mail.attachments.count];
+    
+        attach.fileName = [NSString stringWithFormat:@"IMG_%lu.JPEG", (unsigned long)self.draft.attachments.count];
         attach.data = UIImageJPEGRepresentation(img, 1);
         attach.size = [attach.data length];
+        attach.mimeType = @"image/jpeg";
         
-        if (self.mail.attachments == nil) {
+        attach.image = [UIImage imageWithData:attach.data];
+        
+        attach.msgID = self.draft.msgID;
+        
+        [CCMAttachment addAttachments:@[attach]];
+        
+        /*if (self.attachments == nil) {
+            self.mail.attachments = @[attach];
+        }
+        else {
+            NSMutableArray* ma = [self.attachments mutableCopy];
+            [ma addObject:attach];
+            self.mail.attachments = ma;
+        }*/
+        
+        [self _updateAttachView];
+        
+        [picker dismissViewControllerAnimated:YES completion:nil];
+    }
+    else {
+        NSURL *url =  [info objectForKey:UIImagePickerControllerMediaURL];
+        
+        Attachment* attach = [[Attachment alloc] init];
+        attach.data = [NSData dataWithContentsOfURL:url];
+        attach.size = [attach.data length];
+
+        attach.fileName = [NSString stringWithFormat:@"Video_%lu.MOV", (unsigned long)self.draft.attachments.count];
+
+        AVURLAsset* asset = [[AVURLAsset alloc] initWithURL:url options:nil];
+        AVAssetImageGenerator* generate = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+        generate.appliesPreferredTrackTransform = TRUE;
+        NSError* err = NULL;
+        CMTime time = CMTimeMake(1, 60);
+        CGImageRef imgRef = [generate copyCGImageAtTime:time actualTime:NULL error:&err];
+        
+        if (!err) {
+            attach.image = [[UIImage alloc] initWithCGImage:imgRef];
+        }
+
+        attach.msgID = self.draft.msgID;
+
+        [CCMAttachment addAttachments:@[attach]];
+
+        /*if (self.mail.attachments == nil) {
             self.mail.attachments = @[attach];
         }
         else {
             NSMutableArray* ma = [self.mail.attachments mutableCopy];
             [ma addObject:attach];
             self.mail.attachments = ma;
-        }
+        }*/
+        
         [self _updateAttachView];
+
         
         [picker dismissViewControllerAnimated:YES completion:nil];
     }
 }
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker;
+{
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
 
 #pragma mark - GDRIVE
 
@@ -1607,7 +1680,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         CCMLog(@"Downloaded %@ without overwriting", fileName);
     }
     
-    Attachment* attach = [[Attachment alloc]init];
+    /*Attachment* attach = [[Attachment alloc]init];
     attach.fileName = fileName;
     
     [attach loadLocalFile];
@@ -1620,7 +1693,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         [ma addObject:attach];
         self.mail.attachments = ma;
     }
-    [self _updateAttachView];
+    [self _updateAttachView];*/
 }
 
 -(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
@@ -1650,14 +1723,18 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     attach.size = 0;
     attach.data = [link dataUsingEncoding:NSUTF8StringEncoding];
     
-    if (self.mail.attachments == nil) {
+    attach.msgID = self.draft.msgID;
+
+    [CCMAttachment addAttachments:@[attach]];
+    
+    /*if (self.mail.attachments == nil) {
         self.mail.attachments = @[attach];
     }
     else {
         NSMutableArray* ma = [self.mail.attachments mutableCopy];
         [ma addObject:attach];
         self.mail.attachments = ma;
-    }
+    }*/
     
     [self _updateAttachView];
     
@@ -1694,14 +1771,18 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [attach loadLocalFile];
     
-    if (self.mail.attachments == nil) {
+    attach.msgID = self.draft.msgID;
+    
+    [CCMAttachment addAttachments:@[attach]];
+    
+    /*if (self.mail.attachments == nil) {
         self.mail.attachments = @[attach];
     }
     else {
         NSMutableArray* ma = [self.mail.attachments mutableCopy];
         [ma addObject:attach];
         self.mail.attachments = ma;
-    }
+    }*/
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
@@ -1783,14 +1864,19 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             
             [attach loadLocalFile];
             
-            if (self.mail.attachments == nil) {
+            attach.msgID = self.draft.msgID;
+            
+            [CCMAttachment addAttachments:@[attach]];
+            
+            /*if (self.mail.attachments == nil) {
                 self.mail.attachments = @[attach];
             }
             else {
                 NSMutableArray* ma = [self.mail.attachments mutableCopy];
                 [ma addObject:attach];
                 self.mail.attachments = ma;
-            }
+            }*/
+            
             [self _updateAttachView];
 
             
@@ -1992,11 +2078,11 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     for (Account* a in [Accounts sharedInstance].accounts) {
         idx++;
         
-        if (a.isAllAccounts) {
+        if (a.user.isAll) {
             continue;
         }
         
-        UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:a.userMail style:UIAlertActionStyleDefault
+        UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:a.user.username style:UIAlertActionStyleDefault
                                                               handler:^(UIAlertAction* aa) {
                                                                   
                                                                   // remove from last account if already saved here
@@ -2005,20 +2091,20 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                   UINavigationItem* ni = self.navBar.items.firstObject;
                                                                   
                                                                   UILabel* lbl = (UILabel*)ni.titleView;
-                                                                  lbl.text = a.userMail;
+                                                                  lbl.text = a.user.username;
                                                                   [lbl sizeToFit];
                                                                   self.selectedAccount = a;
                                                                   
-                                                                  self.mail.fromPersonID = -(1 + idx);
+                                                                  self.draft.accountNum = a.user.accountNum;//-(1 + idx);
                                                                   
                                                                   for (UIView* v in self.viewsWithAccountTintColor) {
-                                                                      v.tintColor = a.userColor;
+                                                                      v.tintColor = a.user.color;
                                                                   }
                                                                   
                                                                   [self.navBar setNeedsDisplay];
                                                               }];
         
-        if ([a.userMail isEqualToString:currentTitle]) {
+        if ([a.user.username isEqualToString:currentTitle]) {
             [defaultAction setValue:[UIImage imageNamed:@"swipe_select"] forKey:@"image"];
         }
         else {

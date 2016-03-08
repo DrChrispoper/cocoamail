@@ -22,20 +22,24 @@
 
 
 +(void) tableCheck;
-+(BOOL) addUid:(UidEntry*)uid_entry;
-+(BOOL) updateNewUID:(UidEntry*)uid_entry;
-+(BOOL) removeFromFolderUid:(UidEntry*)uid_entry;
++(void) addUid:(UidEntry*)uid_entry;
++(void) updateNewUID:(UidEntry*)uid_entry;
++(void) removeFromFolderUid:(UidEntry*)uid_entry;
++(void) removeAllMsgID:(NSString*)msgID;
 +(UidEntry*) getUidEntryAtPk:(NSInteger)pk;
 +(NSMutableArray*) getUidEntries;
-+(NSMutableArray*) getUidEntriesinAccount:(NSInteger)accountIndex andDelete:(BOOL)haveDeleted;
-+(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
-+(NSMutableArray*) getUidEntriesFrom:(Mail*)email withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountIndex;
++(NSMutableArray*) getUidEntriesinAccountNum:(NSInteger)accountNum andDelete:(BOOL)haveDeleted;
++(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum;
++(NSMutableArray*) getUidEntriesFrom:(Mail*)email withFolder:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum;
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgID:(NSString*)msgID;
 +(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgID;
+
 +(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;
++(BOOL) hasUidEntrywithMsgId:(NSString*)msgID;
+
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 
-+(void) cleanBeforeDeleteinAccount:(NSInteger)accountIndex;
++(void) cleanBeforeDeleteinAccountNum:(NSInteger)accountNum;
 
 /// Copy email from origin folder to destination folder.
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to;
@@ -46,11 +50,11 @@
 
 /// Add Flag
 +(void) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
-+(void) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
+//+(void) addFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
 /// Remove Flag
-+(void) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
+//+(void) removeFlag:(MCOMessageFlag)flag toMsgId:(NSString*)msg_id fromFolder:(NSInteger)folder;
 +(void) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE;
 
-+(NSArray*) dbNumsInAccount:(NSInteger)accountIndex;
++(NSArray*) dbNumsInAccountNum:(NSInteger)accountNum;
 
 @end

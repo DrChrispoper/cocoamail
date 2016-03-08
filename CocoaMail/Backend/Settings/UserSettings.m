@@ -28,9 +28,8 @@
 @synthesize initials = _initials;
 @synthesize color = _color;
 @synthesize importantFolders = _importantFolders;
-@synthesize allFolders = _allFolders;
+@synthesize allFoldersDisplayNames = _allFoldersDisplayNames;
 @synthesize accountNum = _accountNum;
-@synthesize accountIndex = _accountIndex;
 @synthesize deleted = _deleted;
 @synthesize all = _all;
 
@@ -99,9 +98,9 @@
     return _importantFolders;
 }
 
--(NSArray *)allFolders
+-(NSArray *)allFoldersDisplayNames
 {
-    return _allFolders;
+    return _allFoldersDisplayNames;
 }
 
 -(NSUInteger)accountNum
@@ -111,7 +110,7 @@
 
 -(NSUInteger)accountIndex
 {
-    return _accountIndex;
+    return [AppSettings indexForAccountNum:_accountNum];
 }
 
 -(BOOL)isDeleted
@@ -180,12 +179,20 @@
 
 -(void)setName:(NSString *)name
 {
+    if (!self.isAll) {
+        self.linkedAccount.person.name = name;
+    }
+    
     _name = name;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setInitials:(NSString *)initials
 {
+    if (!self.isAll) {
+        self.linkedAccount.person.codeName = initials;
+    }
+    
     _initials = initials;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
@@ -202,9 +209,9 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(void)setAllFolders:(NSMutableArray *)allFolders
+-(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
-    _allFolders = allFolders;
+    _allFoldersDisplayNames = allFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
@@ -216,12 +223,6 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
-    [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
-}
-
--(void)setAccountIndex:(NSUInteger)accountIndex
-{
-    _accountIndex = accountIndex;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
@@ -308,7 +309,7 @@
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder
 {
-    return _allFolders[folder];
+    return _allFoldersDisplayNames[folder];
 }
 
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder
@@ -332,8 +333,8 @@
     
     if (folder.type == FolderTypeUser) {
         folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-        for (int index = 0; index < [_allFolders count]; index++) {
-            if ([folderName isEqualToString:_allFolders[index]]) {
+        for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
+            if ([folderName isEqualToString:_allFoldersDisplayNames[index]]) {
                 return index;
             }
         }
@@ -346,11 +347,11 @@
 
 -(NSArray*) allNonImportantFoldersName
 {
-    NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFolders];
+    NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
     
     for (NSNumber* index in _importantFolders) {
         if ([index intValue] >= 0) {
-            [foldersSet removeObject:_allFolders[[index intValue]]];
+            [foldersSet removeObject:_allFoldersDisplayNames[[index intValue]]];
         }
     }
     
@@ -359,7 +360,23 @@
 
 -(Account*) linkedAccount
 {
-    return [[Accounts sharedInstance] account:_accountIndex];
+    return [[Accounts sharedInstance] account:[AppSettings indexForAccountNum:_accountNum]];
+}
+
+- (MCOIMAPMessagesRequestKind)requestKind
+{
+    MCOIMAPMessagesRequestKind rq =
+    MCOIMAPMessagesRequestKindHeaders |
+    MCOIMAPMessagesRequestKindStructure |
+    MCOIMAPMessagesRequestKindInternalDate |
+    MCOIMAPMessagesRequestKindHeaderSubject |
+    MCOIMAPMessagesRequestKindFlags;
+    
+    if ([self.identifier isEqualToString:@"gmail"]) {
+        rq |= MCOIMAPMessagesRequestKindGmailThreadID;
+    }
+    
+    return rq;
 }
 
 #pragma mark - NSCoding
@@ -387,13 +404,13 @@
     _color = [UserSettings _colorForString:[decoder decodeObjectForKey:@"color"]];
 
     _importantFolders = [decoder decodeObjectForKey:@"importantFolders"];
-    _allFolders = [decoder decodeObjectForKey:@"allFolders"];
+    _allFoldersDisplayNames = [decoder decodeObjectForKey:@"allFolders"];
 
     _deleted = [decoder decodeBoolForKey:@"deleted"];
     _all = [decoder decodeBoolForKey:@"all"];
 
     _accountNum = [decoder decodeIntegerForKey:@"accountNum"];
-    _accountIndex = [decoder decodeIntegerForKey:@"accountIndex"];
+    //_accountIndex = [decoder decodeIntegerForKey:@"accountIndex"];
     
     NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
@@ -421,13 +438,13 @@
     [encoder encodeObject:[UserSettings _stringForColor:_color] forKey:@"color"];
     
     [encoder encodeObject:_importantFolders forKey:@"importantFolders"];
-    [encoder encodeObject:_allFolders forKey:@"allFolders"];
+    [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     
     [encoder encodeBool:_deleted forKey:@"deleted"];
     [encoder encodeBool:_all forKey:@"all"];
 
     [encoder encodeInteger:_accountNum forKey:@"accountNum"];
-    [encoder encodeInteger:_accountIndex forKey:@"accountIndex"];
+    //[encoder encodeInteger:_accountIndex forKey:@"accountIndex"];
 }
 
 +(UIColor*) _colorForString:(NSString*)colorString

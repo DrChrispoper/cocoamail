@@ -63,14 +63,15 @@ static AppSettings * singleton = nil;
         
         NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:inboxPath error:nil];
         
-        if (dirFiles.count == 0) {
+        if (!dirFiles || dirFiles.count == 0) {
             UserSettings* user = [[UserSettings alloc] init];
             user.accountNum = 999;
+            
             user.all = YES;
             user.deleted = YES;
-            user.accountIndex = _users.count;
             user.initials = @"ALL";
             user.color = [UIColor blackColor];
+            user.username = NSLocalizedString(@"All accounts", @"All accounts");
             
             [_users addObject:user];
         }
@@ -78,17 +79,19 @@ static AppSettings * singleton = nil;
             for (NSString* fileName in dirFiles) {
                 NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
                 UserSettings* user = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
+                //if ([user isDeleted]) {
+                //    continue;
+                //}
                 [_users addObject:user];
             }
         }
         
         NSMutableString* accounts = [NSMutableString stringWithString:@""];
         
-        for (int index; index < _users.count; index++) {
+        for (int index = 0; index < _users.count; index++) {
             UserSettings* user = _users[index];
             
             if (user.isAll) {
-                user.accountIndex = _users.count;
                 continue;
             }
             
@@ -99,6 +102,14 @@ static AppSettings * singleton = nil;
         NSString* userData = [NSString stringWithFormat:@"%@",accounts];
         
         [Instabug setUserData:userData];
+        
+        //Default Settings
+        if (_users.count == 1) {
+            _badgeCount = 1;
+
+            NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+            [defaults setObject:@(_badgeCount) forKey:@"badgecount_preference"];
+        }
     }
     
     return self;
@@ -207,9 +218,14 @@ static AppSettings * singleton = nil;
 
 +(NSInteger) accountIndexForEmail:(NSString*)email
 {
+    NSInteger index = 0;
+    
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
+        if (!user.isDeleted) {
         if ([user.username isEqualToString:email]) {
-            return user.accountIndex;
+            return index;
+        }
+        index++;
         }
     }
     
@@ -217,7 +233,7 @@ static AppSettings * singleton = nil;
 }
 
 //NumAccout:1 - 2 - 4 If 3 is deleted
-+(NSInteger) numAccountForIndex:(NSInteger)accountIndex
+/*+(NSInteger) numAccountForIndex:(NSInteger)accountIndex
 {
     NSAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
 
@@ -228,14 +244,20 @@ static AppSettings * singleton = nil;
     }
     
     return -1;
-}
+}*/
 
 //numIndex:0 - 1 - 2 ...
-+(NSInteger) indexForAccount:(NSInteger)accountNum
++(NSInteger) indexForAccountNum:(NSInteger)accountNum
 {
+    NSInteger index = 0;
+    
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
-        if (user.accountNum == accountNum) {
-            return user.accountIndex;
+        if (!user.isDeleted) {
+            if (user.accountNum == accountNum) {
+                return index;
+            }
+        
+            index++;
         }
     }
     
@@ -255,9 +277,21 @@ static AppSettings * singleton = nil;
     return num;
 }
 
--(UserSettings*) newUser
++(NSMutableArray*) activeUsers
 {
-    NSInteger accountIndex = 0;
+    NSMutableArray* acts = [[NSMutableArray alloc] init];
+    
+    for (UserSettings* user in [[AppSettings getSingleton] users]) {
+        if (!user.isDeleted) {
+            [acts addObject:user];
+        }
+    }
+    
+    return acts;
+}
+
+-(UserSettings*) createNewUser
+{
     NSInteger accountNum = 1;
     
     for (UserSettings* user in _users) {
@@ -266,34 +300,29 @@ static AppSettings * singleton = nil;
         }
         
         accountNum++;
-        
-        if (!user.isDeleted) {
-            accountIndex++;
-        }
     }
     
     UserSettings* user = [[UserSettings alloc] init];
     user.accountNum = accountNum;
-    user.accountIndex = accountIndex;
     
     [_users insertObject:user atIndex:_users.count-1];
     
-    for (UserSettings* user in _users) {
-        if (user.isAll) {
-            user.accountIndex = _users.count;
-        }
-    }
-    
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeFavoris];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSent];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDrafts];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeAll];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted];
+    [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam];
+
     return user;
 }
 
 
 +(UserSettings*) userWithIndex:(NSInteger)accountIndex;
 {
-    for (UserSettings* user in [[AppSettings getSingleton] users]) {
-        if (user.accountIndex == accountIndex) {
-            return user;
-        }
+    if (accountIndex < [AppSettings activeUsers].count) {
+        return [AppSettings activeUsers][accountIndex];
     }
     
     return nil;
@@ -341,39 +370,42 @@ static AppSettings * singleton = nil;
     return imapSession;
 }
 
-+(void) setNotifications:(BOOL)y accountIndex:(NSInteger)accountIndex
++(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     
-    [defaults setObject:@(y) forKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    [defaults setObject:@(y) forKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)accountNum]];
 }
 
-+(BOOL) notifications:(NSInteger)accountIndex
++(BOOL) notifications:(NSInteger)accountNum
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     
-    return [defaults boolForKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    return [defaults boolForKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)accountNum]];
 }
 
 +(NSInteger) defaultAccountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"dAccountNum"]];
-    NSInteger index = [activeAcctPreference integerValue];
+    NSInteger accountNum = [activeAcctPreference integerValue];
     
-    if (index != 999) {
-        return [AppSettings indexForAccount:index];
+    UserSettings* user = [AppSettings userWithNum:accountNum];
+    
+    return user.accountIndex;
+    
+    /*if (accountNum != 999) {
+        return [AppSettings indexForAccountNum:accountNum];
     }
     else {
         return [AppSettings numActiveAccounts];
-    }
+    }*/
 }
 
-+(void) setDefaultAccountIndex:(NSInteger)accountIndex
++(void) setDefaultAccountNum:(NSInteger)accountNum
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex];
-    [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"dAccountNum"]];
+    [defaults setObject:@(accountNum) forKey:[NSString stringWithFormat:@"dAccountNum"]];
 }
 
 +(NSInteger) lastAccountIndex
@@ -383,7 +415,14 @@ static AppSettings * singleton = nil;
     NSInteger num = [activeAcctPreference integerValue];
     
     if ([AppSettings numActiveAccounts] != 0 && num != 999) {
-        return [AppSettings indexForAccount:num];
+        NSInteger idx = [AppSettings indexForAccountNum:num];
+        
+        if (idx < 0 || idx >= [AppSettings numActiveAccounts]) {
+            [AppSettings setLastAccountIndex:0];
+            return 0;
+        }
+        
+        return idx;
     }
     else {
         return [AppSettings numActiveAccounts];
@@ -393,7 +432,7 @@ static AppSettings * singleton = nil;
 +(void) setLastAccountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings numAccountForIndex:accountIndex];
+    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings userWithIndex:accountIndex].accountNum;
     [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"lastAccountNum"]];
 }
 
@@ -411,10 +450,8 @@ static AppSettings * singleton = nil;
     [defaults setObject:folderNum forKey:[NSString stringWithFormat:@"lastFolder"]];
 }
 
-+(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex
++(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal user:(UserSettings*)user
 {
-    UserSettings* user = [AppSettings userWithIndex:accountIndex];
-    
     user.username = accountVal.username;
    
     if (accountVal.OAuth2Token) {
@@ -439,14 +476,14 @@ static AppSettings * singleton = nil;
 
 +(NSInteger) inboxUnread:(NSInteger)accountIndex
 {
-    NSNumber* str =  [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    NSNumber* str =  [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
     return [str integerValue];
 }
 
 +(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings numAccountForIndex:accountIndex]]];
+    [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
     
     int badge = 0;
     

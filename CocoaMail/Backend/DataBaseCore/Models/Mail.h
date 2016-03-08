@@ -13,6 +13,7 @@
 #import "Attachments.h"
 
 @class UserSettings;
+@class Draft;
 
 static NSString* kQueryAll = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id";
 
@@ -24,7 +25,7 @@ static NSString* kQuerySearch = @"SELECT email.pk, email.datetime, email.sender,
 
 static NSString* kQueryThread = @"SELECT email.pk, email.datetime, email.sender, email.tos, email.ccs, email.bccs, email.msg_id, email.html_body, email.flag, search_email.subject, search_email.body FROM email, search_email WHERE email.msg_id = search_email.msg_id AND search_email.msg_id MATCH '";
 
-static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
+static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 
 @interface Mail : NSObject <NSCopying>
 
@@ -35,11 +36,10 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
 @property (nonatomic, strong) NSString* hour;
 
 @property (nonatomic, readwrite, strong) MCOAddress* sender;
-@property (nonatomic, readwrite, copy) NSArray* tos;
-@property (nonatomic, readwrite, copy) NSArray* ccs;
-@property (nonatomic, readwrite, copy) NSArray* bccs;
+@property (nonatomic, readwrite, copy) NSArray<MCOAddress*>* tos;
+@property (nonatomic, readwrite, copy) NSArray<MCOAddress*>* ccs;
+@property (nonatomic, readwrite, copy) NSArray<MCOAddress*>* bccs;
 @property (nonatomic) NSInteger fromPersonID;
-@property (nonatomic, strong) NSArray* toPersonID;
 @property (nonatomic, readwrite, strong) NSArray* toPersonIDs;
 
 @property (nonatomic, strong) NSString* transferContent;
@@ -88,8 +88,8 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
 +(void) tableCheck;
 +(void) tableCheck:(FMDatabase*)db;
 
++(Mail*) getMailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;
 +(NSMutableArray*) getMails;
-+(void) res:(FMResultSet*)result toMail:(Mail*)email;
 +(Mail*) resToMail:(FMResultSet*)result;
 
 +(void) clean:(Mail*)mail;
@@ -99,6 +99,10 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id MATCH '";
 
 +(NSInteger) isTodayOrYesterday:(NSString*)dateString;
 +(Mail*) newMailFormCurrentAccount;
++(Mail*) mailWithMCOIMAPMessage:(MCOIMAPMessage*)msg inFolder:(NSInteger)folder andAccount:(NSInteger)accountNum;
++(Mail*) mailWithDraft:(Draft*)draft;
+
+-(Draft*) toDraft;
 
 @end
 

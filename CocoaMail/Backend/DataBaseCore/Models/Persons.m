@@ -7,7 +7,7 @@
 //
 
 #import "Persons.h"
-
+#import "UserSettings.h"
 #import "UIGlobal.h"
 #import "Accounts.h"
 #import <AddressBook/AddressBook.h>
@@ -151,7 +151,7 @@
     }
 }
 
--(Person*) getPersonID:(NSInteger)idx
+-(Person*) getPersonWithID:(NSInteger)idx
 {
     
     if (idx < 0) {
@@ -159,6 +159,13 @@
     }
     
     return self.alls[idx];
+}
+
+-(NSInteger) indexForEmail:(NSString*)email
+{
+    Person* p = [Person createWithName:@"" email:email icon:nil codeName:@""];
+    
+    return [self addPerson:p];
 }
 
 -(NSInteger) addPerson:(Person*)person
@@ -194,11 +201,11 @@
         }
     }
 
-    for (Person* p in self.allsNeg) {
+    /*for (Person* p in self.allsNeg) {
         if (p.email.length > 0 && [p.email rangeOfString:@"@"].location != NSNotFound) {
             [res addObject:p];
         }
-    }
+    }*/
     
     return res;
 }
@@ -261,7 +268,7 @@
         perso.backgroundColor = [UIGlobal noImageBadgeColor];
         
         if (self.userAccount != nil) {
-            perso.backgroundColor = self.userAccount.userColor;
+            perso.backgroundColor = self.userAccount.user.color;
         }
         
         perso.isColorLocked = YES;
@@ -321,7 +328,7 @@
         perso.backgroundColor = [UIGlobal noImageBadgeColor];
         
         if (self.userAccount != nil) {
-            perso.backgroundColor = self.userAccount.userColor;
+            perso.backgroundColor = self.userAccount.user.color;
         }
        
         perso.isColorLocked = YES;
@@ -363,6 +370,62 @@
         
         iv.contentMode = UIViewContentModeScaleAspectFill;
         iv.layer.cornerRadius = 16.5;
+        iv.layer.masksToBounds = YES;
+        
+        return iv;
+    }
+}
+
+-(UIView*) doubleBadgeView
+{
+    if (self.userAccount || self.image == nil) {
+        
+        MyLabel* perso = [[MyLabel alloc] initWithFrame:CGRectMake(0, 0, 66, 66)];
+        perso.backgroundColor = [UIGlobal noImageBadgeColor];
+        
+        if (self.userAccount != nil) {
+            perso.backgroundColor = self.userAccount.user.color;
+        }
+        
+        perso.isColorLocked = YES;
+        
+        perso.text = self.codeName;
+        perso.textAlignment = NSTextAlignmentCenter;
+        perso.textColor = [UIColor whiteColor];
+        perso.layer.cornerRadius = 33;
+        perso.layer.masksToBounds = YES;
+        perso.font = [UIFont systemFontOfSize:24];
+        
+        return perso;
+    }
+    else {
+        UIImageView* iv = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 66, 66)];
+        
+        if ([self isFakePerson]) {
+            if (self.email == nil) {
+                // fake dot person
+                iv.image = [self.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                iv.tintColor = [UIGlobal noImageBadgeColor];
+            }
+            else {
+                // cocoamail person
+                iv.image = self.image;
+                iv.contentMode = UIViewContentModeScaleAspectFit;
+                
+                iv.backgroundColor = [UIColor colorWithRed:1. green:.69 blue:.0 alpha:1.];
+                iv.layer.cornerRadius = 33;
+                iv.layer.masksToBounds = YES;
+                
+                return iv;
+            }
+        }
+        else {
+            iv.image = self.image;
+        }
+        
+        
+        iv.contentMode = UIViewContentModeScaleAspectFill;
+        iv.layer.cornerRadius = 33;
         iv.layer.masksToBounds = YES;
         
         return iv;

@@ -21,6 +21,7 @@
 #import "Flurry.h"
 #import "ViewController.h"
 #import "UserSettings.h"
+#import "Draft.h"
 
 @import SafariServices;
 
@@ -203,6 +204,16 @@
     for (Mail* m in self.conversation.mails) {
     
         NSString* day = m.day;
+        
+        NSInteger i = [Mail isTodayOrYesterday:day];
+        
+        if (i == 0) {
+            day = NSLocalizedString(@"mail-list-view.date-header.today", @"Today");
+        }
+        else if (i == -1) {
+            day = NSLocalizedString(@"mail-list-view.date-header.yesterday", @"Yesterday");
+        }
+        
         NSString* hour = m.hour;
         //NSString* mail = m.content;
         
@@ -317,16 +328,13 @@
     if ([self isEmailRegExp:url.absoluteString]) {
         NSString* email = [url.absoluteString stringByReplacingOccurrencesOfString:@"mailto:" withString:@""];
         
-        Mail* mail = [Mail newMailFormCurrentAccount];
+        Draft* draft = [Draft newDraftFormCurrentAccount];
         
-        Persons* p = [Persons sharedInstance];
+        [[Persons sharedInstance] addPerson:[Person createWithName:nil email:email icon:nil codeName:nil]];
         
-        Person* more = [Person createWithName:nil email:email icon:nil codeName:nil];
-        NSInteger personID = [p addPerson:more];
+        draft.toPersons = [NSMutableArray arrayWithArray:@[email]];
         
-        mail.toPersonID = @[@(personID)];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:mail}];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
         
         return;
     }
@@ -505,15 +513,27 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    SEL selector = NSSelectorFromString(@"deleteRow:");
     
-    if ([EmailProcessor getSingleton].updateSubscriber != nil && [[EmailProcessor getSingleton].updateSubscriber respondsToSelector:selector]) {
-        ((void (*)(id, SEL, Conversation*))[[EmailProcessor getSingleton].updateSubscriber methodForSelector:selector])([EmailProcessor getSingleton].updateSubscriber, selector,self.conversation);
+    NSString* fromFolderString;
+    NSString* toFolderString;
+    
+    if (self.folder.type == FolderTypeUser) {
+        fromFolderString = @"UserFolder";
     }
-
+    else {
+        fromFolderString = [self.conversation.user.linkedAccount systemFolderNames][self.folder.idx];
+    }
+    
+    if (toFolder.type == FolderTypeUser) {
+        toFolderString = @"UserFolder";
+    }
+    else {
+        toFolderString = [self.conversation.user.linkedAccount systemFolderNames][toFolder.idx];
+    }
+    
     NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   [self.conversation.user folderDisplayNameForType:self.folder] , @"from_Folder",
-                                   [self.conversation.user folderDisplayNameForType:toFolder], @"to_Folder",
+                                   fromFolderString , @"from_Folder",
+                                   toFolderString, @"to_Folder",
                                    @"conversation", @"action_Location"
                                    ,nil];
     
@@ -624,7 +644,7 @@
     [self.subviews.firstObject removeFromSuperview];
     
     Mail* mail = [self.delegate mailDisplayed:self];
-    Person* person = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+    Person* person = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
     
     CGFloat WIDTH = self.bounds.size.width;
     
@@ -653,14 +673,14 @@
     
     if (extended) {
         
-        NSArray* subarray = mail.toPersonID;
+        NSArray* subarray = mail.toPersonIDs;
         
-        if (mail.toPersonID.count>3) {
+        if (mail.toPersonIDs.count>3) {
             NSRange r;
             r.length = 2;
-            r.location = mail.toPersonID.count - 2;
+            r.location = mail.toPersonIDs.count - 2;
             
-            NSMutableArray* tmp = [[mail.toPersonID subarrayWithRange:r] mutableCopy];
+            NSMutableArray* tmp = [[mail.toPersonIDs subarrayWithRange:r] mutableCopy];
             
             [tmp insertObject:@([Persons sharedInstance].idxMorePerson) atIndex:0];
             subarray = tmp;
@@ -668,7 +688,7 @@
         
         for (NSNumber* userID in subarray) {
             
-            Person* p = [[Persons sharedInstance] getPersonID:[userID integerValue]];
+            Person* p = [[Persons sharedInstance] getPersonWithID:[userID integerValue]];
             UIView* perso = [[UIView alloc] initWithFrame:CGRectMake(xPos, 5.5, 33, 33)];
             perso.backgroundColor = [UIColor clearColor];
             perso.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
@@ -783,13 +803,15 @@
     
     if (extended) {
         NSArray* btns = @[@"unread_o", @"forward_o", @"reply_o", @"replyall_o", @"cell_favoris_o"];
-        
+        NSArray* xFix = @[@(0),@(1),@(2),@(2),@(5)];
         
         CGRect baseFrame = CGRectMake(5.5f, height - 33.f - 5.5f, 33.f, 33.f);
         
         CGFloat stepX = ((inIV.frame.size.width - 33.f - 5.5f) - baseFrame.origin.x ) / 4.f;
         
         NSInteger idxTag = 1;
+        
+        NSInteger idxFix = 0;
         
         for (NSString* name in btns) {
             
@@ -802,8 +824,11 @@
             [b setImage:onImg forState:UIControlStateSelected | UIControlStateHighlighted];
             [inIV addSubview:b];
             
-            baseFrame.origin.x = floorf(baseFrame.origin.x + stepX);
+            baseFrame.origin.x = floorf(baseFrame.origin.x + stepX) + [xFix[idxFix] integerValue];
             
+            idxFix++;
+            
+            //NSLog(@"Origin.x:%f", baseFrame.origin.x);
             
             if (name == [btns lastObject]) {
                 [b addTarget:self action:@selector(_fav:) forControlEvents:UIControlEventTouchUpInside];
@@ -907,7 +932,7 @@
         repm = [m replyMail:YES];
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:repm}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:[repm toDraft]}];
 }
 
 -(void) _masr:(UIButton*)button
@@ -943,7 +968,7 @@
         
         if (pos.x < 45) {
             Mail* mail = [self.delegate mailDisplayed:self];
-            Person* person = [[Persons sharedInstance] getPersonID:mail.fromPersonID];
+            Person* person = [[Persons sharedInstance] getPersonWithID:mail.fromPersonID];
             [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
             return;
         }
@@ -1050,7 +1075,7 @@
                 if(!att.data){
                     UidEntry* uidE = [mail.uids firstObject];
                     MCOIMAPFetchContentOperation*  op =
-                    [[ImapSync sharedServices:[conv.user accountIndex]].imapSession
+                    [[ImapSync sharedServices:conv.user].imapSession
                      fetchMessageAttachmentOperationWithFolder:[[conv user] folderServerName:uidE.folder]
                      uid:uidE.uid
                      partID:att.partID

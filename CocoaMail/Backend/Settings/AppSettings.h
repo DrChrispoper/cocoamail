@@ -33,33 +33,34 @@
 +(AppSettings*) getSingleton;
 
 +(NSInteger) numActiveAccounts;
++(NSMutableArray*) activeUsers;
 
--(UserSettings*) newUser;
+-(UserSettings*) createNewUser;
 
 //Account Main Settings
 +(UserSettings*) userWithIndex:(NSInteger)accountIndex;
 +(UserSettings*) userWithNum:(NSInteger)accountNum;
 +(UserSettings*) userWithEmail:(NSString*)email;
 
-+(NSInteger) numAccountForIndex:(NSInteger)accountIndex;
-+(NSInteger) indexForAccount:(NSInteger)accountNum;
+//+(NSInteger) numAccountForIndex:(NSInteger)accountIndex;
++(NSInteger) indexForAccountNum:(NSInteger)accountNum;
 
 //Account Server Settings
 +(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
 
 //Account Other Settings
-+(void) setNotifications:(BOOL)y accountIndex:(NSInteger)accountIndex;
-+(BOOL) notifications:(NSInteger)accountIndex;
++(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;
++(BOOL) notifications:(NSInteger)accountNum;
 
 +(NSInteger) defaultAccountIndex;
-+(void) setDefaultAccountIndex:(NSInteger)accountIndex;
++(void) setDefaultAccountNum:(NSInteger)accountNum;
 +(NSInteger) lastAccountIndex;
 +(void) setLastAccountIndex:(NSInteger)accountIndex;
 
 +(NSNumber*) lastFolderIndex;
 +(void) setLastFolderIndex:(NSNumber*)accountIndex;
 
-+(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal accountIndex:(NSInteger)accountIndex;
++(void) setSettingsWithAccountVal:(MCOAccountValidator*)accountVal user:(UserSettings*)user;
 
 +(NSInteger) inboxUnread:(NSInteger)accountIndex;
 +(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex;

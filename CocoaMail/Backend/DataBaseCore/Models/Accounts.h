@@ -15,8 +15,9 @@
 @class Conversation;
 @class Account;
 @class Mail;
-@protocol MailListDelegate;
+@class Draft;
 
+@protocol MailListDelegate;
 
 @interface Accounts : NSObject
 
@@ -44,17 +45,16 @@
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
 -(NSInteger) getPersonID:(NSInteger)accountIndex;
+-(void) getDrafts;
 
 @end
 
 
 @interface Account : NSObject
 
-@property (nonatomic, getter=codeName, setter=setCodeName:) NSString * codeName;
-@property (nonatomic, strong) NSString* userMail;
-@property (nonatomic, strong) UIColor* userColor;
-@property (nonatomic) NSInteger idx;
+-(NSInteger) idx;
 -(UserSettings*) user;
+-(void) setNewUser:(UserSettings*)user;
 
 @property (nonatomic, strong) NSArray* userFolders;
 @property (nonatomic) NSInteger currentFolderIdx;
@@ -62,8 +62,6 @@
 -(void) setCurrentFolder:(CCMFolderType)folder;
 -(void) refreshCurrentFolder;
 @property (nonatomic, strong) Person* person;
-
-@property (nonatomic) BOOL isAllAccounts;
 
 @property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
 
@@ -79,6 +77,7 @@
 
 -(NSInteger) favorisCount;
 -(NSInteger) draftCount;
+-(NSInteger) unreadInInbox;
 
 -(void) insertRows:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
@@ -86,16 +85,13 @@
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
-// return NO if not removed from form folder, YES if really removed
 -(void) star:(BOOL)add conversation:(Conversation*)conversation;
 
 -(NSArray*) conversations;
 
--(void) setName:(NSString*)name;
--(NSInteger) unreadInInbox;
-
--(void) sendMail:(Mail*)mail bcc:(BOOL)isBcc;
--(void) deleteDraft:(Mail*)mail;
+-(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs;
+-(void) deleteDraft:(NSString*)msgID;
+-(void) addLocalDraft:(Draft*)draft;
 
 -(NSArray*) systemFolderNames;
 -(void) deliverUpdate:(NSArray<Mail*>*)emails;
