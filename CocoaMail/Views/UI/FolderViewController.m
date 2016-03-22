@@ -31,7 +31,6 @@
 -(void) viewDidLoad
 {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
     
     _isBackgroundFetching = NO;
     
@@ -47,26 +46,12 @@
     
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:currentAccount.user.username];
     
-    
-    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
-                                                                       0,
-                                                                       screenBounds.size.width,
-                                                                       screenBounds.size.height - 20)
+    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, screenBounds.size.width, screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
+    
     table.contentInset = UIEdgeInsetsMake(44 - 30, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
-    
     table.backgroundColor = [UIGlobal standardLightGrey];
-    
-    NSUbiquitousKeyValueStore* store = [NSUbiquitousKeyValueStore
-                                        defaultStore];
-    if (store) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(storeChanged:)
-                                                     name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification
-                                                   object:store];
-        [store synchronize];
-    }
     
     [self.view addSubview:table];
     
@@ -79,17 +64,14 @@
     [self addPullToRefreshWithDelta:0];
 
     if (currentAccount && !currentAccount.user.isAll) {
-        [ImapSync runInboxUnread:currentAccount.user];
+        [ImapSync runInboxUnread:currentAccount.user completed:^{  }];
     }
 }
 
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-        
-    if ([AppSettings numActiveAccounts] !=  0) {
-        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
-    }
+    
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -99,6 +81,13 @@
     
     if ([AppSettings numActiveAccounts] ==  0) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
+    }
+    else {
+        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                [self.table reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+            }];
+        }];
     }
 }
 
@@ -125,7 +114,9 @@
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
-    return (section==0) ? [[Accounts sharedInstance].currentAccount systemFolderNames].count : ac.userFolders.count;
+    BOOL showOutBox = [ac outBoxNb] > 0;
+    
+    return (section==0) ? ([[Accounts sharedInstance].currentAccount systemFolderNames].count - (showOutBox?0:1)) : ac.userFolders.count;
 }
 
 -(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
@@ -162,6 +153,10 @@
             case 3:
                 colorBubble = [UIGlobal bubbleFolderGrey];
                 count = [cac draftCount];
+                break;
+            case 7:
+                colorBubble = [UIGlobal bubbleFolderGrey];
+                count = [cac outBoxNb];
                 break;
             default:
                 break;
@@ -263,6 +258,10 @@
     CCMFolderType type;
     
     if (indexPath.section == 0) {
+        if (indexPath.row == 7) {
+            [[[Accounts sharedInstance] currentAccount] sendOutboxs];
+            return;
+        }
         type.type = indexPath.row;
         type.idx = 0;
     }

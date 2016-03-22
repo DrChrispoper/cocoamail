@@ -11,8 +11,6 @@
 
 @interface InViewController ()
 
-@property (nonatomic, strong) PullToRefresh* pullToRefresh;
-
 @property (nonatomic, strong) NSDate* datePressDownBackButton;
 
 @end
@@ -83,8 +81,8 @@
 
 -(void) addPullToRefreshWithDelta:(CGFloat)delta
 {
-    self.pullToRefresh = [[PullToRefresh alloc] init];
-    self.pullToRefresh.delta = delta;
+    //self.pullToRefresh = [[PullToRefresh alloc] init];
+    //self.pullToRefresh.delta = delta;
 }
 
 #pragma  mark - Actions
@@ -109,7 +107,7 @@
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
     //[self.navBar computeBlur];
-    [self.pullToRefresh scrollViewDidScroll:scrollView];
+    //[self.pullToRefresh scrollViewDidScroll:scrollView];
     
     if (!scrollView.isDecelerating) {
         [[ViewController mainVC] closeCocoaButtonIfNeeded];
@@ -118,7 +116,12 @@
 
 -(void) scrollViewDidEndDragging:(UIScrollView*)scrollView willDecelerate:(BOOL)decelerate
 {
-    [self.pullToRefresh scrollViewDidEndDragging:scrollView];
+    //[self.pullToRefresh scrollViewDidEndDragging:scrollView];
+}
+
+-(void) stopAnimating
+{
+    //[self.pullToRefresh stopAnimating];
 }
 
 /*- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion

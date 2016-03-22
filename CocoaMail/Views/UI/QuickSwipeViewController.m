@@ -139,20 +139,20 @@
         
         ConversationTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:idToUse];
         
-        if (cell == nil) {
+        //if (cell == nil) {
             cell = [[ConversationTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:idToUse];
             [cell setupWithDelegate:self];
-        }
+        //}
         
         cell.separatorInset =  UIEdgeInsetsMake(0, CGRectGetWidth(cell.bounds)/2.0, 0, CGRectGetWidth(cell.bounds)/2.0);
         
         [cell fillWithConversation:conv isSelected:NO isDebugMode:NO];
-        
+        [cell setAlwaysSwiped];
+
         return cell;
     }
     else {
         UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
-    
     
     NSArray* names = @[NSLocalizedString(@"quick-swipe.archive", @"Archive"),
                        NSLocalizedString(@"quick-swipe.delete", @"Delete"),
@@ -197,6 +197,7 @@
 {
     if (self.table != tableView) {
         [Accounts sharedInstance].quickSwipeType = indexPath.row;
+        [self.table reloadData];
         [tableView reloadData];
     }
     

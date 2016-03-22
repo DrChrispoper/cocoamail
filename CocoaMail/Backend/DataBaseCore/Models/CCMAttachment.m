@@ -182,7 +182,7 @@
 {
     AttachmentDBAccessor* databaseManager = [AttachmentDBAccessor sharedManager];
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        [db executeUpdate:@"DELETE attachments where msg_id = ? AND file_name = ?", msgID,fileName];
+        [db executeUpdate:@"DELETE FROM attachments where msg_id = ? AND file_name = ?", msgID,fileName];
     }];
     
     NSFileManager *fm = [NSFileManager defaultManager];

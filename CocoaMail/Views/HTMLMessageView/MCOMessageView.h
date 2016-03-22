@@ -30,6 +30,8 @@
 -(void) webViewLoaded:(UIWebView*)webView;
 -(void) openWebURL:(NSURL*)url;
 -(void) openLongURL:(NSURL*)url;
+-(void) openContentID:(NSString*)cid;
+-(void) openLongContentID:(NSString*)cid;
 -(void) partForUniqueID:(NSString*)partID completed:(void (^)(NSData * data))completedBlock;
 -(void) scrollTo:(CGPoint)offset;
 

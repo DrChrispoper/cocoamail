@@ -206,7 +206,7 @@ static NSDateFormatter * s_df_date = nil;
         mailFromName = p.name;
     }
 
-    NSRange r = [mailFromName rangeOfString:word options:NSCaseInsensitiveSearch];
+    NSRange r = [mailFromName rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch];
     
     if (r.location != NSNotFound) {
         
@@ -231,7 +231,7 @@ static NSDateFormatter * s_df_date = nil;
     NSString* subtextToDisplay = (subtext.length==0) ? mail.subject : subtext;
     
 
-    NSRange rST = [subtextToDisplay rangeOfString:word options:NSCaseInsensitiveSearch];
+    NSRange rST = [subtextToDisplay rangeOfString:word options:NSCaseInsensitiveSearch|NSDiacriticInsensitiveSearch];
     
     if (rST.location != NSNotFound) {
         

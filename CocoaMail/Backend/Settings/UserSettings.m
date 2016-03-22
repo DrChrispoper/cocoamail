@@ -253,7 +253,8 @@
 
 -(BOOL) isUsingOAuth
 {
-    return  ![[self oAuth] isEqualToString:@""];
+    BOOL u = ![[self oAuth] isEqualToString:@""];
+    return  u;
 }
 
 -(NSString*) oAuth

@@ -9,6 +9,8 @@
 #import "Draft.h"
 #import "Accounts.h"
 #import "UserSettings.h"
+#import "RegExCategories.h"
+#import "ImapSync.h"
 
 @implementation Draft
 
@@ -59,6 +61,9 @@
     
     draft.msgID = [NSString stringWithFormat:@"%i", [[AppSettings getSingleton] draftCount]];
     
+    draft.toPersons = [[NSMutableArray alloc] init];
+    draft.body = @"";
+    
     return draft;
 
 }
@@ -83,31 +88,47 @@
 
 -(void)deleteDraft
 {
-    [[AppSettings userWithNum:self.accountNum].linkedAccount deleteDraft:self.msgID];
-        
-    NSFileManager *filemgr = [NSFileManager defaultManager];
-    NSString *draftPath = @"drafts";
+    [[AppSettings userWithNum:self.accountNum].linkedAccount deleteDraft:self];
     
     NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:draftPath];
-    
-    if (![filemgr fileExistsAtPath:folderPath]) {
-        [filemgr createDirectoryAtPath:folderPath withIntermediateDirectories:NO attributes:nil error:nil];
-    }
-        
-    NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:folderPath error:nil];
-        
-    for (NSString* fileName in dirFiles) {
-        if ([fileName isEqualToString:[NSString stringWithFormat:@"draft_%@",self.msgID]]) {
-            NSString* localPath = [folderPath stringByAppendingPathComponent:fileName];
-            if ([filemgr removeItemAtPath:localPath error:nil]) {
-                NSLog(@"Local draft deleted");
-            }
-        }
+    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"drafts"];
+    NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
+
+    if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
+        NSLog(@"Local draft file deleted");
     }
 }
 
--(NSData *)rfc822DataTo:(NSArray *)toPersonIDs
+-(void) appendToSent:(NSString*)rfc822DataFilename
+{
+    UserSettings* user = [AppSettings userWithNum:self.accountNum];
+    
+    NSString* sentPath = [user folderServerName:[user importantFolderNumforBaseFolder:FolderTypeSent]];
+    
+    MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:user].imapSession
+                                            appendMessageOperationWithFolder:sentPath
+                                            contentsAtPath:rfc822DataFilename
+                                            flags:MCOMessageFlagSeen
+                                            customFlags:nil];
+    
+    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+        [addOp start:^(NSError * error, uint32_t createdUID) {
+            if (error == nil) {
+                NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+                NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"drafts"];
+                NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"outbox_%@", self.msgID]];
+                
+                if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
+                    NSLog(@"Local outbox file deleted");
+                }
+            }
+        }];
+        
+    });
+
+}
+
+-(NSString*)rfc822DataTo:(NSArray *)toPersonIDs
 {
     MCOMessageBuilder* builder = [[MCOMessageBuilder alloc] init];
     UserSettings* user = [AppSettings userWithNum:self.accountNum];
@@ -128,7 +149,18 @@
         [[builder header] setBcc:to];
     }
     
-    [builder setHTMLBody:self.body];
+    NSMutableString* links = [NSMutableString string];
+    
+    for (Attachment* att in [self attachments]) {
+        if (att.size != 0) {
+            [builder addAttachment:[MCOAttachment attachmentWithData:att.data filename:att.fileName]];
+        }
+        else {
+            [links appendString:[NSString stringWithFormat:@"<a href='%@' download>%@</a>", [[NSString alloc] initWithData:att.data encoding:NSUTF8StringEncoding], att.fileName]];
+        }
+    }
+    
+    [builder setHTMLBody:[NSString stringWithFormat:@"%@<br/>%@", self.body, links]];
     
     if (self.fromMailMsgID) {
         [[builder header] setInReplyTo: @[self.fromMailMsgID]];
@@ -136,12 +168,20 @@
     
     [[builder header] setSubject:self.subject];
     
-    for (Attachment* att in [self attachments]) {
-        [builder addAttachment:[MCOAttachment attachmentWithData:att.data filename:att.fileName]];
+    //NSString* lk = [NSString stringWithFormat:@"<a href='%@' download>%@</a>", link, attach.fileName];
+
+    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"drafts"];
+    NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"outbox_%@", self.msgID]];
+    NSError* error;
+    
+    [builder writeToFile:fileName error:&error];
+
+    if (error) {
+        NSLog(@"error saving outbox message :%@", error.description);
     }
     
-    
-    return [builder data];
+    return fileName;
 }
 
 -(Mail*) fromMail

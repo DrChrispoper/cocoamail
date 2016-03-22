@@ -334,10 +334,17 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       
                                                                       self.draft.body = bodyContent;
                                                                       
-                                                                      NSData* rfc822Data = [self.draft rfc822DataTo:self.toPersonIDs];
+                                                                      NSString* rfc822Data = [self.draft rfc822DataTo:self.toPersonIDs];
                                                                       NSString* draftPath = [self.selectedAccount.user folderServerName:[self.selectedAccount.user importantFolderNumforBaseFolder:FolderTypeDrafts]];
                                                                       
-                                                                      MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.user].imapSession appendMessageOperationWithFolder:draftPath messageData:rfc822Data flags:MCOMessageFlagDraft];
+                                                                      MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.user].imapSession
+                                                                                                              appendMessageOperationWithFolder:draftPath
+                                                                                                              contentsAtPath:rfc822Data
+                                                                                                              flags:MCOMessageFlagDraft
+                                                                                                              customFlags:nil];
+                                                                      
+                                                                      dispatch_async([ImapSync sharedServices:self.selectedAccount.user].s_queue, ^{
+
                                                                       [addOp start:^(NSError * error, uint32_t createdUID) {
                                                                           if (error == nil) {
                                                                               if (![RX(@"^[0-9]+?$") isMatch:self.draft.msgID]) {
@@ -349,6 +356,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                               [self.draft save];
                                                                           }
                                                                       }];
+                                                                          
+                                                                      });
                                                                   }
                                                                   else {
 
@@ -512,8 +521,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, 10, 45)];
     label.text = NSLocalizedString(@"compose-view.label.add-contact", @"To:");
     label.backgroundColor = [UIColor whiteColor];
-    label.font = [UIFont systemFontOfSize:15.];
-    label.textColor = [UIColor colorWithWhite:0.5 alpha:1.0];
+    label.font = [UIFont italicSystemFontOfSize:15.];
+    label.textColor =  [UIColor lightGrayColor]; //[UIColor colorWithWhite:0.5 alpha:1.0];
     [label sizeToFit];
     
     CGRect f = label.frame;
@@ -940,6 +949,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             
             self.isDownloading++;
             
+            dispatch_async([ImapSync sharedServices:self.selectedAccount.user].s_queue, ^{
+
             [op start:^(NSError*  error, NSData*  partData) {
                 self.isDownloading--;
                 if(error){
@@ -950,6 +961,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                 [Attachment updateData:att];
                 [self _updateAttachView];
             }];
+                
+            });
             
         }
         
@@ -978,14 +991,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     NSMutableArray* attachs = [self.draft.attachments mutableCopy];
     Attachment* att = attachs[b.tag];
     //[attachs removeObjectAtIndex:b.tag];
-    
-    [CCMAttachment deleteAttachment:att.msgID fileName:att.fileName];
-    
     //self.mail.attachments = attachs;
     
+    [CCMAttachment deleteAttachment:att.msgID fileName:att.fileName];
+
     if (att.size == 0) {
-        NSString* link = [[NSString alloc] initWithData:att.data encoding:NSUTF8StringEncoding];
-        self.bodyTextView.text = [self.bodyTextView.text stringByReplacingOccurrencesOfString:link withString:@""];
+        //NSString* link = [[NSString alloc] initWithData:att.data encoding:NSUTF8StringEncoding];
+        //self.bodyTextView.text = [self.bodyTextView.text stringByReplacingOccurrencesOfString:link withString:@""];
     }
     
     [self _updateAttachView];
@@ -1043,11 +1055,13 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         UIButton* ccButton = [[UIButton alloc] initWithFrame:CGRectMake(nextPosX, currentPosY, 33, 33)];
         [ccButton addTarget:self action:@selector(_ccButton:) forControlEvents:UIControlEventTouchUpInside];
-        UIImage* ccoff = [[UIImage imageNamed:@"editmail_cc"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImage* ccon = [[UIImage imageNamed:@"editmail_cci"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage* ccoff = [[UIImage imageNamed:@"editmail_cc2"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage* ccon = [[UIImage imageNamed:@"editmail_cci2"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [ccButton setImage:ccoff forState:UIControlStateNormal];
         [ccButton setImage:ccon forState:UIControlStateSelected];
         ccButton.tintColor = currentAccountColor;
+        
+        
         [ccView addSubview:ccButton];
         [self.viewsWithAccountTintColor addObject:ccButton];
         
@@ -1716,17 +1730,16 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 /// Sent to the delegate if the share link is successfully loaded
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didLoadShareLink:(NSString*)link
 {
-    [self.bodyTextView replaceRange:self.bodyTextView.selectedTextRange withText:[NSString stringWithFormat:@"\n%@",link]];
-    
     Attachment* attach = [[Attachment alloc]init];
     attach.fileName = [DropboxBrowserViewController fileName];
     attach.size = 0;
     attach.data = [link dataUsingEncoding:NSUTF8StringEncoding];
-    
     attach.msgID = self.draft.msgID;
 
     [CCMAttachment addAttachments:@[attach]];
     
+    //[self.bodyTextView replaceRange:self.bodyTextView.selectedTextRange withText:[NSString stringWithFormat:@"\n%@",attach.fileName]];
+
     /*if (self.mail.attachments == nil) {
         self.mail.attachments = @[attach];
     }
@@ -1743,7 +1756,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [[PKHUD sharedHUD] show];
     [[PKHUD sharedHUD] hideAfterDelay:2.0];
     
-    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2];
+    //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2 code:0];
 }
 
 /// Sent to the delegate if there was an error creating or loading share link
@@ -1754,7 +1767,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     [[PKHUD sharedHUD] show];
     [[PKHUD sharedHUD] hideAfterDelay:2.0];
     
-    [CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2];
+    //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2 code:2];
 }
 
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten

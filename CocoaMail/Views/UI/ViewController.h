@@ -82,9 +82,6 @@ typedef void (^CRefreshCompletionHandler) (BOOL didReceiveNewPosts) ;
 
 -(void) refreshWithCompletionHandler:(CRefreshCompletionHandler)completionHandler;
 
-//+ (void)check3DTouch;
-- (void)auth:(GTMOAuth2Authentication *)auth finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error;
-
 
 @end
 

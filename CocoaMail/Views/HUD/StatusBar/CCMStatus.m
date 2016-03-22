@@ -7,6 +7,8 @@
 //
 
 #import "CCMStatus.h"
+#import "Accounts.h"
+#import "UserSettings.h"
 
 @interface CCMStatus () {
     UIWindow *_statusWindow;
@@ -23,6 +25,7 @@
 -(id) init
 {
     self = [super init];
+    
     if (self) {
         [self setupDefaultApperance];
         _messageQueue = [[NSMutableArray alloc] init];
@@ -42,9 +45,9 @@
     _backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [[UIScreen mainScreen] bounds].size.width, 20)];
     _backgroundView.backgroundColor = [UIColor whiteColor];
     _backgroundView.userInteractionEnabled = NO;
-
+    
     _statusLabel = [[UILabel alloc] initWithFrame:_backgroundView.bounds];
-    _statusLabel.textColor = [UIColor blackColor];
+    _statusLabel.textColor = [UIColor whiteColor];
     _statusLabel.numberOfLines = 1;
     _statusLabel.font = [UIFont systemFontOfSize:13.0];
     _statusLabel.textAlignment = NSTextAlignmentCenter;
@@ -67,9 +70,9 @@
     return _sharedCCMStatus;
 }
 
-+(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval
++(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval code:(NSInteger)code
 {
-    [[CCMStatus sharedCCMStatus] showStatus:status dismissAfter:interval];
+    [[CCMStatus sharedCCMStatus] showStatus:status dismissAfter:interval code:code];
 }
 
 +(void) dismiss
@@ -79,59 +82,79 @@
 
 #pragma mark - private
 
--(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval
+-(void) showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval code:(NSInteger)code
 {
-    if (_statusWindow.hidden) {
-        [self setStatus:status];
-        [self dismissAfter:interval];
-        _statusWindow.hidden = NO;
-        [UIView animateWithDuration:0.2 animations:^{
-            _statusWindow.alpha = 1;
-        } completion:^(BOOL finished) {
-            [UIView animateWithDuration:0.05 animations:^{
-                _backgroundView.alpha = 1;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        if (_statusWindow.hidden) {
+            _backgroundView.backgroundColor = [Accounts sharedInstance].currentAccount.user.color;
+            
+            [self setStatus:status code:code];
+            [self dismissAfter:interval];
+            _statusWindow.hidden = NO;
+            
+            CGRect frame = _backgroundView.frame;
+            frame.origin.y = frame.origin.y - 20;
+            _backgroundView.frame = frame;
+            
+            [UIView animateWithDuration:0.2 animations:^{
+                _statusWindow.alpha = 1;
+            } completion:^(BOOL finished) {
+                [UIView animateWithDuration:0.2 animations:^{
+                    _backgroundView.alpha = 1;
+                    
+                    CGRect frame = _backgroundView.frame;
+                    frame.origin.y = frame.origin.y + 20;
+                    
+                    _backgroundView.frame = frame;
+                }];
             }];
-        }];
-    }
-    else{
-        [_messageQueue insertObject:@{status:@(interval)} atIndex:0];
-    }
+        }
+        else{
+            [_messageQueue insertObject:@{status:@(interval), status:@(code)} atIndex:0];
+        }
+        
+    }];
 }
 
 -(void) _dismiss
 {
-    if (_messageQueue.count == 0) {
-    [UIView animateWithDuration:0.5 animations:^{
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        _backgroundView.alpha = 0.0;
-        
-    } completion:^(BOOL finished) {
-        
-        [UIView animateWithDuration:0.2 animations:^{
-            
-            _statusWindow.alpha = 0.0;
-            
-        } completion:^(BOOL finished) {
-            
-            _statusWindow.hidden = YES;
-            [[[[UIApplication sharedApplication] delegate] window] makeKeyWindow];
-        }];
-    }];
-    }
-    else {
-        NSDictionary* statusDic = [_messageQueue lastObject];
-        [_messageQueue removeLastObject];
-        
-        [UIView animateWithDuration:0.1 animations:^{
-            //_backgroundView.alpha = 0.0;
-        } completion:^(BOOL finished) {
-            [self setStatus:[[statusDic allKeys] firstObject]];
-            [self dismissAfter:[[[statusDic allValues] firstObject] intValue]];
-            [UIView animateWithDuration:0.1 animations:^{
-                //_backgroundView.alpha = 1;
+        if (_messageQueue.count == 0) {
+            [UIView animateWithDuration:0.5 animations:^{
+                
+                _backgroundView.alpha = 0.0;
+                
+            } completion:^(BOOL finished) {
+                
+                [UIView animateWithDuration:0.2 animations:^{
+                    
+                    _statusWindow.alpha = 0.0;
+                    
+                } completion:^(BOOL finished) {
+                    
+                    _statusWindow.hidden = YES;
+                    [[[[UIApplication sharedApplication] delegate] window] makeKeyWindow];
+                }];
             }];
-        }];
-    }
+        }
+        else {
+            NSDictionary* statusDic = [_messageQueue lastObject];
+            [_messageQueue removeLastObject];
+            
+            [UIView animateWithDuration:0.1 animations:^{
+                //_backgroundView.alpha = 0.0;
+            } completion:^(BOOL finished) {
+                [self setStatus:[[statusDic allKeys] firstObject] code:[[[statusDic allValues] lastObject] intValue]];
+                [self dismissAfter:[[[statusDic allValues] firstObject] intValue]];
+                [UIView animateWithDuration:0.1 animations:^{
+                    //_backgroundView.alpha = 1;
+                }];
+            }];
+        }
+        
+    }];
 }
 
 -(void) dismissAfter:(NSTimeInterval)interval
@@ -143,29 +166,51 @@
 }
 
 #pragma mark - properties
--(void) setStatus:(NSString *)status
+-(void) setStatus:(NSString *)status code:(NSInteger)code
 {
     _status = status;
-    _statusLabel.text = status;
     
-    [self layout];
-}
+    NSMutableAttributedString *str= [[NSMutableAttributedString alloc] init];
+    
+    if (code != 0) {
+        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+        if (code == 1) {
+            attachment.image = [UIImage imageNamed:@"mail_ok"];
+        }
+        else if (code == 2) {
+            attachment.image = [UIImage imageNamed:@"mail_wrong"];
+        }
+        
+        CGFloat offsetY = -0.0;
+        
+        attachment.bounds = CGRectMake(0, offsetY, attachment.image.size.width, attachment.image.size.height);
+        
+        NSAttributedString *attachmentAttrString = [NSAttributedString attributedStringWithAttachment:attachment];
+        [str appendAttributedString:attachmentAttrString];
+        
+        [str appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@" "]];
+    }
+    
 
--(void) layout
-{
+    [str appendAttributedString:[[NSMutableAttributedString alloc] initWithString:status]];
+    
     NSMutableParagraphStyle * paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineBreakMode = _statusLabel.lineBreakMode;
+    paragraphStyle.alignment = NSTextAlignmentCenter;
+    [str addAttributes:@{
+                         NSFontAttributeName:_statusLabel.font,
+                         NSParagraphStyleAttributeName:paragraphStyle
+                         } range:NSMakeRange(0, str.length)];
     
-    CGRect rect =[_status boundingRectWithSize:CGSizeMake([[UIScreen mainScreen] bounds].size.width, 20)
-                                       options:NSStringDrawingUsesLineFragmentOrigin
-                                    attributes:@{
-                                                 NSFontAttributeName:_statusLabel.font,
-                                                 NSParagraphStyleAttributeName:paragraphStyle
-                                                 }
-                                       context:nil];
- 
+    
+    _statusLabel.attributedText = str;
+    
+    /*CGRect rect =[str boundingRectWithSize:CGSizeMake([[UIScreen mainScreen] bounds].size.width, 20)
+     options:NSStringDrawingUsesLineFragmentOrigin
+     context:nil];*/
+     
     CGRect statusLabelFrame = _statusLabel.frame;
-    statusLabelFrame.size.width = rect.size.width;
+    statusLabelFrame.size.height = 20;
 }
 
 @end

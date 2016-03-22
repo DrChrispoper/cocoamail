@@ -16,6 +16,8 @@
 @interface InViewController : UIViewController
 
 @property (nonatomic, weak) WhiteBlurNavBar* navBar;
+//@property (nonatomic, strong) PullToRefresh* pullToRefresh;
+//@property (nonatomic, strong) UIRefreshControl* pullToRefresh;
 
 -(void) setupNavBarWith:(UINavigationItem*)item overMainScrollView:(UIScrollView*)mainScrollView;
 -(void) setupSimpleNavBarWith:(UINavigationItem*)item andWidth:(CGFloat)width;
@@ -31,6 +33,8 @@
 // if the subclass use this methods, call super
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView;
 -(void) scrollViewDidEndDragging:(UIScrollView*)scrollView willDecelerate:(BOOL)decelerate;
+
+//-(void) stopAnimating;
 
 //- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion;
 

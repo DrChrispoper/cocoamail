@@ -274,7 +274,12 @@
     else if (infoCell[ACTION]!=nil) {
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         if ([infoCell[ACTION] isEqualToString:@"OPEN_SERVER"]) {
-            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            if (self.account.isConnected) {
+                cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            }  
+            else {
+                //cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            }
         }
     }
     

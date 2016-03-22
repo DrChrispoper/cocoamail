@@ -27,6 +27,7 @@
 -(void) animatedClose;
 
 -(BOOL) isReplyAll;
+-(void) setAlwaysSwiped;
 
 @end
 

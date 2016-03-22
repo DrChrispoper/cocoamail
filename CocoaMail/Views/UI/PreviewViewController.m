@@ -218,6 +218,8 @@
                         CCMLog(@"%u, %u", current,maximum);
                     };
                     
+                    dispatch_async([ImapSync sharedServices:self.conversation.user].s_queue, ^{
+
                     [op start:^(NSError*  error, NSData*  partData) {
                         if(error){
                             CCMLog(@"%@",error);
@@ -228,7 +230,8 @@
                         
                         completedBlock(att.data);
                     }];
-                    
+                        
+                    });
                     break;
                 }
                 else {

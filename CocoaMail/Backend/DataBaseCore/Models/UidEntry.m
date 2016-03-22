@@ -69,12 +69,16 @@
         if (![result next]) {
             [result close];
             
-            [db executeUpdate:@"INSERT INTO uid_entry (uid,folder,msg_id,son_msg_id,dbNum) VALUES (?,?,?,?,?);",
+            BOOL res = [db executeUpdate:@"INSERT INTO uid_entry (uid,folder,msg_id,son_msg_id,dbNum) VALUES (?,?,?,?,?);",
                         @(uid_entry.uid),
                         @(uid_entry.folder + 1000 * uid_entry.accountNum),
                         uid_entry.msgID,
                         uid_entry.sonMsgID,
                         @(uid_entry.dbNum)];
+            
+            if (!res) {
+                NSLog(@"Add Uid in background:%@ failed", uid_entry.msgID);
+            }
         }
         else {
             [result close];
@@ -411,42 +415,50 @@
     return uid_entry;
 }
 
-+(BOOL) hasUidEntrywithMsgId:(NSString*)msgID
++(BOOL) hasUidEntrywithMsgId:(NSString*)msgID inAccount:(NSInteger)accountNum
 {
     __block BOOL result = NO;
+    NSString* folder = [NSString stringWithFormat:@"%ld___", (long)accountNum];
     
-    UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        
-        FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ?", msgID];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+    [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? AND folder LIKE ?", msgID, folder];
         
         if ([results next]) {
             result = YES;
             [results close];
+            dispatch_semaphore_signal(semaphore);
             return;
         }
+        
+        dispatch_semaphore_signal(semaphore);
     }];
+    
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     
     return result;
 }
 
-+(BOOL) hasUidEntrywithMsgId:(NSString*)msgID withFolder:(NSInteger)folderNum
++(BOOL) hasUidEntrywithMsgId:(NSString*)msgID withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountNum
 {
     __block BOOL result = NO;
     
-    UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
-    
-    [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-        
-        FMResultSet* results = [db executeQuery:@"SELECT folder FROM uid_entry WHERE msg_id = ?", msgID];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+    [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:@"SELECT folder FROM uid_entry WHERE msg_id = ? AND folder = ?", msgID, @(folderNum + 1000 * accountNum)];
         
         while ([results next]) {
             if (folderNum == -1 || folderNum == [results intForColumn:@"folder"] % 1000) {
                 result = YES;
             }
         }
+        
+        dispatch_semaphore_signal(semaphore);
     }];
+    
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     
     return result;
 }
@@ -500,6 +512,9 @@
         MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:user].imapSession copyMessagesOperationWithFolder:fromFolderName
                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                         destFolder:toFolderName];
+        
+        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
                 //CCMLog(@"Email copied to folder!");
@@ -513,6 +528,8 @@
                 CCMLog(@"Error copying email to folder:%@", error);
             }
         }];
+            
+        });
     }
 }
 
@@ -547,6 +564,8 @@
         MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:user].imapSession copyMessagesOperationWithFolder:fromFolderName
                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                         destFolder:toFolderName];
+        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
                 //CCMLog(@"Email copied to folder!");
@@ -564,6 +583,7 @@
                 }
             }
         }];
+        });
     }
 }
 
@@ -589,6 +609,8 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
                                                                                                            flags:MCOMessageFlagDeleted];
+        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
         [op start:^(NSError* error) {
             if (!error) {
                 //CCMLog(@"Updated the deleted flags!");
@@ -608,6 +630,8 @@
                 CCMLog(@"Error updating the deleted flags:%@", error);
             }
         }];
+            
+        });
     } else {
     }
 }
@@ -660,6 +684,8 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindAdd
                                                                                                            flags:flag];
+        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
         [op start:^(NSError* error) {
             if (!error) {
                 CCMLog(@"Added flag!");
@@ -674,6 +700,7 @@
                 CCMLog(@"Error adding flag email:%@", error);
             }
         }];
+        });
     }
 }
 
@@ -709,6 +736,8 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindRemove
                                                                                                            flags:flag];
+        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
         [op start:^(NSError* error) {
             if (!error) {
                 CCMLog(@"Removed flag!");
@@ -723,6 +752,7 @@
                 CCMLog(@"Error removing flag:%@", error);
             }
         }];
+        });
     }
 }
 

@@ -350,24 +350,31 @@ static AppSettings * singleton = nil;
     return nil;
 }
 
-+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
++(MCOIMAPSession*) imapSession:(UserSettings*)user
 {
     MCOIMAPSession* imapSession = [[MCOIMAPSession alloc] init];
-    
-    UserSettings* user = [AppSettings userWithIndex:accountIndex];
-    
+
     imapSession.hostname = user.imapHostname;
     imapSession.port = (unsigned int)user.imapPort;
     imapSession.username = user.username;
     imapSession.password = user.password;
-    
+    imapSession.connectionType = user.imapConnectionType;
+
     if ([user isUsingOAuth]) {
         imapSession.OAuth2Token = [user oAuth];
         imapSession.authType = MCOAuthTypeXOAuth2;
+        imapSession.connectionType = MCOConnectionTypeTLS;
     }
-    imapSession.connectionType = user.imapConnectionType;
+    
+    imapSession.maximumConnections = 6;
     
     return imapSession;
+}
+
++(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
+{
+    UserSettings* user = [AppSettings userWithIndex:accountIndex];
+    return [AppSettings imapSession:user];
 }
 
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum

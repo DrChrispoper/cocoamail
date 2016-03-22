@@ -12,7 +12,7 @@
 
 @property (copy, nonatomic) NSString *status;
 
-+ (void)showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval;
++ (void)showStatus:(NSString *)status dismissAfter:(NSTimeInterval)interval code:(NSInteger)code;
 + (void)dismiss;
 
 @end

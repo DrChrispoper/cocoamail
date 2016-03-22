@@ -40,15 +40,33 @@ for (var i = 0; i < images.length; i++) {\
 var url = images[i].getAttribute('src');\
 if (url.indexOf(info.URLKey) == 0) {\
 images[i].setAttribute('src', info.InlineDataKey);\
+if (!images[i].getAttribute('id')) {\
+images[i].setAttribute('id', info.URLCID);\
+}\
 var width = images[i].style.width;\
-if (!width) {\
+if (!images[i].style.width) {\
+if (!images[i].getAttribute('width')) {\
 images[i].style.width = \"100%\";\
+}\
 }\
 break;\
 }\
 }\
 };\
 \
+function rgbToHex(col)\
+{\
+    if(col.charAt(0)=='r')\
+    {\
+        col=col.replace('rgb(','').replace(')','').split(',');\
+        var r=parseInt(col[0], 10).toString(16);\
+        var g=parseInt(col[1], 10).toString(16);\
+        var b=parseInt(col[2], 10).toString(16);\
+        r=r.length==1?'0'+r:r; g=g.length==1?'0'+g:g; b=b.length==1?'0'+b:b;\
+        var colHex='#'+r+g+b;\
+        return colHex;\
+    }\
+}\
 $.getDocHeight = function(){\
 return Math.max(\
                 $(document).height(),\
@@ -59,6 +77,8 @@ return Math.max(\
 };\
 jQuery(document).ready(function(){\
 window.location.href = \"ready://\" + $.getDocHeight();\
+$(\"img\").bind( 'vclick', imageHandler);\
+$(\"img\").bind( 'taphold', longImageHandler);\
 });\
 jQuery(window).load(function() {\
 window.location.href = \"newheight://\" + $.getDocHeight();\
@@ -71,9 +91,23 @@ $.mobile.loading().hide();\
 \
 function longClickHandler(e){\
 e.preventDefault();\
+if (e.target.href) {\
 window.location.href = \"long://\" + e.target.href;\
 }\
+}\
 \
+function longImageHandler(e){\
+e.preventDefault();\
+if (e.target.id) {\
+window.location.href = \"long://\" + e.target.id;\
+}\
+}\
+function imageHandler(e){\
+e.preventDefault();\
+if (e.target.id) {\
+window.location.href = \"image://\" + e.target.id;\
+}\
+}\
 $(\"a\").bind( 'taphold', longClickHandler);\
 $(document).on( 'taphold', \"div\", longClickHandler );\
 $(function(){\
@@ -82,15 +116,19 @@ $(function(){\
         $('div.showMe').slideToggle('fast', function() {\
             window.location.href = \"showMore://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
         });\
-        var text = $('div.expandContent').html();\
-        if (text == '...')\
-            text = 'Hide quoted text';\
-        else\
-            text = '...';\
-        $('div.expandContent').html(text);\
     }\
 });\
 ";
+
+/*
+ var text = $('div.expandContent').style.backgroundColor;\
+ var h = rgbToHex(text);\
+ alert(rgbToHex(text));\
+ if (h == '#DEDEDE')\
+ $('div.expandContent').style.backgroundColor = rgb(255,255,255);\
+ else\
+ $('div.expandContent').style.backgroundColor = rgb(222,222,222);\
+ */
 
 static NSString * mainStyle = @"\
 body {\
@@ -106,14 +144,28 @@ pre {\
 white-space: pre-wrap;\
 }\
 div.expandContent {\
-font-size: 11px;\
-font-weight: bold;\
-padding: 3px 5px;\
-border-radius: 3px;\
-background: #f0f0f0;\
+border-top-left-radius: 7px;\
+border-top-right-radius: 7px;\
+background-color:rgb(255,255,255);\
 }\
 div.showMe {\
-padding-top: 20px;\
+padding: 10px;\
+background-color:rgb(255,255,255);\
+border-bottom-left-radius: 7px;\
+border-bottom-right-radius: 7px;\
+}\
+a\
+{\
+    -webkit-touch-callout: none;\
+    -webkit-user-select: none;\
+    -khtml-user-select: none;\
+    -ms-user-select: none;\
+    -moz-user-select: none;\
+    user-select: none;\
+}\
+p\
+{\
+margin = 0;\
 }\
 ";
 
@@ -216,6 +268,8 @@ padding-top: 20px;\
         
         NSString* folderPath = [mail.user folderServerName:uidE.folder];
         
+        dispatch_async([ImapSync sharedServices:mail.user].s_queue, ^{
+
         [[[ImapSync sharedServices:mail.user].imapSession fetchMessagesOperationWithFolder:folderPath requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindStructure  uids:uidsIS]
          start:^(NSError * _Nullable error, NSArray * _Nullable messages, MCOIndexSet * _Nullable vanishedMessages) {
              if (messages.count > 0) {
@@ -229,6 +283,8 @@ padding-top: 20px;\
                  }];
              }
          }];
+            
+        });
     }
     else {
         _mail = mail;
@@ -262,9 +318,10 @@ padding-top: 20px;\
 
     if (self.isConversation) {
         NSArray* res = [FindQuote quote_html:content];
+        
         NSString* split = res[0];
         if (res.count == 2) {
-            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\">...</div><div class=\"showMe\" style=\"display:none\">%@</div>", res[0], res[1]];
+            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\"><img height='14px' width='37px' src='caca_off.png'></div><div class=\"showMe\" style=\"display:none\">%@</div>", res[0], res[1]];
         }
         content = split;
     }
@@ -272,11 +329,11 @@ padding-top: 20px;\
     [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
      "<script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
      "<body data-enhance='false'>%@</body>"
-     "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
+     "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe><iframe src='http://putcocoa.in/awsome.html' style='width: 0px; height: 0px; border: none;'></iframe></html>",
      [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
      content];
     
-    [_webView loadHTMLString:html baseURL:nil];
+    [_webView loadHTMLString:html baseURL:[[NSBundle mainBundle] bundleURL]];
 }
 
 -(BOOL) _isCID:(NSURL*)url
@@ -307,13 +364,17 @@ padding-top: 20px;\
                 }
                 NSString* inlineData = [NSString stringWithFormat:@"data:image/jpg;base64,%@",[data base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength]];
                 
-                NSDictionary*  args = @{@"URLKey": urlString, @"InlineDataKey": inlineData };
+                NSDictionary*  args = @{@"URLKey": urlString, @"InlineDataKey": inlineData, @"URLCID": [url resourceSpecifier]};
                 
                 NSString*  jsonString = [self _jsonEscapedStringFromDictionary:args];
                 
                 NSString*  replaceScript = [NSString stringWithFormat:@"replaceImageSrc(%@)", jsonString];
-                NSString* res = [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
-                CCMLog(@"Javascript res:%@", res);
+                
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
+                }];
+                
+                //CCMLog(@"Javascript res:%@", res);
             }];
         }
     }
@@ -337,7 +398,15 @@ padding-top: 20px;\
 
     //NSLog(@"url:%@",url);
     
-    if ([[url scheme] isEqualToString:@"long"]) {
+    if ([[url scheme] isEqualToString:@"image"]) {
+        NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
+        
+        NSString* urlString = comps[1];
+        urlString = [urlString substringFromIndex:2];
+
+        [_delegate openContentID:urlString];
+    }
+    else if ([[url scheme] isEqualToString:@"long"]) {
     
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
         
@@ -356,6 +425,9 @@ padding-top: 20px;\
             }
             
             [_delegate openLongURL:[NSURL URLWithString:correctURL]];
+        }
+        else {
+            [_delegate openLongContentID:urlString];
         }
         
         return false;
@@ -408,7 +480,7 @@ padding-top: 20px;\
 
             [_delegate webViewLoaded:_webView];
             
-            [_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
+            //[_webView stringByEvaluatingJavaScriptFromString:@"document.body.style.webkitTouchCallout='none';"];
 
             return NO;
         }

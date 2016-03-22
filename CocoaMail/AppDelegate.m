@@ -63,7 +63,7 @@
     
     [Accounts sharedInstance];
     [[Accounts sharedInstance] getDrafts];
-
+    
     //[self registerGoogleSignIn];
     
     return shouldPerformAdditionalDelegateHandling;
@@ -121,6 +121,8 @@
         //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
             [[ImapSync sharedServices:user] saveCachedData];
         }
+        
+        [[AppSettings getSingleton] setCache:@[]];
         
         if (self.launchedShortcutItem) {
             UIApplicationShortcutItem* shortCut = self.launchedShortcutItem ;
@@ -371,16 +373,12 @@ didSignInForUser:(GIDGoogleUser*)user
 
 # pragma mark - Springboard Shortcut Items (dynamic)
 
-- (void)createItemsWithIcons {
-    
-    // create some system icons
-    UIApplicationShortcutIcon *loveIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeFavorite];
-    UIApplicationShortcutIcon *mailIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeMail];
-    UIApplicationShortcutIcon *searchIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeSearch];
-    UIApplicationShortcutIcon *composeIcon = [UIApplicationShortcutIcon iconWithType:UIApplicationShortcutIconTypeCompose];
-
-    // icons with my own images
-    //UIApplicationShortcutIcon *icon1 = [UIApplicationShortcutIcon iconWithTemplateImageName:@"iCon1"];
+- (void)createItemsWithIcons
+{
+    UIApplicationShortcutIcon *loveIcon = [UIApplicationShortcutIcon iconWithTemplateImageName:@"favoris_off"];
+    UIApplicationShortcutIcon *mailIcon = [UIApplicationShortcutIcon iconWithTemplateImageName:@"swipe_inbox"];
+    UIApplicationShortcutIcon *searchIcon = [UIApplicationShortcutIcon iconWithTemplateImageName:@"simple_search_off"];
+    UIApplicationShortcutIcon *composeIcon = [UIApplicationShortcutIcon iconWithTemplateImageName:@"simple_edit_off"];
     
     // create several (dynamic) shortcut items
     UIMutableApplicationShortcutItem *itemLove = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.fav" localizedTitle:@"Favoris" localizedSubtitle:nil icon:loveIcon userInfo:nil];

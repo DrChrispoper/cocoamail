@@ -7,15 +7,18 @@
 //
 
 #import "PullToRefresh.h"
-
+#import "UserSettings.h"
 #import "ViewController.h"
 #import "Accounts.h"
-
+#import "ImapSync.h"
 
 @interface PullToRefresh ()
 
 @property (nonatomic, weak) UIActivityIndicatorView* pullToRefresh;
 @property (nonatomic, weak) UIView* pullToRefreshSupport;
+@property (nonatomic) UIEdgeInsets lastInset;
+
+@property (nonatomic, weak) UIScrollView* sv;
 
 
 @end
@@ -49,7 +52,8 @@
             
             self.pullToRefreshSupport = support;
              */
-            UIActivityIndicatorView* av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+            UIActivityIndicatorView* av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+            av.color = [Accounts sharedInstance].currentAccount.user.color;
             [av stopAnimating];
             av.center = CGPointMake(scrollView.frame.size.width / 2, -35 + self.delta);
             [scrollView addSubview:av];
@@ -62,11 +66,12 @@
         CGFloat limite = -scrollView.contentInset.top - 60;
         CGFloat pourc = scrollView.contentOffset.y / limite;
         
-        if (pourc>1.1) {
-            pourc = 1.1f;
+        if (pourc>1.f) {
+            pourc = 1.f;
         }
         
         pourc = pourc * pourc;
+        //self.pullToRefresh.transform = CGAffineTransformMakeRotation(M_PI_2);
         self.pullToRefresh.transform = CGAffineTransformScale(CGAffineTransformMakeRotation(M_PI_2), pourc, pourc);
     }
     else {
@@ -80,28 +85,32 @@
         
         [self.pullToRefresh startAnimating];
         
-        //[scrollView setContentOffset:scrollView.contentOffset animated:NO];
+        [scrollView setContentOffset:scrollView.contentOffset animated:NO];
         
-        /*UIEdgeInsets lastInset = scrollView.contentInset;
+        self.lastInset = scrollView.contentInset;
         
         UIEdgeInsets newInset = scrollView.contentInset;
         newInset.top += 65;
         
         [UIView animateWithDuration:0.2 animations:^{
             scrollView.contentInset = newInset;
-        }];*/
+        }];
         
-        // fake async
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self.pullToRefresh stopAnimating];
-            //scrollView.contentInset = lastInset;
-            [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
-            [[Accounts sharedInstance].currentAccount showProgress];
-            [[Accounts sharedInstance].currentAccount localFetchMore:NO];
-        });
-        // TODO true one
+        self.sv = scrollView;
+        
+        [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
+        [[Accounts sharedInstance].currentAccount localFetchMore:NO];
+        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
     }
 }
 
+-(void) stopAnimating
+{
+    [self.pullToRefresh stopAnimating];
+    
+    if (self.sv) {
+        self.sv.contentInset = self.lastInset;
+    }
+}
 
 @end

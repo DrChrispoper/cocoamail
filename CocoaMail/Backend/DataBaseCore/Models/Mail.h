@@ -55,7 +55,6 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 
 //ToFetch
 @property (nonatomic, readwrite, copy) NSArray* attachments;
-@property (nonatomic, readwrite, copy) NSArray<UidEntry*>* uids;
 
 
 -(BOOL) hasAttachments;
@@ -64,6 +63,8 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 -(BOOL) existsLocally;
 -(UserSettings*) user;
 -(UidEntry*) uidEWithFolder:(NSInteger)folderNum;
+-(NSArray*) uids;
+-(void) setUids:(NSArray<UidEntry *> *)uids;
 -(NSString*) sonID;
 -(BOOL) haveSonInFolder:(NSInteger)folderIdx;
 -(NSArray*) getSons;
@@ -79,8 +80,8 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 -(void) toggleFav;
 -(void) toggleRead;
 
--(Mail*) replyMail:(BOOL)replyAll;
--(Mail*) transfertMail;
+-(Draft*) replyDraft:(BOOL)replyAll;
+-(Draft*) transfertDraft;
 -(NSData*) rfc822DataWithAccountIdx:(NSInteger)idx isBcc:(BOOL)isBcc;
 
 -(BOOL) isEqualToMail:(Mail*)mail;
@@ -92,7 +93,7 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 +(NSMutableArray*) getMails;
 +(Mail*) resToMail:(FMResultSet*)result;
 
-+(void) clean:(Mail*)mail;
++(void) clean:(NSString*)msgID dbNum:(NSInteger)dbNum;
 +(NSInteger) insertMail:(Mail*)mail;
 +(void) updateMail:(Mail*)mail;
 +(BOOL) removeMail:(NSString*)msgIdDel;

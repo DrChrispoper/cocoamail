@@ -134,8 +134,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void)clean:(Mail *)mail
 {
-    [self _switchDBForMail:mail];
-    [Mail clean:mail];
+    [Mail clean:mail.msgID dbNum:[EmailProcessor dbNumForDate:mail.datetime]];
 }
 
 -(void) updateFlag:(NSMutableArray<Mail*>*)emails
@@ -200,7 +199,6 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) addEmailWrapper:(Mail*)mail
 {
-	// Note that there should be no parallel accesses to addEmailWrapper
 	[self addEmail:mail];
     [self addAttachments:mail.attachments];
 }
@@ -213,19 +211,22 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     
     [self _switchDBForMail:mail];
     
-    UidEntry* uidE = mail.uids[0];
+    [Mail insertMail:mail];
     
-    if ([Mail insertMail:mail] != -1) {
-        [UidEntry addUid:uidE];
-    }
-    else {
-        mail.uids = nil;
-        
-        if (![mail existsLocally]) {
-            [UidEntry addUid:uidE];
+    if ([mail.user.name isEqualToString:@""]) {
+        UidEntry* u = [mail uidEWithFolder:[mail.user importantFolderNumforBaseFolder:FolderTypeSent]];
+        if (u) {
+            if (![mail.sender.displayName isEqualToString:@""] || ![mail.sender.displayName isEqualToString:mail.sender.mailbox]) {
+                NSLog(@"New display name:%@",mail.sender.displayName);
+                mail.user.name = mail.sender.displayName;
+            }
         }
+    }
+    
+    UidEntry* uid = mail.uids[0];
         
-        mail.uids = @[uidE];
+    if (![UidEntry hasUidEntrywithMsgId:mail.msgID withFolder:uid.folder inAccount:uid.accountNum]) {
+        [UidEntry addUid:uid];
     }
 }
 

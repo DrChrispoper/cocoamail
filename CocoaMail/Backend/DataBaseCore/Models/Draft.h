@@ -32,8 +32,9 @@
 
 -(void) save;
 -(void) deleteDraft;
+-(void) appendToSent:(NSString*)rfc822DataFilename;
 
--(NSData*) rfc822DataTo:(NSArray*)toPersonIDs;
+-(NSString*) rfc822DataTo:(NSArray*)toPersonIDs;
 -(Mail*) fromMail;
 //-(Mail*) mail;
 

@@ -18,5 +18,7 @@
 
 @property (nonatomic) CGFloat delta;
 
+-(void) stopAnimating;
+
 
 @end

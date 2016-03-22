@@ -34,8 +34,8 @@
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgID:(NSString*)msgID;
 +(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgID;
 
-+(BOOL) hasUidEntrywithMsgId:(NSString*)md5hash withFolder:(NSInteger)folderNum;
-+(BOOL) hasUidEntrywithMsgId:(NSString*)msgID;
++(BOOL) hasUidEntrywithMsgId:(NSString*)msgID withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountNum;
++(BOOL) hasUidEntrywithMsgId:(NSString*)msgID inAccount:(NSInteger)accountNum;
 
 +(NSMutableArray*) getUidEntriesWithThread:(NSString*)son_msgId;
 

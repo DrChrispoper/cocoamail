@@ -34,6 +34,8 @@
 -(void) openURL:(NSURL*)url;
 -(void) openWebURL:(NSURL*)url;
 -(void) openLongURL:(NSURL*)url;
+-(void) openContentID:(NSString*)cid;
+-(void) openLongContentID:(NSString*)cid;
 -(void) shareAttachment:(Attachment*)att;
 -(void) scrollTo:(CGPoint)offset;
 -(BOOL) isConversation;
@@ -351,6 +353,34 @@
     [self.view.window.rootViewController presentViewController:activityViewController
                                                       animated:YES
                                                     completion:nil];
+}
+
+-(void) openContentID:(NSString*)cid
+{
+    for (Mail* mail in self.conversation.mails) {
+        for (Attachment* att in mail.attachments) {
+            if (att.isInline && [att.contentID isEqualToString:cid]) {
+                NSString* filePath = [StringUtil filePathInDocumentsDirectoryForAttachmentFileName:att.fileName];
+                [att.data writeToFile:filePath atomically:YES];
+                NSURL* URL = [NSURL fileURLWithPath:filePath];
+                [self openURL:URL];
+            }
+        }
+    }
+}
+
+-(void) openLongContentID:(NSString*)cid
+{
+    for (Mail* mail in self.conversation.mails) {
+        for (Attachment* att in mail.attachments) {
+            if (att.isInline && [att.contentID isEqualToString:cid]) {
+                UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[[UIImage imageWithData:att.data]] applicationActivities:nil];
+                [self.view.window.rootViewController presentViewController:activityViewController
+                                                                  animated:YES
+                                                                completion:nil];
+            }
+        }
+    }
 }
 
 - (void)safariViewControllerDidFinish:(SFSafariViewController *)controller
@@ -870,7 +900,15 @@
 
 -(UIView*) _createAttachments:(NSArray*)attachs
 {
-    if (attachs.count == 0) {
+    NSInteger normalAttsCount = 0;
+
+    for (Attachment* a in attachs) {
+        if (!a.isInline) {
+            normalAttsCount++;
+        }
+    }
+    
+    if (attachs.count == 0 || normalAttsCount == 0) {
         return nil;
     }
     
@@ -878,13 +916,17 @@
     
     const CGFloat stepY = 73.f;
     
-    UIView* v = [[UIView alloc] initWithFrame:CGRectMake(8, 0, WIDTH - 32, stepY * attachs.count)];
+    UIView* v = [[UIView alloc] initWithFrame:CGRectMake(8, 0, WIDTH - 32, stepY * normalAttsCount)];
     v.backgroundColor = [UIColor whiteColor];
     CGFloat posY = 0.f;
     
     NSInteger idx = 0;
     
     for (Attachment* a in attachs) {
+        
+        if (a.isInline) {
+            continue;
+        }
         
         AttachmentView* av = [[AttachmentView alloc] initWithWidth:WIDTH-32 leftMarg:0];
         av.delegate = self;
@@ -920,19 +962,19 @@
 {
     Mail* m = [self.delegate mailDisplayed:self];
     
-    Mail* repm = nil;
+    Draft* repm = nil;
     
     if (button.tag==1) {
-        repm = [m transfertMail];
+        repm = [m transfertDraft];
     }
     else if (button.tag==2) {
-        repm = [m replyMail:NO];
+        repm = [m replyDraft:NO];
     }
     else {
-        repm = [m replyMail:YES];
+        repm = [m replyDraft:YES];
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:[repm toDraft]}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:repm}];
 }
 
 -(void) _masr:(UIButton*)button
@@ -1024,6 +1066,16 @@
     [self.delegate openLongURL:url];
 }
 
+-(void) openContentID:(NSString*)cid
+{
+    [self.delegate openContentID:cid];
+}
+
+-(void) openLongContentID:(NSString*)cid
+{
+    [self.delegate openLongContentID:cid];
+}
+
 -(void) scrollTo:(CGPoint)offset
 {
     [self.delegate scrollTo:offset];
@@ -1084,7 +1136,7 @@
                     op.progress = ^(unsigned int current, unsigned int maximum){
                         CCMLog(@"%u, %u", current,maximum);
                     };
-             
+                    dispatch_async([ImapSync sharedServices:conv.user].s_queue, ^{
                     [op start:^(NSError*  error, NSData*  partData) {
                         if(error){
                             CCMLog(@"%@",error);
@@ -1095,6 +1147,8 @@
 
                         completedBlock(att.data);
                     }];
+                        
+                    });
                     
                     break;
                 }

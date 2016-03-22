@@ -34,6 +34,8 @@
 
 @protocol MailListDelegate
 
+-(void) localSearchDone:(BOOL)done;
+-(void) serverSearchDone:(BOOL)done;
 -(void) removeConversationList:(NSArray*)convs;
 -(void) reFetch:(BOOL)forceRefresh;
 -(BOOL) isPresentingDrafts;

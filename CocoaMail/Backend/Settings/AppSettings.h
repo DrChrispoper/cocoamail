@@ -46,6 +46,7 @@
 +(NSInteger) indexForAccountNum:(NSInteger)accountNum;
 
 //Account Server Settings
++(MCOIMAPSession*) imapSession:(UserSettings*)user;
 +(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
 
 //Account Other Settings

@@ -16,6 +16,7 @@
 @property (nonatomic, strong) NSMutableArray* cachedData;
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
 @property (nonatomic) BOOL connected;
+@property (nonatomic) dispatch_queue_t s_queue;
 
 +(ImapSync*) sharedServices:(UserSettings*)user;
 +(NSArray*) allSharedServices:(MCOIMAPSession*)updated;
@@ -30,8 +31,10 @@
 +(void) deletedAndWait:(UserSettings*)deleteUser;
 +(void) runInboxUnread:(UserSettings*)user;
 -(void) cancel;
++(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock;;
 
 -(NSMutableSet*) emailIDs;
+//-(void) newOAuthSet;
 
 +(BOOL) canFullSync;
 

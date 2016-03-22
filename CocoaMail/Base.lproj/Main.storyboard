@@ -41,7 +41,7 @@
                             <constraint firstItem="P9O-J9-tSL" firstAttribute="leading" secondItem="kBV-Ly-cv5" secondAttribute="leading" id="rhO-cB-VfF"/>
                         </constraints>
                     </view>
-                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
+                    <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="lightContent"/>
                     <connections>
                         <outlet property="contentView" destination="P9O-J9-tSL" id="zHy-IK-8XH"/>
                     </connections>

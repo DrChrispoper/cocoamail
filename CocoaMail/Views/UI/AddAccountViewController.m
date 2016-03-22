@@ -508,7 +508,7 @@
                        password:(NSString *)password
                     oauth2Token:(NSString *)oauth2Token
 {
-    self.accountVal = [[MCOAccountValidator alloc]init];
+    self.accountVal = [[MCOAccountValidator alloc] initValidator];
     self.accountVal.username = username;
     self.accountVal.password = password;
     

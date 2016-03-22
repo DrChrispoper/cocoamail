@@ -106,7 +106,7 @@ static ViewController * s_self;
     //[GIDSignIn sharedInstance].uiDelegate = self;
     
     [[[Accounts sharedInstance] currentAccount] connect];
-    
+
     [self setup];
     
     CocoaButton* cb = [CocoaButton sharedButton];
@@ -114,6 +114,11 @@ static ViewController * s_self;
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
 }
 
 -(void) didReceiveMemoryWarning
@@ -134,7 +139,7 @@ static ViewController * s_self;
 
 +(void) animateCocoaButtonRefresh:(BOOL)anim
 {
-    [[self mainVC].cocoaButton refreshAnimation:anim];
+    //[[self mainVC].cocoaButton refreshAnimation:anim];
 }
 
 -(void) closeCocoaButtonIfNeeded
@@ -469,7 +474,7 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         IBGLog(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
-        AddAccountViewController* f = [[AddAccountViewController alloc] init];
+        AddFirstAccountViewController* f = [[AddFirstAccountViewController alloc] init];
         f.firstRunMode = YES;
         
         if (self.viewControllers.count==1) {
@@ -637,7 +642,7 @@ static ViewController * s_self;
             return;
         }
         IBGLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
-        AddAccountViewController* f = [[AddAccountViewController alloc] init];
+        AddFirstAccountViewController* f = [[AddFirstAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
@@ -1036,6 +1041,10 @@ static ViewController * s_self;
             continue;
         }
         
+        if (alls.count == 2 && a.user.isAll) {
+            continue;
+        }
+        
         if (idx == currentAIdx) {
             idx++;
             continue;
@@ -1140,26 +1149,6 @@ static ViewController * s_self;
 
 -(UIInterfaceOrientationMask) supportedInterfaceOrientations{
     return UIInterfaceOrientationMaskPortrait;
-}
-
-#pragma mark - OAuth
-
-- (void)auth:(GTMOAuth2Authentication *)auth finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error
-{
-    if (!error) {
-        if ([auth accessToken]) {
-            UserSettings* user = [AppSettings userWithEmail:[auth userEmail]];
-            if (![[auth accessToken] isEqualToString:[user oAuth]]) {
-                [user setOAuth:[auth accessToken]];
-                [[ImapSync doLogin:user] subscribeError:^(NSError *error) {
-                    CCMLog(@"connection error");
-                } completed:^{}];
-            }
-        }
-    }
-    else {
-        CCMLog(@"Erorr signing in %@",error.description);
-    }
 }
 
 @end

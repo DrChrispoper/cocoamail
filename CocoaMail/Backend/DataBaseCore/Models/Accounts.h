@@ -46,6 +46,7 @@
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
 -(NSInteger) getPersonID:(NSInteger)accountIndex;
 -(void) getDrafts;
+-(void) appeared;
 
 @end
 
@@ -70,14 +71,16 @@
 -(void) initContent;
 -(void) connect;
 -(BOOL) isConnected;
--(void) setConnected:(BOOL)isConnected;
+-(void) setConnected;
 -(void) runTestData;
 -(void) releaseContent;
 -(void) cancelSearch;
+-(void) sendOutboxs;
 
 -(NSInteger) favorisCount;
 -(NSInteger) draftCount;
 -(NSInteger) unreadInInbox;
+-(NSInteger) outBoxNb;
 
 -(void) insertRows:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
@@ -90,7 +93,7 @@
 -(NSArray*) conversations;
 
 -(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs;
--(void) deleteDraft:(NSString*)msgID;
+-(void) deleteDraft:(Draft*)draft;
 -(void) addLocalDraft:(Draft*)draft;
 
 -(NSArray*) systemFolderNames;
@@ -102,7 +105,5 @@
 -(void) doTextSearch:(NSString*)searchString;
 
 -(void) localFetchMore:(BOOL)loadMore;
-
--(void) showProgress;
 
 @end

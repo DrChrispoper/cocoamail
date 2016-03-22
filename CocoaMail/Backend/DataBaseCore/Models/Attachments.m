@@ -415,9 +415,7 @@
 
 -(void) fetchAttachment:(Attachment*)att
 {
-    Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
-    
-    if ([networkReachability currentReachabilityStatus] != NotReachable) {
+    //if ([networkReachability currentReachabilityStatus] != NotReachable) {
         if (!att.data) {
             NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgID];
             
@@ -445,6 +443,8 @@
                 }
             };
             
+            dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+
             [self.op start:^(NSError* error, NSData* partData) {
                 if (error) {
                     CCMLog(@"%@", error);
@@ -465,8 +465,10 @@
                 [self.delegate downloaded:att];
                 [self doneDownloading];
             }];
+                
+            });
         }
-    }
+    //}
 }
 
 

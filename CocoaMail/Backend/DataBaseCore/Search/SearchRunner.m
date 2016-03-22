@@ -20,6 +20,9 @@
 #import "StringUtil.h"
 #import "Accounts.h"
 #import "UserSettings.h"
+#import "ViewController.h"
+#import "InViewController.h"
+#import "InViewController+SGProgress.h"
 
 static SearchRunner * searchSingleton = nil;
 
@@ -206,6 +209,8 @@ static SearchRunner * searchSingleton = nil;
                 return [RACDisposable disposableWithBlock:^{}];
             }
             
+            NSMutableArray* dels = [[NSMutableArray alloc] init];
+            
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
             
             [queue inDatabase:^(FMDatabase* db) {
@@ -223,6 +228,9 @@ static SearchRunner * searchSingleton = nil;
                     Mail* email = [Mail resToMail:results];
                     
                     if (!email) {
+                        Mail* email = [[Mail alloc] init];
+                        email.msgID = [results stringForColumnIndex:6];
+                        [dels addObject:email];
                         continue;
                     }
                     
@@ -236,6 +244,11 @@ static SearchRunner * searchSingleton = nil;
                     [subscriber sendNext:email];
                 }
                 [results close];
+                
+                for (Mail* m in dels) {
+                    NSLog(@"Lone email deleted");
+                    [db executeUpdate:kQueryDelete, m.msgID];
+                }
             }];
         }
         
@@ -252,10 +265,9 @@ static SearchRunner * searchSingleton = nil;
         
         [UidEntry cleanBeforeDeleteinAccountNum:accountNum];
         
-            NSMutableArray* uidsInGroups;
-            
+            NSMutableArray* uidsInGroups = [UidEntry getUidEntriesinAccountNum:accountNum andDelete:YES];
+        
             while (true) {
-                uidsInGroups = [UidEntry getUidEntriesinAccountNum:accountNum andDelete:YES];
                 
                 if (uidsInGroups.count == 0) {
                     break;
@@ -264,6 +276,11 @@ static SearchRunner * searchSingleton = nil;
                     NSLog(@"Deleting Batch");
                     
                     for (NSArray* pagedUids in uidsInGroups) {
+                        
+                        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                            [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:((long)(pagedUids.count*100)/uidsInGroups.count) andTintColor:[UIColor blackColor]];
+                        }];
+                        
                         for (UidEntry* p in pagedUids) {
                             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:p.dbNum]]];
                             [queue inDatabase:^(FMDatabase* db) {
@@ -273,6 +290,8 @@ static SearchRunner * searchSingleton = nil;
                             }];
                         }
                     }
+                    
+                    break;
                 }
             }
             
@@ -305,7 +324,7 @@ static SearchRunner * searchSingleton = nil;
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
             if (self.cancelled) {
-                CCMLog(@"Cancel");
+                NSLog(@"Cancel Search");
                 [subscriber sendCompleted];
                 
                 return [RACDisposable disposableWithBlock:^{}];
@@ -328,7 +347,7 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:query];
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    CCMLog(@"Checking table");
+                    NSLog(@"Error querying table. Checking table");
                     [Mail tableCheck:db];
                 }
                 
@@ -395,6 +414,10 @@ static SearchRunner * searchSingleton = nil;
 -(RACSignal*) activeFolderSearch:(Mail*)email inAccountNum:(NSInteger)accountNum
 {
     self.cancelled = NO;
+    
+    if (!email.msgID) {
+        email = nil;
+    }
     
     return [self searchForSignal:[self performFolderSearch:[Accounts sharedInstance].currentAccount.currentFolderIdx inAccountNum:accountNum from:email]];
 }

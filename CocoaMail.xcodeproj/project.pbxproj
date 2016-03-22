@@ -100,7 +100,11 @@
 		2777380E1B8B03A40030F299 /* MailListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2777380D1B8B03A40030F299 /* MailListViewController.m */; };
 		27781AFE1B8DC55D00BDE682 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27781AFD1B8DC55D00BDE682 /* Images.xcassets */; };
 		2778A1A41BE11C38006FB71D /* SignatureViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2778A1A31BE11C38006FB71D /* SignatureViewController.m */; };
-		277D64C01C8EC69100C0135F /* OnePasswordExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64BF1C8EC69100C0135F /* OnePasswordExtension.m */; };
+		277D64CA1C8EE7F900C0135F /* OnePasswordExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64C91C8EE7F900C0135F /* OnePasswordExtension.m */; };
+		277D64CF1C8F0A9800C0135F /* InViewController+SGProgress.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64CC1C8F0A9800C0135F /* InViewController+SGProgress.m */; };
+		277D64D01C8F0A9800C0135F /* SGProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64CE1C8F0A9800C0135F /* SGProgressView.m */; };
+		277D64D41C8F0BBA00C0135F /* NSDate+TimeAgo.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64D21C8F0BBA00C0135F /* NSDate+TimeAgo.m */; };
+		277D64D51C8F0BBA00C0135F /* NSDateTimeAgo.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 277D64D31C8F0BBA00C0135F /* NSDateTimeAgo.bundle */; };
 		277D89021BB14B1B00FAFED5 /* DropboxBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */; };
 		277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89041BB14BA200FAFED5 /* GoogleDriveExplorer.m */; };
 		277D895C1BB183B300FAFED5 /* folder.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D89081BB183B300FAFED5 /* folder.png */; };
@@ -190,6 +194,7 @@
 		277E9D1D1C1AD4540098EDB4 /* jquerymobile.js in Resources */ = {isa = PBXBuildFile; fileRef = 277E9D1C1C1AD4540098EDB4 /* jquerymobile.js */; };
 		277E9D271C1AD7C60098EDB4 /* jquery.js in Resources */ = {isa = PBXBuildFile; fileRef = 277E9D261C1AD7C60098EDB4 /* jquery.js */; };
 		277F4C231C859BF500720479 /* Draft.m in Sources */ = {isa = PBXBuildFile; fileRef = 277F4C221C859BF500720479 /* Draft.m */; };
+		278174C71CA1445500965B32 /* caca_off.png in Resources */ = {isa = PBXBuildFile; fileRef = 278174C61CA1445500965B32 /* caca_off.png */; };
 		278183921C232564000B257A /* apple.png in Resources */ = {isa = PBXBuildFile; fileRef = 2781838F1C232564000B257A /* apple.png */; };
 		278183931C232564000B257A /* captaintrain.png in Resources */ = {isa = PBXBuildFile; fileRef = 278183901C232564000B257A /* captaintrain.png */; };
 		278183941C232564000B257A /* quip.png in Resources */ = {isa = PBXBuildFile; fileRef = 278183911C232564000B257A /* quip.png */; };
@@ -223,8 +228,6 @@
 		27818C6D1BABF28D00D26D1A /* Persons.m in Sources */ = {isa = PBXBuildFile; fileRef = 27818C6A1BABF28D00D26D1A /* Persons.m */; };
 		2782D67E1C22C445006B6926 /* crunchbase.png in Resources */ = {isa = PBXBuildFile; fileRef = 2782D67C1C22C444006B6926 /* crunchbase.png */; };
 		2782D67F1C22C445006B6926 /* groupon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2782D67D1C22C445006B6926 /* groupon.png */; };
-		2788272F1C8D74D400807F65 /* NSDate+TimeAgo.m in Sources */ = {isa = PBXBuildFile; fileRef = 2788272D1C8D74D300807F65 /* NSDate+TimeAgo.m */; };
-		278827301C8D74D400807F65 /* NSDateTimeAgo.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2788272E1C8D74D300807F65 /* NSDateTimeAgo.bundle */; };
 		278BF2F61BA95D9200A68D9E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */; };
 		2798B56B1C4AAE6600C98321 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2798B56A1C4AAE6600C98321 /* ViewController.m */; };
 		279F28BD1C202AEE00D554A7 /* pics.json in Resources */ = {isa = PBXBuildFile; fileRef = 279F28BC1C202AEE00D554A7 /* pics.json */; };
@@ -287,14 +290,14 @@
 		279F293B1C20591200D554A7 /* number26.png in Resources */ = {isa = PBXBuildFile; fileRef = 279F29391C20591200D554A7 /* number26.png */; };
 		279F293C1C20591200D554A7 /* supinfo.png in Resources */ = {isa = PBXBuildFile; fileRef = 279F293A1C20591200D554A7 /* supinfo.png */; };
 		27A5CBC81C7E3FF600131998 /* UserSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A5CBC71C7E3FF600131998 /* UserSettings.m */; };
+		27A6364A1CA02CCE000B6D2D /* AddFirstAccountViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A636491CA02CCE000B6D2D /* AddFirstAccountViewController.m */; };
+		27A636551CA02EB5000B6D2D /* LoginTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A636541CA02EB5000B6D2D /* LoginTableViewCell.m */; };
 		27B7FD6B1C24052D00FF8AE5 /* hover.png in Resources */ = {isa = PBXBuildFile; fileRef = 27B7FD681C24052D00FF8AE5 /* hover.png */; };
 		27B7FD6C1C24052D00FF8AE5 /* techcrunch.png in Resources */ = {isa = PBXBuildFile; fileRef = 27B7FD691C24052D00FF8AE5 /* techcrunch.png */; };
 		27B7FD6D1C24052D00FF8AE5 /* theverge.png in Resources */ = {isa = PBXBuildFile; fileRef = 27B7FD6A1C24052D00FF8AE5 /* theverge.png */; };
 		27B7FD781C2405DC00FF8AE5 /* SpamListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27B7FD771C2405DC00FF8AE5 /* SpamListViewController.m */; };
 		27BD428A1C7B4F2D00C0168E /* sfr.png in Resources */ = {isa = PBXBuildFile; fileRef = 27BD42891C7B4F2D00C0168E /* sfr.png */; };
 		27C077BA1BBC1E4300FC1841 /* RegExCategories.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C077B91BBC1E4300FC1841 /* RegExCategories.m */; };
-		27C203E31C7B21C200BB9960 /* SGProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C203E01C7B21C200BB9960 /* SGProgressView.m */; };
-		27C203E41C7B21C200BB9960 /* InViewController+SGProgress.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C203E21C7B21C200BB9960 /* InViewController+SGProgress.m */; };
 		27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */; };
 		27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */; };
 		27D3B1071BB2D8C500D5B1E4 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B0FE1BB2D8C400D5B1E4 /* CoreMotion.framework */; };
@@ -533,8 +536,15 @@
 		27781AFD1B8DC55D00BDE682 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		2778A1A21BE11C38006FB71D /* SignatureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SignatureViewController.h; sourceTree = "<group>"; };
 		2778A1A31BE11C38006FB71D /* SignatureViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SignatureViewController.m; sourceTree = "<group>"; };
-		277D64BE1C8EC69100C0135F /* OnePasswordExtension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OnePasswordExtension.h; path = "../../../../../../../Downloads/onepassword-app-extension-master/OnePasswordExtension.h"; sourceTree = "<group>"; };
-		277D64BF1C8EC69100C0135F /* OnePasswordExtension.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OnePasswordExtension.m; path = "../../../../../../../Downloads/onepassword-app-extension-master/OnePasswordExtension.m"; sourceTree = "<group>"; };
+		277D64C81C8EE7F900C0135F /* OnePasswordExtension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OnePasswordExtension.h; sourceTree = "<group>"; };
+		277D64C91C8EE7F900C0135F /* OnePasswordExtension.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OnePasswordExtension.m; sourceTree = "<group>"; };
+		277D64CB1C8F0A9800C0135F /* InViewController+SGProgress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "InViewController+SGProgress.h"; path = "CocoaMail/Backend/Utilities/InViewController+SGProgress.h"; sourceTree = SOURCE_ROOT; };
+		277D64CC1C8F0A9800C0135F /* InViewController+SGProgress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "InViewController+SGProgress.m"; path = "CocoaMail/Backend/Utilities/InViewController+SGProgress.m"; sourceTree = SOURCE_ROOT; };
+		277D64CD1C8F0A9800C0135F /* SGProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SGProgressView.h; path = CocoaMail/Backend/Utilities/SGProgressView.h; sourceTree = SOURCE_ROOT; };
+		277D64CE1C8F0A9800C0135F /* SGProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SGProgressView.m; path = CocoaMail/Backend/Utilities/SGProgressView.m; sourceTree = SOURCE_ROOT; };
+		277D64D11C8F0BBA00C0135F /* NSDate+TimeAgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+TimeAgo.h"; sourceTree = "<group>"; };
+		277D64D21C8F0BBA00C0135F /* NSDate+TimeAgo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+TimeAgo.m"; sourceTree = "<group>"; };
+		277D64D31C8F0BBA00C0135F /* NSDateTimeAgo.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = NSDateTimeAgo.bundle; sourceTree = "<group>"; };
 		277D89001BB14B1B00FAFED5 /* DropboxBrowserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DropboxBrowserViewController.h; sourceTree = "<group>"; };
 		277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DropboxBrowserViewController.m; sourceTree = "<group>"; };
 		277D89031BB14BA200FAFED5 /* GoogleDriveExplorer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GoogleDriveExplorer.h; sourceTree = "<group>"; };
@@ -627,6 +637,7 @@
 		277E9D261C1AD7C60098EDB4 /* jquery.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jquery.js; sourceTree = "<group>"; };
 		277F4C211C859BF500720479 /* Draft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Draft.h; sourceTree = "<group>"; };
 		277F4C221C859BF500720479 /* Draft.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Draft.m; sourceTree = "<group>"; };
+		278174C61CA1445500965B32 /* caca_off.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = caca_off.png; path = ../../../../../Desktop/caca_off.png; sourceTree = "<group>"; };
 		2781838F1C232564000B257A /* apple.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = apple.png; sourceTree = "<group>"; };
 		278183901C232564000B257A /* captaintrain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = captaintrain.png; sourceTree = "<group>"; };
 		278183911C232564000B257A /* quip.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = quip.png; sourceTree = "<group>"; };
@@ -688,9 +699,6 @@
 		27818C6A1BABF28D00D26D1A /* Persons.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Persons.m; sourceTree = "<group>"; };
 		2782D67C1C22C444006B6926 /* crunchbase.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = crunchbase.png; sourceTree = "<group>"; };
 		2782D67D1C22C445006B6926 /* groupon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = groupon.png; sourceTree = "<group>"; };
-		2788272C1C8D74D300807F65 /* NSDate+TimeAgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSDate+TimeAgo.h"; path = "../../../../../../../Downloads/NSDate-TimeAgo-master/NSDate+TimeAgo.h"; sourceTree = "<group>"; };
-		2788272D1C8D74D300807F65 /* NSDate+TimeAgo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSDate+TimeAgo.m"; path = "../../../../../../../Downloads/NSDate-TimeAgo-master/NSDate+TimeAgo.m"; sourceTree = "<group>"; };
-		2788272E1C8D74D300807F65 /* NSDateTimeAgo.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = NSDateTimeAgo.bundle; path = "../../../../../../../Downloads/NSDate-TimeAgo-master/NSDateTimeAgo.bundle"; sourceTree = "<group>"; };
 		278BF2F51BA95D9200A68D9E /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		2798B5691C4AAE6600C98321 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		2798B56A1C4AAE6600C98321 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
@@ -755,6 +763,10 @@
 		279F293A1C20591200D554A7 /* supinfo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = supinfo.png; sourceTree = "<group>"; };
 		27A5CBC61C7E3FF600131998 /* UserSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UserSettings.h; path = Backend/Settings/UserSettings.h; sourceTree = "<group>"; };
 		27A5CBC71C7E3FF600131998 /* UserSettings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UserSettings.m; path = Backend/Settings/UserSettings.m; sourceTree = "<group>"; };
+		27A636481CA02CCE000B6D2D /* AddFirstAccountViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddFirstAccountViewController.h; sourceTree = "<group>"; };
+		27A636491CA02CCE000B6D2D /* AddFirstAccountViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddFirstAccountViewController.m; sourceTree = "<group>"; };
+		27A636531CA02EB5000B6D2D /* LoginTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoginTableViewCell.h; sourceTree = "<group>"; };
+		27A636541CA02EB5000B6D2D /* LoginTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoginTableViewCell.m; sourceTree = "<group>"; };
 		27B7F99D1BF4841C00B4F421 /* en-US */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "en-US"; path = "en-US.lproj/LaunchScreen.xib"; sourceTree = "<group>"; };
 		27B7FD681C24052D00FF8AE5 /* hover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = hover.png; sourceTree = "<group>"; };
 		27B7FD691C24052D00FF8AE5 /* techcrunch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = techcrunch.png; sourceTree = "<group>"; };
@@ -764,10 +776,6 @@
 		27BD42891C7B4F2D00C0168E /* sfr.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sfr.png; sourceTree = "<group>"; };
 		27C077B81BBC1E4300FC1841 /* RegExCategories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegExCategories.h; sourceTree = "<group>"; };
 		27C077B91BBC1E4300FC1841 /* RegExCategories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegExCategories.m; sourceTree = "<group>"; };
-		27C203DF1C7B21C200BB9960 /* SGProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SGProgressView.h; path = "../../../../../../../Downloads/SGNavigationProgress-master/SGNavigationProgress/UINavigationController+SGProgress/SGProgressView.h"; sourceTree = "<group>"; };
-		27C203E01C7B21C200BB9960 /* SGProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SGProgressView.m; path = "../../../../../../../Downloads/SGNavigationProgress-master/SGNavigationProgress/UINavigationController+SGProgress/SGProgressView.m"; sourceTree = "<group>"; };
-		27C203E11C7B21C200BB9960 /* InViewController+SGProgress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "InViewController+SGProgress.h"; path = "../../../../../../../Downloads/SGNavigationProgress-master/SGNavigationProgress/UINavigationController+SGProgress/InViewController+SGProgress.h"; sourceTree = "<group>"; };
-		27C203E21C7B21C200BB9960 /* InViewController+SGProgress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "InViewController+SGProgress.m"; path = "../../../../../../../Downloads/SGNavigationProgress-master/SGNavigationProgress/UINavigationController+SGProgress/InViewController+SGProgress.m"; sourceTree = "<group>"; };
 		27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		27D3B0FE1BB2D8C400D5B1E4 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
@@ -953,6 +961,7 @@
 		271D4D341B8470F800D19373 /* Ressources */ = {
 			isa = PBXGroup;
 			children = (
+				278174C61CA1445500965B32 /* caca_off.png */,
 				279F28C61C202BCE00D554A7 /* spamPics */,
 				27D3B10E1BB2D95300D5B1E4 /* Instabug.bundle */,
 				27D3B10F1BB2D95300D5B1E4 /* Instabug.framework */,
@@ -1138,9 +1147,9 @@
 		277D64B51C8EC63C00C0135F /* TimeAgo */ = {
 			isa = PBXGroup;
 			children = (
-				2788272C1C8D74D300807F65 /* NSDate+TimeAgo.h */,
-				2788272D1C8D74D300807F65 /* NSDate+TimeAgo.m */,
-				2788272E1C8D74D300807F65 /* NSDateTimeAgo.bundle */,
+				277D64D11C8F0BBA00C0135F /* NSDate+TimeAgo.h */,
+				277D64D21C8F0BBA00C0135F /* NSDate+TimeAgo.m */,
+				277D64D31C8F0BBA00C0135F /* NSDateTimeAgo.bundle */,
 			);
 			name = TimeAgo;
 			sourceTree = "<group>";
@@ -1148,8 +1157,8 @@
 		277D64C11C8EC69600C0135F /* OnePassword */ = {
 			isa = PBXGroup;
 			children = (
-				277D64BE1C8EC69100C0135F /* OnePasswordExtension.h */,
-				277D64BF1C8EC69100C0135F /* OnePasswordExtension.m */,
+				277D64C81C8EE7F900C0135F /* OnePasswordExtension.h */,
+				277D64C91C8EE7F900C0135F /* OnePasswordExtension.m */,
 			);
 			name = OnePassword;
 			sourceTree = "<group>";
@@ -1181,6 +1190,8 @@
 				2778A1A31BE11C38006FB71D /* SignatureViewController.m */,
 				27B7FD761C2405DC00FF8AE5 /* SpamListViewController.h */,
 				27B7FD771C2405DC00FF8AE5 /* SpamListViewController.m */,
+				27A636481CA02CCE000B6D2D /* AddFirstAccountViewController.h */,
+				27A636491CA02CCE000B6D2D /* AddFirstAccountViewController.m */,
 			);
 			name = Settings;
 			sourceTree = "<group>";
@@ -1394,6 +1405,8 @@
 				27818C221BABF22500D26D1A /* SearchTableViewCell.m */,
 				27F9B6B21C689DC10008D681 /* ContactTableViewCell.h */,
 				27F9B6B31C689DC20008D681 /* ContactTableViewCell.m */,
+				27A636531CA02EB5000B6D2D /* LoginTableViewCell.h */,
+				27A636541CA02EB5000B6D2D /* LoginTableViewCell.m */,
 			);
 			path = Cells;
 			sourceTree = "<group>";
@@ -1501,10 +1514,10 @@
 		27C203D61C7B219C00BB9960 /* Progress */ = {
 			isa = PBXGroup;
 			children = (
-				27C203DF1C7B21C200BB9960 /* SGProgressView.h */,
-				27C203E01C7B21C200BB9960 /* SGProgressView.m */,
-				27C203E11C7B21C200BB9960 /* InViewController+SGProgress.h */,
-				27C203E21C7B21C200BB9960 /* InViewController+SGProgress.m */,
+				277D64CB1C8F0A9800C0135F /* InViewController+SGProgress.h */,
+				277D64CC1C8F0A9800C0135F /* InViewController+SGProgress.m */,
+				277D64CD1C8F0A9800C0135F /* SGProgressView.h */,
+				277D64CE1C8F0A9800C0135F /* SGProgressView.m */,
 			);
 			name = Progress;
 			sourceTree = "<group>";
@@ -1618,7 +1631,7 @@
 				1C2F9E1F295DFDC02481677C /* Copy Pods Resources */,
 				OBJCLEANCUSTOMRUNSCRIPTT /* Objective-Clean Run Script */,
 				5C4D1CF95FC0C60ED575BC86 /* Embed Pods Frameworks */,
-				2747DD691C8E33AE00F3D248 /* ShellScript */,
+				274C6B201C933CA3008ABDCE /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -1841,6 +1854,7 @@
 				277D89761BB183B300FAFED5 /* page_white_acrobat_import.png in Resources */,
 				277D896B1BB183B300FAFED5 /* invite_folder@2x.png in Resources */,
 				279F29171C202BEC00D554A7 /* instagram.png in Resources */,
+				278174C71CA1445500965B32 /* caca_off.png in Resources */,
 				277D89891BB183B300FAFED5 /* page_white_excel@2x.png in Resources */,
 				279F290B1C202BEC00D554A7 /* ebay.png in Resources */,
 				279F28BD1C202AEE00D554A7 /* pics.json in Resources */,
@@ -1868,7 +1882,7 @@
 				279F290C1C202BEC00D554A7 /* evernote.png in Resources */,
 				277D896C1BB183B300FAFED5 /* keynote.png in Resources */,
 				277D89811BB183B300FAFED5 /* page_white_cplusplus@2x.png in Resources */,
-				278827301C8D74D400807F65 /* NSDateTimeAgo.bundle in Resources */,
+				277D64D51C8F0BBA00C0135F /* NSDateTimeAgo.bundle in Resources */,
 				277D89861BB183B300FAFED5 /* page_white_dvd.png in Resources */,
 				277D89841BB183B300FAFED5 /* page_white_cup.png in Resources */,
 				277D896F1BB183B300FAFED5 /* numbers@2x.png in Resources */,
@@ -1938,7 +1952,7 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		2747DD691C8E33AE00F3D248 /* ShellScript */ = {
+		274C6B201C933CA3008ABDCE /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1949,7 +1963,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\nAPP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
+			shellScript = "";
 		};
 		5C4D1CF95FC0C60ED575BC86 /* Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2008,12 +2022,13 @@
 				27818C5F1BABF22500D26D1A /* PullToRefresh.m in Sources */,
 				273219DA1C466B360019967C /* PKHUDAnimation.swift in Sources */,
 				27818C601BABF22500D26D1A /* UIImage+ImageEffects.m in Sources */,
-				277D64C01C8EC69100C0135F /* OnePasswordExtension.m in Sources */,
+				277D64CA1C8EE7F900C0135F /* OnePasswordExtension.m in Sources */,
 				273219DD1C466B360019967C /* PKHUDProgressView.swift in Sources */,
 				271D4D9B1B84758E00D19373 /* ImapSync.m in Sources */,
 				271D4D911B84758E00D19373 /* CacheDBAccessor.m in Sources */,
 				273219DF1C466B360019967C /* PKHUDStatusProgressView.swift in Sources */,
 				2771085E1C61500600A459E1 /* HTMLEncoding.m in Sources */,
+				277D64D01C8F0A9800C0135F /* SGProgressView.m in Sources */,
 				271D4D071B846E4500D19373 /* AppDelegate.m in Sources */,
 				2771085D1C61500600A459E1 /* HTMLElement.m in Sources */,
 				27818C581BABF22500D26D1A /* InViewController.m in Sources */,
@@ -2031,10 +2046,8 @@
 				2770B9791C19DF2E008F7784 /* MCOCIDURLProtocol.mm in Sources */,
 				27818C611BABF22500D26D1A /* WhiteBlurNavBar.m in Sources */,
 				27818C4A1BABF22500D26D1A /* AccountViewController.m in Sources */,
-				27C203E41C7B21C200BB9960 /* InViewController+SGProgress.m in Sources */,
 				27818C571BABF22500D26D1A /* FolderViewController.m in Sources */,
 				273219E11C466B360019967C /* PKHUDSubtitleView.swift in Sources */,
-				27C203E31C7B21C200BB9960 /* SGProgressView.m in Sources */,
 				2771085C1C61500600A459E1 /* HTMLDocumentType.m in Sources */,
 				273219DC1C466B360019967C /* PKHUDImageView.swift in Sources */,
 				27818C5B1BABF22500D26D1A /* SearchViewController.m in Sources */,
@@ -2061,7 +2074,6 @@
 				27B7FD781C2405DC00FF8AE5 /* SpamListViewController.m in Sources */,
 				270FD3FD1C4CE4A3001B82F2 /* MailListViewController+UIViewControllerPreviewing.m in Sources */,
 				273219E01C466B360019967C /* PKHUDStatusView.swift in Sources */,
-				2788272F1C8D74D400807F65 /* NSDate+TimeAgo.m in Sources */,
 				273219E21C466B360019967C /* PKHUDSuccessView.swift in Sources */,
 				27818C521BABF22500D26D1A /* CreditContentViewController.m in Sources */,
 				273219E61C466B360019967C /* PKHUDWideBaseView.swift in Sources */,
@@ -2071,15 +2083,18 @@
 				271D4D941B84758E00D19373 /* UidDBAccessor.m in Sources */,
 				27818C6C1BABF28D00D26D1A /* Mail.m in Sources */,
 				2778A1A41BE11C38006FB71D /* SignatureViewController.m in Sources */,
+				27A6364A1CA02CCE000B6D2D /* AddFirstAccountViewController.m in Sources */,
 				273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */,
 				27818C4C1BABF22500D26D1A /* AttachmentsViewController.m in Sources */,
 				2777380B1B8B03830030F299 /* Accounts.m in Sources */,
 				271D4D541B84721A00D19373 /* PDKeychainBindings.m in Sources */,
 				27C077BA1BBC1E4300FC1841 /* RegExCategories.m in Sources */,
+				277D64CF1C8F0A9800C0135F /* InViewController+SGProgress.m in Sources */,
 				271D4D4E1B84720000D19373 /* AppSettings.m in Sources */,
 				277108641C61500600A459E1 /* HTMLSelector.m in Sources */,
 				271D4D921B84758E00D19373 /* EmailDBAccessor.m in Sources */,
 				271D4DA31B8475B700D19373 /* StringUtil.m in Sources */,
+				277D64D41C8F0BBA00C0135F /* NSDate+TimeAgo.m in Sources */,
 				271D4D951B84758E00D19373 /* CCMAttachment.m in Sources */,
 				27818C4F1BABF22500D26D1A /* CloudViewController.m in Sources */,
 				271D4D551B84721A00D19373 /* PDKeychainBindingsController.m in Sources */,
@@ -2091,6 +2106,7 @@
 				271D4D971B84758E00D19373 /* UidEntry.m in Sources */,
 				2747697C1C48F9DD00BF04DE /* PreviewViewController.m in Sources */,
 				273219E51C466B360019967C /* PKHUDTitleView.swift in Sources */,
+				27A636551CA02EB5000B6D2D /* LoginTableViewCell.m in Sources */,
 				27FABC241B9D8E030089634A /* FrameView.swift in Sources */,
 				27818C5D1BABF22500D26D1A /* UserFolderViewController.m in Sources */,
 				277108651C61500600A459E1 /* HTMLSerialization.m in Sources */,

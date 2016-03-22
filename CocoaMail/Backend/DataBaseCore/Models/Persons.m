@@ -195,7 +195,10 @@
 {
     NSMutableArray* res = [[NSMutableArray alloc] initWithCapacity:self.alls.count + self.allsNeg.count];
     
-    for (Person* p in self.alls) {
+    
+    for (int i = 0; i < self.alls.count; i++) {
+    //for (Person* p in tmp) {
+        Person* p = self.alls[i];
         if (p.email.length > 0 && [p.email rangeOfString:@"@"].location != NSNotFound) {
             [res addObject:p];
         }

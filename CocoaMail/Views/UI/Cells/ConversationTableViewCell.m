@@ -108,6 +108,7 @@
     
     if ([self.reuseIdentifier isEqualToString:kCONVERSATION_CELL_ID]) {
         UIImage* rBack = [[UIImage imageNamed:@"cell_conversation_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44,44, 44)];
+        //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIImageView* iv = [[UIImageView alloc] initWithImage:rBack];
         iv.frame = CGRectMake(8., 0, screenBounds.size.width - 9, 89);
         back = iv;
@@ -117,6 +118,7 @@
     }
     else {
         UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
+        //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIImageView* iv = [[UIImageView alloc] initWithImage:rBack];
         iv.frame = CGRectMake(8, 0, screenBounds.size.width - 16, 89);
         back = iv;
@@ -127,12 +129,10 @@
     //UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
     //lpgr.minimumPressDuration = 0.01;
     //[self.contentView addGestureRecognizer:lpgr];
-    
     //lpgr.delegate = self;
     
     
     UITapGestureRecognizer* tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
-    //lpgr.minimumPressDuration = 0.01;
     [self.contentView addGestureRecognizer:tap];
     
     tap.delegate = self;
@@ -152,7 +152,7 @@
     sep.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [back addSubview:sep];
     
-    UILabel* n = [[UILabel alloc] initWithFrame:CGRectMake(44, 0, back.bounds.size.width - 115 - moreRightSpace, 45)];
+    UILabel* n = [[UILabel alloc] initWithFrame:CGRectMake(44, 0, back.bounds.size.width - 135 - moreRightSpace, 45)];
     n.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
     n.font = [UIFont systemFontOfSize:16];
     n.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -167,7 +167,7 @@
     self.title = t;
     
     
-    UILabel* h = [[UILabel alloc] initWithFrame:CGRectMake(back.bounds.size.width - 68 - moreRightSpace, 0, 60, 45)];
+    UILabel* h = [[UILabel alloc] initWithFrame:CGRectMake(back.bounds.size.width - 108 - moreRightSpace, 0, 100, 45)];
     h.textAlignment = NSTextAlignmentRight;
     h.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
     h.font = [UIFont systemFontOfSize:13];
@@ -185,12 +185,14 @@
     [back addSubview:fav];
     self.favori = fav;
     
+    
     UIImageView* atc = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"mail_attachment_off"] highlightedImage:[UIImage imageNamed:@"mail_attachment_on"]];
     atc.frame = CGRectMake(5.5, 50.5, 33, 33);
     atc.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
     [back addSubview:atc];
     self.attachment = atc;
     
+
     UIView* perso = [[UIView alloc] initWithFrame:CGRectMake(5.5, 5.5, 33, 33)];
     perso.backgroundColor = [UIColor clearColor];
     [back addSubview:perso];
@@ -204,6 +206,24 @@
         self.favori.hidden = YES;
     }
     
+}
+
+-(void) setAlwaysSwiped
+{
+    self.currentSwipedPosition = [self _limiteRightSwipe];
+    
+    CGRect frame = self.baseView.frame;
+    frame.size = self.panBaseSize;
+    frame.origin.x = 8 + self.currentSwipedPosition;
+    frame.size.width -= self.currentSwipedPosition;
+    self.baseView.frame = frame;
+    
+    //self.backViewR.alpha = (self.currentSwipedPosition == 0.0f) ? 0.f : 1.f;
+    self.backViewL.alpha = 1.f;
+    
+    for (UIGestureRecognizer* gr in [self.contentView gestureRecognizers]) {
+        [self.contentView removeGestureRecognizer:gr];
+    }
 }
 
 -(BOOL) gestureRecognizer:(UIGestureRecognizer*)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer*)otherGestureRecognizer
@@ -435,6 +455,10 @@
                     pourc = 1.f;
                 }
                 
+                if (pourc < 0.f) {
+                    pourc = 0.f;
+                }
+                
                 if (self.currentSwipedPosition == 0.f) {
                     
                     self.leftAction.hidden = pourc<1.f;
@@ -460,6 +484,10 @@
                 
                 if (pourc > 1.f) {
                     pourc = 1.f;
+                }
+                
+                if (pourc < 0.f) {
+                    pourc = 0.f;
                 }
                 
                 self.backViewR.alpha = pourc;
@@ -583,7 +611,7 @@
         self.title.text = mail.subject;
     }
     else {
-        self.title.text = [mail.body stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        self.title.text = [mail.body stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     }
     
     Person* p = nil;
@@ -632,7 +660,7 @@
     
     NSDate* twelveHours = [[NSDate date] dateByAddingTimeInterval:- 60 * 60 * 12];
 
-    if ([mail.datetime compare:twelveHours] == NSOrderedDescending) {
+    if ([Mail isTodayOrYesterday:mail.day] == 0 && [mail.datetime compare:twelveHours] == NSOrderedDescending) {
         self.time.text = [mail.datetime timeAgo];
     }
     else {

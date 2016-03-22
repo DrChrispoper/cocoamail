@@ -54,7 +54,7 @@ static SyncManager * singleton = nil;
 				
 				if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
 					NSData* fileData = [[NSData alloc] initWithContentsOfFile:filePath];
-					NSMutableDictionary* props = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
+					NSDictionary* props = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
 					
 					[self.syncStates addObject:props];
 				}
@@ -73,7 +73,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user.linkedAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
 }
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)pfolder user:(UserSettings*)user
@@ -131,7 +131,7 @@ static SyncManager * singleton = nil;
     return [folderStates count];
 }
 
--(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
 	
@@ -193,10 +193,7 @@ static SyncManager * singleton = nil;
 
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-	NSMutableArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
-	
-	NSMutableDictionary* y = folderStates[folderNum];
-	y[@"deleted"] = @YES;
+    self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum][@"deleted"] = @YES;
 	
 	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum]];
 	
@@ -207,10 +204,8 @@ static SyncManager * singleton = nil;
 
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-	NSMutableArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
-	
-	folderStates[folderNum] = data;
-	
+	self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum] = data;
+		
 	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum]];
     
     if (![self.syncStates[accountNum] writeToFile:filePath atomically:YES]) {

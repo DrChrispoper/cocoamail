@@ -28,6 +28,9 @@
 
 @property (nonatomic, retain) NSOperationQueue* searchQueue;
 
+@property (nonatomic) BOOL localSearchDone;
+@property (nonatomic) BOOL serverSearchDone;
+
 @end
 
 @implementation SearchViewController
@@ -458,6 +461,24 @@
         //self.lastSearchLength = self.searchBar.text.length;
         [self _updateSearchResultWith:self.searchBar.text];
     }];
+}
+
+-(void) localSearchDone:(BOOL)done
+{
+    self.localSearchDone = done;
+    
+    if (self.localSearchDone && self.serverSearchDone) {
+        [self.table.tableFooterView setHidden:YES];
+    }
+}
+
+-(void) serverSearchDone:(BOOL)done
+{
+    self.serverSearchDone = done;
+    
+    if (self.localSearchDone && self.serverSearchDone) {
+        [self.table.tableFooterView setHidden:YES];
+    }
 }
 
 @end
