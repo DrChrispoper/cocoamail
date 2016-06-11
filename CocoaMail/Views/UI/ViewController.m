@@ -30,6 +30,7 @@
 #import "InViewController.h"
 #import "EditMailViewController.h"
 #import "ImapSync.h"
+#import "AddAccountViewController.h"
 
 #import <Instabug/Instabug.h>
 
@@ -642,7 +643,7 @@ static ViewController * s_self;
             return;
         }
         IBGLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
-        AddFirstAccountViewController* f = [[AddFirstAccountViewController alloc] init];
+        AddAccountViewController* f = [[AddAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
     
@@ -1022,6 +1023,7 @@ static ViewController * s_self;
         }
     
         [[A currentAccount] connect];
+
         [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
     }];
 }

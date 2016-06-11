@@ -61,27 +61,26 @@
         text = NSLocalizedString(@"credits.bio.reinald",@"");
         name = @"Reinald Freling";
         self.barTitle = @"Product Design";
-        self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN", @"FACEBOOK"];
+        self.btnActions = @[@"TWITTER", @"LINKEDIN", @"FACEBOOK"];
     }
     else if ([self.type isEqualToString:@"CH"]) {
         image = @"cocoamail";
         text = NSLocalizedString(@"credits.bio.christopher",@"");
         name = @"Christopher Hockley";
         self.barTitle = @"Development";
-        self.btnActions = @[@"TWITTER", @"MAIL", @"LINKEDIN"];
+        self.btnActions = @[@"TWITTER", @"LINKEDIN"];
     }
     else if ([self.type isEqualToString:@"CB"]) {
         image = @"cocoamail";
         text = NSLocalizedString(@"credits.bio.christophe",@"");
         name = @"Christophe Branche";
         self.barTitle = @"UI/UX Design";
-        self.btnActions = @[@"MAIL", @"LINKEDIN"];
+        self.btnActions = @[@"LINKEDIN"];
     }
     else if ([self.type isEqualToString:@"PCC"]) {
         image = @"cocoamail";
         text = NSLocalizedString(@"credits.bio.pascal",@"");
         name = @"Pascal Costa-Cunha";
-        self.barTitle = @"Helping hand";
         self.btnActions = @[@"LINKEDIN"];
     }
     else if ([self.type isEqualToString:@"T"]) {

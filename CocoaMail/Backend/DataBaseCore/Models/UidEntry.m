@@ -327,7 +327,7 @@
 
             NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
 
-            if (folderNum != [[AppSettings userWithIndex:kActiveAccountIndex] importantFolderNumforBaseFolder:FolderTypeAll]) {
+            if (folderNum != [[AppSettings userWithIndex:kActiveAccountIndex] numFolderWithFolder:CCMFolderTypeAll]) {
                 [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder = %@ "
                 //[query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c) "
                          "OR t.folder != %@ "
@@ -693,7 +693,7 @@
                     [CachedAction removeAction:action];
                 }
                 if ((flag & MCOMessageFlagFlagged)) {
-                    [UidEntry copy:uidE toFolder:[user importantFolderNumforBaseFolder:FolderTypeFavoris]];
+                    [UidEntry copy:uidE toFolder:[user numFolderWithFolder:CCMFolderTypeFavoris]];
                 }
             }
             else {
@@ -745,7 +745,7 @@
                     [CachedAction removeAction:action];
                 }
                 if ((flag & MCOMessageFlagFlagged)) {
-                    [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:[user importantFolderNumforBaseFolder:FolderTypeFavoris] msgID:uidE.msgID]];
+                    [UidEntry deleteUidEntry:[UidEntry getUidEntryWithFolder:[user numFolderWithFolder:CCMFolderTypeFavoris] msgID:uidE.msgID]];
                 }
             }
             else {

@@ -76,9 +76,9 @@ static SyncManager * singleton = nil;
     return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user.linkedAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
 }
 
--(RACSignal*) refreshImportantFolder:(NSInteger)pfolder user:(UserSettings*)user
+-(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user importantFolderNumforBaseFolder:pfolder] fromStart:YES fromAccount:NO]];
+    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user numFolderWithFolder:FolderTypeWith(baseFolder, 0)] fromStart:YES fromAccount:NO]];
 }
 
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
@@ -98,7 +98,7 @@ static SyncManager * singleton = nil;
         
         [ImapSync runInboxUnread:user];
         
-        NSInteger folder = [user importantFolderNumforBaseFolder:FolderTypeInbox];
+        NSInteger folder = [user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
         [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:user] runFolder:folder fromStart:YES fromAccount:NO]]];
     }
     

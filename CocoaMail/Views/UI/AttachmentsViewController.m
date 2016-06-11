@@ -294,7 +294,7 @@
 
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-/*    AttachmentsCell*  cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
+/*   AttachmentsCell*  cell = (AttachmentsCell*)[tableView cellForRowAtIndexPath:indexPath];
     
     Mail* m = self.mailsWithAttachment[indexPath.section];
     Attachment* att = m.attachments[indexPath.row];
@@ -314,17 +314,22 @@
 
 -(void) openURL:(NSURL*)url
 {
-    if (!_activityItems) {
-        _activityItems = [[NSMutableArray alloc]init];
-    }
-    
-    [_activityItems addObject:url];
-
     QLPreviewController* previewController = [[QLPreviewController alloc]init];
     previewController.delegate = self;
     previewController.dataSource = self;
-    previewController.currentPreviewItemIndex = _activityItems.count - 1;
 
+    if (!_activityItems) {
+        _activityItems = [[NSMutableArray alloc]init];
+        previewController.currentPreviewItemIndex = 0;
+    }
+    else if (![_activityItems containsObject:url]) {
+        [_activityItems addObject:url];
+        previewController.currentPreviewItemIndex  = _activityItems.count - 1;
+    }
+    else {
+        previewController.currentPreviewItemIndex = [_activityItems indexOfObject:url];
+    }
+    
     [self.view.window.rootViewController presentViewController:previewController animated:YES completion:nil];
 }
 

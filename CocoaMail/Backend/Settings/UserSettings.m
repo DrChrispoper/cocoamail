@@ -268,6 +268,17 @@
     [bindings setString:token forKey:[NSString stringWithFormat: @"T%li", (long)_accountNum] accessibleAttribute:kSecAttrAccessibleAfterFirstUnlock];
 }
 
+-(NSString*) refreshT
+{
+    return [[PDKeychainBindings sharedKeychainBindings] stringForKey:[NSString stringWithFormat: @"RT%li", (long)_accountNum]];
+}
+
+-(void) setRefreshT:(NSString*)token
+{
+    PDKeychainBindings* bindings = [PDKeychainBindings sharedKeychainBindings];
+    [bindings setString:token forKey:[NSString stringWithFormat: @"RT%li", (long)_accountNum] accessibleAttribute:kSecAttrAccessibleAfterFirstUnlock];
+}
+
 -(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder
 {
     return [_importantFolders[baseFolder] integerValue];
@@ -305,7 +316,7 @@
         }
     }
     
-    return FolderTypeWith(FolderTypeAll, 0);
+    return CCMFolderTypeAll;
 }
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder

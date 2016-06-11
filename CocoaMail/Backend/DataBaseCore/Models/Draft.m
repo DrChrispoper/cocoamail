@@ -103,7 +103,7 @@
 {
     UserSettings* user = [AppSettings userWithNum:self.accountNum];
     
-    NSString* sentPath = [user folderServerName:[user importantFolderNumforBaseFolder:FolderTypeSent]];
+    NSString* sentPath = [user folderServerName:[user numFolderWithFolder:CCMFolderTypeSent]];
     
     MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:user].imapSession
                                             appendMessageOperationWithFolder:sentPath
@@ -115,7 +115,7 @@
         [addOp start:^(NSError * error, uint32_t createdUID) {
             if (error == nil) {
                 NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-                NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"drafts"];
+                NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"outbox"];
                 NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"outbox_%@", self.msgID]];
                 
                 if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
@@ -126,6 +126,32 @@
         
     });
 
+}
+
+-(BOOL)saveOuboxDraft
+{
+    [self deleteDraft];
+    
+    self.datetime = [NSDate date];
+    
+    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"outbox"];
+    NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
+    
+    return  [NSKeyedArchiver archiveRootObject:self toFile:fileName];
+}
+
+-(void)deleteOutboxDraft
+{
+    [[AppSettings userWithNum:self.accountNum].linkedAccount deleteDraft:self];
+    
+    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"outbox"];
+    NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
+    
+    if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
+        NSLog(@"Local draft file deleted");
+    }
 }
 
 -(NSString*)rfc822DataTo:(NSArray *)toPersonIDs

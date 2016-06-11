@@ -9,11 +9,12 @@
 #import <UIKit/UIKit.h>
 
 @class Conversation;
-
+@protocol SearchDelegate;
 
 @interface SearchTableViewCell : UITableViewCell
 
 -(void) fillWithConversation:(Conversation*)conv subText:(NSString*)subtext highlightWord:(NSString*)word;
 
+@property (nonatomic, weak) id<SearchDelegate> sDelegate;
 
 @end

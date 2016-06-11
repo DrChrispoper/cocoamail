@@ -335,7 +335,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       self.draft.body = bodyContent;
                                                                       
                                                                       NSString* rfc822Data = [self.draft rfc822DataTo:self.toPersonIDs];
-                                                                      NSString* draftPath = [self.selectedAccount.user folderServerName:[self.selectedAccount.user importantFolderNumforBaseFolder:FolderTypeDrafts]];
+                                                                      NSString* draftPath = [self.selectedAccount.user folderServerName:[self.selectedAccount.user numFolderWithFolder:FolderTypeWith(FolderTypeDrafts, 0)]];
                                                                       
                                                                       MCOIMAPAppendMessageOperation* addOp = [[ImapSync sharedServices:self.selectedAccount.user].imapSession
                                                                                                               appendMessageOperationWithFolder:draftPath
@@ -416,7 +416,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     if (self.isDownloading != 0) {
         [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
-        [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString stringWithFormat:@"Still downloading attachments (%ld)",(long)self.isDownloading]];
+        [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString stringWithFormat:@"Downloading transfered attachments (%ld)",(long)self.isDownloading]];
         [[PKHUD sharedHUD] show];
         [[PKHUD sharedHUD] hideAfterDelay:2.0];
         return;
@@ -445,7 +445,15 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         self.draft.body = [NSString stringWithFormat:@"%@<br />%@ %@", bodyContent, self.selectedAccount.user.signature, transfertContent];
     }
     
-    [self.draft save];
+    
+    for (NSNumber* personID in self.toPersonIDs) {
+        Person* p = [[Persons sharedInstance] getPersonWithID:[personID intValue]];
+        [self.draft.toPersons addObject:p.email];
+    }
+    
+    if ([self.draft saveOuboxDraft]) {
+        [self.draft deleteDraft];
+    }
     
     [self.selectedAccount sendDraft:self.draft to:self.toPersonIDs];
     
@@ -521,7 +529,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(8, 0, 10, 45)];
     label.text = NSLocalizedString(@"compose-view.label.add-contact", @"To:");
     label.backgroundColor = [UIColor whiteColor];
-    label.font = [UIFont italicSystemFontOfSize:15.];
+    label.font = [UIFont systemFontOfSize:15.];
     label.textColor =  [UIColor lightGrayColor]; //[UIColor colorWithWhite:0.5 alpha:1.0];
     [label sizeToFit];
     
@@ -1055,8 +1063,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         
         UIButton* ccButton = [[UIButton alloc] initWithFrame:CGRectMake(nextPosX, currentPosY, 33, 33)];
         [ccButton addTarget:self action:@selector(_ccButton:) forControlEvents:UIControlEventTouchUpInside];
-        UIImage* ccoff = [[UIImage imageNamed:@"editmail_cc2"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImage* ccon = [[UIImage imageNamed:@"editmail_cci2"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage* ccoff = [[UIImage imageNamed:@"contact_view"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage* ccon = [[UIImage imageNamed:@"contact_hide"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [ccButton setImage:ccoff forState:UIControlStateNormal];
         [ccButton setImage:ccon forState:UIControlStateSelected];
         ccButton.tintColor = currentAccountColor;
@@ -1477,6 +1485,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         }
     }
     
+    if (range.location > textField.text.length) {
+        return YES;
+    }
+    
     // TODO a real incremental search
     NSString* newText = [textField.text stringByReplacingCharactersInRange:range withString:string];
 
@@ -1580,6 +1592,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
         textField.text = nil;
         [self _removeSearchUI];
         self.currentSearchPersonList = nil;
+        
+        return YES;
     }
     
     return NO;

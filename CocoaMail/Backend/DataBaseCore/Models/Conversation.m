@@ -123,6 +123,17 @@ static NSDateFormatter * s_df_hour = nil;
     return false;
 }
 
+-(BOOL) isUnread
+{
+    for (Mail* m in self.mails) {
+        if (![m isRead]) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
     for (Mail* m in self.mails) {

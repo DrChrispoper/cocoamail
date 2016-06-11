@@ -8,6 +8,7 @@
 
 #import "UidDBAccessor.h"
 #import "StringUtil.h"
+#import "sqlite3.h"
 
 #define UID_DB_NAME @"uid.tdb"
 

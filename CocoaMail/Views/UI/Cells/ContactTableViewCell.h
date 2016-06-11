@@ -10,8 +10,12 @@
 
 @class Person;
 
+@protocol SearchDelegate;
+
 @interface ContactTableViewCell : UITableViewCell
 
 -(void) fillWithPerson:(Person*)p;
+
+@property (nonatomic, weak) id<SearchDelegate> sDelegate;
 
 @end

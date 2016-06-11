@@ -15,21 +15,36 @@
 #import "SearchRunner.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "ContactTableViewCell.h"
+#import "CCMSearchTableViewController.h"
 
-@interface SearchViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, MailListDelegate>
+@interface SearchViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, MailListDelegate, UISearchControllerDelegate, UISearchResultsUpdating, SearchDelegate>
 
-@property (nonatomic, weak) UITableView* table;
+@property (nonatomic, strong) UITableView* table;
 @property (nonatomic, strong) id keyboardNotificationId;
-@property (nonatomic, strong) UISearchBar* searchBar;
-@property (nonatomic, strong) UIView* searchBarSupport;
+//@property (nonatomic, strong) UISearchBar* searchBar;
+//@property (nonatomic, strong) UIView* searchBarSupport;
 
-@property (nonatomic, strong) NSArray<NSArray*>* searchResult;
-@property (nonatomic) NSInteger lastSearchLength;
+@property (nonatomic, strong) NSMutableArray* data;
+@property (nonatomic, strong) NSArray<NSArray*>* filteredResults;
+@property (nonatomic, strong) NSString *text;
 
-@property (nonatomic, retain) NSOperationQueue* searchQueue;
+//@property (nonatomic) NSInteger lastSearchLength;
+
+//@property (nonatomic, retain) NSOperationQueue* searchQueue;
 
 @property (nonatomic) BOOL localSearchDone;
 @property (nonatomic) BOOL serverSearchDone;
+
+@property (nonatomic) BOOL canReload;
+
+//Fetch result controller
+@property (nonatomic, strong) UISearchController *searchController;
+
+//for the results to be shown with two table delegates
+@property (nonatomic, strong) CCMSearchTableViewController *resultsTableController;
+
+@property BOOL searchControllerWasActive;
+@property BOOL searchControllerSearchFieldWasFirstResponder;
 
 @end
 
@@ -42,11 +57,9 @@
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
-    
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     item.leftBarButtonItem = [self backButtonInNavBar];
     
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"search-view.title", @"Search")];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
@@ -60,21 +73,20 @@
     
     [self.view addSubview:table];
 
-    self.view.backgroundColor = table.backgroundColor;
+    self.view.backgroundColor = [UIGlobal standardLightGrey];
     
-    [self setupNavBarWith:item overMainScrollView:table];
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
 
     table.allowsSelection = false;
-    table.rowHeight = 90;
+    //table.rowHeight = 90;
     table.separatorStyle = UITableViewCellSeparatorStyleNone;
     
     table.dataSource = self;
     table.delegate = self;
     self.table = table;
     
-    UIView* headerView = [[UIView alloc] init];
+    /*UIView* headerView = [[UIView alloc] init];
     headerView.backgroundColor = self.table.backgroundColor;
     
     UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
@@ -83,15 +95,74 @@
     
     [headerView addSubview:button];
     
-    self.table.tableFooterView = headerView;
+    self.table.tableFooterView = headerView;*/
     
-    self.searchQueue = [NSOperationQueue new];
-    [self.searchQueue setMaxConcurrentOperationCount:1];
+    //self.searchQueue = [NSOperationQueue new];
+    //[self.searchQueue setMaxConcurrentOperationCount:1];
+    
+    _resultsTableController = [[CCMSearchTableViewController alloc] init];
+    _searchController = [[UISearchController alloc] initWithSearchResultsController:self.resultsTableController];
+    
+    self.searchController.searchResultsUpdater = self;
+    self.searchController.searchBar.placeholder = nil;
+    self.searchController.obscuresBackgroundDuringPresentation = NO;
+    self.searchController.hidesNavigationBarDuringPresentation = NO;
+    [self.searchController.searchBar sizeToFit];
+    //self.table.tableHeaderView = self.searchController.searchBar;
+    
+    item.titleView = self.searchController.searchBar;
+    
+    //item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"search-view.title", @"Search")];
+
+    [self setupNavBarWith:item overMainScrollView:table];
+
+    // we want to be the delegate for our filtered table so didSelectRowAtIndexPath is called for both tables
+    self.resultsTableController.tableView.delegate = self;
+    self.searchController.delegate = self;
+    self.searchController.dimsBackgroundDuringPresentation = NO; // default is YES
+    self.searchController.searchBar.delegate = self; // so we can monitor text changes + others
+   
+    self.resultsTableController.sDelegate = self;
+    
+    // Search is now just presenting a view controller. As such, normal view controller
+    // presentation semantics apply. Namely that presentation will walk up the view controller
+    // hierarchy until it finds the root view controller or one that defines a presentation context.
+    //
+    self.definesPresentationContext = YES;  // know where you want UISearchController to be displayed
+    
+    self.canReload = YES;
+    
+    [self setupData];
+}
+
+-(void) setupData
+{
+    NSMutableArray* alls = [[NSMutableArray alloc] init];
+    
+    if (kisActiveAccountAll) {
+        for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+            Account* a = [[Accounts sharedInstance] account:idx];
+            [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+            
+        }
+    }
+    else {
+        Account* a = [[Accounts sharedInstance] currentAccount];
+        [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+    }
+    
+    self.data = [alls mutableCopy];
+}
+
+#pragma mark - UISearchBarDelegate
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    [searchBar resignFirstResponder];
 }
 
 -(void) _hideKeyboard
 {
-    [self.searchBar resignFirstResponder];
+    [self.searchController.searchBar resignFirstResponder];
 }
 
 -(void) _keyboardNotification:(BOOL)listen
@@ -130,20 +201,40 @@
     [super viewDidAppear:animated];
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
-
-    if (![self.searchBar.text isEqualToString:@""]) {
+    
+    // restore the searchController's active state
+    
+    if (self.searchControllerWasActive) {
+        //[self.searchController setActive:NO];
+        [self.table reloadData];
+        //[self.view :self.resultsTableController.tableView];
+        //self.searchController.searchBar.hidden = NO;
+        
+        //_searchControllerWasActive = NO;
+        
+        if (self.searchControllerSearchFieldWasFirstResponder) {
+            _searchControllerSearchFieldWasFirstResponder = NO;
+        }
+    }
+    else {
+    //[self _keyboardNotification:YES];
+    [self.searchController.searchBar becomeFirstResponder];
+    }
+    /*if (![self.searchBar.text isEqualToString:@""]) {
         [self reFetch:NO];
     }
     
     [self _keyboardNotification:YES];
     
-    [self.searchBar becomeFirstResponder];
+    [self.searchBar becomeFirstResponder];*/
 }
 
 -(void) viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
     
+    self.canReload = YES;
+
     [self _keyboardNotification:NO];
 }
 
@@ -151,7 +242,8 @@
 {
     [self _keyboardNotification:NO];
     [[SearchRunner getSingleton] cancel];
-    [self.searchQueue cancelAllOperations];
+    //[self.searchQueue cancelAllOperations];
+    [self.searchController setActive:NO];
 
     self.table.delegate = nil;
     self.table.dataSource = nil;
@@ -166,89 +258,10 @@
     }
 }
 
-#pragma mark - Table Datasource
-
-#define kCONTENT @"c"
-#define kSUBTEXT @"st"
-
--(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
-{
-    return 2;
-}
-
--(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
-{
-    if (self.searchResult) {
-        return [self.searchResult[section] count];
-    }
-    else {
-        return 0;
-    }
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (indexPath.section == 0) {
-        return 45;
-    }
-    else {
-        return 90;
-    }
-}
-
--(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    if (indexPath.section == 0) {
-        Person* p = self.searchResult[indexPath.section][indexPath.row];
-        
-        NSString* reuseID = @"kPersonCellID";
-        
-        ContactTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
-        
-        if (cell==nil) {
-            cell = [[ContactTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
-        }
-        
-        [cell fillWithPerson:p];
-
-        return cell;
-    }
-    else {
-        
-    NSString* reuseID = @"kSearchCellID";
-    
-    SearchTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
-    
-    if (cell == nil) {
-        cell = [[SearchTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
-    }
-    
-    NSDictionary* dic = self.searchResult[indexPath.section][indexPath.row];
-    
-    Conversation* c = [[Accounts sharedInstance] conversationForCI:dic[kCONTENT]];
-    NSString* st = dic[kSUBTEXT];
-    
-    [cell fillWithConversation:c subText:st highlightWord:self.searchBar.text];
-    
-    return cell;
-    }
-}
-
-#pragma mark - Table Delegate
-
--(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
-{
-    return CGFLOAT_MIN;
-}
-
--(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
-{
-    return (section == 0) ? 46 : 5;
-}
 
 -(UIView*) tableView:(UITableView*)tableView viewForHeaderInSection:(NSInteger)section
 {
-    if (section==0) {
+    /*if (section==0) {
         
         if (self.searchBar ==nil) {
             
@@ -265,13 +278,114 @@
         }
         
         return self.searchBarSupport;
-    }
+    }*/
     
     return nil;
 }
 
+#pragma mark - UISearchControllerDelegate
+
+// Called after the search controller's search bar has agreed to begin editing or when
+// 'active' is set to YES.
+// If you choose not to present the controller yourself or do not implement this method,
+// a default presentation is performed on your behalf.
+//
+// Implement this method if the default presentation is not adequate for your purposes.
+//
+
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
+{
+    self.navBar.hidden = FALSE;
+}
+
+- (void)willPresentSearchController:(UISearchController *)searchController {
+    // do something before the search controller is presented
+    //self.table.contentInset = UIEdgeInsetsMake(0, 0, 60, 0);
+}
+
+- (void)didPresentSearchController:(UISearchController *)searchController {
+    // do something after the search controller is presented
+}
+
+- (void)willDismissSearchController:(UISearchController *)searchController {
+    // do something before the search controller is dismissed
+    //self.table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
+}
+
+- (void)didDismissSearchController:(UISearchController *)searchController {
+    // do something after the search controller is dismissed
+}
+
+#define kCONTENT @"c"
+#define kSUBTEXT @"st"
+
+-(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
+{
+    return 2;
+}
+
+-(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _searchControllerWasActive?[self.filteredResults[section] count]:0;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+
+        if (indexPath.section == 0) {
+            return 45;
+        }
+        else {
+            return 90;
+        }
+    
+}
+
+-(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
+{
+    if (indexPath.section == 0) {
+        Person* p = self.filteredResults[indexPath.section][indexPath.row];
+        
+        NSString* reuseID = @"kPersonCellID";
+        
+        ContactTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
+        
+        if (cell==nil) {
+            cell = [[ContactTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
+        }
+        
+        cell.sDelegate = self;
+        
+        [cell fillWithPerson:p];
+        
+        return cell;
+    }
+    else {
+        NSString* reuseID = @"kSearchCellID";
+        
+        SearchTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
+        
+        if (cell == nil) {
+            cell = [[SearchTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
+        }
+        
+        cell.sDelegate = self;
+        
+        NSDictionary* dic = self.filteredResults[indexPath.section][indexPath.row];
+        
+        Conversation* c = [[Accounts sharedInstance] conversationForCI:dic[kCONTENT]];
+        NSString* st = dic[kSUBTEXT];
+        
+        [cell fillWithConversation:c subText:st highlightWord:self.text];
+        
+        return cell;
+    }
+
+}
+
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
+    self.canReload = NO;
     return nil;
 }
 
@@ -282,43 +396,26 @@
 
 #pragma mark - SearchBar Delegate
 
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
+    [self _updateSearchResultWith:searchController.searchBar.text];
+}
+
 -(void) _updateSearchResultWith:(NSString*)word
 {
-    if (word.length == 0) {
-        self.searchResult = nil;
+    if (!word) {
+        word = @"";
+    }
+    /*if (word.length == 0) {
+        //self.searchResult = nil;
         return ;
-    }
+    }*/
     
-    NSMutableArray* current;
+    self.resultsTableController.text = word;
+    self.text = word;
     
-    if (word.length <= 2 || self.lastSearchLength >= word.length) {
-        NSMutableArray* alls = [[NSMutableArray alloc] init];
-        
-        if (kisActiveAccountAll) {
-            for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
-                Account* a = [[Accounts sharedInstance] account:idx];
-                [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
-                
-            }
-        }
-        else {
-            Account* a = [[Accounts sharedInstance] currentAccount];
-            [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
-        }
-        
-        current = [alls mutableCopy];
-    }
-    else {
-        NSMutableArray* currentContent = [NSMutableArray arrayWithCapacity:[self.searchResult[1] count]];
-        
-        for (NSDictionary* d in self.searchResult[1]) {
-            [currentContent addObject:d[kCONTENT]];
-        }
-        
-        current = currentContent;
-    }
+    NSMutableArray* current = [self.data mutableCopy];
     
-    self.lastSearchLength = word.length;
+    //self.lastSearchLength = word.length;
     
     NSMutableSet* peopleIn = [[NSMutableSet alloc] init];
     
@@ -422,13 +519,25 @@
         }
     }
     
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+    CCMSearchTableViewController *tableController = (CCMSearchTableViewController *)self.searchController.searchResultsController;
+    tableController.filteredResults = @[ppl, next];
+    self.filteredResults = @[ppl, next];
+    [self.table reloadData];
+    [tableController.tableView reloadData];
+    
+    /*dispatch_async(dispatch_get_main_queue(), ^{
         self.searchResult = [NSArray arrayWithObjects:ppl, next, nil];
-        [self.table reloadData];
-    }];
+        [self.searchBar resignFirstResponder];
+        [UIView animateWithDuration:0 animations:^{
+            [self.table reloadData];
+        } completion:^(BOOL finished) {
+            NSLog(@"Finished");
+            [self.searchBar becomeFirstResponder];
+        }];
+    });*/
 }
 
--(void) searchBar:(UISearchBar*)searchBar textDidChange:(NSString*)searchText
+/*-(void) searchBar:(UISearchBar*)searchBar textDidChange:(NSString*)searchText
 {
     [self.searchQueue addOperationWithBlock:^{
         [self _updateSearchResultWith:searchBar.text];
@@ -446,7 +555,7 @@
     }
     
     [searchBar resignFirstResponder];
-}
+}*/
 
 -(void) removeConversationList:(NSArray *)convs { }
 
@@ -457,10 +566,13 @@
 
 - (void)reFetch:(BOOL)force
 {
-    [self.searchQueue addOperationWithBlock:^{
+    if (self.canReload) {
+    [self setupData];
+    //[self.searchQueue addOperationWithBlock:^{
         //self.lastSearchLength = self.searchBar.text.length;
-        [self _updateSearchResultWith:self.searchBar.text];
-    }];
+    [self _updateSearchResultWith:self.searchController.searchBar.text];
+    //}];
+    }
 }
 
 -(void) localSearchDone:(BOOL)done
@@ -479,6 +591,15 @@
     if (self.localSearchDone && self.serverSearchDone) {
         [self.table.tableFooterView setHidden:YES];
     }
+}
+
+- (void)selectedRow
+{
+    self.canReload = NO;
+
+    [self _hideKeyboard];
+    //self.searchController.active = NO;
+    self.searchControllerWasActive = YES;
 }
 
 @end

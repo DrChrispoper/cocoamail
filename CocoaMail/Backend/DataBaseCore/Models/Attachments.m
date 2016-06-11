@@ -48,17 +48,17 @@
         if ([self.mimeType  isEqualToString:@"application/msword"] ||
            [self.mimeType isEqualToString:@"application/vnd.oasis.opendocument.text"]||
            [self.mimeType rangeOfString:@"text/"].location != NSNotFound) {
-            self.image = [UIImage imageNamed:@"pj_other"];
+            self.image = [UIImage imageNamed:@"pj_text"];
         }
         else if([self.mimeType isEqualToString:@"application/pdf"]) {
-            return [UIImage imageNamed:@"pj_other"];
+            return [UIImage imageNamed:@"pj_pdf"];
         }
         else if([self.mimeType rangeOfString:@"image/"].location != NSNotFound) {
             if (self.data) {
                 self.image = [UIImage imageWithData:self.data];
             }
             else {
-                self.image = [UIImage imageNamed:@"pj_other"];
+                self.image = [UIImage imageNamed:@"pj_photo"];
             }
         }
         else if([self.mimeType rangeOfString:@"audio/"].location != NSNotFound) {
@@ -87,8 +87,23 @@
                 self.image = [UIImage imageNamed:@"pj_video"];
             }
         }
-        else if([self.mimeType rangeOfString:@"zip"].location != NSNotFound) {
-            self.image = [UIImage imageNamed:@"pj_other"];
+        else if([self.mimeType rangeOfString:@"zip"].location != NSNotFound || [self.mimeType rangeOfString:@"compressed"].location != NSNotFound){
+            self.image = [UIImage imageNamed:@"pj_packed"];
+        }
+        else if ([self.mimeType rangeOfString:@"powerpoint"].location != NSNotFound) {
+            self.image = [UIImage imageNamed:@"pj_powerpoint"];
+        }
+        else if ([self.mimeType rangeOfString:@"excel"].location != NSNotFound) {
+            self.image = [UIImage imageNamed:@"pj_tabler"];
+        }
+        else if ([self.mimeType rangeOfString:@"3d"].location != NSNotFound) {
+            self.image = [UIImage imageNamed:@"pj_3d"];
+        }
+        else if ([self.mimeType rangeOfString:@"vcard"].location != NSNotFound) {
+            self.image = [UIImage imageNamed:@"pj_vcard"];
+        }
+        else if ([self.mimeType rangeOfString:@"font"].location != NSNotFound) {
+            self.image = [UIImage imageNamed:@"pj_font"];
         }
         else {
             self.image = [UIImage imageNamed:@"pj_other"];
@@ -121,14 +136,14 @@
 @property (nonatomic, weak) UIImageView* mini;
 @property (nonatomic, weak) UIButton* btn;
 @property (nonatomic, weak) UIButton* cellBtn;
-@property (nonatomic, weak) Attachment* att;
+@property (nonatomic, strong) Attachment* att;
 
 @property (nonatomic) NSInteger internalState;
 @property (nonatomic, weak) UIImageView* circleView;
 
 @property (nonatomic) BOOL fakeIgnoreNextEnd;
 
-@property (nonatomic, weak) MCOIMAPFetchContentOperation* op;
+@property (nonatomic, strong) MCOIMAPFetchContentOperation* op;
 
 
 @end
@@ -267,10 +282,14 @@
     self.mini.image = [at miniature];
     self.extention.text = @"";
     
-    if ([at.mimeType rangeOfString:@"image/"].location == NSNotFound && [at.mimeType rangeOfString:@"video/"].location == NSNotFound) {
-        self.extention.text = [[at.fileName componentsSeparatedByString:@"."] lastObject];
-        [self.extention setHidden:NO];
-    }
+    /*if ([at.mimeType rangeOfString:@"image/"].location == NSNotFound && [at.mimeType rangeOfString:@"video/"].location == NSNotFound) {
+        if ([at.fileName componentsSeparatedByString:@"."].count > 1) {
+            NSString* ext = [[at.fileName componentsSeparatedByString:@"."] lastObject];
+            self.extention.text = ext;
+            [self.extention setHidden:NO];
+
+        }
+    }*/
     
     [self.cellBtn removeTarget:self action:@selector(_applyButtonDownload:) forControlEvents:UIControlEventTouchUpInside];
     [self.cellBtn removeTarget:self action:@selector(_openAttach:) forControlEvents:UIControlEventTouchUpInside];
@@ -435,16 +454,18 @@
                                                                                                              partID:att.partID
                                                                                                            encoding:MCOEncodingBase64];
             
+            UILabel* sizeTmp = self.size;
             
             self.op.progress = ^(unsigned int current, unsigned int maximum){
                 if (maximum != 0) {
                     NSString *word = NSLocalizedString(@"attachment.dowload-progress",@"-percent- of -size-");
-                    self.size.text = [NSString stringWithFormat:@"%u%% %@ %@", (current * 100 / maximum), word, [att stringSize]];
+                    if (sizeTmp) {
+                        sizeTmp.text = [NSString stringWithFormat:@"%u%% %@ %@", (current * 100 / maximum), word, [att stringSize]];
+                    }
                 }
             };
             
             dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
             [self.op start:^(NSError* error, NSData* partData) {
                 if (error) {
                     CCMLog(@"%@", error);
@@ -462,8 +483,10 @@
                     self.extention.text = @"";
                 }
 
-                [self.delegate downloaded:att];
-                [self doneDownloading];
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [self.delegate downloaded:att];
+                    [self doneDownloading];
+                }];
             }];
                 
             });

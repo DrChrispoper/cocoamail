@@ -16,6 +16,7 @@
 @property (nonatomic, strong) NSMutableArray* cachedData;
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
 @property (nonatomic) BOOL connected;
+@property (nonatomic, strong) RACSignal* signal;
 @property (nonatomic) dispatch_queue_t s_queue;
 
 +(ImapSync*) sharedServices:(UserSettings*)user;
@@ -25,7 +26,7 @@
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
--(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups))completedBlock;
+-(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock;
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deletedAndWait:(UserSettings*)deleteUser;

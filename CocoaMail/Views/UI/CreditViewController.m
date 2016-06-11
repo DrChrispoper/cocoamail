@@ -64,6 +64,7 @@
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;
+    
 }
 
 -(BOOL) haveCocoaButton
@@ -85,9 +86,9 @@
 {
     [super viewDidAppear:animated];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    /*dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self.cocoaButton openWide];
-    });
+    });*/
 }
 
 -(void) _prepareTable
@@ -127,11 +128,11 @@
     cell.textLabel.textAlignment = NSTextAlignmentNatural;
     cell.textLabel.textColor = [UIColor blackColor];
     
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    //cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
-    if (indexPath.row == [((NSDictionary*)self.tableContent[indexPath.section]) count]-1) {
+    //if (indexPath.row == [((NSDictionary*)self.tableContent[indexPath.section]) count]-1) {
         cell.accessoryType = UITableViewCellAccessoryNone;
-    }
+    //}
     
     NSString* sub = infos[kSUB];
     
@@ -187,7 +188,7 @@
         
         UILabel* lbl = [[UILabel alloc] initWithFrame:CGRectMake((WIDTH - WIDTH_LBL) / 2. , 105, WIDTH_LBL, 50)];
         lbl.backgroundColor = bigOne.backgroundColor;
-        lbl.text = @"CocoaMail was made with love sitting at a french café.";
+        lbl.text = @"CocoaMail was made with love sitting at a French café.";
         lbl.numberOfLines = 0;
         [bigOne addSubview:lbl];
         lbl.textAlignment = NSTextAlignmentCenter;
@@ -208,12 +209,12 @@
         [ViewController presentAlertWIP:@"itunes review…"];
     }
     else {
-        NSArray* ele = [action componentsSeparatedByString:@" "];
+        /*NSArray* ele = [action componentsSeparatedByString:@" "];
         
         [self.cocoaButton forceCloseButton];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kSETTINGS_CREDIT2_NOTIFICATION object:nil
-                                                          userInfo:@{kSETTINGS_KEY:ele[1]}];
+                                                          userInfo:@{kSETTINGS_KEY:ele[1]}];*/
     }
     
     

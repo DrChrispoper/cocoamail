@@ -23,7 +23,7 @@
 #import "CocoaMail-Swift.h"
 #import "OnePasswordExtension.h"
 
-@interface AddAccountViewController ()
+@interface AddAccountViewController () <MailListDelegate>
 
 @property (nonatomic, strong) UserSettings* user;
 @property (nonatomic, strong) MCOAccountValidator* accountVal;
@@ -37,13 +37,13 @@
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSArray* settings;
 
-@property (nonatomic, weak) UITextField* username;
+//@property (nonatomic, weak) UITextField* username;
 @property (nonatomic, weak) UITextField* email;
 @property (nonatomic, weak) UITextField* password;
 @property (nonatomic, weak) UIButton* onePassword;
 
-@property (nonatomic, weak) EditCocoaButtonView* editCocoa;
-@property (nonatomic) NSInteger step;
+//@property (nonatomic, weak) EditCocoaButtonView* editCocoa;
+//@property (nonatomic) NSInteger step;
 
 @property (nonatomic, weak) UIButton* googleBtn;
 
@@ -63,14 +63,6 @@
     if (self.firstRunMode == NO) {
         item.leftBarButtonItem = [self backButtonInNavBar];
     }
-    
-    /*[[NSNotificationCenter defaultCenter]
-     addObserver:self
-     selector:@selector(receiveToggleAuthUINotification:)
-     name:@"ToggleAuthUINotification"
-     object:nil];*/
-    
-    //[GIDSignIn sharedInstance].uiDelegate = self;
     
     NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
@@ -112,11 +104,11 @@
     cocoa.frame = CGRectMake(0, 242, screenBounds.size.width, posYbutton + 35 - 242);
     cocoa.contentMode = UIViewContentModeCenter;
     
-    [self.view addSubview:cocoa];
+    //[self.view addSubview:cocoa];
     
     UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tap:)];
-    [cocoa addGestureRecognizer:tgr];
-    cocoa.userInteractionEnabled = YES;
+    tgr.cancelsTouchesInView = NO;
+    [self.table addGestureRecognizer:tgr];
     
     UIButton* google = [[UIButton alloc] initWithFrame:CGRectMake(0, posYbutton, screenBounds.size.width, 70 + 45)];
     [google setImage:[UIImage imageNamed:@"signGoogle_on"] forState:UIControlStateNormal];
@@ -124,13 +116,7 @@
     [google addTarget:self action:@selector(_startOAuth2:) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:google];
-    
-    /*for (Account* a in [Accounts sharedInstance].accounts) {
-        if (!a.isAllAccounts && [a.user isUsingOAuth]) {
-            google.hidden = YES;
-        }
-    }*/
-    
+
     self.googleBtn = google;
 }
 
@@ -168,19 +154,8 @@
     [self _hideKeyboard];
 }
 
--(void) _google:(UIButton*)sender
-{
-    //[[GIDSignIn sharedInstance] signOut];
-    //[[GIDSignIn sharedInstance] signIn];
-}
-
 - (void) _startOAuth2:(UIButton*)sender
 {
-    /*GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:KEYCHAIN_ITEM_NAME
-                                                                                           clientID:CLIENT_ID
-                                                                                       clientSecret:CLIENT_SECRET];*/
-    
-    //if (![auth canAuthorize]) {
     SEL selectorFinish = @selector(viewController:finishedWithAuth:error:);
     SEL selectorButtonCancel = @selector(buttonCancelTapped:);
     
@@ -196,20 +171,25 @@
     
     [navController.view addSubview:navigationBar];
     
-        GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
+    NSInteger accountNum = 1;
+    
+    for (UserSettings* user in [AppSettings getSingleton].users) {
+        if (user.isAll) {
+            continue;
+        }
+        
+        accountNum++;
+    }
+    
+    GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
                                                                                                 clientID:CLIENT_ID
                                                                                             clientSecret:CLIENT_SECRET
-                                                                                        keychainItemName:KEYCHAIN_ITEM_NAME
+                                                                                        keychainItemName:[NSString stringWithFormat:@"%@%d", TKN_KEYCHAIN_NAME,accountNum]
                                                                                                 delegate:self
                                                                                         finishedSelector:selectorFinish];
     [navController addChildViewController:authViewController];
     
     [[ViewController mainVC] presentViewController:navController animated:YES completion:nil];
-
-    //}
-    //else {
-    //    [auth beginTokenFetchWithDelegate:self didFinishSelector:@selector(auth:finishedRefreshWithFetcher:error:)];
-    //}
 }
 
 - (void)buttonCancelTapped:(UIBarButtonItem *)sender {
@@ -218,7 +198,7 @@
 
 - (void)viewController:(GTMOAuth2ViewControllerTouch *)viewController finishedWithAuth:(GTMOAuth2Authentication *)authResult error:(NSError *)error {
     [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
-
+    
     if (error != nil) {
         [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
     }
@@ -236,11 +216,6 @@
     }
 }
 
-/*- (void)signInWillDispatch:(GIDSignIn *)signIn error:(NSError *)error
-{
-    CCMLog(@"Remove Spinner");
-}*/
-
 -(void) _hideKeyboard
 {
     [self.table endEditing:YES];
@@ -256,7 +231,7 @@
 {
     
     NSArray* infos = @[
-                       @{TEXT: NSLocalizedString(@"add-account-view.username", @"Label: Username"), DACTION : @"EDIT_NAME"},
+                       //@{TEXT: NSLocalizedString(@"add-account-view.username", @"Label: Username"), DACTION : @"EDIT_NAME"},
                        @{TEXT: NSLocalizedString(@"add-account-view.email", @"Label: Email"), DACTION : @"EDIT_MAIL"},
                        @{TEXT: NSLocalizedString(@"add-account-view.password", @"Label: Password"), DACTION : @"EDIT_PASS"}
                        ];
@@ -299,11 +274,6 @@
     
     if (indexPath.row==0) {
         base += .5;
-        /*
-        if (indexPath.section == 1) {
-            base += 60;
-        }
-         */
     }
     
     return base;
@@ -361,11 +331,6 @@
             tf.returnKeyType = UIReturnKeyNext;
             self.email = tf;
         }
-        else {
-            tf.autocapitalizationType = UITextAutocapitalizationTypeWords;
-            tf.returnKeyType = UIReturnKeyNext;
-            self.username = tf;
-        }
     }
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
@@ -394,26 +359,10 @@
 
 -(void) _nextStep
 {
-    if (self.step == 0) {
-        
         self.email.text = [self.email.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         self.password.text = [self.password.text stringByReplacingOccurrencesOfString:@" " withString:@""];
 
         [self loadAccountWithUsername:self.email.text password:self.password.text oauth2Token:nil];
-        
-    }
-    else {
-        [Accounts sharedInstance].currentAccountIdx = self.user.accountIndex;
-        
-        [ViewController refreshCocoaButton];
-        
-        [self.user.linkedAccount connect];
-        [self.user.linkedAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
-    }
-    
 }
 
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
@@ -448,10 +397,11 @@
 {
     [textField resignFirstResponder];
     
-    if (textField == self.username) {
+    /*if (textField == self.username) {
         [self.email becomeFirstResponder];
     }
-    else if (textField == self.email) {
+    else*/
+    if (textField == self.email) {
         [self.password becomeFirstResponder];
     }
     else if (textField == self.password) {
@@ -474,31 +424,9 @@
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
 }
 
-/*-(void) receiveToggleAuthUINotification:(NSNotification*)notification
-{
-    if ([[notification name] isEqualToString:@"ToggleAuthUINotification"] && [notification userInfo][@"accessToken"]) {
-
-        NSString* accessToken = [notification userInfo][@"accessToken"];
-        NSString* email = [notification userInfo][@"email"];
-        NSString* name = [notification userInfo][@"name"];
-    
-        self.email.text = email;
-        self.username.text = name;
-        self.password.text = @"";
-    
-        self.accountVal = [[MCOAccountValidator alloc]init];
-        self.accountVal.email = email;
-        self.accountVal.username = email;
-        self.accountVal.OAuth2Token = accessToken;
-    
-        [self load];
-    }
-}*/
-
 -(void) loadWithAuth:(GTMOAuth2Authentication *)auth
 {
     self.email.text = [auth userEmail];
-    self.username.text = [auth userEmail];
     self.password.text = @"";
     
     [self loadAccountWithUsername:[auth userEmail] password:nil oauth2Token:[auth accessToken]];
@@ -525,11 +453,11 @@
     if (!self.accountVal.OAuth2Token) {
         NSString* email = self.email.text;
         NSString* password = self.password.text;
-    
+        
         if (!email.length || !password.length) {
             return;
         }
-    
+        
         if (![self isEmailRegExp:email]) {
             [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.invalid-email", @"Alert message: Invalid Email")];
             return;
@@ -566,12 +494,12 @@
             CCMLog(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
             
             [[PKHUD sharedHUD] hideWithAnimated:YES];
-
-            if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication) {
+            
+            if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication || strongSelf.accountVal.smtpError.code == MCOErrorAuthentication) {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
-            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection)  {
+            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection || strongSelf.accountVal.smtpError.code == MCOErrorConnection)  {
                 if (networkStatus != NotReachable) {
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
@@ -579,7 +507,7 @@
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.no-internet",@"Connection error. There seems to be not internet connection.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
             }
-            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
+            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired || strongSelf.accountVal.smtpError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
             }
             else {
@@ -608,7 +536,7 @@
         imapSession.authType = MCOAuthTypeXOAuth2;
     }
     imapSession.connectionType = self.accountVal.imapServer.connectionType;
-
+    
     MCOIMAPFetchNamespaceOperation* namespaceOp = [imapSession fetchNamespaceOperation];
     [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
         if (error) {
@@ -631,14 +559,14 @@
             }
             
             MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.accountVal.identifier];
-
+            
             NSMutableArray* flagedFolders = [[NSMutableArray alloc] init];
             NSMutableArray* otherFolders = [[NSMutableArray alloc] init];
             MCOIMAPFolder*  __block inboxfolder;
             MCOIMAPFolder*  __block allMailFolder;
             
             for (MCOIMAPFolder* folder in folders) {
-
+                
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     continue;
                 }
@@ -717,7 +645,7 @@
     //User Settings
     UserSettings* user = [[AppSettings getSingleton] createNewUser];
     [user setUsername:self.email.text];
-    [user setName:self.username.text];
+    [user setName:@""];
     [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
     [user setColor: [AppSettings defaultColors][user.accountIndex]];
     
@@ -728,16 +656,24 @@
     }
     
     NSString* mail = self.email.text;
-    NSUInteger loc = [mail rangeOfString:@"@"].location;
+    
+    NSString* code = [[mail substringToIndex:3] uppercaseString];
+    [user setInitials:code];
+    
+    /*NSUInteger loc = [mail rangeOfString:@"@"].location;
     NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
     
-    if (loc != NSNotFound && loc > 2 &&  locDot != NSNotFound && loc < locDot) {
-        NSString* code = [[mail substringToIndex:3] uppercaseString];
+    if (loc != NSNotFound &&  locDot != NSNotFound && loc < locDot && (locDot-loc) > 2) {
+        NSString* code = [[mail substringWithRange:NSMakeRange(loc+1, 3)] uppercaseString];
         [user setInitials:code];
     }
+    else {
+        NSString* code = [[mail substringToIndex:3] uppercaseString];
+        [user setInitials:code];
+    }*/
     
     [AppSettings setSettingsWithAccountVal:self.accountVal user:user];
-
+    
     //Account of User
     Account* ac = [Account emptyAccount];
     [ac setNewUser:user];
@@ -760,9 +696,9 @@
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
     [[SyncManager getSingleton] addAccountState];
-
+    
     for (MCOIMAPFolder* folder in sortedFolders) {
-
+        
         //Inbox
         if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
@@ -812,8 +748,8 @@
         indexPath++;
     }
     
-    if ([user importantFolderNumforBaseFolder:FolderTypeFavoris] == -1) {
-        [user setImportantFolderNum:[user importantFolderNumforBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris];
+    if ([user numFolderWithFolder:CCMFolderTypeFavoris] == -1) {
+        [user setImportantFolderNum:[user numFolderWithFolder:CCMFolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
     [user setAllFoldersDisplayNames:dispNamesFolders];
@@ -830,10 +766,11 @@
     
     CCMLog(@"4 - Go!");
     
-    [[PKHUD sharedHUD] hideWithAnimated:NO];
+    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
+    [[PKHUD sharedHUD] show];
     
     self.user = user;
-    self.step = 1;
+    /*self.step = 1;
     
     EditCocoaButtonView* ecbv = [EditCocoaButtonView editCocoaButtonViewForAccount:ac];
     ecbv.frame = CGRectMake(0, 55, ecbv.frame.size.width, ecbv.frame.size.height);
@@ -844,13 +781,38 @@
     UINavigationItem* item = [self.navBar.items firstObject];
     NSString* title = NSLocalizedString(@"add-account-view.title-for-cocoa-button", @"Title: Your Cocoa button");
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
-    [self.navBar setNeedsDisplay];
+    [self.navBar setNeedsDisplay];*/
         
     self.googleBtn.hidden = YES;
     
     [ImapSync allSharedServices:imapSession];
-    [user.linkedAccount connect];
+    
+    [ac connect];
+    
+    [Accounts sharedInstance].currentAccountIdx = self.user.accountIndex;
+    
+    [ViewController refreshCocoaButton];
+    ac.mailListSubscriber = self;
+    
+    [ac refreshCurrentFolder];
 }
+
+-(void) serverSearchDone:(BOOL)done
+{
+    if (done) {
+        [[PKHUD sharedHUD] hideWithAnimated:NO];
+        
+        self.user.linkedAccount.mailListSubscriber = nil;
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+    }
+}
+
+-(void) localSearchDone:(BOOL)done {}
+-(void) removeConversationList:(NSArray*)convs {}
+-(void) reFetch:(BOOL)forceRefresh {}
+-(BOOL) isPresentingDrafts { return NO; }
 
 
 -(void) findLoginFrom1Password:(id)sender
@@ -866,6 +828,16 @@
         self.email.text = loginDictionary[AppExtensionUsernameKey];
         self.password.text = loginDictionary[AppExtensionPasswordKey];
     }];
+}
+
+-(void) insertConversationIndex:(ConversationIndex*)ci
+{
+    
+}
+
+- (void)updateDays:(NSArray *)days
+{
+    
 }
 
 @end

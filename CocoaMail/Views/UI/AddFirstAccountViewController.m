@@ -24,7 +24,7 @@
 #import "OnePasswordExtension.h"
 #import "LoginTableViewCell.h"
 
-@interface AddFirstAccountViewController ()
+@interface AddFirstAccountViewController () <MailListDelegate>
 
 @property (nonatomic, strong) UserSettings* user;
 @property (nonatomic, strong) MCOAccountValidator* accountVal;
@@ -33,9 +33,9 @@
 @end
 
 
-@interface AddFirstAccountViewController () <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate, OPDelegate/*,GIDSignInUIDelegate*/>
+@interface AddFirstAccountViewController () <UITextFieldDelegate/*,GIDSignInUIDelegate*/>
 
-@property (nonatomic, weak) UITableView* table;
+//@property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) NSArray* settings;
 
 @property (nonatomic, weak) UITextField* email;
@@ -43,6 +43,7 @@
 @property (nonatomic, weak) UIButton* onePassword;
 
 @property (nonatomic, weak) UIButton* googleBtn;
+@property (nonatomic, weak) UIView* Ok;
 
 
 @end
@@ -66,43 +67,132 @@
     
     [self.view addSubview:cocoa];
     
-    NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
-    item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
+    //NSString* title = NSLocalizedString(@"add-account-view.title", @"Add account View Title");
+    //item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
-    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
+    /*UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        20,
                                                                        screenBounds.size.width,
-                                                                       242/*screenBounds.size.height-20*/)
+                                                                       242screenBounds.size.height-20)
                                                       style:UITableViewStyleGrouped];
     table.contentInset = UIEdgeInsetsMake(44, 0, 60, 0);
     table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
     table.separatorStyle = UITableViewCellSeparatorStyleNone;
     
-    table.backgroundColor = [UIColor clearColor];
+    table.backgroundColor = [UIColor clearColor];*/
+    
     self.view.backgroundColor = [UIColor clearColor];
     
-    [self.view addSubview:table];
+    //Email
+    
+    CGFloat WIDTH = screenBounds.size.width;
+    CGFloat height = 44;
+    
+    CGFloat posY = 20;
+
+    UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(22, 30, 22, 30)];
+    UIImageView* inIV = [[UIImageView alloc] initWithImage:rBack];
+    inIV.frame = CGRectMake(8 , posY , WIDTH - 16, height);
+    
+    UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(20, 0, inIV.bounds.size.width - 20, 45)];
+    tf.autocorrectionType = UITextAutocorrectionTypeNo;
+    tf.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    
+    [inIV addSubview:tf];
+    
+    self.email = tf;
+    self.email.userInteractionEnabled = YES;
+    self.email.placeholder = NSLocalizedString(@"add-account-view.email", @"Email");
+    self.email.keyboardType = UIKeyboardTypeEmailAddress;
+    self.email.returnKeyType = UIReturnKeyNext;
+    self.email.delegate = self;
+    
+    inIV.userInteractionEnabled = YES;
+    inIV.clipsToBounds = YES;
+    [self.view addSubview:inIV];
+    
+    //Password
+    
+    posY = posY + 44 + 10;
+    
+    UIImageView* pinIV = [[UIImageView alloc] initWithImage:rBack];
+    pinIV.frame = CGRectMake(8 , posY , WIDTH - 16, height);
+    
+    UITextField* ptf = [[UITextField alloc] initWithFrame:CGRectMake(20, 0, inIV.bounds.size.width - 20, 45)];
+    ptf.autocorrectionType = UITextAutocorrectionTypeNo;
+    ptf.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    
+    [pinIV addSubview:ptf];
+    
+    self.password = ptf;
+    
+    self.password.placeholder = NSLocalizedString(@"account-view.main-details.password", @"Password");
+    self.password.secureTextEntry = YES;
+    self.password.returnKeyType = UIReturnKeyDone;
+    self.password.delegate = self;
+
+    UIButton* fav = [[UIButton alloc] initWithFrame:CGRectMake(inIV.bounds.size.width - 33.f - 5.5, 5.5, 33.F, 33.F)];
+    [fav setImage:[UIImage imageNamed:@"onepassword-toolbar"] forState:UIControlStateNormal];
+    [fav setImage:[UIImage imageNamed:@"onepassword-toolbar-light"] forState:UIControlStateHighlighted];
+    
+    fav.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    [pinIV addSubview:fav];
+    pinIV.userInteractionEnabled = YES;
+
+    self.onePassword = fav;
+    [self.onePassword addTarget:self action:@selector(findLoginFrom1Password:) forControlEvents:UIControlEventTouchUpInside];
+
+    self.onePassword.hidden = YES;
+
+    if ([[OnePasswordExtension sharedExtension] isAppExtensionAvailable]) {
+        self.onePassword.hidden = NO;
+    }
+    
+    pinIV.clipsToBounds = YES;
+    [self.view addSubview:pinIV];
+    
+    
+    posY = posY + 44 + 10;
+    
+    UIImageView* okinIV = [[UIImageView alloc] initWithImage:rBack];
+    okinIV.frame = CGRectMake(8, posY, WIDTH - 16, height);
+    
+    UITextField* oktf = [[UITextField alloc] initWithFrame:CGRectMake(20, 0, inIV.bounds.size.width - 20, 45)];
+    oktf.autocorrectionType = UITextAutocorrectionTypeNo;
+    oktf.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    oktf.text = NSLocalizedString(@"add-account-view.ok", @"Button: OK");
+    oktf.textAlignment = NSTextAlignmentCenter;
+    
+    oktf.delegate = self;
+    
+    [okinIV addSubview:oktf];
+    okinIV.userInteractionEnabled = YES;
+    okinIV.alpha = .5f;
+    okinIV.clipsToBounds = YES;
+    self.Ok = okinIV;
+    [self.view addSubview:okinIV];
+    
+    //[self.view addSubview:table];
     
     if (self.firstRunMode == NO) {
         item.leftBarButtonItem = [self backButtonInNavBar];
     }
     
-    [self setupNavBarWith:item overMainScrollView:table];
-
+    //[self setupSimpleNavBarWith:item andWidth:screenBounds.size.width];
     
-    [self _prepareTable];
+    //[self _prepareTable];
     
-    table.scrollEnabled = NO;
+    //table.scrollEnabled = NO;
     
-    table.dataSource = self;
-    table.delegate = self;
-    self.table = table;
+    //table.dataSource = self;
+    //table.delegate = self;
+    //self.table = table;
     
     CGFloat posYbutton = screenBounds.size.height - 20 - (70 + 45);
     
     UITapGestureRecognizer* tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tap:)];
-    [cocoa addGestureRecognizer:tgr];
-    cocoa.userInteractionEnabled = YES;
+    [self.view addGestureRecognizer:tgr];
+    self.view.userInteractionEnabled = YES;
     
     UIButton* google = [[UIButton alloc] initWithFrame:CGRectMake(0, posYbutton, screenBounds.size.width, 70 + 45)];
     [google setImage:[UIImage imageNamed:@"signGoogle_on"] forState:UIControlStateNormal];
@@ -123,8 +213,7 @@
 {
     [super viewDidAppear:animated];
     
-    [self.view setFrame:CGRectMake(0, -20, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
-    self.view.clipsToBounds = NO;
+    [self.view setFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height)];
 
     NSThread* driverThread = [[NSThread alloc] initWithTarget:self selector:@selector(loadIt) object:nil];
     [driverThread start];
@@ -166,10 +255,20 @@
     
     [navController.view addSubview:navigationBar];
     
+    NSInteger accountNum = 1;
+    
+    for (UserSettings* user in [AppSettings getSingleton].users) {
+        if (user.isAll) {
+            continue;
+        }
+        
+        accountNum++;
+    }
+    
     GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
                                                                                                 clientID:CLIENT_ID
                                                                                             clientSecret:CLIENT_SECRET
-                                                                                        keychainItemName:KEYCHAIN_ITEM_NAME
+                                                                                        keychainItemName:[NSString stringWithFormat:@"%@%d", TKN_KEYCHAIN_NAME,accountNum]
                                                                                                 delegate:self
                                                                                         finishedSelector:selectorFinish];
     [navController addChildViewController:authViewController];
@@ -203,7 +302,7 @@
 
 -(void) _hideKeyboard
 {
-    [self.table endEditing:YES];
+    [self.view endEditing:YES];
 }
 
 #define TITLE @"title"
@@ -232,108 +331,8 @@
 -(void) cleanBeforeGoingBack
 {
     [self _hideKeyboard];
-    self.table.delegate = nil;
-    self.table.dataSource = nil;
-}
-
-#pragma mark - Table Datasource
-
--(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
-{
-    return self.settings.count;
-}
-
--(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
-{
-    NSDictionary* sectionInfos = self.settings[section];
-    NSArray* content = sectionInfos[CONTENT];
-    
-    return content.count;
-}
-
--(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    
-    CGFloat base = 64.f;
-    
-    /*if (indexPath.row==0) {
-        base += .5;
-    }*/
-    
-    return base;
-}
-
--(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    
-    NSDictionary* sectionInfos = self.settings[indexPath.section];
-    NSArray* content = sectionInfos[CONTENT];
-    NSDictionary* infoCell = content[indexPath.row];
-    
-    NSString* reuseID = @"kPersonCellID";
-    
-    LoginTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:reuseID];
-    
-    if (cell==nil) {
-        cell = [[LoginTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID];
-    }
-    
-    /*cell.textLabel.text = infoCell[TEXT];
-    
-    cell.textLabel.textAlignment = NSTextAlignmentNatural;
-    cell.textLabel.textColor = [UIColor blackColor];
-    
-    [cell.textLabel sizeToFit];
-    
-    cell.accessoryType = UITableViewCellAccessoryNone;
-    
-    
-    CGSize bounds = tableView.bounds.size;
-    bounds.height = 44.f;*/
-    
-    NSString* action = infoCell[DACTION];
-    
-    if ([action isEqualToString:@"VALIDATE"]) {
-        //cell.textLabel.textColor = [UIColor blackColor];
-        //[cell.textLabel sizeToFit];
-        //cell.textLabel.textAlignment = NSTextAlignmentCenter;
-        
-        [cell fillWithButton:infoCell[TEXT]];
-    }
-    else {
-
-        if ([action isEqualToString:@"EDIT_PASS"]) {
-            self.password = [cell fillWithPlaceholder:@"Password" oP:self];
-            self.password.delegate = self;
-        }
-        else if ([action isEqualToString:@"EDIT_MAIL"]) {
-            self.email = [cell fillWithPlaceholder:@"Email" oP:nil];
-            self.email.delegate = self;
-        }
-    }
-    
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    
-    return cell;
-}
-
--(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
-{
-    NSDictionary* sectionInfos = self.settings[section];
-    
-    return sectionInfos[TITLE];
-}
-
-#pragma mark Table Delegate
-
--(CGFloat) tableView:(UITableView*)tableView heightForFooterInSection:(NSInteger)section
-{
-    return CGFLOAT_MIN;
-}
-
--(CGFloat) tableView:(UITableView*)tableView heightForHeaderInSection:(NSInteger)section
-{
-    return CGFLOAT_MIN;
+    //self.table.delegate = nil;
+    //self.table.dataSource = nil;
 }
 
 -(void) _nextStep
@@ -342,38 +341,6 @@
         self.password.text = [self.password.text stringByReplacingOccurrencesOfString:@" " withString:@""];
         
         [self loadAccountWithUsername:self.email.text password:self.password.text oauth2Token:nil];
-}
-
--(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    if (indexPath.section == 0) {
-        if (indexPath.row == 0) {
-            [self.email becomeFirstResponder];
-        }
-        else {
-            [self.password becomeFirstResponder];
-        }
-        /*UITableViewCell* cell = [tableView cellForRowAtIndexPath:indexPath];
-        NSArray* alls = [cell subviews];
-        
-        for (UIView* v in alls) {
-            if ([v isKindOfClass:[UITextField class]]) {
-                [v becomeFirstResponder];
-                break;
-            }
-        }*/
-    }
-    else {
-        [self _hideKeyboard];
-        [self _nextStep];
-    }
-    
-    return nil;
-}
-
--(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark - TextField delegate
@@ -387,6 +354,26 @@
     }
     else if (textField == self.password) {
         [self _nextStep];
+    }
+    
+    return YES;
+}
+
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    if (textField != self.email && textField != self.password) {
+        [self _hideKeyboard];
+        [self _nextStep];
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    if (self.password.text.length > 4 && [self isEmailRegExp:self.email.text]) {
+        [self.Ok setAlpha:1.];
     }
     
     return YES;
@@ -464,6 +451,8 @@
     [self.accountVal setImapEnabled:YES];
     [self.accountVal setSmtpEnabled:YES];
     
+    NSLog(@"Starting account Val");
+
     [self.accountVal start:^() {
         AddFirstAccountViewController* strongSelf = bself;
         
@@ -476,11 +465,11 @@
             
             [[PKHUD sharedHUD] hideWithAnimated:YES];
             
-            if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication) {
+            if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication || strongSelf.accountVal.smtpError.code == MCOErrorAuthentication) {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
-            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection)  {
+            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection || strongSelf.accountVal.smtpError.code == MCOErrorConnection)  {
                 if (networkStatus != NotReachable) {
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
@@ -488,7 +477,7 @@
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.no-internet",@"Connection error. There seems to be not internet connection.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
             }
-            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
+            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired || strongSelf.accountVal.smtpError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
             }
             else {
@@ -637,17 +626,20 @@
     }
     
     NSString* mail = self.email.text;
-    NSUInteger loc = [mail rangeOfString:@"@"].location;
-    NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
+    NSString* code = [[mail substringToIndex:3] uppercaseString];
+    [user setInitials:code];
     
-    if (loc != NSNotFound &&  locDot != NSNotFound && loc < locDot && (locDot-loc) > 2) {
-        NSString* code = [[mail substringWithRange:NSMakeRange(loc+1, 3)] uppercaseString];
-        [user setInitials:code];
-    }
-    else {
-        NSString* code = [[mail substringToIndex:3] uppercaseString];
-        [user setInitials:code];
-    }
+    /*NSUInteger loc = [mail rangeOfString:@"@"].location;
+     NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
+     
+     if (loc != NSNotFound &&  locDot != NSNotFound && loc < locDot && (locDot-loc) > 2) {
+     NSString* code = [[mail substringWithRange:NSMakeRange(loc+1, 3)] uppercaseString];
+     [user setInitials:code];
+     }
+     else {
+     NSString* code = [[mail substringToIndex:3] uppercaseString];
+     [user setInitials:code];
+     }*/
     
     [AppSettings setSettingsWithAccountVal:self.accountVal user:user];
     
@@ -725,8 +717,8 @@
         indexPath++;
     }
     
-    if ([user importantFolderNumforBaseFolder:FolderTypeFavoris] == -1) {
-        [user setImportantFolderNum:[user importantFolderNumforBaseFolder:FolderTypeAll] forBaseFolder:FolderTypeFavoris];
+    if ([user numFolderWithFolder:CCMFolderTypeFavoris] == -1) {
+        [user setImportantFolderNum:[user numFolderWithFolder:CCMFolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
     [user setAllFoldersDisplayNames:dispNamesFolders];
@@ -743,24 +735,41 @@
         
     CCMLog(@"4 - Go!");
     
-    [[PKHUD sharedHUD] hideWithAnimated:NO];
+    [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
+    [[PKHUD sharedHUD] show];
     
     self.user = user;
     self.googleBtn.hidden = YES;
-    
+
     [ImapSync allSharedServices:imapSession];
-    [user.linkedAccount connect];
+    
+    [ac connect];
     
     [Accounts sharedInstance].currentAccountIdx = self.user.accountIndex;
     
     [ViewController refreshCocoaButton];
     
-    [self.user.linkedAccount setCurrentFolder:FolderTypeWith(FolderTypeInbox, 0)];
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+    ac.mailListSubscriber = self;
+
+    [ac refreshCurrentFolder];
 }
 
+-(void) serverSearchDone:(BOOL)done
+{
+    if (done) {
+        [[PKHUD sharedHUD] hideWithAnimated:NO];
+
+        self.user.linkedAccount.mailListSubscriber = nil;
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+    }
+}
+
+-(void) localSearchDone:(BOOL)done {}
+-(void) removeConversationList:(NSArray*)convs {}
+-(void) reFetch:(BOOL)forceRefresh {}
+-(BOOL) isPresentingDrafts { return NO; }
 
 -(void) findLoginFrom1Password:(id)sender
 {
@@ -779,6 +788,16 @@
 
 -(UIStatusBarStyle)preferredStatusBarStyle{
     return UIStatusBarStyleLightContent;
+}
+
+-(void) insertConversationIndex:(ConversationIndex*)ci
+{
+    
+}
+
+- (void)updateDays:(NSArray *)days
+{
+    
 }
 
 @end

@@ -8,6 +8,7 @@
 
 #import "EmailDBAccessor.h"
 #import "AppSettings.h"
+#import "sqlite3.h"
 
 @implementation EmailDBAccessor
 

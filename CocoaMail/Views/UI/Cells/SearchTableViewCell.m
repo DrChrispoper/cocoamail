@@ -12,7 +12,7 @@
 #import "Persons.h"
 #import "ViewController.h"
 #import "UIGlobal.h"
-
+#import "SearchViewController.h"
 
 @interface SearchTableViewCell ()
 
@@ -138,7 +138,7 @@ static NSDateFormatter * s_df_date = nil;
         bigger = CGRectInset(self.attachment.frame, -10, -10);
         
         if (CGRectContainsPoint(bigger, pos)) {
-            
+            [self.sDelegate selectedRow];
             [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
                                                               userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];
             return;
@@ -149,6 +149,7 @@ static NSDateFormatter * s_df_date = nil;
     bigger = CGRectInset(self.badge.frame, -10, -10);
     
     if (CGRectContainsPoint(bigger, pos)) {
+        [self.sDelegate selectedRow];
         Person* person = [[Persons sharedInstance] getPersonWithID:[self mail].fromPersonID];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:person}];
         return;
@@ -163,6 +164,8 @@ static NSDateFormatter * s_df_date = nil;
     
     [self.baseView addSubview:overView];
     
+    [self.sDelegate selectedRow];
+
     [UIView animateWithDuration:0.1
                      animations:^{
                          overView.alpha = 0.8f;
@@ -174,7 +177,6 @@ static NSDateFormatter * s_df_date = nil;
                                           }
                                           completion:^(BOOL fini){
                                               [overView removeFromSuperview];
-                                              
                                               [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                                                                   object:nil
                                                                                                 userInfo:@{kPRESENT_CONVERSATION_KEY:self.conversation}];

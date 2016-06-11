@@ -14,7 +14,7 @@
 #import "AttachmentsViewController.h"
 
 @protocol MailListDelegate;
-
+@class ConversationIndex;
 
 @interface MailListViewController : InViewController <CocoaButtonDatasource>
 
@@ -37,7 +37,9 @@
 -(void) localSearchDone:(BOOL)done;
 -(void) serverSearchDone:(BOOL)done;
 -(void) removeConversationList:(NSArray*)convs;
+-(void) updateDays:(NSArray*)days;
 -(void) reFetch:(BOOL)forceRefresh;
 -(BOOL) isPresentingDrafts;
+-(void) insertConversationIndex:(ConversationIndex*)ci;
 
 @end

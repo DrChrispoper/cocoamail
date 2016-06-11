@@ -80,7 +80,7 @@
 {
     Mail* mail = [Mail newMailFormCurrentAccount];
     
-    mail.subject = @"Swipe Me!";
+    mail.subject = @"Quick swipe";
     mail.body = @"COCOAMAILSECRECTWEAPON";
     
     Persons* p = [Persons sharedInstance];

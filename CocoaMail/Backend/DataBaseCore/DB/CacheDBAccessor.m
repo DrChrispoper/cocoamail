@@ -8,6 +8,7 @@
 
 #import "CacheDBAccessor.h"
 #import "StringUtil.h"
+#import "sqlite3.h"
 
 #define CACHE_DB_NAME @"cache.tdb"
 

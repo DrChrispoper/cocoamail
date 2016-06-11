@@ -32,6 +32,14 @@ typedef struct CCMFolderType{
     NSInteger idx;
 } CCMFolderType;
 
+static CCMFolderType CCMFolderTypeInbox     = { FolderTypeInbox, 0 };
+static CCMFolderType CCMFolderTypeFavoris   = { FolderTypeFavoris, 0 };
+static CCMFolderType CCMFolderTypeSent      = { FolderTypeSent, 0 };
+static CCMFolderType CCMFolderTypeDrafts    = { FolderTypeDrafts, 0 };
+static CCMFolderType CCMFolderTypeAll       = { FolderTypeAll, 0 };
+static CCMFolderType CCMFolderTypeDeleted   = { FolderTypeDeleted, 0 };
+static CCMFolderType CCMFolderTypeSpam      = { FolderTypeSpam, 0 };
+
 static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
 {
     CCMFolderType type;

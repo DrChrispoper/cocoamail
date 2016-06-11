@@ -1,4 +1,4 @@
- //
+//
 //  ConversationViewController.m
 //  Cocoamail
 //
@@ -100,7 +100,7 @@
     // TODO put it elsewhere
     
     self.folder = [[AppSettings userWithIndex:kActiveFolderIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
-
+    
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
     Mail* mail = [self.conversation firstMail];
@@ -108,7 +108,7 @@
     UINavigationItem* item = [[UINavigationItem alloc] initWithTitle:@""];
     
     item.leftBarButtonItem = [self backButtonInNavBar];
-
+    
     if ([self.conversation hasAttachments]) {
         UIButton* attach = [WhiteBlurNavBar navBarButtonWithImage:@"attachment_off" andHighlighted:@"attachment_on"];
         [attach addTarget:self action:@selector(_attach) forControlEvents:UIControlEventTouchUpInside];
@@ -122,7 +122,7 @@
     //self.scrollView.panGestureRecognizer.delegate = self;
     
     [self.scrollView.panGestureRecognizer requireGestureRecognizerToFail:[ViewController mainVC].customPGR];
-
+    
     [self setupNavBarWith:item overMainScrollView:self.scrollView];
 }
 
@@ -131,7 +131,7 @@
     [super viewDidAppear:animated];
     
     self.contentOffset = CGPointMake(0,0);
-
+    
     [self refreshAttachments];
     //TODO:TODO? :)
     //[[CocoaButton sharedButton] enterLevel:2];
@@ -139,7 +139,7 @@
 
 -(void) cleanBeforeGoingBack
 {
-    self.scrollView.delegate = nil;    
+    self.scrollView.delegate = nil;
 }
 
 -(void) _attach
@@ -153,7 +153,7 @@
     if ([self.conversation hasAttachments]) {
         return @[kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION, self.conversation];
     }
-
+    
     return [super nextViewControllerInfos];
 }
 
@@ -165,7 +165,7 @@
     
     UIView* contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 10000)];
     contentView.backgroundColor = [UIColor clearColor];
-  
+    
     // title
     UILabel* lbl = [[UILabel alloc] initWithFrame:self.view.bounds];
     lbl.text = [self.conversation firstMail].subject;
@@ -204,7 +204,7 @@
     NSInteger idx = 0;
     
     for (Mail* m in self.conversation.mails) {
-    
+        
         NSString* day = m.day;
         
         NSInteger i = [Mail isTodayOrYesterday:day];
@@ -217,14 +217,13 @@
         }
         
         NSString* hour = m.hour;
-        //NSString* mail = m.content;
         
-        if ((idx ==0) && !m.isRead) {
+        posY = [self _addHeaderDay:day hour:hour atYPos:posY inView:contentView];
+        posY = [self _addMail:m withIndex:idx extended:((![m isRead]) || idx == 0) atYPos:posY inView:contentView];
+        
+        if (!m.isRead) {
             [m toggleRead];
         }
-
-        posY = [self _addHeaderDay:day hour:hour atYPos:posY inView:contentView];
-        posY = [self _addMail:m withIndex:idx extended:(idx==0) atYPos:posY inView:contentView];
         
         idx++;
     }
@@ -274,14 +273,14 @@
 }
 
 /*-(void) makeConversationFav:(BOOL)isFav
-{
-    //Account* ac = [[Accounts sharedInstance] currentAccount];
-    //[ac manage:self.conversation isFav:isFav];
-    
-    //for (SingleMailView* smv in self.allMailViews) {
-        [smv updateFavUI:isFav];
-    //}
-}*/
+ {
+ //Account* ac = [[Accounts sharedInstance] currentAccount];
+ //[ac manage:self.conversation isFav:isFav];
+ 
+ //for (SingleMailView* smv in self.allMailViews) {
+ [smv updateFavUI:isFav];
+ //}
+ }*/
 
 -(void) mailView:(SingleMailView*)mailView changeHeight:(CGFloat)deltaHeight
 {
@@ -327,7 +326,7 @@
 
 -(void) openWebURL:(NSURL*)url
 {
-    if ([self isEmailRegExp:url.absoluteString]) {
+    if (![url.absoluteString containsString:@"http"] && [self isEmailRegExp:url.absoluteString]) {
         NSString* email = [url.absoluteString stringByReplacingOccurrencesOfString:@"mailto:" withString:@""];
         
         Draft* draft = [Draft newDraftFormCurrentAccount];
@@ -444,7 +443,7 @@
     UIDocumentInteractionController* documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:URL];
     documentInteractionController.delegate = self;
     [documentInteractionController presentOpenInMenuFromRect:CGRectMake(0, 0, 0, 0) inView:self.view animated:YES];
-     
+    
 }
 
 -(CGFloat) _addMail:(Mail*)mail withIndex:(NSInteger)idx extended:(BOOL)extended atYPos:(CGFloat)posY inView:(UIView*)v
@@ -511,13 +510,13 @@
     [b2 setImage:[UIImage imageNamed:@"button_archive_on"] forState:UIControlStateHighlighted];
     b2.tag = 1;
     [b2 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
-
+    
     UIButton* b3 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b3 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
     [b3 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
     b3.tag = 2;
     [b3 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
-
+    
     UIButton* b4 = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 33, 33)];
     [b4 setImage:[UIImage imageNamed:@"button_delete_off"] forState:UIControlStateNormal];
     [b4 setImage:[UIImage imageNamed:@"button_delete_on"] forState:UIControlStateHighlighted];
@@ -746,37 +745,34 @@
     }
     self.posXtoUsers = xPos + 33.f;
     
-    
     UIView* sep = [[UIView alloc] initWithFrame:CGRectMake(0, 44, inIV.bounds.size.width, 1)];
     sep.backgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0];
     sep.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [inIV addSubview:sep];
     
-    
-    
     if (extended) {
-
+        
         CGSize size = CGSizeMake(WIDTH - 30,  ([UIScreen mainScreen].bounds.size.height / 2));
-
+        
         size.width = ceilf(size.width);
         size.height = ceilf(size.height);
         
         const CGFloat topBorder = 14.f;
-
-            if (!self.htmlView) {
-                self.height = size.height;// = 100;
-                MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0/*8*/, 48.f + topBorder, size.width, size.height)];
-                view.isConversation = [self.delegate isConversation];
-                [view setMail:mail];
-                view.delegate = self;
-                self.htmlView = view;
-            }
-            else {
-                size.height = self.height;
-                [self.htmlView setFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
-            }
-
-            [inIV addSubview:self.htmlView];
+        
+        if (!self.htmlView) {
+            self.height = size.height;// = 100;
+            MCOMessageView* view = [[MCOMessageView alloc]initWithFrame:CGRectMake(0/*8*/, 48.f + topBorder, size.width, size.height)];
+            view.isConversation = [self.delegate isConversation];
+            [view setMail:mail];
+            view.delegate = self;
+            self.htmlView = view;
+        }
+        else {
+            size.height = self.height;
+            [self.htmlView setFrame:CGRectMake(8, 48.f + topBorder, size.width, size.height)];
+        }
+        
+        [inIV addSubview:self.htmlView];
         
         CGRect f = inIV.frame;
         f.size.height = 90 + size.height + topBorder * 2.f;
@@ -790,11 +786,11 @@
         else {
             n.text = person.name;
         }
-
+        
         f = n.frame;
         f.size.width = self.posXtoUsers - f.origin.x;
         n.frame = f;
-
+        
         UIView* av = [self _createAttachments:mail.attachments];
         
         if (av != nil) {
@@ -823,11 +819,9 @@
     
     inIV.clipsToBounds = YES;
     
-    
     CGRect f = self.frame;
     f.size.height = height;
     self.frame = f;
-
     
     self.favoriBtn = nil;
     
@@ -879,7 +873,6 @@
                 
                 [b addTarget:self action:@selector(_openEdit:) forControlEvents:UIControlEventTouchUpInside];
             }
-            
         }
     }
     
@@ -901,7 +894,7 @@
 -(UIView*) _createAttachments:(NSArray*)attachs
 {
     NSInteger normalAttsCount = 0;
-
+    
     for (Attachment* a in attachs) {
         if (!a.isInline) {
             normalAttsCount++;
@@ -973,7 +966,7 @@
     else {
         repm = [m replyDraft:YES];
     }
-
+    
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:repm}];
 }
 
@@ -990,7 +983,7 @@
     [mail toggleFav];
     //[self updateFavUI:mail.isFav];
     [self setupWithText:mail extended:YES];
-
+    
     //[self.delegate makeConversationFav:mail.isFav];
 }
 
@@ -1033,7 +1026,7 @@
         CGFloat nextHeight = 44.f;
         
         Mail* mail = [self.delegate mailDisplayed:self];
-
+        
         if (mailView.bounds.size.height>50) {
             [self setupWithText:mail extended:NO];
             nextHeight = 44.f;
@@ -1121,7 +1114,7 @@
     Conversation* conv = ((ConversationViewController*)self.delegate).conversation;
     for (Mail* mail in conv.mails) {
         for (Attachment* att in mail.attachments) {
-
+            
             if (att.isInline && [att.contentID isEqualToString:partID]) {
                 found = YES;
                 if(!att.data){
@@ -1132,30 +1125,29 @@
                      uid:uidE.uid
                      partID:att.partID
                      encoding:MCOEncodingBase64];
-                
+                    
                     op.progress = ^(unsigned int current, unsigned int maximum){
                         CCMLog(@"%u, %u", current,maximum);
                     };
+                    
                     dispatch_async([ImapSync sharedServices:conv.user].s_queue, ^{
-                    [op start:^(NSError*  error, NSData*  partData) {
-                        if(error){
-                            CCMLog(@"%@",error);
-                            return;
-                        }
-                        att.data = partData;
-                        [Attachment updateData:att];
-
-                        completedBlock(att.data);
-                    }];
+                        [op start:^(NSError*  error, NSData*  partData) {
+                            if(error){
+                                CCMLog(@"%@",error);
+                                return;
+                            }
+                            att.data = partData;
+                            [Attachment updateData:att];
+                            
+                            completedBlock(att.data);
+                        }];
                         
                     });
                     
                     break;
                 }
                 else {
-
                     completedBlock(att.data);
-                    
                     break;
                 }
             }

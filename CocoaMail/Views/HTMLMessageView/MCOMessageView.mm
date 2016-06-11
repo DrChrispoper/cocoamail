@@ -14,6 +14,7 @@
 #import <Instabug/Instabug.h>
 #import "Flurry.h"
 #import "UserSettings.h"
+#import "CCMStatus.h"
 
 static NSString * mainJavascript = @"\
 var imageElements = function() {\
@@ -75,13 +76,21 @@ return Math.max(\
                 document.documentElement.clientHeight\
                 );\
 };\
+$.getDocWidth = function(){\
+return Math.max(\
+$(document).width(),\
+$(window).width(),\
+/* For opera: */\
+document.documentElement.clientWidth\
+);\
+};\
 jQuery(document).ready(function(){\
-window.location.href = \"ready://\" + $.getDocHeight();\
+window.location.href = \"ready://\" + $.getDocHeight() + \",\" + $.getDocWidth();\
 $(\"img\").bind( 'vclick', imageHandler);\
 $(\"img\").bind( 'taphold', longImageHandler);\
 });\
 jQuery(window).load(function() {\
-window.location.href = \"newheight://\" + $.getDocHeight();\
+window.location.href = \"newheight://\" + $.getDocHeight() + \",\" + $.getDocWidth();\
 });\
 $(document).on('mobileinit', function () {\
 $.mobile.ignoreContentEnabled=true;\
@@ -108,8 +117,8 @@ if (e.target.id) {\
 window.location.href = \"image://\" + e.target.id;\
 }\
 }\
-$(\"a\").bind( 'taphold', longClickHandler);\
 $(document).on( 'taphold', \"div\", longClickHandler );\
+$(\"a\").bind( 'taphold', longClickHandler);\
 $(function(){\
     $('div.expandContent').bind( \"tap\", tapHandler );\
     function tapHandler( event ){\
@@ -118,9 +127,32 @@ $(function(){\
         });\
     }\
 });\
+var expd = function() {\
+$('div.showMe').slideToggle('fast', function() {\
+window.location.href = \"showMore://\" + document.documentElement.clientHeight + \",\" + document.body.offsetWidth;\
+});\
+};\
 ";
 
 /*
+
+ $(\"a\").on({\
+ taphold: function(e) {\
+ post('long tap fired');\
+ $(this).data('longTapRegistered', true);\
+ if (e.target.href) {\
+ window.location.href = \"long://\" + e.target.href;\
+ }\
+ },\
+ 'vclick vmouseout': function(e) {\
+ var $this = $(this);\
+ if (e.type == 'vclick' && $this.data('longTapRegistered')) {\
+ e.preventDefault();\
+ }\
+ $this.removeData('longTapRegistered');\
+ }\
+ });\
+ 
  var text = $('div.expandContent').style.backgroundColor;\
  var h = rgbToHex(text);\
  alert(rgbToHex(text));\
@@ -165,7 +197,11 @@ a\
 }\
 p\
 {\
-margin = 0;\
+margin : 0;\
+}\
+blockquote\
+{\
+margin : 0;\
 }\
 ";
 
@@ -206,6 +242,9 @@ margin = 0;\
         
         _webView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
         _webView.scrollView.backgroundColor = [UIColor colorWithWhite:1. alpha:1.];
+        
+        _webView.opaque = NO;
+        _webView.backgroundColor = [UIColor clearColor];
 
         [_webView setDelegate:self];
         
@@ -296,14 +335,16 @@ margin = 0;\
 {
     NSString * content = _html;
 
-    content = [content stringByReplacingOccurrencesOfString:@"height=\"100%\"" withString:@"?"];
+    /*content = [content stringByReplacingOccurrencesOfString:@"height=\"100%\"" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"height: 100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"height:100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"min-height:100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nheight=\"100%\"" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nheight: 100%" withString:@"?"];
     content = [content stringByReplacingOccurrencesOfString:@"\nheight:100%" withString:@"?"];
-    content = [content stringByReplacingOccurrencesOfString:@"\nmin-height:100%" withString:@"?"];
+    content = [content stringByReplacingOccurrencesOfString:@"\nmin-height:100%" withString:@"?"];*/
+
+    content = [content stringByReplacingOccurrencesOfString:@"device-width" withString:[NSString stringWithFormat:@"%f",[self bounds].size.width]];
     
     if (content == nil) {
         [_webView loadHTMLString:@"" baseURL:nil];
@@ -325,12 +366,23 @@ margin = 0;\
         }
         content = split;
     }
+    /*else {
+        NSArray* res = [FindQuote quote_html:content];
+        
+        NSString* split = res[0];
+        if (res.count == 2) {
+            split = [NSString stringWithFormat:@"%@<div class=\"expandContent\"><img height='14px' width='37px' src='caca_off.png'></div><div class=\"showMe\">%@</div>", res[0], res[1]];
+        }
+        content = split;
+    }*/
 
-    [html appendFormat:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+    //<iframe src='http://putcocoa.in/awsome.html' style='width: 0px; height: 0px; border: none;'></iframe>
+    
+    [html appendFormat:@"<html><head><meta name='viewport' content='width=%f, user-scalable=1'>"
      "<script src=\"%@\"></script><script src=\"%@\"></script><script src=\"%@\"></script><script>%@</script><style>%@</style></head>"
      "<body data-enhance='false'>%@</body>"
-     "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe><iframe src='http://putcocoa.in/awsome.html' style='width: 0px; height: 0px; border: none;'></iframe></html>",
-     [jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
+     "<iframe src='x-mailcore-msgviewloaded:' style='width: 0px; height: 0px; border: none;'></iframe></html>",
+     [self bounds].size.width,[jsURL absoluteString], [jsMobileURL absoluteString], [jsLongURL absoluteString], mainJavascript, mainStyle,
      content];
     
     [_webView loadHTMLString:html baseURL:[[NSBundle mainBundle] bundleURL]];
@@ -396,7 +448,7 @@ margin = 0;\
 {
     NSURL *url = [request URL];
 
-    //NSLog(@"url:%@",url);
+    NSLog(@"url:%@",url);
     
     if ([[url scheme] isEqualToString:@"image"]) {
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
@@ -418,13 +470,23 @@ margin = 0;\
             NSMutableString* correctURL = [NSMutableString stringWithString:urlString];
             
             if ([urlString containsString:@"https"]) {
-                [correctURL insertString:@":" atIndex:5];
+                NSRange range = [correctURL rangeOfString:@"https"];
+                [correctURL insertString:@":" atIndex:range.location+range.length];
             }
             else {
-                [correctURL insertString:@":" atIndex:4];
+                NSRange range = [correctURL rangeOfString:@"http"];
+                [correctURL insertString:@":" atIndex:range.location+range.length];
             }
             
             [_delegate openLongURL:[NSURL URLWithString:correctURL]];
+        }
+        else if ([urlString isEqualToString:@"mailto"]){
+            //[_delegate openLongURL:[NSURL URLWithString:[NSString stringWithFormat:@"mailto:%@", comps[2]]]];
+            
+            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+            pasteboard.persistent = YES;
+            pasteboard.string = comps[2];
+            [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad") dismissAfter:2 code:0];
         }
         else {
             [_delegate openLongContentID:urlString];
@@ -445,6 +507,7 @@ margin = 0;\
     else if (navigationType == UIWebViewNavigationTypeOther) {
         if ([[url scheme] isEqualToString:@"ready"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
 
             [_loadingView setHidden:YES];
 
@@ -455,21 +518,38 @@ margin = 0;\
                 notCool = YES;
             }
             
-            if (_webView.scrollView.contentSize.height > 0) {
-            if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
+            NSLog(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
+            NSLog(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
+            CGFloat widthRef = _webView.scrollView.contentSize.width;
+            
+            if (_webView.scrollView.contentSize.height > 1) {
+                if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
                 //if (contentHeight < _webView.scrollView.contentSize.height) {
                 contentHeight = _webView.scrollView.contentSize.height;
                 //}
-            }
-            else {
-                if (contentHeight > _webView.scrollView.contentSize.height) {
-                    contentHeight = _webView.scrollView.contentSize.height;
+                }
+                else {
+                    if (contentHeight > _webView.scrollView.contentSize.height) {
+                        contentHeight = _webView.scrollView.contentSize.height;
+                    }
                 }
             }
+            
+            
+            NSLog(@"Screen bounds Width:%f", [self bounds].size.width);
+            NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+
+            if (_webView.scrollView.contentSize.width > [self bounds].size.width) {
+                _webView.scrollView.zoomScale = ((float)[self bounds].size.width / (float)contentWidth);
+                _webView.scrollView.minimumZoomScale = _webView.scrollView.zoomScale;
+                //_webView.scrollView.maximumZoomScale = _webView.scrollView.zoomScale;
+                contentHeight = contentHeight * _webView.scrollView.zoomScale;
+                NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
             }
             
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
+            
             _webView.frame = fr;
             
             _webView.scrollView.showsVerticalScrollIndicator = false;
@@ -486,6 +566,7 @@ margin = 0;\
         }
         else if ([[url scheme] isEqualToString:@"newheight"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            float contentWidth = [[[url host] componentsSeparatedByString:@","][1] integerValue];
 
             [_loadingView setHidden:YES];
 
@@ -498,19 +579,39 @@ margin = 0;\
                 notCool = YES;
             }
             
+            NSLog(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
+            NSLog(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
+            
             if (_webView.scrollView.contentSize.height > 0) {
                 if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
                     contentHeight = _webView.scrollView.contentSize.height;
                 }
                 else {
                     if (contentHeight > _webView.scrollView.contentSize.height) {
-                        contentHeight = _webView.scrollView.contentSize.height;
+                        //contentHeight = _webView.scrollView.contentSize.height;
                     }
                 }
             }
             
+            NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+            
+            if (_webView.scrollView.zoomScale < 1.0) {
+                //_webView.scrollView.zoomScale = (345.f / contentWidth);
+                //_webView.scrollView.minimumZoomScale = _webView.scrollView.zoomScale;
+                contentHeight = contentHeight * _webView.scrollView.zoomScale;
+            }
+            else if (_webView.scrollView.contentSize.width > [self bounds].size.width) {
+                _webView.scrollView.zoomScale = ((float)[self bounds].size.width / (float)contentWidth);
+                _webView.scrollView.minimumZoomScale = _webView.scrollView.zoomScale;
+                contentHeight = contentHeight * _webView.scrollView.zoomScale;
+                NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+            }
+            
+            NSLog(@"Content height:%f", contentHeight);
+
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
+            
             _webView.frame = fr;
             
             if (!notCool) {
@@ -519,19 +620,25 @@ margin = 0;\
 
             [_delegate webViewLoaded:_webView];
             
+            /*if (!self.isConversation) {
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [_webView stringByEvaluatingJavaScriptFromString:@"expd()"];
+                }];
+            }*/
+            
             return NO;
         }
         else if ([[url scheme] isEqualToString:@"showMore"]) {
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
             
-            //ShowMore
-            if (_showLessSize == 0) {
-                _showLessSize = _webView.frame.size.height;
-            }
-            else if (_showLessSize < contentHeight) {
-                contentHeight = _showLessSize;
-                _showLessSize = 0;
-            }
+                //ShowMore
+                if (_showLessSize == 0) {
+                    _showLessSize = _webView.frame.size.height;
+                }
+                else if (_showLessSize < contentHeight) {
+                    contentHeight = _showLessSize;
+                    _showLessSize = 0;
+                }
             
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);

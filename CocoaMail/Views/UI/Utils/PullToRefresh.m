@@ -99,8 +99,8 @@
         self.sv = scrollView;
         
         [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
-        [[Accounts sharedInstance].currentAccount localFetchMore:NO];
-        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
+        //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
+        //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
     }
 }
 

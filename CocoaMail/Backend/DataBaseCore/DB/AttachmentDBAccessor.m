@@ -8,6 +8,7 @@
 
 #import "AttachmentDBAccessor.h"
 #import "StringUtil.h"
+#import "sqlite3.h"
 
 #define ATTACHMENTS_DB_NAME @"attachment.tdb"
 

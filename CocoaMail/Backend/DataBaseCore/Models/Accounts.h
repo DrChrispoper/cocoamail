@@ -59,6 +59,7 @@
 
 @property (nonatomic, strong) NSArray* userFolders;
 @property (nonatomic) NSInteger currentFolderIdx;
+@property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;
 -(void) setCurrentFolder:(CCMFolderType)folder;
 -(void) refreshCurrentFolder;

@@ -13,7 +13,8 @@
 #import <AddressBook/AddressBook.h>
 #import "MyLabel.h"
 #import "UIView+RenderViewToImage.h"
-
+#import <CommonCrypto/CommonDigest.h>
+#import <AvailabilityMacros.h>
 
 @interface Persons ()
 
@@ -238,6 +239,15 @@
     p.codeName = codeName;
     p.email = mail;
     
+    if (!name) {
+        p.name = mail;
+    }
+    
+    if (!codeName) {
+        p.codeName = [[mail substringToIndex:3] uppercaseString];
+    }
+    
+    
     p.isGeneric = [p hasGeneriEmail];
 
     if (p.isGeneric) {
@@ -250,10 +260,49 @@
         p.codeName = cN;
     }
     
+    if (UIApplicationStateBackground != [UIApplication sharedApplication].applicationState && mail) {
+    NSURL* url = [p gravatarURL:mail];
+    
+    NSURLRequest *request = [NSURLRequest
+                             requestWithURL:url
+                             cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                             timeoutInterval:0.f];
+    
+    NSURLSession *session = [NSURLSession sharedSession];
+    
+    NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request
+                                                            completionHandler:
+                                              ^(NSURL *location, NSURLResponse *response, NSError *error) {
+                                                  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+
+                                                  if (!error && httpResponse.statusCode != 404) {
+                                                      NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+                                                      NSURL *documentsDirectoryURL = [NSURL fileURLWithPath:documentsPath];
+                                                      NSURL *documentURL = [documentsDirectoryURL URLByAppendingPathComponent:[response
+                                                                                                                           suggestedFilename]];
+                                                      [[NSFileManager defaultManager] moveItemAtURL:location
+                                                                                          toURL:documentURL
+                                                                                          error:nil];
+                                                      
+                                                      NSString* fP = [NSString stringWithFormat:@"%@/%@",documentsPath,[response suggestedFilename]];
+                                                    if ([[NSFileManager defaultManager] fileExistsAtPath:fP]) {
+                                                          p.image = [UIImage imageWithContentsOfFile:fP];
+                                                    }
+                                                  }
+                                              }];
+    
+            [downloadTask resume];
+    }
     
     [[Persons sharedInstance] addPerson:p];
     
     return p;
+}
+
+- (NSURL *)gravatarURL:(NSString *)email {
+    NSMutableString *gravatarPath = [NSMutableString stringWithFormat:@"http://gravatar.com/avatar/%@?s=%d&r=pg&d=404", [self createMD5:email], 66];
+    
+    return [NSURL URLWithString:gravatarPath];
 }
 
 -(void) linkToAccount:(Account*)account
@@ -493,5 +542,19 @@
     return YES;
 }
 
+- (NSString *)createMD5:(NSString *)email {
+    const char *cStr = [_email UTF8String];
+    unsigned char digest[16];
+    
+    CC_MD5(cStr, (int)strlen(cStr), digest);
+    
+    NSMutableString *emailMD5 = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    
+    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+        [emailMD5 appendFormat:@"%02x", digest[i]];
+    }
+    
+    return  emailMD5;
+}
 
 @end

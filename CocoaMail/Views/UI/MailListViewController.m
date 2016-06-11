@@ -25,19 +25,19 @@
 #import "PreviewViewController.h"
 #import "ConversationViewController.h"
 #import "MailListViewController+UIViewControllerPreviewing.h"
-#import "UIScrollView+EmptyDataSet.h"
+//#import "UIScrollView+EmptyDataSet.h"
 #import "Flurry.h"
 #import "UserSettings.h"
 #import "Conversation.h"
 #import "Draft.h"
 
-@interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate>
+@interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate/*, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate*/>
 
 @property (nonatomic, strong) NSMutableArray<NSMutableIndexSet*>* indexSet;
-@property (nonatomic, strong) NSMutableArray<ConversationIndex*>* deletes;
+@property (nonatomic, strong) NSMutableSet* deletes;
 
-@property (nonatomic) NSInteger pageIndex;
-@property (nonatomic) NSInteger deletedSections;
+//@property (nonatomic) NSInteger pageIndex;
+//@property (nonatomic) NSInteger deletedSections;
 @property (nonatomic) NSInteger countBeforeLoadMore;
 @property (nonatomic) NSInteger indexCount;
 @property (nonatomic, strong) NSString* folderName;
@@ -53,6 +53,7 @@
 @property (nonatomic) BOOL initialLoading;
 @property (nonatomic) BOOL localSearchDone;
 @property (nonatomic) BOOL serverSearchDone;
+@property (nonatomic) BOOL closing;
 
 @property (nonatomic, strong) UIRefreshControl* refreshC;
 
@@ -60,7 +61,7 @@
 
 @implementation MailListViewController
 
-static NSInteger pageCount = 15;
+//static NSInteger pageCount = 15;
 
 -(instancetype) initWithName:(NSString*)name
 {
@@ -68,14 +69,13 @@ static NSInteger pageCount = 15;
     self.folderName = name;
     
     self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
-    self.pageIndex = 1;
-    self.deletedSections = 0;
+    //self.pageIndex = 1;
+    //self.deletedSections = 0;
     self.countBeforeLoadMore = 0;
     self.indexCount = 0;
     self.isDebugMode = NO;
     self.initialLoading = YES;
-    self.deletes = [[NSMutableArray alloc] init];
-    
+    self.closing = NO;
     return self;
 }
 
@@ -102,7 +102,7 @@ static NSInteger pageCount = 15;
     self = [self initWithName:person.name];
     
     self.onlyPerson = person;
-    self.folder = FolderTypeWith(FolderTypeAll, 0);
+    self.folder = CCMFolderTypeAll;
     self.presentAttach = YES;
     
     return self;
@@ -143,7 +143,8 @@ static NSInteger pageCount = 15;
     
     self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
     self.indexSet = [[NSMutableArray alloc]initWithCapacity:[Accounts sharedInstance].accountsCount];
-    
+    self.deletes = [[NSMutableSet alloc]init];
+
     for (Account* a in [Accounts sharedInstance].accounts) {
         if (!a.user.isAll) {
             [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
@@ -226,14 +227,8 @@ static NSInteger pageCount = 15;
     
     table.dataSource = self;
     table.delegate = self;
-    table.emptyDataSetSource = self;
-    table.emptyDataSetDelegate = self;
     self.table = table;
-    
-    self.refreshC = [[UIRefreshControl alloc] init];
-    [self.table addSubview:self.refreshC];
-    [self.refreshC addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
-    
+
     UIView* headerView = [[UIView alloc] init];
     headerView.backgroundColor = self.table.backgroundColor;
     
@@ -243,10 +238,17 @@ static NSInteger pageCount = 15;
     
     [headerView addSubview:button];
     
+    [headerView setHidden:YES];
+    
     self.table.tableFooterView = headerView;
     
     if (!self.onlyPerson) {
-        [self addPullToRefreshWithDelta:0];
+        self.refreshC = [[UIRefreshControl alloc] init];
+        [self.table addSubview:self.refreshC];
+        [self.refreshC addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
+        //[self addPullToRefreshWithDelta:0];
+        //table.emptyDataSetSource = self;
+        //table.emptyDataSetDelegate = self;
     }
     
     if (self.convByDay.count == 0) {
@@ -256,8 +258,8 @@ static NSInteger pageCount = 15;
 
 - (void)refreshTable {
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
-    [[Accounts sharedInstance].currentAccount localFetchMore:NO];
-    [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
+    //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
+    //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -266,12 +268,12 @@ static NSInteger pageCount = 15;
 
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
     if (UIEventSubtypeMotionShake) {
-        self.isDebugMode = !self.isDebugMode;
+       /* self.isDebugMode = !self.isDebugMode;
         
         [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
         [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:self.isDebugMode?@"Debug Mode On":@"Debug Mode Off"];
         [[PKHUD sharedHUD] show];
-        [[PKHUD sharedHUD] hideAfterDelay:2.0];
+        [[PKHUD sharedHUD] hideAfterDelay:2.0];*/
         
         [self reload];
     }
@@ -303,7 +305,7 @@ static NSInteger pageCount = 15;
     //c.mails = tmp;
     
     // to have the right title in next VC
-    [c firstMail].subject = self.onlyPerson.name;
+    //[c firstMail].subject = self.onlyPerson.name;
     
     if (self.attachSubscriber) {
         [self.attachSubscriber reloadWithConversation:c];
@@ -352,10 +354,11 @@ static NSInteger pageCount = 15;
 
 -(void) cleanBeforeGoingBack
 {
-    self.pageIndex = 1;
+    //self.pageIndex = 1;
     self.countBeforeLoadMore = 0;
     self.indexCount = 0;
-    
+    self.closing = YES;
+
     self.table.delegate = nil;
     self.table.dataSource = nil;
     [[SearchRunner getSingleton] cancel];
@@ -365,15 +368,18 @@ static NSInteger pageCount = 15;
 {
     [super viewWillAppear:animated];
     
-    self.table.emptyDataSetSource = self;
-    self.table.emptyDataSetDelegate = self;
+    //self.table.emptyDataSetSource = self;
+    //self.table.emptyDataSetDelegate = self;
     
-    [self serverSearchDone:YES];
-    [self localSearchDone:YES];
+    if (self.indexSet.count < [AppSettings numActiveAccounts]) {
+        [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
+    }
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
     
-    [self reFetch:YES];
+    [self serverSearchDone:YES];
+
+    //[self reFetch:YES];
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -397,8 +403,13 @@ static NSInteger pageCount = 15;
     
     [self.table setContentOffset:self.table.contentOffset animated:NO];
     
-    //self.table.emptyDataSetSource = nil;
-    //self.table.emptyDataSetDelegate = nil;
+    //[[Accounts sharedInstance] currentAccount].mailListSubscriber = nil;
+
+    if (!self.onlyPerson) {
+        //self.table.emptyDataSetSource = nil;
+        //self.table.emptyDataSetDelegate = nil;
+    }
+    
     
     [ViewController animateCocoaButtonRefresh:NO];
 }
@@ -434,11 +445,15 @@ static NSInteger pageCount = 15;
 
 -(void) _removeConversation:(NSArray*)convs
 {
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+
     NSMutableArray* ips = [[NSMutableArray alloc]init];
     
     for (ConversationIndex* pConversationIndex in convs) {
         
         if ([self.indexSet[pConversationIndex.user.accountIndex] containsIndex:pConversationIndex.index]) {
+            
+            NSLog(@"ConversationIndex:%ld in Account:%ld", (long)pConversationIndex.index, (unsigned long)pConversationIndex.user.accountNum);
             
             BOOL found = NO;
             
@@ -457,14 +472,9 @@ static NSInteger pageCount = 15;
                 
                 if (found) break;
             }
-            
-            if (!found) {
-                NSLog(@"Email to delete not found in list shown");
-            }
         }
     }
     
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [self _commonRemoveConvs:ips];
     }];
 }
@@ -512,6 +522,195 @@ static NSInteger pageCount = 15;
     }];
 }
 
+-(void) updateDays:(NSArray*)days
+{
+    if (!days || days.count == 0){
+        return;
+    }
+    
+    NSMutableIndexSet* sections = [[NSMutableIndexSet alloc] init];
+    
+    for (NSString* day in days) {
+        NSDateFormatter* s_df_day = [[NSDateFormatter alloc] init];
+        s_df_day.dateFormat = @"d MMM yy";
+        NSDate* dayDate = [s_df_day dateFromString:day];
+        
+        for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
+            NSDate* tmpDay = self.convByDay[dayIndex][@"day"];
+            if ([dayDate compare:tmpDay] == NSOrderedSame){
+                [sections addIndex:dayIndex];
+            }
+        }
+    }
+    
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [self.table beginUpdates];
+        [self.table reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
+        [self.table endUpdates];
+    }];
+
+}
+
+-(void) insertConversationIndex:(ConversationIndex*)ci
+{
+   [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+       if (self.closing) {
+           return ;
+       }
+       
+    if (self.onlyPerson) {
+    NSInteger personID = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
+    NSInteger meID = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
+    
+    BOOL found = false;
+
+    for (Mail* mail in [[[Accounts sharedInstance] conversationForCI:ci] mails]) {
+        
+        if (mail.fromPersonID == personID) {
+            found = true;
+        }
+        else if (mail.fromPersonID == meID) {
+            for (NSNumber* toPersonID in mail.toPersonIDs) {
+                if ([toPersonID integerValue] == personID) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        if (found) {
+            break;
+        }
+    }
+    
+    if(!found){
+        return;
+    }
+    }
+    
+    if ([self.indexSet[ci.user.accountIndex] containsIndex:ci.index]) {
+        return;
+    }
+    
+    Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
+    
+    NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+    
+    if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+        
+        [conv foldersType];
+        
+        BOOL isInFolder = NO;
+        
+        for (Mail* mail in conv.mails) {
+            if ([mail uidEWithFolder:currentFolderIdx]) {
+                isInFolder = YES;
+                break;
+            }
+        }
+        
+        if (!isInFolder) {
+            IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
+            NSLog(@"%@",[NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
+            Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
+            [a deleteIndex:ci.index fromFolder:self.folder];
+            return;
+        }
+    }
+    
+    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
+
+    [self.indexSet[ci.user.accountIndex] addIndex:ci.index];
+    
+    NSDate* convDay = ci.day;
+    
+    BOOL added = NO;
+    
+    for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
+        
+        NSDate* tmpDay = self.convByDay[dayIndex][@"day"];
+        NSComparisonResult result = [convDay compare:tmpDay];
+        
+        if (result == NSOrderedDescending) {
+            //Email Before //Insert section before date //+ email
+            
+            NSDictionary* earlier = @{@"list": [NSMutableArray arrayWithObject:ci], @"day":convDay};
+            [self.convByDay insertObject:earlier atIndex:dayIndex];
+            
+            //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
+            //NSLog(@"self.convByDay: %d", [self.convByDay count]);
+            //NSInteger pager = MIN(self.convByDay.count, (pageCount * self.pageIndex)+1-self.deletedSections);
+            //NSLog(@"pager: %d", pager);
+            
+            [self.table beginUpdates];
+            [self.table insertSections:[NSIndexSet indexSetWithIndex:dayIndex] withRowAnimation:UITableViewRowAnimationFade];
+            //[self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+            [self.table endUpdates];
+            
+            added = YES;
+            break;
+        }
+        else if (result == NSOrderedSame) {
+            //Add email to section of date
+            NSMutableArray* list = self.convByDay[dayIndex][@"list"];
+            
+            [list sortUsingDescriptors:@[sortByDate]];
+            
+            for (int j = 0 ; j < list.count ; j++) {
+                
+                ConversationIndex* cI = list[j];
+                
+                NSComparisonResult result = [ci.date compare:cI.date];
+                
+                if (result == NSOrderedDescending) {
+                    [list insertObject:ci atIndex:j];
+                    [self.table beginUpdates];
+                    if (self.convByDay.count > dayIndex) {
+                    [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:j inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
+                    }else {
+                        NSLog(@"Something went wrong with convByDay");
+                    }
+                    [self.table endUpdates];
+                    added = YES;
+                    break;
+                }
+            }
+            
+            if (!added) {
+                [list addObject:ci];
+                [self.table beginUpdates];
+                if (self.convByDay.count > dayIndex) {
+                [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:list.count-1 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
+                }else {
+                    NSLog(@"Something went wrong with convByDay");
+                }
+                [self.table endUpdates];
+                added = YES;
+            }
+            
+            break;
+        }
+    }
+    
+    if (!added) {
+        //Date section not existing //Add new date //Add email to new date
+        NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:ci], @"day":convDay};
+        [self.convByDay addObject:later];
+        
+        //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
+        //NSLog(@"self.convByDay: %d", [self.convByDay count]);
+        //NSInteger pager = MIN(self.convByDay.count, (pageCount * self.pageIndex)+1-self.deletedSections);
+        //NSLog(@"pager: %d", pager);
+        
+        //if(self.convByDay.count < pager) {
+            [self.table beginUpdates];
+            [self.table insertSections:[NSIndexSet indexSetWithIndex:self.convByDay.count-1] withRowAnimation:UITableViewRowAnimationFade];
+            [self.table endUpdates];
+        //}
+    }
+}];
+
+}
 
 -(void) insertConversations:(NSArray*)pConvs
 {
@@ -524,10 +723,8 @@ static NSInteger pageCount = 15;
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
     [convs sortUsingDescriptors:@[sortByDate]];
     
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        
-        NSLog(@"Begin Add");
-
+    //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
+    
         for (ConversationIndex* conversationIndex in convs) {
             
             if ([self.indexSet[conversationIndex.user.accountIndex] containsIndex:conversationIndex.index]) {
@@ -538,7 +735,7 @@ static NSInteger pageCount = 15;
             
             NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
             
-            if (currentFolderIdx != [conv.user importantFolderNumforBaseFolder:FolderTypeAll]) {
+            if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
                 
                 [conv foldersType];
                 
@@ -615,11 +812,9 @@ static NSInteger pageCount = 15;
             }
         }
         
-        NSLog(@"End Add");
-
         [self reload];
         self.initialLoading = NO;
-    }];
+    //}];
 }
 
 -(NSMutableArray*) _filterResultsForPerson:(NSArray*)convs
@@ -695,7 +890,7 @@ static NSInteger pageCount = 15;
     else if (swipetype == QuickSwipeMark) {
         arch.highlightedImage = [UIImage imageNamed:@"swipe_unread"];
     }
-    else if(self.folder.type == type.type && swipetype == QuickSwipeArchive) {
+    else if((self.folder.type == FolderTypeAll && swipetype == QuickSwipeArchive) || (self.folder.type == FolderTypeDeleted && swipetype == QuickSwipeDelete)) {
         //We archive emails from the archive folder if they are already in the Inbox
         arch.highlightedImage = [UIImage imageNamed:@"swipe_inbox"];
     }
@@ -733,25 +928,26 @@ static NSInteger pageCount = 15;
     
     NSMutableArray* tmpIps = [[NSMutableArray alloc] initWithCapacity:ips.count];
     
-    NSLog(@"Begin Delete");
     for (NSIndexPath* ip in [ips reverseObjectEnumerator]) {
         // change in model
-        NSMutableArray* ma  = self.convByDay[ip.section][@"list"];
-        ConversationIndex* cIndex = ma[ip.row];
+        NSMutableArray* list  = self.convByDay[ip.section][@"list"];
+        ConversationIndex* cIndex = list[ip.row];
         
-        NSLog(@"Delete cell section:%li self.convByDay.count:%li", (long)ip.section, (unsigned long)self.convByDay.count);
-        NSLog(@"Delete cell row:%li list.count:%li", (long)ip.row, (unsigned long)ma.count);
         
         if ([self.indexSet[cIndex.user.accountIndex] containsIndex:cIndex.index]) {
-            if (ma.count == 1) {
+            if (list.count == 1) {
+                NSLog(@"Delete section:%li self.convByDay.count:%li", (long)ip.section, (unsigned long)self.convByDay.count);
+
                 if (ip.section < self.convByDay.count) {
                     [self.convByDay removeObjectAtIndex:ip.section];
                     [is addIndex:ip.section];
                 }
             }
             else {
-                if (ip.row < ma.count) {
-                    [ma removeObjectAtIndex:ip.row];
+                NSLog(@"Delete cell section:%li row:%li list.count:%li", (long)ip.section, (long)ip.row, (unsigned long)list.count);
+
+                if (ip.row < list.count) {
+                    [list removeObjectAtIndex:ip.row];
                     [tmpIps addObject:ip];
                 }
             }
@@ -760,21 +956,19 @@ static NSInteger pageCount = 15;
         }
     }
     
-    self.deletedSections = self.deletedSections + is.count;
+    //self.deletedSections = self.deletedSections + is.count;
     
     [self.table beginUpdates];
     
     [self.table deleteRowsAtIndexPaths:tmpIps withRowAnimation:UITableViewRowAnimationFade];
-    
+
     if (is.count > 0) {
         [self.table deleteSections:is withRowAnimation:UITableViewRowAnimationFade];
     }
     
     [self.table endUpdates];
-    
-    NSLog(@"End Delete");
 
-    [self.table reloadEmptyDataSet];
+    //[self.table reloadEmptyDataSet];
 }
 
 -(void) leftActionDoneForCell:(ConversationTableViewCell*)cell
@@ -932,24 +1126,21 @@ static NSInteger pageCount = 15;
 
 -(void) reload
 {
-    self.deletedSections = 0;
+    //self.deletedSections = 0;
     
     [self.table reloadData];
     
     dispatch_async(dispatch_get_main_queue(),^{
-        //NSLog(@"Reload done");
         if (self.deletes.count > 0) {
-            NSLog(@"Deletes");
-            NSArray* tmp = [[NSArray alloc] initWithArray:self.deletes];
-            self.deletes = [[NSMutableArray alloc] init];
-            [self removeConversationList:tmp];
+            NSLog(@"%ld Conversations to delete", (unsigned long)self.deletes.count);
+            [self removeConversationList:[self.deletes allObjects]];
         }
     });
 }
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    return MIN(self.convByDay.count, (pageCount * self.pageIndex)+1-self.deletedSections);
+    return self.convByDay.count;//MIN(self.convByDay.count, (pageCount * self.pageIndex)+1-self.deletedSections);
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
@@ -972,14 +1163,15 @@ static NSInteger pageCount = 15;
         [self.attachButton setHidden:NO];
     }
     
-    BOOL lastSection = (indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1);
+    BOOL lastSection = (indexPath.section == self.convByDay.count - 1);//(indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1);
     BOOL lastRow = indexPath.row == ([convs count] - 1);
     
     if (!self.onlyPerson && self.indexCount != self.countBeforeLoadMore && lastSection && lastRow) {
         [self reFetch:NO];
     }
     
-    if (!self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
+    if (self.localSearchDone && !self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
+        NSLog(@"Last and Searching");
         [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
@@ -992,11 +1184,7 @@ static NSInteger pageCount = 15;
         [cell setupWithDelegate:self];
     }
     
-    BOOL isSelected = [self.selectedCells containsObject:[conv firstMail].msgID];
-    
-    NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
-    
-    if (currentFolderIdx != [conv.user importantFolderNumforBaseFolder:FolderTypeAll]) {
+    if (self.folder.type != FolderTypeAll && self.folder.type != FolderTypeDrafts) {
         
         NSMutableString* fldrsStill = [NSMutableString string];
         
@@ -1005,7 +1193,8 @@ static NSInteger pageCount = 15;
         }
         
         BOOL isInFolder = NO;
-        
+        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+
         for (Mail* mail in conv.mails) {
             if ([mail uidEWithFolder:currentFolderIdx]) {
                 isInFolder = YES;
@@ -1015,38 +1204,12 @@ static NSInteger pageCount = 15;
         
         if (!isInFolder) {
             NSLog(@"%@",[NSString stringWithFormat:@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ", (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill]);
-            [self.deletes addObject:conversationIndex];
             
-            /*Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-             if ([a deleteIndex:conversationIndex.index fromFolder:self.folder]) {
-             
-             NSIndexPath* ip = nil;
-             BOOL found = NO;
-             
-             for (NSInteger section = 0; section < self.convByDay.count ;section++) {
-             NSArray* list = self.convByDay[section][@"list"];
-             
-             for (NSInteger row = 0; row < list.count; row++) {
-             ConversationIndex* tmpConversationIndex = list[row];
-             
-             if (tmpConversationIndex.index == conversationIndex.index) {
-             ip = [NSIndexPath indexPathForRow:row inSection:section];
-             found = YES;
-             break;
-             }
-             }
-             
-             if (found) break;
-             }
-             
-             if (ip) {
-             NSLog(@"Remove at IP section:%li row:%li", (long)ip.section, (long)ip.row);
-             
-             [self _commonRemoveConvs:[@[ip] mutableCopy]];
-             }
-             }*/
+            [self.deletes addObject:conversationIndex];
         }
     }
+    
+    BOOL isSelected = [self.selectedCells containsObject:[conv firstMail].msgID];
     
     [cell fillWithConversation:conv isSelected:isSelected isDebugMode:self.isDebugMode];
     
@@ -1372,16 +1535,15 @@ static NSInteger pageCount = 15;
 
 #pragma mark - Fetch Data
 
-
 -(void) localSearchDone:(BOOL)done
 {
     self.localSearchDone = done;
     
-    if (self.localSearchDone) {
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            [self.table.tableFooterView setHidden:YES];
-        }];
-    }
+    NSLog(@"%@ searching local", done?@"Not":@"");
+    
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [self.table.tableFooterView setHidden:self.localSearchDone];
+    }];
 }
 
 -(void) serverSearchDone:(BOOL)done
@@ -1412,7 +1574,7 @@ static NSInteger pageCount = 15;
             mailCountBefore += indexSet.count;
         }
         
-        if (self.convByDay.count <= pageCount * self.pageIndex ) {
+        //if (self.convByDay.count <= pageCount * self.pageIndex ) {
             if (kisActiveAccountAll) {
                 for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
                     Account* a = [[Accounts sharedInstance] account:idx];
@@ -1424,7 +1586,7 @@ static NSInteger pageCount = 15;
                 Account* a = [[Accounts sharedInstance] currentAccount];
                 [self insertConversations:[a getConversationsForFolder:self.folder]];
             }
-        }
+        //}
         
         [self checkConversationsUpdate];
         
@@ -1435,7 +1597,7 @@ static NSInteger pageCount = 15;
         }
         
         self.indexCount = mailCountAfer;
-        self.countBeforeLoadMore =  MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);
+        self.countBeforeLoadMore =  mailCountAfer;//MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);
         
         
         [self _createAttachs];
@@ -1443,13 +1605,13 @@ static NSInteger pageCount = 15;
         //NSLog(@"self.indexCount:%ld", (long)self.indexCount);
         
         if (!forceRefresh && self.countBeforeLoadMore == mailCountAfer) {
-            [self.table performSelectorOnMainThread:@selector(reloadEmptyDataSet)
+            /*[self.table performSelectorOnMainThread:@selector(reloadEmptyDataSet)
                                          withObject:nil
-                                      waitUntilDone:NO];
+                                      waitUntilDone:NO];*/
             return;
         }
         
-        self.pageIndex++;
+        //self.pageIndex++;
         [self performSelectorOnMainThread:@selector(reload)
                                withObject:nil
                             waitUntilDone:NO];
@@ -1480,7 +1642,7 @@ static NSInteger pageCount = 15;
 
 - (NSAttributedString *)titleForEmptyDataSet:(UIScrollView *)scrollView
 {
-    NSString *text = self.initialLoading?@"":NSLocalizedString(@"No more emails.", @"No more emails.");
+    NSString *text = self.initialLoading?@"":self.onlyPerson?NSLocalizedString(@"No emails.", @"No emails."):NSLocalizedString(@"No more emails.", @"No more emails.");
     
     NSDictionary *attributes = @{NSFontAttributeName: [UIFont boldSystemFontOfSize:18.0f],
                                  NSForegroundColorAttributeName: [UIColor darkGrayColor]};

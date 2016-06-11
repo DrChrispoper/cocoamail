@@ -11,3 +11,9 @@
 @interface SearchViewController : InViewController
 
 @end
+
+@protocol SearchDelegate
+
+-(void) selectedRow;
+
+@end

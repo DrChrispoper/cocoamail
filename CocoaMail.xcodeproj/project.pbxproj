@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
 		27026F1A1C1ED6FB00BC2C1A /* jquerylong.js in Resources */ = {isa = PBXBuildFile; fileRef = 27026F191C1ED6FB00BC2C1A /* jquerylong.js */; };
 		270C84E51C565DED006C0B7F /* ARSafariActivity.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 270C84E21C565DEC006C0B7F /* ARSafariActivity.bundle */; };
@@ -310,6 +311,7 @@
 		27D3B1101BB2D95300D5B1E4 /* Instabug.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 27D3B10E1BB2D95300D5B1E4 /* Instabug.bundle */; };
 		27D3B1111BB2D95300D5B1E4 /* Instabug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B10F1BB2D95300D5B1E4 /* Instabug.framework */; };
 		27D4A6B31C6097AA00F7670A /* FindQuote.m in Sources */ = {isa = PBXBuildFile; fileRef = 27D4A6B21C6097AA00F7670A /* FindQuote.m */; };
+		27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */; };
 		27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3C9CD1C807FCE0066116B /* Conversation.m */; };
 		27F9B6B41C689DC20008D681 /* ContactTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F9B6B31C689DC20008D681 /* ContactTableViewCell.m */; };
 		27FABC191B9D8AC10089634A /* PKHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC161B9D8AC10089634A /* PKHUD.swift */; };
@@ -382,6 +384,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
+		2700855A1CB90CE0004069B4 /* AlternateViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlternateViewController.m; sourceTree = "<group>"; };
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
 		27026F0B1C1EBA8900BC2C1A /* MyLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyLabel.h; sourceTree = "<group>"; };
 		27026F0C1C1EBA8900BC2C1A /* MyLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyLabel.m; sourceTree = "<group>"; };
@@ -637,7 +641,7 @@
 		277E9D261C1AD7C60098EDB4 /* jquery.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jquery.js; sourceTree = "<group>"; };
 		277F4C211C859BF500720479 /* Draft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Draft.h; sourceTree = "<group>"; };
 		277F4C221C859BF500720479 /* Draft.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Draft.m; sourceTree = "<group>"; };
-		278174C61CA1445500965B32 /* caca_off.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = caca_off.png; path = ../../../../../Desktop/caca_off.png; sourceTree = "<group>"; };
+		278174C61CA1445500965B32 /* caca_off.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = caca_off.png; path = Ressources/caca_off.png; sourceTree = "<group>"; };
 		2781838F1C232564000B257A /* apple.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = apple.png; sourceTree = "<group>"; };
 		278183901C232564000B257A /* captaintrain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = captaintrain.png; sourceTree = "<group>"; };
 		278183911C232564000B257A /* quip.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = quip.png; sourceTree = "<group>"; };
@@ -789,6 +793,8 @@
 		27D3B10F1BB2D95300D5B1E4 /* Instabug.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Instabug.framework; sourceTree = "<group>"; };
 		27D4A6B11C6097AA00F7670A /* FindQuote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindQuote.h; sourceTree = "<group>"; };
 		27D4A6B21C6097AA00F7670A /* FindQuote.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindQuote.m; sourceTree = "<group>"; };
+		27F3AD5F1CB2413D00F6430E /* CCMSearchTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMSearchTableViewController.h; sourceTree = "<group>"; };
+		27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMSearchTableViewController.m; sourceTree = "<group>"; };
 		27F3C9CC1C807FCE0066116B /* Conversation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Conversation.h; sourceTree = "<group>"; };
 		27F3C9CD1C807FCE0066116B /* Conversation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Conversation.m; sourceTree = "<group>"; };
 		27F9B6B21C689DC10008D681 /* ContactTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactTableViewCell.h; sourceTree = "<group>"; };
@@ -1261,6 +1267,10 @@
 			children = (
 				27818C3B1BABF22500D26D1A /* SearchViewController.h */,
 				27818C3C1BABF22500D26D1A /* SearchViewController.m */,
+				27F3AD5F1CB2413D00F6430E /* CCMSearchTableViewController.h */,
+				27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */,
+				270085591CB90CE0004069B4 /* AlternateViewController.h */,
+				2700855A1CB90CE0004069B4 /* AlternateViewController.m */,
 			);
 			name = Search;
 			sourceTree = "<group>";
@@ -1963,7 +1973,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "";
+			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\nAPP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
 		};
 		5C4D1CF95FC0C60ED575BC86 /* Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2057,6 +2067,7 @@
 				277D89021BB14B1B00FAFED5 /* DropboxBrowserViewController.m in Sources */,
 				277108661C61500600A459E1 /* HTMLString.m in Sources */,
 				27818C561BABF22500D26D1A /* EditMailViewController.m in Sources */,
+				27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */,
 				271D4D991B84758E00D19373 /* SearchRunner.m in Sources */,
 				27FABC191B9D8AC10089634A /* PKHUD.swift in Sources */,
 				277108691C61500600A459E1 /* HTMLTreeEnumerator.m in Sources */,
@@ -2065,6 +2076,7 @@
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
 				2798B56B1C4AAE6600C98321 /* ViewController.m in Sources */,
+				2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */,
 				27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */,
 				2771086A1C61500600A459E1 /* NSString+HTMLEntities.m in Sources */,
 				27818C5E1BABF22500D26D1A /* CocoaButton.m in Sources */,

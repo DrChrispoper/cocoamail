@@ -61,7 +61,7 @@
 {
     CocoaButton* cb = [[CocoaButton alloc] init];
     
-    cb.backView.backgroundColor = [UIColor colorWithRed:0.63 green:0.33 blue:0.18 alpha:0.9];
+    cb.backView.backgroundColor = [UIColor colorWithRed:0.63 green:0.33 blue:0.18 alpha:1.0];
     
     cb.nameView.text = @"";
     

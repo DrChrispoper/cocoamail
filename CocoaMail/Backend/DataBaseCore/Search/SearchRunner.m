@@ -23,6 +23,7 @@
 #import "ViewController.h"
 #import "InViewController.h"
 #import "InViewController+SGProgress.h"
+#import <ReactiveCocoa/ReactiveCocoa.h>
 
 static SearchRunner * searchSingleton = nil;
 
@@ -275,10 +276,12 @@ static SearchRunner * searchSingleton = nil;
                 else {
                     NSLog(@"Deleting Batch");
                     
+                    NSInteger group = 0;
+                    
                     for (NSArray* pagedUids in uidsInGroups) {
                         
                         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                            [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:((long)(pagedUids.count*100)/uidsInGroups.count) andTintColor:[UIColor blackColor]];
+                            [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:((group*100)/uidsInGroups.count) andTintColor:[UIColor blackColor]];
                         }];
                         
                         for (UidEntry* p in pagedUids) {
@@ -289,6 +292,8 @@ static SearchRunner * searchSingleton = nil;
                                 }
                             }];
                         }
+                        
+                        group++;
                     }
                     
                     break;
@@ -304,22 +309,35 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
 {
-    return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
-        NSMutableArray* uidsInGroups;
-        
-        NSInteger realFolderNum = folderNum;
-        
-        if ([Accounts sharedInstance].currentAccount.user.isAll) {
-            realFolderNum = [[AppSettings userWithNum:accountNum] importantFolderNumforBaseFolder:[Accounts sharedInstance].currentAccount.currentFolderType.type];
-        }
-        
-        if (email) {
-            uidsInGroups = [UidEntry getUidEntriesFrom:email withFolder:realFolderNum inAccountNum:accountNum];
-        }
-        else {
-            uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccountNum:accountNum];
-        }
-        
+    NSMutableArray* uidsInGroups;
+    
+    NSInteger realFolderNum = folderNum;
+    
+    if ([Accounts sharedInstance].currentAccount.user.isAll) {
+        realFolderNum = [[AppSettings userWithNum:accountNum] numFolderWithFolder:[Accounts sharedInstance].currentAccount.currentFolderType];
+    }
+    
+    if (email) {
+        uidsInGroups = [UidEntry getUidEntriesFrom:email withFolder:realFolderNum inAccountNum:accountNum];
+    }
+    else {
+        uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccountNum:accountNum];
+    }
+    
+    
+    if (uidsInGroups.count == 0){
+        dispatch_queue_t global_default_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+        RACScheduler *scheduler = [[RACTargetQueueScheduler alloc] initWithName:@"testScheduler" targetQueue:global_default_queue];
+        return [RACSignal startEagerlyWithScheduler:scheduler block:^(id<RACSubscriber> subscriber) {
+            NSLog(@"Done with 0");
+            [subscriber sendCompleted];
+        }];
+    }
+
+    NSDate *fetchStart = [NSDate date];
+
+    return [RACSignal startEagerlyWithScheduler:[RACScheduler schedulerWithPriority:DISPATCH_QUEUE_PRIORITY_HIGH] block:^(id<RACSubscriber> subscriber) {
+
         for (NSArray* pagedUids in uidsInGroups) {
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
@@ -327,7 +345,7 @@ static SearchRunner * searchSingleton = nil;
                 NSLog(@"Cancel Search");
                 [subscriber sendCompleted];
                 
-                return [RACDisposable disposableWithBlock:^{}];
+                return;
             }
             
             NSMutableString* query = [NSMutableString string];
@@ -346,6 +364,8 @@ static SearchRunner * searchSingleton = nil;
             [queue inDatabase:^(FMDatabase* db) {
                 FMResultSet* results = [db executeQuery:query];
                 
+                NSDate *fetchStartG = [NSDate date];
+
                 if ([db hadError] && [db lastErrorCode] == 1) {
                     NSLog(@"Error querying table. Checking table");
                     [Mail tableCheck:db];
@@ -384,18 +404,19 @@ static SearchRunner * searchSingleton = nil;
                     [UidEntry removeAllMsgID:p.msgID];
                 }
                 
+                NSDate *fetchEndG = [NSDate date];
+                NSTimeInterval timeElapsedG = [fetchEndG timeIntervalSinceDate:fetchStartG];
+                //NSLog(@"Group Fetch Duration: %f seconds.", timeElapsedG);
+                
                 [results close];
             }];
         }
         
-        //NSDate *fetchEnd = [NSDate date];
-        //NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-        //NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
+        NSDate *fetchEnd = [NSDate date];
+        NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
+        NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
         
         [subscriber sendCompleted];
-        
-        return [RACDisposable disposableWithBlock:^{
-        }];
     }];
 }
 

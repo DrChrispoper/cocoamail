@@ -167,7 +167,7 @@
         Account* ac = [[Accounts sharedInstance] account:self.conversation.user.accountIndex];
         
         CCMFolderType fromfolder = [[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
-        CCMFolderType tofolder = FolderTypeWith(FolderTypeAll, 0);
+        CCMFolderType tofolder = CCMFolderTypeAll;
         
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                        [self.conversation.user folderDisplayNameForType:fromfolder], @"from_Folder",

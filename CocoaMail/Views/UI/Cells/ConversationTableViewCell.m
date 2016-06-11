@@ -681,7 +681,7 @@
         self.leftAction.highlighted = ![conv isInInbox];
     }
     
-    if (mail.isRead) {
+    if (![conv isUnread]) {
         
         if (self.readMask == nil) {
             UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];

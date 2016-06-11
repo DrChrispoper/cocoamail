@@ -40,6 +40,7 @@
 @property (nonatomic, strong) NSString* codeName;
 @property (nonatomic, strong) NSString* email;
 @property (nonatomic) BOOL isGeneric;
+@property (nonatomic, strong) NSMutableData *imageData;
 
 -(void) linkToAccount:(Account*)account;
 

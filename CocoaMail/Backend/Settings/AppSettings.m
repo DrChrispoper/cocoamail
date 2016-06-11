@@ -78,11 +78,21 @@ static AppSettings * singleton = nil;
         else {
             for (NSString* fileName in dirFiles) {
                 NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
+                
                 UserSettings* user = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
                 //if ([user isDeleted]) {
                 //    continue;
                 //}
+                
+                if (!user) {
+                    NSData* data = [[NSFileManager defaultManager] contentsAtPath:localPath];
+                    user = [NSKeyedUnarchiver unarchiveObjectWithData:data]; // nil
+                }
+                
+                NSAssert(user, @"User can't be nil, Filename:%@", fileName);
+                
                 [_users addObject:user];
+                
             }
         }
         
@@ -99,7 +109,7 @@ static AppSettings * singleton = nil;
             [accounts appendFormat:@"OAuth?%@\n", user.oAuth];
         }
         
-        NSString* userData = [NSString stringWithFormat:@"%@",accounts];
+        NSString* userData = [NSString stringWithFormat:@"Users:\n%@",accounts];
         
         [Instabug setUserData:userData];
         

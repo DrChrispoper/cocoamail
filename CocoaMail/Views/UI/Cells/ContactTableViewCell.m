@@ -9,6 +9,7 @@
 #import "ContactTableViewCell.h"
 #import "Persons.h"
 #import "ViewController.h"
+#import "SearchViewController.h"
 
 @interface ContactTableViewCell ()
 
@@ -35,7 +36,9 @@
     
     UIView* back = nil;
     
-    CGFloat WIDTH = self.bounds.size.width;
+    CGRect screenBounds = [UIScreen mainScreen].bounds;
+
+    CGFloat WIDTH = screenBounds.size.width;
     CGFloat height = 44;
 
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(22, 30, 22, 30)];
@@ -75,6 +78,7 @@
         return;
     }
     
+    [self.sDelegate selectedRow];
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_PERSON:self.person}];
     return;
 }

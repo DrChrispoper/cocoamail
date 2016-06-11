@@ -85,7 +85,7 @@
     else {
         [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{
             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                [self.table reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+                [self.table reloadData];
             }];
         }];
     }
@@ -260,6 +260,7 @@
     if (indexPath.section == 0) {
         if (indexPath.row == 7) {
             [[[Accounts sharedInstance] currentAccount] sendOutboxs];
+            [tableView deselectRowAtIndexPath:indexPath animated:YES];
             return;
         }
         type.type = indexPath.row;

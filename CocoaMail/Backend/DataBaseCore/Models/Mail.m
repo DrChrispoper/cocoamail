@@ -20,6 +20,7 @@
 #import "UserSettings.h"
 #import <Instabug/Instabug.h>
 #import "Draft.h"
+#import "sqlite3.h"
 
 @implementation Mail {
     UserSettings* _user;
@@ -181,6 +182,10 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void)setSubject:(NSString *)subject
 {
+    if (!subject) {
+        subject = @"";
+    }
+    
     _subject = [subject replace:RX(@"([Rr][Ee]|[Tt][Rr]|[Ff][Ww][Dd]|[Ff][Ww])\\s??:\\s?") with:@""];
 }
 
@@ -429,7 +434,9 @@ static NSDateFormatter * s_df_hour = nil;
             NSMutableString* string = [NSMutableString new];
             
             for (MCOIMAPPart* imapPart in imapParts.parts) {
-                [string appendString:imapPart.filename];
+                if (imapPart.filename) {
+                    [string appendString:imapPart.filename];
+                }
             }
         }
     }
@@ -456,8 +463,12 @@ static NSDateFormatter * s_df_hour = nil;
             NSMutableString* string = [NSMutableString new];
             
             for (MCOIMAPPart* imapPart in imapParts.parts) {
-                [string appendString:imapPart.filename];
+                if (imapPart.filename) {
+                    [string appendString:imapPart.filename];
+                }
             }
+            
+            
         }
     }
     
@@ -949,7 +960,7 @@ static NSDateFormatter * s_df_hour = nil;
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
     if (!email.user || email.user.isDeleted) {
-        NSLog(@"Should delete this");
+        NSLog(@"Should delete this:%@", email.subject);
         return nil;
     }
     
@@ -1001,7 +1012,7 @@ static NSDateFormatter * s_df_hour = nil;
     CCMLog(@"Move from folder %@ to %@", [self.user folderDisplayNameForIndex:fromFolderIdx],  [self.user folderDisplayNameForIndex:toFolderIdx]);
     
     if ([self uidEWithFolder:fromFolderIdx]) {
-        if (([self.user importantFolderNumforBaseFolder:FolderTypeAll] == fromFolderIdx && [self.user importantFolderNumforBaseFolder:FolderTypeDeleted] != toFolderIdx) || [self.user importantFolderNumforBaseFolder:FolderTypeFavoris] == toFolderIdx) {
+        if (([self.user numFolderWithFolder:CCMFolderTypeAll] == fromFolderIdx && [self.user numFolderWithFolder:CCMFolderTypeDeleted] != toFolderIdx) || [self.user numFolderWithFolder:CCMFolderTypeFavoris] == toFolderIdx) {
             [UidEntry copy:[self uidEWithFolder:fromFolderIdx] toFolder:toFolderIdx];
         }
         else if ([self uidEWithFolder:toFolderIdx]) {
@@ -1018,7 +1029,7 @@ static NSDateFormatter * s_df_hour = nil;
 -(void) trash
 {
     for (UidEntry* uidE in _uids) {
-        [UidEntry move:uidE toFolder:[self.user importantFolderNumforBaseFolder:FolderTypeDeleted]];
+        [UidEntry move:uidE toFolder:[self.user numFolderWithFolder:CCMFolderTypeDeleted]];
     }
     
     _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];

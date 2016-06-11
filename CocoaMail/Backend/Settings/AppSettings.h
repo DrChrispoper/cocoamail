@@ -14,7 +14,8 @@
 
 #define CLIENT_ID @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com"
 #define CLIENT_SECRET @"LhDDzVoxcxbVT95lNPSDWkCg"
-#define KEYCHAIN_ITEM_NAME @"CocoaMail iOS"
+#define TKN_KEYCHAIN_NAME @"CocoaMail iOS"
+#define USR_TKN_KEYCHAIN_NAME [NSString stringWithFormat:@"%@%lu", TKN_KEYCHAIN_NAME,(unsigned long)user.accountNum]
 
 @interface AppSettings : NSObject
 

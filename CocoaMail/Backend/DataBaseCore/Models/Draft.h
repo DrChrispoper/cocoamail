@@ -31,7 +31,9 @@
 -(NSArray*)attachments;
 
 -(void) save;
+-(BOOL) saveOuboxDraft;
 -(void) deleteDraft;
+-(void) deleteOutboxDraft;
 -(void) appendToSent:(NSString*)rfc822DataFilename;
 
 -(NSString*) rfc822DataTo:(NSArray*)toPersonIDs;

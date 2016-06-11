@@ -73,6 +73,9 @@
 {
     [self.window makeKeyAndVisible];
     
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"WebKitDiskImageCacheEnabled"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
     return YES;
 }
 
@@ -87,6 +90,7 @@
     }
     
     if (notification && application.applicationState == 1) {
+        NSLog(@"Notification Body: %@", notification.alertBody);
         self.launchedNotification = notification;
     }
 }
@@ -142,10 +146,11 @@
             
             [conversation foldersType];
             
-            CCMLog(@"Opening email:%@", [conversation firstMail].subject);
+            NSLog(@"Opening email:%@", [conversation firstMail].subject);
+            NSLog(@"Index: %ld",(long)cIndex.index);
             
             Accounts* A = [Accounts sharedInstance];
-            //[[A currentAccount] releaseContent];
+
             A.currentAccountIdx = cIndex.user.accountIndex;
             [[A currentAccount] connect];
             
@@ -381,13 +386,13 @@ didSignInForUser:(GIDGoogleUser*)user
     UIApplicationShortcutIcon *composeIcon = [UIApplicationShortcutIcon iconWithTemplateImageName:@"simple_edit_off"];
     
     // create several (dynamic) shortcut items
-    UIMutableApplicationShortcutItem *itemLove = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.fav" localizedTitle:@"Favoris" localizedSubtitle:nil icon:loveIcon userInfo:nil];
+    UIMutableApplicationShortcutItem *itemLove = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.fav" localizedTitle:NSLocalizedString(@"3d.favoris",@"Favoris") localizedSubtitle:nil icon:loveIcon userInfo:nil];
     
-    UIMutableApplicationShortcutItem *itemMail = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.inbox" localizedTitle:@"Inbox" localizedSubtitle:nil icon:mailIcon userInfo:nil];
+    UIMutableApplicationShortcutItem *itemMail = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.inbox" localizedTitle:NSLocalizedString(@"3d.inbox",@"Inbox") localizedSubtitle:nil icon:mailIcon userInfo:nil];
     
-    UIMutableApplicationShortcutItem *item3 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.search" localizedTitle:@"Search" localizedSubtitle:nil icon:searchIcon userInfo:nil];
+    UIMutableApplicationShortcutItem *item3 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.search" localizedTitle:NSLocalizedString(@"3d.search",@"Search") localizedSubtitle:nil icon:searchIcon userInfo:nil];
     
-    UIMutableApplicationShortcutItem *item4 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.compose" localizedTitle:@"Compose" localizedSubtitle:nil icon:composeIcon userInfo:nil];
+    UIMutableApplicationShortcutItem *item4 = [[UIMutableApplicationShortcutItem alloc]initWithType:@"com.compose" localizedTitle:NSLocalizedString(@"3d.compose",@"Compose") localizedSubtitle:nil icon:composeIcon userInfo:nil];
     
     // add all items to an array
     NSArray *items = @[item4, item3, itemLove, itemMail];
@@ -408,13 +413,13 @@ didSignInForUser:(GIDGoogleUser*)user
     NSLog(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
     
     if ([shortcutItem.type isEqualToString:@"com.fav"]) {
-        CCMFolderType type = FolderTypeWith(FolderTypeFavoris, 0);
+        CCMFolderType type = CCMFolderTypeFavoris;
         [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
         NSNumber* encodedType = @(encodeFolderTypeWith(type));
         [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
     }
     else if ([shortcutItem.type isEqualToString:@"com.inbox"]) {
-        CCMFolderType type = FolderTypeWith(FolderTypeInbox, 0);
+        CCMFolderType type = CCMFolderTypeInbox;
         [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
         NSNumber* encodedType = @(encodeFolderTypeWith(type));
         [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];

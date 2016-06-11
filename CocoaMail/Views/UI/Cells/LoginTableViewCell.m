@@ -30,7 +30,9 @@
     
     UIView* back = nil;
     
-    CGFloat WIDTH = self.bounds.size.width;
+    CGRect screenBounds = [UIScreen mainScreen].bounds;
+
+    CGFloat WIDTH = screenBounds.size.width;
     CGFloat height = 44;
     
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(22, 30, 22, 30)];
