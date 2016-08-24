@@ -15,8 +15,11 @@
 #import "Reachability.h"
 #import "CachedAction.h"
 #import "EmailProcessor.h"
-#import <Instabug/Instabug.h>
 #import "UserSettings.h"
+
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 @implementation UidEntry
 

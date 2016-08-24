@@ -11,10 +11,13 @@
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "FindQuote.h"
-#import <Instabug/Instabug.h>
 #import "Flurry.h"
 #import "UserSettings.h"
 #import "CCMStatus.h"
+
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 static NSString * mainJavascript = @"\
 var imageElements = function() {\
@@ -295,7 +298,9 @@ margin : 0;\
 
         if ([mail uids].count == 0) {
             NSException* myE = [NSException exceptionWithName:@"EmailHasNoUID" reason:@"Showing email with no UidEntry" userInfo:nil];
+#ifdef USING_INSTABUG
             [Instabug reportException:myE];
+#endif
             [self setHtml:@"An error appeared and has been reported."];
             return;
         }

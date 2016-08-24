@@ -21,11 +21,13 @@
 #import "Mail.h"
 
 #import "ViewController.h"
-#import <Instabug/Instabug.h>
 #import "StringUtil.h"
 #import "CCMConstants.h"
 #import "UserSettings.h"
 
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 @interface ImapSync ()
 
@@ -145,7 +147,9 @@ static NSArray * sharedServices = nil;
             return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
                 NSLog(@"No shared Service");
                 NSException* myE = [NSException exceptionWithName:@"No shared Service" reason:@"Can't login no shared service" userInfo:nil];
+#ifdef USING_INSTABUG
                 [Instabug reportException:myE];
+#endif
                 [subscriber sendError:[NSError errorWithDomain:@"No shared service" code:9009 userInfo:nil]];
             }];
         }

@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "55F679C1B0F63BE499C1AE10B54BB57B9DA2DA5B",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "55F679C1B0F63BE499C1AE10B54BB57B9DA2DA5B" : 0,
+    "7ACF23A507BCFA5964C32B48177971421D05CCCE" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "8EE0427E-2327-42C8-897A-A29F8319B556",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "55F679C1B0F63BE499C1AE10B54BB57B9DA2DA5B" : "clean-cocoamail\/",
+    "7ACF23A507BCFA5964C32B48177971421D05CCCE" : "mailcore2\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "CocoaMail",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "CocoaMail.xcworkspace",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/DrChrispoper\/clean-cocoamail.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "55F679C1B0F63BE499C1AE10B54BB57B9DA2DA5B"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/MailCore\/mailcore2.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "7ACF23A507BCFA5964C32B48177971421D05CCCE"
+    }
+  ]
+}
