@@ -146,8 +146,8 @@ static NSArray * sharedServices = nil;
         if (!sharedService) {
             return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
                 NSLog(@"No shared Service");
-                NSException* myE = [NSException exceptionWithName:@"No shared Service" reason:@"Can't login no shared service" userInfo:nil];
 #ifdef USING_INSTABUG
+                NSException* myE = [NSException exceptionWithName:@"No shared Service" reason:@"Can't login no shared service" userInfo:nil];
                 [Instabug reportException:myE];
 #endif
                 [subscriber sendError:[NSError errorWithDomain:@"No shared service" code:9009 userInfo:nil]];
