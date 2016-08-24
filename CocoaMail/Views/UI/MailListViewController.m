@@ -614,8 +614,11 @@
         }
         
         if (!isInFolder) {
+#ifdef USING_INSTABUG
             IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
-            NSLog(@"%@",[NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
+#endif
+            NSLog(@"Insert cell: Conversation with error:%ld",(long)ci.index);
+            
             Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
             [a deleteIndex:ci.index fromFolder:self.folder];
             return;
@@ -753,8 +756,11 @@
                 }
                 
                 if (!isInFolder) {
+#ifdef USING_INSTABUG
                     IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
-                    NSLog(@"%@",[NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
+#endif
+                    NSLog(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
+                    
                     Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
                     [a deleteIndex:conversationIndex.index fromFolder:self.folder];
                     continue;
@@ -1019,7 +1025,10 @@
                 totype.type = FolderTypeDeleted;
             }
             
+#ifdef USING_INSTABUG
             IBGLog([NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
+#endif
+             NSLog(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
             NSString* fromFolderString;
             NSString* toFolderString;
@@ -1408,8 +1417,10 @@
         for (ConversationIndex* conversationIndex in res) {
             Account* ac = [[Accounts sharedInstance] account:conversationIndex.user.accountIndex];
             
+#ifdef USING_INSTABUG
             IBGLog([NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
-            
+#endif
+            NSLog(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
             NSString* fromFolderString;
             NSString* toFolderString;
             
