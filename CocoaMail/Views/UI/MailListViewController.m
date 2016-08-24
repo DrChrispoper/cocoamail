@@ -20,7 +20,6 @@
 #import "UserFolderViewController.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "CCMStatus.h"
-#import <Instabug/Instabug.h>
 #import "CocoaMail-Swift.h"
 #import "PreviewViewController.h"
 #import "ConversationViewController.h"
@@ -30,6 +29,11 @@
 #import "UserSettings.h"
 #import "Conversation.h"
 #import "Draft.h"
+
+
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 @interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate/*, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate*/>
 

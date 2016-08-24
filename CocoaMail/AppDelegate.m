@@ -17,11 +17,13 @@
 #import "GlobalDBFunctions.h"
 #import "Reachability.h"
 #import <DropboxSDK/DropboxSDK.h>
-#import <Instabug/Instabug.h>
 #import "Flurry.h"
 #import "UserSettings.h"
 #import "Draft.h"
 
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 @implementation AppDelegate
 
@@ -29,8 +31,10 @@
 {
     BOOL shouldPerformAdditionalDelegateHandling = TRUE;
     
+#ifdef USING_INSTABUG
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     [Instabug setIntroMessageEnabled:NO];
+#endif
     
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
     

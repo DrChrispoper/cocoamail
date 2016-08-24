@@ -10,8 +10,11 @@
 #import <UIKit/UIDevice.h>
 #import "Accounts.h"
 #import "SyncManager.h"
-#import <Instabug/Instabug.h>
 #import "UserSettings.h"
+
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 static AppSettings * singleton = nil;
 
@@ -111,7 +114,9 @@ static AppSettings * singleton = nil;
         
         NSString* userData = [NSString stringWithFormat:@"Users:\n%@",accounts];
         
+#ifdef USING_INSTABUG
         [Instabug setUserData:userData];
+#endif
         
         //Default Settings
         if (_users.count == 1) {

@@ -18,9 +18,12 @@
 #import "EmailDBAccessor.h"
 #import "ImapSync.h"
 #import "UserSettings.h"
-#import <Instabug/Instabug.h>
 #import "Draft.h"
 #import "sqlite3.h"
+
+#ifdef USING_INSTABUG
+#import <Instabug/Instabug.h>
+#endif
 
 @implementation Mail {
     UserSettings* _user;
@@ -847,7 +850,9 @@ static NSDateFormatter * s_df_hour = nil;
 {
     if (!email.subject) {
         NSException* myE = [NSException exceptionWithName:@"EmailHasNoSUBJECT" reason:@"Updating email with nil Subject" userInfo:nil];
+#ifdef USING_INSTABUG
         [Instabug reportException:myE];
+#endif
         return;
     }
     

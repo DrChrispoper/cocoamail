@@ -32,7 +32,9 @@
 #import "ImapSync.h"
 #import "AddAccountViewController.h"
 
+#ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
+#endif
 
 @interface ViewController () <CocoaButtonDatasource/*, GIDSignInUIDelegate*/>
 
