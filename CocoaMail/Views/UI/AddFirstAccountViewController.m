@@ -13,7 +13,6 @@
 //#import <Google/SignIn.h>
 #import "GTMOAuth2Authentication.h"
 #import "GTMOAuth2ViewControllerTouch.h"
-#import "GTMSessionFetcher"
 #import "UserSettings.h"
 #import "SyncManager.h"
 #import "AppSettings.h"
@@ -23,6 +22,13 @@
 #import "CocoaMail-Swift.h"
 #import "OnePasswordExtension.h"
 #import "LoginTableViewCell.h"
+
+// 20160731_1356 AJCerier
+// Error: "'init' is unavailable"
+// Resolution: Added this class extension to make init() availale;
+@interface MCOAccountValidator (foo)
+- (instancetype) init;
+@end
 
 @interface AddFirstAccountViewController () <MailListDelegate>
 
@@ -268,7 +274,7 @@
     GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
                                                                                                 clientID:CLIENT_ID
                                                                                             clientSecret:CLIENT_SECRET
-                                                                                        keychainItemName:[NSString stringWithFormat:@"%@%d", TKN_KEYCHAIN_NAME,accountNum]
+                                                                                        keychainItemName:[NSString stringWithFormat:@"%@%ld", TKN_KEYCHAIN_NAME,(long)accountNum]
                                                                                                 delegate:self
                                                                                         finishedSelector:selectorFinish];
     [navController addChildViewController:authViewController];
@@ -407,7 +413,19 @@
                        password:(NSString *)password
                     oauth2Token:(NSString *)oauth2Token
 {
-    self.accountVal = [[MCOAccountValidator alloc] initValidator];
+    // 20160824_1151 AJCerier
+    // Error: No visible interface for MCOAccountValidator
+    //      declares the selector 'initValidator'.
+    // Discussion:
+    //      Change 'initValidator' to 'init'.
+    //      init() exists in MCOAccountValidator and its superclass
+    //      MCOOperation.
+    //      However, init is marked as NS_UNAVAILABLE in the superclass,
+    //      and is not included in the MCOAccountValidator header.
+    // Resolution:
+    //      My solution is to add an extension to MCOAccountValidator
+    //      to the top of this file which makes init available.
+    self.accountVal = [[MCOAccountValidator alloc] init];
     self.accountVal.username = username;
     self.accountVal.password = password;
     
