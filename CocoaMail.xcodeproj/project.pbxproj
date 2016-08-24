@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
 		27026F1A1C1ED6FB00BC2C1A /* jquerylong.js in Resources */ = {isa = PBXBuildFile; fileRef = 27026F191C1ED6FB00BC2C1A /* jquerylong.js */; };
@@ -19,7 +20,6 @@
 		271D4D401B8471AC00D19373 /* libbox-ios-browse-sdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D351B8471AC00D19373 /* libbox-ios-browse-sdk.a */; };
 		271D4D411B8471AC00D19373 /* libbox-ios-sdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D361B8471AC00D19373 /* libbox-ios-sdk.a */; };
 		271D4D421B8471AC00D19373 /* libFMDB.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D371B8471AC00D19373 /* libFMDB.a */; };
-		271D4D431B8471AC00D19373 /* libGoogle-API-Client.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D381B8471AC00D19373 /* libGoogle-API-Client.a */; };
 		271D4D461B8471AC00D19373 /* liblibextobjc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3B1B8471AC00D19373 /* liblibextobjc.a */; };
 		271D4D471B8471AC00D19373 /* libMBProgressHUD.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3C1B8471AC00D19373 /* libMBProgressHUD.a */; };
 		271D4D481B8471AC00D19373 /* libpop.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3D1B8471AC00D19373 /* libpop.a */; };
@@ -308,7 +308,6 @@
 		27D3B10C1BB2D8C500D5B1E4 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B1031BB2D8C400D5B1E4 /* QuartzCore.framework */; };
 		27D3B10D1BB2D8C500D5B1E4 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B1041BB2D8C400D5B1E4 /* SystemConfiguration.framework */; };
 		27D3B1101BB2D95300D5B1E4 /* Instabug.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 27D3B10E1BB2D95300D5B1E4 /* Instabug.bundle */; };
-		27D3B1111BB2D95300D5B1E4 /* Instabug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B10F1BB2D95300D5B1E4 /* Instabug.framework */; };
 		27D4A6B31C6097AA00F7670A /* FindQuote.m in Sources */ = {isa = PBXBuildFile; fileRef = 27D4A6B21C6097AA00F7670A /* FindQuote.m */; };
 		27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */; };
 		27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3C9CD1C807FCE0066116B /* Conversation.m */; };
@@ -385,6 +384,7 @@
 
 /* Begin PBXFileReference section */
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
+		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
 		2700855A1CB90CE0004069B4 /* AlternateViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlternateViewController.m; sourceTree = "<group>"; };
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
@@ -822,6 +822,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
 				27D3B1071BB2D8C500D5B1E4 /* CoreMotion.framework in Frameworks */,
@@ -833,7 +834,6 @@
 				27D3B10D1BB2D8C500D5B1E4 /* SystemConfiguration.framework in Frameworks */,
 				271D4DBC1B847DE800D19373 /* UIKit.framework in Frameworks */,
 				271D4DBA1B847A4600D19373 /* libiconv.dylib in Frameworks */,
-				27D3B1111BB2D95300D5B1E4 /* Instabug.framework in Frameworks */,
 				271D4DB81B847A3700D19373 /* libz.dylib in Frameworks */,
 				271D4DB61B847A2A00D19373 /* libstdc++.dylib in Frameworks */,
 				271D4DB41B847A1B00D19373 /* libresolv.dylib in Frameworks */,
@@ -845,7 +845,6 @@
 				271D4D411B8471AC00D19373 /* libbox-ios-sdk.a in Frameworks */,
 				271D4E111B85DC6200D19373 /* StoreKit.framework in Frameworks */,
 				271D4D421B8471AC00D19373 /* libFMDB.a in Frameworks */,
-				271D4D431B8471AC00D19373 /* libGoogle-API-Client.a in Frameworks */,
 				271D4D461B8471AC00D19373 /* liblibextobjc.a in Frameworks */,
 				271D4D471B8471AC00D19373 /* libMBProgressHUD.a in Frameworks */,
 				271D4D481B8471AC00D19373 /* libpop.a in Frameworks */,
@@ -1586,6 +1585,7 @@
 		BF2226EDEE049E09103949DC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */,
 				27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */,
 				27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */,
 				27D3B0FE1BB2D8C400D5B1E4 /* CoreMotion.framework */,
@@ -2299,15 +2299,14 @@
 					"-ObjC",
 					"-all_load",
 					"-l\"FMDB\"",
-					"-l\"Google-API-Client\"",
+					"-l\"GoogleAPIClient\"",
 					"-l\"MBProgressHUD\"",
 					"-l\"Reachability\"",
 					"-l\"ReactiveCocoa\"",
 					"-l\"box-ios-browse-sdk\"",
 					"-l\"box-ios-sdk\"",
 					"-l\"c++\"",
-					"-l\"gtm-http-fetcher\"",
-					"-l\"gtm-oauth2\"",
+					"-l\"gtmoauth2\"",
 					"-l\"libextobjc\"",
 					"-l\"pop\"",
 					"-l\"sqlite3\"",
@@ -2367,15 +2366,14 @@
 					"-ObjC",
 					"-all_load",
 					"-l\"FMDB\"",
-					"-l\"Google-API-Client\"",
+					"-l\"GoogleAPIClient\"",
 					"-l\"MBProgressHUD\"",
 					"-l\"Reachability\"",
 					"-l\"ReactiveCocoa\"",
 					"-l\"box-ios-browse-sdk\"",
 					"-l\"box-ios-sdk\"",
 					"-l\"c++\"",
-					"-l\"gtm-http-fetcher\"",
-					"-l\"gtm-oauth2\"",
+					"-l\"gtmoauth2\"",
 					"-l\"libextobjc\"",
 					"-l\"pop\"",
 					"-l\"sqlite3\"",
