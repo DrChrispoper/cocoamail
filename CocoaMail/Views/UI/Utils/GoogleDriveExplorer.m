@@ -73,7 +73,7 @@ static NSString * currentFileName = nil;
         // Sort Drive Files by modified date (descending order).
         [self.driveFiles sortUsingComparator:^NSComparisonResult(GTLDriveFile* lhs,
                                                                  GTLDriveFile* rhs) {
-            return [rhs.modifiedDate.date compare:lhs.modifiedDate.date];
+            return [rhs.modifiedTime.date compare:lhs.modifiedTime.date];
         }];
         [self.tableView reloadData];
     }
@@ -279,8 +279,13 @@ static NSString * currentFileName = nil;
         [fileUrl getResourceValue:&fileDate forKey:NSURLContentModificationDateKey error:&error];
         
         if (!error) {
+            // 20160824_1200 AJCerier
+            // Error: Property 'modifiedDate' not found on object of type
+            //      'GTLDriveFile *'.
+            // Resolution: It appears that this property is now named
+            //      'modifiedTime'.
             NSComparisonResult result;
-            result = [file.modifiedDate.date compare:fileDate]; // Compare the Dates
+            result = [file.modifiedTime.date compare:fileDate]; // Compare the Dates
             
             UIAlertController* alertView = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"File Conflict", @"Dropbox alert view title")
                                                                                message:[NSString stringWithFormat:@"%@ is not linked to your Dropbox. Would you like to login now and allow access?", [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleNameKey]]
