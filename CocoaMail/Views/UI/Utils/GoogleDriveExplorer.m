@@ -254,7 +254,11 @@ static NSString * currentFileName = nil;
         // Resolution: Changed downloadURL to webContentLink
         GTMSessionFetcher* fetcher = [self.driveService.fetcherService fetcherWithURLString:file.webContentLink];
         
-        fetcher.downloadPath = localPath;
+        // 20160824_1210 AJCerier
+        // Error: Property 'downloadPath' not found on object
+        //      of type 'GTMSessionFetcher *'.
+        // Resolution: Changed 'downloadPath' to 'destinationFileURL'.
+        fetcher.destinationFileURL = [NSURL fileURLWithPath:localPath];
         
         [fetcher beginFetchWithCompletionHandler:^(NSData* data, NSError* error) {
             if (error == nil) {
