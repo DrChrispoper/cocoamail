@@ -495,7 +495,10 @@
     
     //No Important folder at Index
     if (to == -1) {
+#ifdef USING_INSTABUG
         IBGLog(@"Email not synced in folder, so can't move it");
+#endif
+        NSLog(@"Email not synced in folder, so can't move it");
         return ;
     }
     
@@ -545,7 +548,10 @@
     
     //No Important folder at Index
     if (to == -1) {
+#ifdef USING_INSTABUG
         IBGLog(@"Email not synced in folder, so can't move it");
+#endif
+        NSLog(@"Email not synced in folder, so can't move it");
         return ;
     }
 
