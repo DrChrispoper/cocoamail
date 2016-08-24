@@ -141,8 +141,11 @@ static NSString * currentFileName = nil;
 {
     UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
     
+    // 20160824_1059 AJCerier
+    // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+    // Resolution: Chagned file.title to file.name
     GTLDriveFile* file = [self.driveFiles objectAtIndex:indexPath.row];
-    cell.textLabel.text = file.title;
+    cell.textLabel.text = file.name;
     
     return cell;
 }
@@ -159,13 +162,16 @@ static NSString * currentFileName = nil;
     }
     else {
         selectedFile = [self.driveFiles objectAtIndex:indexPath.row];
-        //CCMLog(@"File Type: %@ Name:%@ MIMEType:%@",file.kind,file.title,file.mimeType);
+        //CCMLog(@"File Type: %@ Name:%@ MIMEType:%@",file.kind,file.name,file.mimeType);
         
         if ([selectedFile.mimeType isEqualToString:@"application/vnd.google-apps.folder"]) {
             // Create new UITableViewController
             newSubdirectoryController = [[GoogleDriveExplorer alloc] init];
             newSubdirectoryController.rootViewDelegate = self.rootViewDelegate;
-            NSString* subpath = [currentPath stringByAppendingPathComponent:selectedFile.title];
+            // 20160824_1059 AJCerier
+            // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+            // Resolution: Chagned file.title to file.name
+            NSString* subpath = [currentPath stringByAppendingPathComponent:selectedFile.name];
             newSubdirectoryController.currentPath = subpath;
             newSubdirectoryController.title = [subpath lastPathComponent];
             newSubdirectoryController.deliverDownloadNotifications = self.deliverDownloadNotifications;
@@ -177,7 +183,10 @@ static NSString * currentFileName = nil;
             [self.navigationController pushViewController:newSubdirectoryController animated:YES];
         }
         else {
-            currentFileName = selectedFile.title;
+            // 20160824_1059 AJCerier
+            // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+            // Resolution: Chagned file.title to file.name
+            currentFileName = selectedFile.name;
 
             // Check if our delegate handles file selection
             if ([self.rootViewDelegate respondsToSelector:@selector(gdriveExplorer:didSelectFile:)]) {
@@ -214,7 +223,7 @@ static NSString * currentFileName = nil;
     
     // Create the local file path
     //NSString* documentsPath = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
-    NSString* localPath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.title];
+    NSString* localPath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.name];
     
     // Check if the local version should be overwritten
     if (replaceLocalVersion) {
@@ -238,7 +247,12 @@ static NSString * currentFileName = nil;
         
         //[[self restClient] loadFile:file.path intoPath:localPath];
 
-        GTMHTTPFetcher* fetcher = [self.driveService.fetcherService fetcherWithURLString:file.downloadUrl];
+        // 20160824_1055 AJCerier
+        // Error 1: "Use of undeclared identifier 'GTMHTTPFetcher'"
+        // Resolution: Changed GTMHTTPFetcher to GTMSessionFetcher.
+        // Error 2: "Property 'downloadURL' not foudnd on object of type 'GTLDriveFile *'
+        // Resolution: Changed downloadURL to webContentLink
+        GTMSessionFetcher* fetcher = [self.driveService.fetcherService fetcherWithURLString:file.webContentLink];
         
         fetcher.downloadPath = localPath;
         
@@ -281,8 +295,12 @@ static NSString * currentFileName = nil;
             }]];
             
             if (result == NSOrderedAscending) {
+                // 20160824_1059 AJCerier
+                // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+                // Resolution: Chagned file.title to file.name
+                
                 // Dropbox file is older than local file
-                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox one. The file in local files is newer than the Dropbox file.", file.title];
+                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox one. The file in local files is newer than the Dropbox file.", file.name];
                 
                 NSDictionary* infoDictionary = @{@"file": file, @"message": @"File already exists in Dropbox and locally. The local file is newer."};
                 NSError* error = [NSError errorWithDomain:@"[DropboxBrowser] File Conflict Error: File already exists in Dropbox and locally. The local file is newer." code:kGDriveFileOlderError userInfo:infoDictionary];
@@ -293,8 +311,12 @@ static NSString * currentFileName = nil;
                 
             }
             else if (result == NSOrderedDescending) {
+                // 20160824_1059 AJCerier
+                // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+                // Resolution: Chagned file.title to file.name
                 // Dropbox file is newer than local file
-                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. The file in Dropbox is newer than the local file.", file.title];
+                
+                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. The file in Dropbox is newer than the local file.", file.name];
                 
                 NSDictionary* infoDictionary = @{@"file": file, @"message": @"File already exists in Dropbox and locally. The Dropbox file is newer."};
                 NSError* error = [NSError errorWithDomain:@"[DropboxBrowser] File Conflict Error: File already exists in Dropbox and locally. The Dropbox file is newer." code:kGDriveFileNewerError userInfo:infoDictionary];
@@ -304,8 +326,12 @@ static NSString * currentFileName = nil;
                 }
             }
             else if (result == NSOrderedSame) {
+                // 20160824_1059 AJCerier
+                // Error: "Property 'title' not found on object of type 'GTLDriveFile *'"
+                // Resolution: Chagned file.title to file.name
+                
                 // Dropbox File and local file were both modified at the same time
-                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. Both the local file and the Dropbox file were modified at the same time.", file.title];
+                alertView.message = [NSString stringWithFormat:@"%@ has already been downloaded from Dropbox. You can overwrite the local version with the Dropbox file. Both the local file and the Dropbox file were modified at the same time.", file.name];
                 
                 NSDictionary* infoDictionary = @{@"file": file, @"message": @"File already exists in Dropbox and locally. Both files were modified at the same time."};
                 NSError* error = [NSError errorWithDomain:@"[DropboxBrowser] File Conflict Error: File already exists in Dropbox and locally. Both files were modified at the same time." code:kGDriveFileSameAsLocalFileError userInfo:infoDictionary];
