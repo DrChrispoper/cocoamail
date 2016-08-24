@@ -112,9 +112,9 @@ static AppSettings * singleton = nil;
             [accounts appendFormat:@"OAuth?%@\n", user.oAuth];
         }
         
-        NSString* userData = [NSString stringWithFormat:@"Users:\n%@",accounts];
         
 #ifdef USING_INSTABUG
+        NSString* userData = [NSString stringWithFormat:@"Users:\n%@",accounts];
         [Instabug setUserData:userData];
 #endif
         

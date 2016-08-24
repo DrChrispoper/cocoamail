@@ -297,8 +297,8 @@ margin : 0;\
         NSLog(@"Fetching html");
 
         if ([mail uids].count == 0) {
-            NSException* myE = [NSException exceptionWithName:@"EmailHasNoUID" reason:@"Showing email with no UidEntry" userInfo:nil];
 #ifdef USING_INSTABUG
+            NSException* myE = [NSException exceptionWithName:@"EmailHasNoUID" reason:@"Showing email with no UidEntry" userInfo:nil];
             [Instabug reportException:myE];
 #endif
             [self setHtml:@"An error appeared and has been reported."];
@@ -525,7 +525,7 @@ margin : 0;\
             
             NSLog(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
             NSLog(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
-            CGFloat widthRef = _webView.scrollView.contentSize.width;
+//            CGFloat widthRef = _webView.scrollView.contentSize.width;
             
             if (_webView.scrollView.contentSize.height > 1) {
                 if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {

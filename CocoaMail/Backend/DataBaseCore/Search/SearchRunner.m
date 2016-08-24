@@ -364,7 +364,7 @@ static SearchRunner * searchSingleton = nil;
             [queue inDatabase:^(FMDatabase* db) {
                 FMResultSet* results = [db executeQuery:query];
                 
-                NSDate *fetchStartG = [NSDate date];
+//                NSDate *fetchStartG = [NSDate date];
 
                 if ([db hadError] && [db lastErrorCode] == 1) {
                     NSLog(@"Error querying table. Checking table");
@@ -404,9 +404,9 @@ static SearchRunner * searchSingleton = nil;
                     [UidEntry removeAllMsgID:p.msgID];
                 }
                 
-                NSDate *fetchEndG = [NSDate date];
-                NSTimeInterval timeElapsedG = [fetchEndG timeIntervalSinceDate:fetchStartG];
-                //NSLog(@"Group Fetch Duration: %f seconds.", timeElapsedG);
+//                NSDate *fetchEndG = [NSDate date];
+//                NSTimeInterval timeElapsedG = [fetchEndG timeIntervalSinceDate:fetchStartG];
+//                NSLog(@"Group Fetch Duration: %f seconds.", timeElapsedG);
                 
                 [results close];
             }];
