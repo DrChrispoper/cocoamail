@@ -13,7 +13,7 @@
 //#import <Google/SignIn.h>
 #import "GTMOAuth2Authentication.h"
 #import "GTMOAuth2ViewControllerTouch.h"
-#import "GTMHTTPFetcher.h"
+#import "GTMSessionFetcher"
 #import "UserSettings.h"
 #import "SyncManager.h"
 #import "AppSettings.h"
@@ -291,7 +291,10 @@
     }
 }
 
-- (void)auth:(GTMOAuth2Authentication *)authResult finishedRefreshWithFetcher:(GTMHTTPFetcher *)fetcher error:(NSError *)error {
+// 20160824_1055 AJCerier
+// Error: "Use of undeclared identifier 'GTMHTTPFetcher'"
+// Resolution: Changed GTMHTTPFetcher to GTMSessionFetcher.
+- (void)auth:(GTMOAuth2Authentication *)authResult finishedRefreshWithFetcher:(GTMSessionFetcher *)fetcher error:(NSError *)error {
     if (error != nil) {
         [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
     }
