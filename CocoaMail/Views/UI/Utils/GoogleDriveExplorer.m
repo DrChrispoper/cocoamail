@@ -463,7 +463,12 @@ static NSString * currentFileName = nil;
                 self.driveFiles = [[NSMutableArray alloc] init];
             }
             [self.driveFiles removeAllObjects];
-            [self.driveFiles addObjectsFromArray:files.items];
+            // 20160824_1221 AJCerier
+            // Error: Property 'items' not found on object of
+            //      type 'GTLDriveList *'.
+            // Resolution:
+            //      Replaced 'items' with 'files'.
+            [self.driveFiles addObjectsFromArray:files.files];
             [self.tableView reloadData];
         }
         else {
