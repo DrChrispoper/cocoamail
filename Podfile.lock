@@ -9,7 +9,7 @@ PODS:
   - box-ios-sdk/no-arc (1.0.11):
     - box-ios-sdk/logger
   - DZNEmptyDataSet (1.8.1)
-  - FirebaseAnalytics (3.3.0):
+  - FirebaseAnalytics (3.3.1):
     - FirebaseInstanceID (~> 1.0)
     - GoogleInterchangeUtilities (~> 1.2)
     - GoogleSymbolUtilities (~> 1.1)
@@ -125,7 +125,7 @@ SPEC CHECKSUMS:
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
   box-ios-sdk: a34a7c130e83e3d2380d2f6c1f16e589ba7788ba
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
-  FirebaseAnalytics: 228be2991cb28efb96cdafc4d62f64680e615c69
+  FirebaseAnalytics: d968d4d5f6aeb795cd64144337bcd233e530efc6
   FirebaseInstanceID: ba1e640935235e5fac39dfa816fe7660e72e1a8a
   Flurry-iOS-SDK: 97bbeec09cca666c2f1772f6e161c4f8ccff611e
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
