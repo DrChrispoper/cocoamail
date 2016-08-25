@@ -20,6 +20,7 @@
 #import "Flurry.h"
 #import "UserSettings.h"
 #import "Draft.h"
+#import <CocoaLumberjack/CocoaLumberjack.h>
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
@@ -35,6 +36,21 @@
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     [Instabug setIntroMessageEnabled:NO];
 #endif
+    
+    [DDLog addLogger:[DDTTYLogger sharedInstance]]; // TTY = Xcode console
+    [DDLog addLogger:[DDASLLogger sharedInstance]]; // ASL = Apple System Logs
+    
+    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
+    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+    [DDLog addLogger:fileLogger];
+    
+    // Set debug level in CocoaMail-Prefix.pch
+    DDLogVerbose(@"Verbose");
+    DDLogDebug(@"Debug");
+    DDLogInfo(@"Info");
+    DDLogWarn(@"Warn");
+    DDLogError(@"Error");
     
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
     

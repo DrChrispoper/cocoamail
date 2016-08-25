@@ -8,6 +8,7 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
+#import <CocoaLumberjack/CocoaLumberjack.h>
 #endif
 
 #define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -26,3 +27,7 @@
 #define kActiveAccountIndex [Accounts sharedInstance].currentAccountIdx
 #define kActiveFolderIndex [[Accounts sharedInstance] currentAccount].currentFolderIdx
 #define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
+
+// Change this to change the log level for CocoaLumberjack
+static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
+

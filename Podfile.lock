@@ -8,6 +8,14 @@ PODS:
   - box-ios-sdk/logger (1.0.11)
   - box-ios-sdk/no-arc (1.0.11):
     - box-ios-sdk/logger
+  - CocoaLumberjack (2.3.0):
+    - CocoaLumberjack/Default (= 2.3.0)
+    - CocoaLumberjack/Extensions (= 2.3.0)
+  - CocoaLumberjack/Core (2.3.0)
+  - CocoaLumberjack/Default (2.3.0):
+    - CocoaLumberjack/Core
+  - CocoaLumberjack/Extensions (2.3.0):
+    - CocoaLumberjack/Default
   - DZNEmptyDataSet (1.8.1)
   - FirebaseAnalytics (3.3.1):
     - FirebaseInstanceID (~> 1.0)
@@ -101,6 +109,7 @@ PODS:
 
 DEPENDENCIES:
   - box-ios-browse-sdk
+  - CocoaLumberjack
   - DZNEmptyDataSet
   - Flurry-iOS-SDK/FlurrySDK
   - FMDB
@@ -124,6 +133,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
   box-ios-sdk: a34a7c130e83e3d2380d2f6c1f16e589ba7788ba
+  CocoaLumberjack: 97fab7ee5f507fe54445cca7ea80f926729cfd15
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
   FirebaseAnalytics: d968d4d5f6aeb795cd64144337bcd233e530efc6
   FirebaseInstanceID: ba1e640935235e5fac39dfa816fe7660e72e1a8a
@@ -146,6 +156,6 @@ SPEC CHECKSUMS:
   Reachability: dd9aa4fb6667b9f787690a74f53cb7634ce99893
   ReactiveCocoa: e2db045570aa97c695e7aa97c2bcab222ae51f4a
 
-PODFILE CHECKSUM: 116c560252a3fb17a96f546ef9a5cb3c1f3fb689
+PODFILE CHECKSUM: 4b4dcea461340d1c1dd5e4bea6988b7e4703702f
 
 COCOAPODS: 1.0.0
