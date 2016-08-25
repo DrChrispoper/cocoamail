@@ -1985,7 +1985,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\nAPP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
+			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\n#SCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\n#if [ ! \"${SCRIPT_SRC}\" ]; then\n#echo \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\n#exit 1\n#fi\n#APP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\n#source \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
 		};
 		5C4D1CF95FC0C60ED575BC86 /* 📦 Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
