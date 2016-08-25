@@ -18,6 +18,7 @@ target 'CocoaMail' do
 	pod 'DZNEmptyDataSet'
 	pod 'Flurry-iOS-SDK/FlurrySDK'
 #	pod 'Instabug'
+  pod 'CocoaLumberjack' 
 end
 
 
