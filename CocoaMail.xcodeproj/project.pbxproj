@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
@@ -307,7 +308,6 @@
 		27D3B10B1BB2D8C500D5B1E4 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B1021BB2D8C400D5B1E4 /* OpenGLES.framework */; };
 		27D3B10C1BB2D8C500D5B1E4 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B1031BB2D8C400D5B1E4 /* QuartzCore.framework */; };
 		27D3B10D1BB2D8C500D5B1E4 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D3B1041BB2D8C400D5B1E4 /* SystemConfiguration.framework */; };
-		27D3B1101BB2D95300D5B1E4 /* Instabug.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 27D3B10E1BB2D95300D5B1E4 /* Instabug.bundle */; };
 		27D4A6B31C6097AA00F7670A /* FindQuote.m in Sources */ = {isa = PBXBuildFile; fileRef = 27D4A6B21C6097AA00F7670A /* FindQuote.m */; };
 		27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */; };
 		27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3C9CD1C807FCE0066116B /* Conversation.m */; };
@@ -320,10 +320,16 @@
 		27FADA3A1C5774FC007A3D14 /* UIView+RenderViewToImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 27FADA391C5774FC007A3D14 /* UIView+RenderViewToImage.m */; };
 		27FDE1701C4A4CF300FD69F1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 27FDE16E1C4A4CF300FD69F1 /* Main.storyboard */; };
 		6A8D5F497F086BD47ADD116A /* libPods-CocoaMail.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAF94853EC065E63930E0AFF /* libPods-CocoaMail.a */; };
-		91CE6430FB8EB65B4EBA9252 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 55683D925F45599EB9CB2647 /* libPods.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1423E0751D6E27C2000A6120 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = C6BA2B091705F4E6003F0E9E;
+			remoteInfo = "static mailcore2 ios";
+		};
 		14685AE51D6CCE4300A261AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */;
@@ -822,6 +828,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */,
 				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
@@ -850,7 +857,6 @@
 				271D4D481B8471AC00D19373 /* libpop.a in Frameworks */,
 				271D4D491B8471AC00D19373 /* libReachability.a in Frameworks */,
 				271D4D4A1B8471AC00D19373 /* libReactiveCocoa.a in Frameworks */,
-				91CE6430FB8EB65B4EBA9252 /* libPods.a in Frameworks */,
 				6A8D5F497F086BD47ADD116A /* libPods-CocoaMail.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1652,6 +1658,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				1423E0761D6E27C2000A6120 /* PBXTargetDependency */,
 			);
 			name = CocoaMail;
 			productName = CocoaMail;
@@ -1906,7 +1913,6 @@
 				277D89A61BB183B300FAFED5 /* page_white_tux.png in Resources */,
 				278183921C232564000B257A /* apple.png in Resources */,
 				277D89941BB183B300FAFED5 /* page_white_jef.png in Resources */,
-				27D3B1101BB2D95300D5B1E4 /* Instabug.bundle in Resources */,
 				279F29121C202BEC00D554A7 /* google.png in Resources */,
 				279F29231C202BEC00D554A7 /* pocket.png in Resources */,
 				279F29211C202BEC00D554A7 /* pinterest.png in Resources */,
@@ -2150,6 +2156,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		1423E0761D6E27C2000A6120 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "static mailcore2 ios";
+			targetProxy = 1423E0751D6E27C2000A6120 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		271D4D131B846E4600D19373 /* LaunchScreen.xib */ = {
 			isa = PBXVariantGroup;
@@ -2294,6 +2308,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -2306,7 +2321,6 @@
 					"-l\"box-ios-browse-sdk\"",
 					"-l\"box-ios-sdk\"",
 					"-l\"c++\"",
-					"-l\"gtmoauth2\"",
 					"-l\"libextobjc\"",
 					"-l\"pop\"",
 					"-l\"sqlite3\"",
@@ -2361,6 +2375,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -2373,7 +2388,6 @@
 					"-l\"box-ios-browse-sdk\"",
 					"-l\"box-ios-sdk\"",
 					"-l\"c++\"",
-					"-l\"gtmoauth2\"",
 					"-l\"libextobjc\"",
 					"-l\"pop\"",
 					"-l\"sqlite3\"",
