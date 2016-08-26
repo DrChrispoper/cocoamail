@@ -27,7 +27,3 @@
 #define kActiveAccountIndex [Accounts sharedInstance].currentAccountIdx
 #define kActiveFolderIndex [[Accounts sharedInstance] currentAccount].currentFolderIdx
 #define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
-
-// Change this to change the log level for CocoaLumberjack
-static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
-

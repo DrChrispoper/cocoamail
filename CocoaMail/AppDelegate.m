@@ -37,27 +37,47 @@
     [Instabug setIntroMessageEnabled:NO];
 #endif
     
+    
+    /**********************************/
+    /*** Initialize CocoaLumberjack ***/
+    /**********************************/
+    
+    // Change this to change the log level for CocoaLumberjack
+    static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
+    
     // Enable XcodeColors
     setenv("XcodeColors", "YES", 0);
+
+    // Send debug statements to the System Log (Console.app)
+//    [DDLog addLogger:[DDASLLogger sharedInstance]];
     
-    [DDLog addLogger:[DDTTYLogger sharedInstance]]; // TTY = Xcode console
-    [DDLog addLogger:[DDASLLogger sharedInstance]]; // ASL = Apple System Logs
+    // Send debug statements to the Xcode console (uses XcodeColor)
+    DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
+    if (ttyLogger) {
+        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
+        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
+        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
+        [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
+    }
     
-    // Enable colors in CocoaLumberjack
-    [[DDTTYLogger sharedInstance] setColorsEnabled:YES];
+    // Send debug info to log files
+//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
+//    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+//    [DDLog addLogger:fileLogger];
     
-    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
-    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
-    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-    [DDLog addLogger:fileLogger];
+    // Show the Xcode console colors
+    DDLogError(  @"Color Demo: DDLogError");    // Red
+    DDLogWarn(   @"Color Demo: DDLogWarn");     // Orange
+    DDLogInfo(   @"Color Demo: DDLogInfo");     // Green
+    DDLogDebug(  @"Color Demo: DDLogDebug");    // Cyan
+    DDLogVerbose(@"Color Demo: DDLogVerbose");  // Default (black)
     
-    // Set debug level in CocoaMail-Prefix.pch
-    DDLogVerbose(@"Verbose");
-    DDLogDebug(@"Debug");
-    DDLogInfo(@"Info");
-    DDLogWarn(@"Warn");
-    DDLogError(@"Error");
     
+    
+    // Initialize Flurry analytics
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
     
     // First, create an action
