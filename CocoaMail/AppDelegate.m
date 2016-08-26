@@ -41,10 +41,7 @@
     /**********************************/
     /*** Initialize CocoaLumberjack ***/
     /**********************************/
-    
-    // Change this to change the log level for CocoaLumberjack
-    static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
-    
+        
     // Enable XcodeColors
     setenv("XcodeColors", "YES", 0);
 
