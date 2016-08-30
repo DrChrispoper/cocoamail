@@ -631,7 +631,7 @@
                     }
                     else {
                         [CachedAction removeAction:action];
-                        DDLogInfo(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
+//                        DDLogInfo(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
                     }
                 }];
             }
