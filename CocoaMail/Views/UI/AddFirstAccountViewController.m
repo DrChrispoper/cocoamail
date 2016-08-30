@@ -510,7 +510,7 @@
 
 -(void) saveSettings
 {
-    CCMLog(@"2 - Start setting Folders");
+    DDLogDebug(@"2 - Start setting Folders (saveSettings)");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.account-in-config", @"HUD Message: Account Configuration...")];
     [[PKHUD sharedHUD] show];
@@ -531,7 +531,7 @@
     MCOIMAPFetchNamespaceOperation* namespaceOp = [imapSession fetchNamespaceOperation];
     [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
         if (error) {
-            CCMLog(@"%@", error.description);
+            DDLogError(@"MCOIMAPFetchNamespaceOperation Error: %@", error.description);
             [[PKHUD sharedHUD] hideWithAnimated:YES];
             
             return ;
@@ -543,7 +543,7 @@
         
         [op start:^(NSError*  error, NSArray* folders) {
             if (error) {
-                CCMLog(@"%@", error.description);
+                DDLogError(@"MCOIMAPFetchFoldersOperation Error: %@", error.description);
                 [[PKHUD sharedHUD] hideWithAnimated:YES];
                 
                 return ;
@@ -556,26 +556,31 @@
             MCOIMAPFolder*  __block inboxfolder;
             MCOIMAPFolder*  __block allMailFolder;
             
+            DDLogDebug(@"Processing %ld folders:",(long)[folders count]);
+            
             for (MCOIMAPFolder* folder in folders) {
                 
+                DDLogVerbose(@"Folder \"%@\":",folder.path);
+                
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
+                    DDLogDebug(@"Folder flags includes MCOIMAPFolderFlagNoSelect");
                     continue;
                 }
                 
                 if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
-                    CCMLog(@"Inbox:%@", folder.path);
+                    DDLogVerbose(@"Folder is INBOX");
                     inboxfolder = folder;
                 }
                 else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folder.path]) {
-                    CCMLog(@"All:%@", folder.path);
+                    DDLogVerbose(@"Folder is ALL MAIL FOLDER");
                     allMailFolder = folder;
                 }
                 else if (![@(folder.flags) isEqualToNumber:@0]) {
-                    CCMLog(@"Flagged:%@", folder.path);
+                    DDLogVerbose(@"Folder is FLAGGED (%ld)",(long)folder.flags);
                     [flagedFolders addObject:folder];
                 }
                 else {
-                    CCMLog(@"other:%@", folder.path);
+                    DDLogVerbose(@"Folder is of some OTHER type");
                     [otherFolders addObject:folder];
                 }
             }
@@ -616,6 +621,9 @@
                         }];
                     }
                     else {
+                        DDLogWarn(@"[AddFirstAccountViewController saveSettings:]");
+                        DDLogWarn(@"      Failed to create folder \"Archive\", NSError = %@",[error description]);
+                        
                         //Account not supported
                         [[PKHUD sharedHUD] hideWithAnimated:YES];
                         [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert Message: This email provider is not supported")];
@@ -669,6 +677,8 @@
     [ac setNewUser:user];
     
     ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
+    
+    DDLogInfo(@"Adding first Account:\n%@",[ac description]);
     
     //Folder Settings
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];

@@ -25,6 +25,8 @@
 #import "CCMConstants.h"
 #import "UserSettings.h"
 
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
 #endif
@@ -610,11 +612,21 @@ static NSArray * sharedServices = nil;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
+    DDLogDebug(@"-[ImapSync runFolder:(%ld) fromStart:(%@) fromAccount:(getAll=%@):",
+               folder,
+               (isFromStart==TRUE?@"TRUE":@"FALSE"),
+               (getAll==TRUE?@"TRUE":@"FALSE"));
+    
     BOOL isInBackground = UIApplicationStateBackground == [UIApplication sharedApplication].applicationState;
+    
+    DDLogDebug(@"\tisInBackground = %@",
+               (isInBackground==TRUE?@"TRUE":@"FALSE") );
     
     if (folder == -1) {
         folder = [self nextFolderToSync];
+        DDLogDebug(@"\tfolder was -1, calling -[self nextFolderToSync]");
     }
+    DDLogDebug(@"\tfolder= %ld",folder);
     
     NSInteger currentFolder = folder;
     

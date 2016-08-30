@@ -617,6 +617,7 @@
                 //Create folder
                 MCOIMAPOperation*  op = [imapSession createFolderOperation:newAllMail];
                 [op start:^(NSError*  error) {
+                    
                     if (!error) {
                         
                         MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
@@ -647,6 +648,9 @@
                         }];
                     }
                     else {
+                        DDLogDebug(@"[AddFirstAccountViewController saveSettings:]");
+                        DDLogDebug(@"      Failed to create folder \"Archive\", NSError = %@",[error description]);
+
                         //Account not supported
                         [[PKHUD sharedHUD] hideWithAnimated:YES];
                         [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert Message: This email provider is not supported")];
@@ -702,6 +706,8 @@
     
     ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
     
+    DDLogInfo(@"Adding first Account:\n%@",[ac description]);
+
     //Folder Settings
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
