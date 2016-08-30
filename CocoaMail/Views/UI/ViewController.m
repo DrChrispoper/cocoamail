@@ -479,7 +479,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
 #endif
-        NSLog(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
+        DDLogInfo(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
         AddFirstAccountViewController* f = [[AddFirstAccountViewController alloc] init];
         f.firstRunMode = YES;
@@ -517,7 +517,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_FOLDER_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_FOLDER_NOTIFICATION);
+        DDLogInfo(kPRESENT_FOLDER_NOTIFICATION);
 
         //[[SearchRunner getSingleton] cancel];
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
@@ -561,7 +561,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_SETTINGS_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_SETTINGS_NOTIFICATION);
+        DDLogInfo(kPRESENT_SETTINGS_NOTIFICATION);
         
         SettingsViewController* f = [[SettingsViewController alloc] init];
         [self _animatePushVC:f];
@@ -575,7 +575,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_CREDIT_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_CREDIT_NOTIFICATION);
+        DDLogInfo(kSETTINGS_CREDIT_NOTIFICATION);
         
         CreditViewController* f = [[CreditViewController alloc] init];
         [self _animatePushVC:f];
@@ -589,7 +589,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_CREDIT2_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_CREDIT2_NOTIFICATION);
+        DDLogInfo(kSETTINGS_CREDIT2_NOTIFICATION);
         
         CreditContentViewController* f = [[CreditContentViewController alloc] init];
         f.type = [notif.userInfo objectForKey:kSETTINGS_KEY];
@@ -604,7 +604,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_SPAMTEST_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_SPAMTEST_NOTIFICATION);
+        DDLogInfo(kSETTINGS_SPAMTEST_NOTIFICATION);
         
         SpamListViewController* f = [[SpamListViewController alloc] init];
         [self _animatePushVC:f];
@@ -618,7 +618,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_CLOUD_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_CLOUD_NOTIFICATION);
+        DDLogInfo(kSETTINGS_CLOUD_NOTIFICATION);
         
         CloudViewController* f = [[CloudViewController alloc] init];
         f.cloudServiceName = [notif.userInfo objectForKey:kSETTINGS_KEY];
@@ -632,7 +632,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
+        DDLogInfo(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
         
         DefaultAccountViewController* f = [[DefaultAccountViewController alloc] init];
         [self _animatePushVC:f];
@@ -645,7 +645,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_SWIPE_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_SWIPE_NOTIFICATION);
+        DDLogInfo(kSETTINGS_SWIPE_NOTIFICATION);
         
         QuickSwipeViewController* f = [[QuickSwipeViewController alloc] init];
         [self _animatePushVC:f];
@@ -658,7 +658,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_NOTIF_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_NOTIF_NOTIFICATION);
+        DDLogInfo(kSETTINGS_NOTIF_NOTIFICATION);
         
         NotificationViewController* f = [[NotificationViewController alloc] init];
         [self _animatePushVC:f];
@@ -671,7 +671,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_ACCOUNT_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_ACCOUNT_NOTIFICATION);
+        DDLogInfo(kSETTINGS_ACCOUNT_NOTIFICATION);
         
         AccountViewController* f = [[AccountViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
@@ -685,7 +685,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
+        DDLogInfo(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
         
         SignatureViewController* f = [[SignatureViewController alloc] init];
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
@@ -699,7 +699,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
 #endif
-        NSLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
+        DDLogInfo(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
         
         AddAccountViewController* f = [[AddAccountViewController alloc] init];
         [self _animatePushVC:f];
@@ -712,7 +712,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_CONVERSATION_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_CONVERSATION_NOTIFICATION);
+        DDLogInfo(kPRESENT_CONVERSATION_NOTIFICATION);
         
         ConversationViewController* f = [[ConversationViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
@@ -726,7 +726,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
+        DDLogInfo(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
         
         AttachmentsViewController* f = [[AttachmentsViewController alloc] init];
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
@@ -748,7 +748,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_CONTACTS_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_CONTACTS_NOTIFICATION);
+        DDLogInfo(kPRESENT_CONTACTS_NOTIFICATION);
         
         ContactsViewController* f = [[ContactsViewController alloc] init];
         f.mail = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
@@ -762,7 +762,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_SEARCH_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_SEARCH_NOTIFICATION);
+        DDLogInfo(kPRESENT_SEARCH_NOTIFICATION);
         
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
 
@@ -777,7 +777,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_EDITMAIL_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_EDITMAIL_NOTIFICATION);
+        DDLogInfo(kPRESENT_EDITMAIL_NOTIFICATION);
         
         EditMailViewController* f = [[EditMailViewController alloc] init];
         f.draft = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
@@ -791,7 +791,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kPRESENT_DROPBOX_NOTIFICATION);
 #endif
-        NSLog(kPRESENT_DROPBOX_NOTIFICATION);
+        DDLogInfo(kPRESENT_DROPBOX_NOTIFICATION);
         
         DropboxBrowserViewController* f = [[DropboxBrowserViewController alloc]init];
         f.rootViewDelegate = [notif.userInfo objectForKey:kPRESENT_DELEGATE_KEY];
@@ -806,7 +806,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kBACK_TO_INBOX_NOTIFICATION);
 #endif
-        NSLog(kBACK_TO_INBOX_NOTIFICATION);
+        DDLogInfo(kBACK_TO_INBOX_NOTIFICATION);
 
         //[[SearchRunner getSingleton] cancel];
         
@@ -840,7 +840,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kBACK_NOTIFICATION);
 #endif
-        NSLog(kBACK_NOTIFICATION);
+        DDLogInfo(kBACK_NOTIFICATION);
 
         InViewController* vc = [self.viewControllers lastObject];
         [vc cleanBeforeGoingBack];
@@ -910,7 +910,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kACCOUNT_CHANGED_NOTIFICATION);
 #endif
-        NSLog(kACCOUNT_CHANGED_NOTIFICATION);
+        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
 
         //[[Parser sharedParser] cleanConversations];
         
@@ -947,7 +947,7 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kQUICK_ACTION_NOTIFICATION);
 #endif
-        NSLog(kQUICK_ACTION_NOTIFICATION);
+        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
         
         BOOL inFolders = self.viewControllers.count == 1;
         
