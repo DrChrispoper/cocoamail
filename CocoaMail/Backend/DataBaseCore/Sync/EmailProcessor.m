@@ -76,16 +76,23 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) rolloverAddEmailDBTo:(NSInteger)dbNum
 {
+    DDLogInfo(@"rolloverAddEmailDBTo:");
+
 	//[[[EmailDBAccessor sharedManager] databaseQueue] close];
 	
 	// create new, empty db file
 	NSString* fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
 	NSString* dbPath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
     
+    DDLogInfo(@"dbNum    = %ld",(long)dbNum);
+    DDLogInfo(@"filename = \"%@\"",fileName);
+    DDLogInfo(@"dbPath   = \"%@\"",dbPath);
+    
 	if (![[NSFileManager defaultManager] fileExistsAtPath:dbPath]) {
         [[NSFileManager defaultManager] createFileAtPath:dbPath contents:nil attributes:@{NSFileProtectionKey: NSFileProtectionNone}];
+        DDLogInfo(@"dbPath doesn't exist, creating");
 	}
-	
+    
 	[[EmailDBAccessor sharedManager] setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:fileName]];
 	
     [Mail tableCheck];
