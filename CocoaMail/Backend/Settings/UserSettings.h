@@ -65,4 +65,6 @@
 
 -(MCOIMAPMessagesRequestKind) requestKind;
 
+-(NSString *)description;
+
 @end

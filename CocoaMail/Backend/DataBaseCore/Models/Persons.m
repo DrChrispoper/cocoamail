@@ -557,4 +557,22 @@
     return  emailMD5;
 }
 
+#pragma mark - object description
+- (NSString *)description
+{
+    NSMutableString *desc = [NSMutableString string];
+    
+    [desc appendString:@"\n --- Person --- \n"];
+    
+    [desc appendFormat:@"\tName       = \"%@\"\n",self.name];
+    [desc appendFormat:@"\tCodename   = \"%@\"\n",self.codeName];
+    [desc appendFormat:@"\tEmail      = \"%@\"\n",self.email];
+    [desc appendFormat:@"\tIs Generic = %@\n",(self.isGeneric?@"TRUE":@"FALSE")];
+    [desc appendFormat:@"\tImage Data:\n%@",[self.imageData description]];
+    
+    [desc appendString:@" --- End Person ---\n"];
+    
+    return desc;
+}
+
 @end

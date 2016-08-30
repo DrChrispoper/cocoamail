@@ -428,6 +428,8 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
+    DDLogInfo(@"Decoded UserSettings: %@",[self description]);
+
     return self;
 }
 
@@ -477,5 +479,79 @@
 {
     return [CIColor colorWithCGColor:color.CGColor].stringRepresentation;
 }
+
+#pragma mark - NSObject description
+
+-(NSString *)description
+{
+    NSMutableString *desc = [NSMutableString string];
+    
+    [desc appendString:@"\n--- UserSettings: ---\n"];
+        
+    [desc appendFormat:@"\tidentifier = \"%@\"\n",self.identifier];
+    [desc appendFormat:@"\tusername   = \"%@\"\n",self.username];
+    [desc appendString:@"\n"];
+    
+    // IMAP
+    [desc appendFormat:@"\tIMAP hostname        = \"%@\"\n",self.imapHostname];
+    [desc appendFormat:@"\tIMAP port            = %ld\n",(long)self.imapPort];
+    [desc appendFormat:@"\tIMAP connection type = \"%@\"\n",
+        [self connTypeDescription:self.imapConnectionType]];
+    [desc appendString:@"\n"];
+    
+    // SMTP
+    [desc appendFormat:@"\tSMTP hostname        = \"%@\"\n",self.smtpHostname];
+    [desc appendFormat:@"\tSMTP port            = %ld\n",(long)self.smtpPort];
+    [desc appendFormat:@"\tSMTP connection type = \"%@\"\n",
+        [self connTypeDescription:self.smtpConnectionType]];
+    [desc appendString:@"\n"];
+    
+    [desc appendFormat:@"\tSignature = \"%@\"\n",self.signature];
+    [desc appendFormat:@"\tName      = \"%@\"\n",self.name];
+    [desc appendFormat:@"\tInitials  = \"%@\"\n",self.initials];
+    [desc appendFormat:@"\tcolor     = \"%@\"\n",[self.color description]];
+    [desc appendString:@"\n"];
+
+    [desc appendFormat:@"\tImportant Folders count = %ld\n",
+     [self.importantFolders count]];
+    for (NSString *importantFolderName in self.importantFolders) {
+        [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
+    }
+    [desc appendFormat:@"\tFolder Display Names count = %ld\n",
+     [self.allFoldersDisplayNames count]];
+    for (NSString *folderName in self.allFoldersDisplayNames) {
+        [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
+    }
+    [desc appendString:@"\n"];
+
+    [desc appendFormat:@"\tIs Deleted = %@\n",([self isDeleted]?@"TRUE":@"FALSE")];
+    [desc appendFormat:@"\tIs All     = %@\n",([self isAll]?@"TRUE":@"FALSE")];
+   
+    [desc appendString:@"--- End of UserSettings ---"];
+    
+    return desc;
+}
+
+-(NSString *) connTypeDescription:(NSInteger)connType
+{
+    NSString *desc = @"";
+    
+    switch ( connType ) {
+        case MCOConnectionTypeClear:
+            desc = @"Clear-text";
+            break;
+        case MCOConnectionTypeStartTLS:
+            desc = @"Start TLS - Start with Clear-text, then switch to encrypted connection using TLS/SSL";
+            break;
+        case MCOConnectionTypeTLS:
+            desc = @"TLS - encrypted connection using TLS/SSL.";
+            break;
+        default:
+            desc = [NSString stringWithFormat:@"Unknown MOConnectionType %ld",(long)connType];
+            break;
+    }
+    return desc;
+}
+
 
 @end

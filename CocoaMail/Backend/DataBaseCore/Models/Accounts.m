@@ -18,6 +18,7 @@
 #import "Draft.h"
 #import "RegExCategories.h"
 
+
 @interface Accounts()
 
 @property (nonatomic, retain) NSOperationQueue* localFetchQueue;
@@ -25,7 +26,6 @@
 @property (nonatomic) BOOL canUI;
 
 @end
-
 
 @interface Account () {
     BOOL _currentFolderFullSyncCompleted;
@@ -63,9 +63,11 @@
          [UIColor colorWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
          [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];*/
         
-        NSMutableArray* accounts = [[NSMutableArray alloc]initWithCapacity:[AppSettings numActiveAccounts]];
+        NSInteger numActiveAccounts = [AppSettings numActiveAccounts];
         
-        if ([AppSettings numActiveAccounts] > 0) {
+        NSMutableArray* accounts = [[NSMutableArray alloc]initWithCapacity:numActiveAccounts];
+        
+        if ( numActiveAccounts > 0) {
             
             for (UserSettings* user in [AppSettings getSingleton].users) {
                 //for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
@@ -87,6 +89,9 @@
         if ([AppSettings numActiveAccounts] > 0) {
             [sharedInstance runLoadData];
         }
+        
+        DDLogInfo(@"Accounts Loaded, count = %ld",[accounts count]);
+        DDLogInfo(@"Accounts:\n%@",[sharedInstance description]);
     });
     
     return sharedInstance;
@@ -376,6 +381,20 @@
 -(void) appeared
 {
     _canUI = YES;
+}
+
+#pragma mark - Accounts description
+
+-(NSString *)description
+{
+    NSMutableString *desc = [NSMutableString string ];
+    
+    [desc appendFormat:@"Accounts has %lu Account:\n",(unsigned long)[self.accounts count]];
+    for (Account *acnt in self.accounts) {
+        [desc appendString:[acnt description]];
+    }
+    
+    return desc;
 }
 
 @end
@@ -1772,4 +1791,67 @@
      }];
 }
 
+#pragma mark - Account description
+
+-(NSString *)description
+{
+    NSMutableString *desc = [NSMutableString string];
+    
+    [desc appendString:@"\n --- Account ---\n"];
+    
+    // Account Index
+    [desc appendFormat:@"Account Index = %ld\n",[self idx]];
+    [desc appendString:@"\n"];
+
+    // UserSettings
+    [desc appendFormat:@"UserSettings: %@",[[self user] description]];
+    [desc appendString:@"\n\n"];
+
+    [desc appendFormat:@"User Folders count   = %ld\n",[self.userFolders count]];
+    [desc appendFormat:@"Current Folder Index = %ld\n",(long)self.currentFolderIdx];
+    [desc appendFormat:@"Is Sending Out count = %ld\n",(long)self.isSendingOut];
+    [desc appendFormat:@"Current Folder Type  = %@\n",[self currentFolderTypeValue]];
+    [desc appendString:@"\n"];
+
+    [desc appendFormat:@"Person: %@",[[self person] description]];
+      
+//    @property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
+    
+    [desc appendString:@"\n --- End Account ---\n"];
+    
+    return desc;
+}
+
+-(NSString *)currentFolderTypeValue
+{
+    NSString *currFolderType = @"";
+    
+    switch (self.currentFolderType.type) {
+        case FolderTypeInbox:
+            currFolderType = @"INBOX";
+            break;
+        case FolderTypeFavoris:
+            currFolderType = @"Favorite?";
+            break;
+        case FolderTypeSent:
+            currFolderType = @"Sent";
+            break;
+        case FolderTypeDrafts:
+            currFolderType = @"Drafts";
+            break;
+        case FolderTypeAll:
+            currFolderType = @"All";
+            break;
+        case FolderTypeDeleted:
+            currFolderType = @"Deleted";
+            break;
+        case FolderTypeSpam:
+            currFolderType = @"SPAM";
+            break;
+        default:
+            currFolderType = [NSString stringWithFormat:@"Unknown CCMFolderType.type (%ld)",(long)self.currentFolderType.type];
+            break;
+    }
+        return currFolderType;
+}
 @end

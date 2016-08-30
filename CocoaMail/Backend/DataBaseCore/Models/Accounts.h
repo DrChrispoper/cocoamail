@@ -48,6 +48,8 @@
 -(void) getDrafts;
 -(void) appeared;
 
+-(NSString*) description;
+
 @end
 
 
@@ -106,5 +108,7 @@
 -(void) doTextSearch:(NSString*)searchString;
 
 -(void) localFetchMore:(BOOL)loadMore;
+
+-(NSString *) description;
 
 @end
