@@ -250,7 +250,7 @@
         return self.accounts[accountIndex];
     }
     
-    NSAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%ld is incorrect only %ld active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
+    DDAssert(accountIndex <= [AppSettings numActiveAccounts], @"accountIdx:%ld is incorrect only %ld active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
     
     return nil;
 }
@@ -550,7 +550,7 @@
 
 -(void) setConnected
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     [ImapSync runInboxUnread:self.user];
     [self refreshCurrentFolder];
@@ -686,7 +686,7 @@
 
 -(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     for (NSNumber* Fuser in folders) {
         [self _addIdx:idx inArray:decodeFolderTypeWith([Fuser integerValue])];
@@ -695,7 +695,7 @@
 
 -(void) _addIdx:(NSUInteger)idx inArray:(CCMFolderType)type
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableIndexSet* set = nil;
     
@@ -731,7 +731,7 @@
 
 -(NSUInteger) addConversation:(Conversation*)conv
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
@@ -770,14 +770,14 @@
 
 -(Conversation*) getConversationForIndex:(NSUInteger)index
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     return [self.allsMails objectAtIndex:index];
 }
 
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableIndexSet* set = nil;
     
@@ -806,7 +806,7 @@
 
 -(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs
 {
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
     
@@ -1059,7 +1059,7 @@
 {
     if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     return [self moveConversation:[self.allsMails objectAtIndex:index] from:folderFrom to:folderTo updateUI:updateUI];
 }
@@ -1068,7 +1068,7 @@
 {
     if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
@@ -1177,7 +1177,7 @@
 {
     if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
-    NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
