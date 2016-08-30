@@ -77,6 +77,8 @@ static AppSettings * singleton = nil;
             user.username = NSLocalizedString(@"All accounts", @"All accounts");
             
             [_users addObject:user];
+            
+            DDLogInfo(@"Created \"All Files\" UserSettings: %@",[user description]);
         }
         else {
             for (NSString* fileName in dirFiles) {
@@ -329,6 +331,8 @@ static AppSettings * singleton = nil;
     [user setImportantFolderNum:-1 forBaseFolder:FolderTypeAll];
     [user setImportantFolderNum:-1 forBaseFolder:FolderTypeDeleted];
     [user setImportantFolderNum:-1 forBaseFolder:FolderTypeSpam];
+
+    DDLogInfo(@"Created New User UserSettings: %@",[user description]);
 
     return user;
 }
