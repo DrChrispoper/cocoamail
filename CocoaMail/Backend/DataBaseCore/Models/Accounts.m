@@ -18,6 +18,8 @@
 #import "Draft.h"
 #import "RegExCategories.h"
 
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
 
 @interface Accounts()
 
@@ -562,7 +564,7 @@
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
-        DDLogWarning(@"Same folder");
+        DDLogWarn(@"Same folder");
         return;
     }
     
@@ -1128,7 +1130,7 @@
             remove = (folderTo.type == FolderTypeDeleted);
             break;
         default:
-            DDLogError(@"move from this folder not implemented (From Folder Type = %l)",folderFrom.type);
+            DDLogError(@"move from this folder not implemented (From Folder Type = %ld)",folderFrom.type);
             
             return NO;
     }
