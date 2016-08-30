@@ -849,9 +849,12 @@ static NSDateFormatter * s_df_hour = nil;
 +(void) updateMail:(Mail*)email;
 {
     if (!email.subject) {
-#ifdef USING_INSTABUG
         NSException* myE = [NSException exceptionWithName:@"EmailHasNoSUBJECT" reason:@"Updating email with nil Subject" userInfo:nil];
+#ifdef USING_INSTABUG
         [Instabug reportException:myE];
+#else // not using Instabug
+        // Raise the exception
+        [myE raise];
 #endif
         return;
     }
