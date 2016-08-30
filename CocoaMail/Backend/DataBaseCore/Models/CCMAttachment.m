@@ -230,11 +230,11 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
         if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS attachments (pk INTEGER PRIMARY KEY, file_name TEXT, size INTEGER, mime_type TEXT, msg_id VARCHAR(32), data BLOB, partID TEXT, contentID TEXT)"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
         
         if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS attachments_msg_id on attachments(msg_id);"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
         
     }];

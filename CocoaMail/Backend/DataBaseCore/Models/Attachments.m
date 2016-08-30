@@ -439,7 +439,7 @@
             NSArray* uidEs = [UidEntry getUidEntriesWithMsgId:att.msgID];
             
             if (uidEs.count == 0 || ((UidEntry*)uidEs[0]).pk == 0) {
-                CCMLog(@"Can't find the uid of Attachment");
+                DDLogError(@"Can't find the uid of Attachment");
 
                 return;
             }
@@ -468,7 +468,7 @@
             dispatch_async([ImapSync sharedServices:user].s_queue, ^{
             [self.op start:^(NSError* error, NSData* partData) {
                 if (error) {
-                    CCMLog(@"%@", error);
+                    DDLogError(@"%@", error);
                     return;
                 }
                 att.data = partData;

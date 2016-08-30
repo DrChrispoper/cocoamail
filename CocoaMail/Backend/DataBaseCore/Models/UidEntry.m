@@ -30,19 +30,19 @@
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         
         if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS uid_entry (pk INTEGER PRIMARY KEY, uid INTEGER, folder INTEGER, msg_id TEXT, son_msg_id TEXT, dbNum INTEGER)"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
         
         if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS uid_entry_md5 on uid_entry(msg_id);"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
         
         if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS uid_entry_son on uid_entry(son_msg_id);"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
         
         if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS uid_entry_folder on uid_entry(folder);"]) {
-            CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+            DDLogError(@"errorMessage = %@", db.lastErrorMessage);
         }
     }];
 }
@@ -80,7 +80,7 @@
                         @(uid_entry.dbNum)];
             
             if (!res) {
-                NSLog(@"Add Uid in background:%@ failed", uid_entry.msgID);
+                DDLogError(@"Add Uid in background:%@ failed", uid_entry.msgID);
             }
         }
         else {
@@ -110,7 +110,7 @@
 +(void) removeFromFolderUid:(UidEntry*)uid_entry
 {
     if (uid_entry.uid == 0) {
-        NSLog(@"Draft not in DB no Delete");
+        DDLogError(@"Draft not in DB no Delete");
         return;
     }
     
@@ -121,7 +121,7 @@
                     uid_entry.msgID,
                     @(uid_entry.folder + 1000 * uid_entry.accountNum)];
         if (success) {
-            //NSLog(@"UID Deleted");
+            DDLogInfo(@"UID Deleted");
         }
     }];
     
@@ -139,7 +139,7 @@
         BOOL success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? ;",
                          msgID];
         if (success) {
-            //NSLog(@"UID Deleted");
+            DDLogInfo(@"UID Deleted");
         }
     }];
 }
@@ -232,7 +232,7 @@
             for (NSArray* uidEs in uids) {
                 for (UidEntry* uid in uidEs) {
                     if ([db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? ", uid.msgID]) {
-                        //NSLog(@"UID Deleted");
+                        DDLogInfo(@"UID Deleted");
                     }
                 }
             }
@@ -489,7 +489,7 @@
 +(void) copy:(UidEntry*)uidE toFolder:(NSInteger)to
 {
     if (uidE.uid == 0) {
-        NSLog(@"Draft not in DB no copy");
+        DDLogError(@"Draft not in DB no copy");
         return ;
     }
     
@@ -498,7 +498,7 @@
 #ifdef USING_INSTABUG
         IBGLog(@"Email not synced in folder, so can't move it");
 #endif
-        NSLog(@"Email not synced in folder, so can't move it");
+        DDLogError(@"Email not synced in folder, so can't move it");
         return ;
     }
     
@@ -523,7 +523,7 @@
 
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
-                //CCMLog(@"Email copied to folder!");
+                DDLogInfo(@"Email copied to folder!");
                 
                 [CachedAction removeAction:action];
                 
@@ -531,7 +531,7 @@
                 [self updateNewUID:newUidE];
                 [CachedAction updateActionUID:newUidE];
             } else if (error) {
-                CCMLog(@"Error copying email to folder:%@", error);
+                DDLogError(@"Error copying email to folder:%@", error);
             }
         }];
             
@@ -542,7 +542,7 @@
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
 {
     if (uidE.uid == 0) {
-        NSLog(@"Draft not in DB no move");
+        DDLogError(@"Draft not in DB no move");
         return ;
     }
     
@@ -551,7 +551,7 @@
 #ifdef USING_INSTABUG
         IBGLog(@"Email not synced in folder, so can't move it");
 #endif
-        NSLog(@"Email not synced in folder, so can't move it");
+        DDLogError(@"Email not synced in folder, so can't move it");
         return ;
     }
 
@@ -577,7 +577,7 @@
 
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
-                //CCMLog(@"Email copied to folder!");
+                DDLogInfo(@"Email copied to folder!");
                 
                 [CachedAction removeAction:action];
                 
@@ -588,7 +588,7 @@
                 [CachedAction updateActionUID:newUidE];
             } else {
                 if (error) {
-                    CCMLog(@"Error copying email to folder:%@", error);
+                    DDLogError(@"Error copying email to folder:%@", error);
                 }
             }
         }];
@@ -599,7 +599,7 @@
 +(void) deleteUidEntry:(UidEntry*)uidE
 {
     if (uidE.uid == 0) {
-        NSLog(@"Draft not in DB no delete");
+        DDLogError(@"Draft not in DB no delete");
         return ;
     }
     
@@ -622,21 +622,21 @@
 
         [op start:^(NSError* error) {
             if (!error) {
-                //CCMLog(@"Updated the deleted flags!");
+                DDLogInfo(@"Updated the deleted flags!");
                 
                 MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:user].imapSession expungeOperation:[user folderServerName:uidE.folder]];
                 [deleteOp start:^(NSError* error) {
                     if (error) {
-                        CCMLog(@"Error expunging folder:%@", error);
+                        DDLogError(@"Error expunging folder:%@", error);
                     }
                     else {
                         [CachedAction removeAction:action];
-                        //CCMLog(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
+                        DDLogInfo(@"Successfully expunged folder:%@", [AppSettings folderDisplayName:uidE.folder forAccountIndex:accountIndex]);
                     }
                 }];
             }
             else {
-                CCMLog(@"Error updating the deleted flags:%@", error);
+                DDLogError(@"Error updating the deleted flags:%@", error);
             }
         }];
             
@@ -670,12 +670,12 @@
 +(void) addFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
 {
     if (uidE.uid == 0) {
-        NSLog(@"Draft not in DB no flagging");
+        DDLogError(@"Draft not in DB no flagging");
         return ;
     }
     
     if (uidE.pk == 0) {
-        CCMLog(@"Email not synced in folder, so can't add flag");
+        DDLogError(@"Email not synced in folder, so can't add flag");
         return ;
     }
     
@@ -697,7 +697,7 @@
 
         [op start:^(NSError* error) {
             if (!error) {
-                CCMLog(@"Added flag!");
+                DDLogInfo(@"Added flag!");
                 if (action) {
                     [CachedAction removeAction:action];
                 }
@@ -706,7 +706,7 @@
                 }
             }
             else {
-                CCMLog(@"Error adding flag email:%@", error);
+                DDLogError(@"Error adding flag email:%@", error);
             }
         }];
         });
@@ -721,12 +721,12 @@
 +(void) removeFlag:(MCOMessageFlag)flag to:(UidEntry*)uidE
 {
     if (uidE.uid == 0) {
-        NSLog(@"Draft not in DB no unflagging");
+        DDLogError(@"Draft not in DB no unflagging");
         return ;
     }
     
     if (uidE.pk == 0) {
-        CCMLog(@"Email not synced in folder, so can't remove flag");
+        DDLogError(@"Email not synced in folder, so can't remove flag");
         
         return ;
     }
@@ -749,7 +749,7 @@
 
         [op start:^(NSError* error) {
             if (!error) {
-                CCMLog(@"Removed flag!");
+                DDLogInfo(@"Removed flag!");
                 if (action) {
                     [CachedAction removeAction:action];
                 }
@@ -758,7 +758,7 @@
                 }
             }
             else {
-                CCMLog(@"Error removing flag:%@", error);
+                DDLogError(@"Error removing flag:%@", error);
             }
         }];
         });

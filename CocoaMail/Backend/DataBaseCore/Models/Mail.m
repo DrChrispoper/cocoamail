@@ -688,7 +688,7 @@ static NSDateFormatter * s_df_hour = nil;
         
         
         if ([db hadError] && [db lastErrorCode] == 1) {
-            CCMLog(@"Checking table");
+            DDLogInfo(@"Checking table");
             [Mail tableCheck:db];
         }
     }];
@@ -706,7 +706,7 @@ static NSDateFormatter * s_df_hour = nil;
     }
     
     if (!_user) {
-        NSLog(@"WHAT!NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+        DDLogError(@"WHAT!NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
     }
     
     return _user;
@@ -787,23 +787,23 @@ static NSDateFormatter * s_df_hour = nil;
           "msg_id TEXT,"
           "flag INTEGER);"
           ]) {
-        CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
     if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS email_datetime on email (datetime desc);"]) {
-        CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
     if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS email_sender on email (sender);"]) {
-        CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
     if (![db executeUpdate:@"CREATE VIRTUAL TABLE IF NOT EXISTS search_email USING fts4(subject TEXT, body TEXT, sender TEXT, tos TEXT, ccs TEXT, people TEXT,msg_id TEXT);"]) {
-        CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
     if (![db executeUpdate:@"CREATE TRIGGER IF NOT EXISTS delete_email_search AFTER DELETE ON email BEGIN DELETE FROM search_email WHERE search_email.msg_id = OLD.msg_id; END;"]) {
-        CCMLog(@"errorMessage = %@", db.lastErrorMessage);
+        DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
     [db executeUpdate:@"DELETE FROM search_email WHERE msg_id NOT IN (SELECT msg_id FROM email)"];
@@ -903,7 +903,7 @@ static NSDateFormatter * s_df_hour = nil;
         }
         
         if ([db hadError] && [db lastErrorCode] == 1) {
-            CCMLog(@"Checking table");
+            DDLogInfo(@"Checking table");
             [Mail tableCheck:db];
         }
     }];
@@ -965,7 +965,7 @@ static NSDateFormatter * s_df_hour = nil;
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
     if (!email.user || email.user.isDeleted) {
-        NSLog(@"Should delete this:%@", email.subject);
+        DDLogInfo(@"Should delete this:%@", email.subject);
         return nil;
     }
     
@@ -1014,7 +1014,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    CCMLog(@"Move from folder %@ to %@", [self.user folderDisplayNameForIndex:fromFolderIdx],  [self.user folderDisplayNameForIndex:toFolderIdx]);
+    DDLogInfo(@"Move from folder %@ to %@", [self.user folderDisplayNameForIndex:fromFolderIdx],  [self.user folderDisplayNameForIndex:toFolderIdx]);
     
     if ([self uidEWithFolder:fromFolderIdx]) {
         if (([self.user numFolderWithFolder:CCMFolderTypeAll] == fromFolderIdx && [self.user numFolderWithFolder:CCMFolderTypeDeleted] != toFolderIdx) || [self.user numFolderWithFolder:CCMFolderTypeFavoris] == toFolderIdx) {
@@ -1084,7 +1084,7 @@ static NSDateFormatter * s_df_hour = nil;
 
     [queue inDatabase:^(FMDatabase* db) {
         if ([db executeUpdate:@"DELETE FROM email WHERE msg_id = ?;", msgID]) {
-            CCMLog(@"Email cleaned");
+            DDLogInfo(@"Email cleaned");
         }
     }];
 }

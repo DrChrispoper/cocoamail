@@ -70,7 +70,7 @@
                         completionHandler:^(BOOL granted, NSError* _Nullable error) {
                             if (granted) {
                                 if (error) {
-                                    CCMLog(@"Error reading Address Book: %@", error.description);
+                                    DDLogError(@"Error reading Address Book: %@", error.description);
                                 }
                                 [self loadContacts:store];
                             }
@@ -148,7 +148,7 @@
 
         }];
     } else {
-        CCMLog(@"Error reading Address Book");
+        DDLogError(@"Error reading Address Book");
     }
 }
 

@@ -95,7 +95,7 @@
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
 
     if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-        NSLog(@"Local draft file deleted");
+        DDLogInfo(@"Local draft file deleted");
     }
 }
 
@@ -119,7 +119,7 @@
                 NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"outbox_%@", self.msgID]];
                 
                 if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-                    NSLog(@"Local outbox file deleted");
+                    DDLogInfo(@"Local outbox file deleted");
                 }
             }
         }];
@@ -150,7 +150,7 @@
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
     
     if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-        NSLog(@"Local draft file deleted");
+        DDLogInfo(@"Local draft file deleted");
     }
 }
 
@@ -204,7 +204,7 @@
     [builder writeToFile:fileName error:&error];
 
     if (error) {
-        NSLog(@"error saving outbox message :%@", error.description);
+        DDLogError(@"error saving outbox message :%@", error.description);
     }
     
     return fileName;

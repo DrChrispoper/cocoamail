@@ -187,7 +187,7 @@
 -(void) sortEmail:(Mail*)email
 {
     if (!email.user || email.user.isDeleted) {
-        CCMLog(@"Houston on a un probleme avec l'email:%@", email.subject);
+        DDLogInfo(@"Houston on a un probleme avec l'email:%@", email.subject);
         NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
         [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
     }
@@ -512,9 +512,9 @@
         for (Account* a in [[Accounts sharedInstance] accounts]) {
             if (!a.user.isAll && !a.isConnected) {
                 [[ImapSync doLogin:a.user] subscribeError:^(NSError *error) {
-                    CCMLog(@"connection error");
+                    DDLogError(@"connection error");
                 } completed:^{
-                    CCMLog(@"login");
+                    DDLogInfo(@"login");
                 }];
                 
                 break;
@@ -533,7 +533,7 @@
                 }
                 else {
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
-                    NSLog(@"Unkown connection error");
+                    DDLogError(@"Unkown connection error, Error Code =%ld",(long)error.code );
                 }
             }
         } completed:^{}];
@@ -562,7 +562,7 @@
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
-        CCMLog(@"Same folder");
+        DDLogWarning(@"Same folder");
         return;
     }
     
@@ -825,7 +825,7 @@
         smtpSession.connectionType = service.connectionType;
     }
     
-    CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
+    DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
     //[CCMStatus showStatus:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...") dismissAfter:2 code:0];
     
     UserSettings* user = [AppSettings userWithNum:draft.accountNum];
@@ -872,7 +872,7 @@
                     [vc presentViewController:ac animated:YES completion:nil];
                 }
                 
-                CCMLog(@"%@ Error sending email:%@", self.user.username, error);
+                DDLogError(@"%@ Error sending email:%@", self.user.username, error);
                 
                 if (smtpServicesArray.count == 2) {
                     
@@ -889,7 +889,7 @@
                     smtpSessionAux.username = self.user.username;
                     smtpSessionAux.password = self.user.password;
                     
-                    CCMLog(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
+                    DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
                     
                     MCOSMTPSendOperation * op = [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
                                                                                         from:[MCOAddress addressWithDisplayName:[user name] mailbox:[user username]]
@@ -915,14 +915,14 @@
                                 [vc presentViewController:ac animated:YES completion:nil];
                             }
                             [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
-                            CCMLog(@"%@ Error sending email:%@", self.user.username, error);
+                            DDLogError(@"%@ Error sending email:%@", self.user.username, error);
                             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2 code:2];
                             self.isSendingOut--;
                             [self endBackgroundUpdateTask];
                         }
                         else {
                             [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
-                            CCMLog(@"%@ Successfully sent email!", self.user.username);
+                            DDLogInfo(@"%@ Successfully sent email!", self.user.username);
                             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.") dismissAfter:2 code:1];
                             [draft deleteOutboxDraft];
                             [draft appendToSent:rfc822DataFilename];
@@ -940,7 +940,7 @@
             }
             else {
                 [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
-                CCMLog(@"%@ Successfully sent email!", self.user.username);
+                DDLogInfo(@"%@ Successfully sent email!", self.user.username);
                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")  dismissAfter:2 code:1];
                 [draft deleteOutboxDraft];
                 [draft appendToSent:rfc822DataFilename];
@@ -1055,7 +1055,7 @@
 
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
-    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+    if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
     NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
@@ -1064,7 +1064,7 @@
 
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
-    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+    if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
     NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
@@ -1072,7 +1072,7 @@
     NSUInteger idx = [tmp indexOfObject:conversation];
     
     if (idx == NSNotFound) {
-        CCMLog(@"Conversation:%@ not found",[conversation firstMail].subject);
+        DDLogError(@"Conversation:%@ not found",[conversation firstMail].subject);
         return FALSE;
     }
     
@@ -1093,7 +1093,7 @@
         case FolderTypeUser:
             break;
         default:
-            NSLog(@"move to this folder not implemented");
+            DDLogError(@"move to this folder not implemented (To Folder Type = %ld",(long)folderTo.type);
             
             return NO;
     }
@@ -1128,7 +1128,7 @@
             remove = (folderTo.type == FolderTypeDeleted);
             break;
         default:
-            NSLog(@"move from this folder not implemented");
+            DDLogError(@"move from this folder not implemented (From Folder Type = %l)",folderFrom.type);
             
             return NO;
     }
@@ -1173,7 +1173,7 @@
 
 -(void) star:(BOOL)add conversation:(Conversation*)conversation
 {
-    if ([NSThread isMainThread]) CCMLog(@"Main Thread");
+    if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
     
     NSAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
@@ -1323,12 +1323,12 @@
              _isSyncing = NO;
              
              if (error.code != 9002 && error.code != 9001) {
-                 CCMLog(@"Error: %@", error.localizedDescription);
+                 DDLogError(@"Error: %@", error.localizedDescription);
              }
              
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                  if (error.code == 9001) {
-                     //CCMLog(@"ALLLLLL Synced!?");
+                     DDLogInfo(@"ALLLLLL Synced!?");
                  }
                  else if (error.code == 9002) {
                      [self doLoadServer];;
@@ -1464,7 +1464,7 @@
         }
         
         if (!found) {
-            CCMLog(@"Error Conversation to delete not found");
+            DDLogError(@"Error Conversation to delete not found");
         }
     }
 }
@@ -1502,7 +1502,7 @@
         index--;
         
         if (!found) {
-            CCMLog(@"Error Conversation to delete not found");
+            DDLogError(@"Error Conversation to delete not found");
         }
         else {
             if ([currentSet containsIndex:index]) {
@@ -1532,7 +1532,7 @@
     }
     
     if ([currentSet containsIndex:index]) {
-        NSLog(@"Index %ld was still in set",(long)index);
+        DDLogError(@"Index %ld was still in set",(long)index);
         [currentSet removeIndex:index];
         return YES;
     }
@@ -1578,7 +1578,7 @@
          //}
      }
      error:^(NSError* error) {
-         CCMLog(@"Error: %@", error.localizedDescription);
+         DDLogError(@"Error: %@", error.localizedDescription);
             [self.mailListSubscriber reFetch:YES];
      }
      completed:^{
@@ -1622,7 +1622,7 @@
          [self insertRows:email];
      }
      error:^(NSError* error) {
-         CCMLog(@"Error: %@", error.localizedDescription);
+         DDLogError(@"Error: %@", error.localizedDescription);
              [self.mailListSubscriber reFetch:YES];
      }
      completed:^{
@@ -1653,7 +1653,7 @@
         
         BOOL __block more = NO;
         
-        NSLog(@"Local search");
+        DDLogInfo(@"Local search");
         
         [_localFetchQueue addOperationWithBlock:^{
             [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil inAccountNum:self.user.accountNum]
@@ -1669,7 +1669,7 @@
              completed:^{
                  _isLoadingMore = NO;
                  
-                 NSLog(@"Local search done. Found emails? %@", more?@"YES":@"NO");
+                 DDLogInfo(@"Local search done. Found emails? %@", more?@"YES":@"NO");
                  
                  if (!more) {
                      _hasLoadedAllLocal = YES;
@@ -1706,17 +1706,17 @@
             
             [self runTestData];
             
-            NSLog(@"Refresh");
+            DDLogInfo(@"Refresh");
             
             [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
              subscribeNext:^(Mail* email) {
-                 NSLog(@"Email Refresh");
+                 DDLogInfo(@"Email Refresh");
 
                  new++;
                  [self insertRows:email];
              } error:^(NSError* error) {
                  
-                 NSLog(@"Error Refresh");
+                 DDLogError(@"Error Refresh");
 
                  [self.mailListSubscriber serverSearchDone:YES];
                  
@@ -1733,7 +1733,7 @@
                  }
              } completed:^{
 
-                 NSLog(@"Done Refresh");
+                 DDLogInfo(@"Done Refresh");
 
                  [self.mailListSubscriber serverSearchDone:YES];
                  
@@ -1778,7 +1778,7 @@
      subscribeNext:^(Mail* email) {
          //[self insertRows:email];
      } error:^(NSError* error) {
-         //CCMLog(@"Error: %@", error.localizedDescription);
+         DDLogError(@"Error: %@", error.localizedDescription);
          _isSyncingCurrentFolder = NO;
          if (error.code == 9002) {
              _currentFolderFullSyncCompleted = YES;
