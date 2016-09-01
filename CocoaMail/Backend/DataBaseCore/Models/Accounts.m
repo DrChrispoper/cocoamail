@@ -1307,15 +1307,20 @@
 
 -(void) doLoadServer
 {
+    DDLogDebug(@"-[Accounts doLoadServer]");
+    
     if (self.user.isDeleted) {
+        DDLogDebug(@"\tUser is deleted, doLoadServer returning.");
         return;
     }
     
     if (![ImapSync canFullSync]){
+        DDLogDebug(@"\tCannot Full Sync, doLoadServer returning.");
         return;
     }
     
     if (!_isSyncing && !_isSyncingCurrentFolder) {
+        DDLogDebug(@"\tNOT syncing AND NOT syncing current folder");
         _isSyncing = YES;
         [[[[SyncManager getSingleton] syncFoldersUser:self.user] deliverOn:[RACScheduler scheduler]]
          subscribeNext:^(Mail* email) {
@@ -1324,22 +1329,27 @@
          error:^(NSError* error) {
              _isSyncing = NO;
              
+             
              if (error.code != 9002 && error.code != 9001) {
-                 DDLogError(@"Error: %@", error.localizedDescription);
+                 DDLogError(@"\tSyncing error, error code = %ld",error.code);
+                 DDLogError(@"\t\tError description = \'%@\"", error.localizedDescription);
              }
              
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                  if (error.code == 9001) {
-                     DDLogInfo(@"ALLLLLL Synced!?");
+                     DDLogDebug(@"\tError code 9001, ALLLLLL Synced!?");
                  }
                  else if (error.code == 9002) {
+                     DDLogDebug(@"\tError code 9002, calling self recursively");
                      [self doLoadServer];;
                  }
              }
          }
          completed:^{
+             DDLogDebug(@"\tSyncing completed.");
              _isSyncing = NO;
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+                 DDLogDebug(@"\tCalling self recursively");
                  [self doLoadServer];
              }
          }];
@@ -1635,6 +1645,8 @@
 
 -(void) localFetchMore:(BOOL)loadMore
 {
+    DDLogDebug(@"-[Accounts localFetchMore:%@]",(loadMore?@"TRUE":@"FALSE"));
+    
     if (self.user.isAll) {
         for (Account* a in [Accounts sharedInstance].accounts) {
             if (!self.user.isAll) {
@@ -1655,7 +1667,7 @@
         
         BOOL __block more = NO;
         
-        DDLogInfo(@"Local search");
+        DDLogDebug(@"Local search");
         
         [_localFetchQueue addOperationWithBlock:^{
             [[[SearchRunner getSingleton] activeFolderSearch:loadMore?_lastEmails[self.currentFolderIdx]:nil inAccountNum:self.user.accountNum]
@@ -1671,7 +1683,7 @@
              completed:^{
                  _isLoadingMore = NO;
                  
-                 DDLogInfo(@"Local search done. Found emails? %@", more?@"YES":@"NO");
+                 DDLogDebug(@"Local search done. Found emails? %@", more?@"YES":@"NO");
                  
                  if (!more) {
                      _hasLoadedAllLocal = YES;
@@ -1688,6 +1700,8 @@
 
 -(void) refreshCurrentFolder
 {
+    DDLogInfo(@"-[Accounts refreshCurrentFolder]");
+    
     if (self.user.isAll) {
         for (Account* a in [[Accounts sharedInstance] accounts]) {
             if (!a.user.isAll) {
@@ -1708,17 +1722,17 @@
             
             [self runTestData];
             
-            DDLogInfo(@"Refresh");
+            DDLogInfo(@"\tRefresh");
             
             [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
              subscribeNext:^(Mail* email) {
-                 DDLogInfo(@"Email Refresh");
+                 DDLogInfo(@"\tEmail Refresh");
 
                  new++;
                  [self insertRows:email];
              } error:^(NSError* error) {
                  
-                 DDLogError(@"Error Refresh");
+                 DDLogError(@"\tError Refresh");
 
                  [self.mailListSubscriber serverSearchDone:YES];
                  
@@ -1735,7 +1749,7 @@
                  }
              } completed:^{
 
-                 DDLogInfo(@"Done Refresh");
+                 DDLogInfo(@"\tDone Refresh");
 
                  [self.mailListSubscriber serverSearchDone:YES];
                  

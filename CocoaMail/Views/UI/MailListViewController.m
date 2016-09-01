@@ -420,7 +420,9 @@
 
 -(void) setupData
 {
+    DDLogDebug(@"-[MailListViewController setupData]");
     if (kisActiveAccountAll) {
+        DDLogDebug(@"\tActive Account is \"All\" Account");
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
             a.mailListSubscriber = self;
@@ -429,6 +431,7 @@
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
+        DDLogDebug(@"\tActive Account Index = %ld\n",[a idx]);
         a.mailListSubscriber = self;
         [self insertConversations:[[Accounts sharedInstance].currentAccount getConversationsForFolder:self.folder]];
     }
@@ -721,6 +724,9 @@
 
 -(void) insertConversations:(NSArray*)pConvs
 {
+    DDLogDebug(@"-[MailListViewController insertConverstations:]");
+    DDLogDebug(@"\tConversations array count = %ld",(long)[pConvs count]);
+    
     if (self.onlyPerson) {
         pConvs = [self _filterResultsForPerson:pConvs];
     }
@@ -1579,9 +1585,10 @@
 
 - (void)reFetch:(BOOL)forceRefresh
 {
+    DDLogDebug(@"-[MailListViewController reFetch:(BOOL)forceRefresh=%@",
+               (forceRefresh?@"TRUE":@"FALSE"));
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        
-        //NSLog(@"reFetch");
         
         NSInteger mailCountBefore = 0;
         
@@ -1597,7 +1604,8 @@
                     
                 }
             }
-            else {
+            else { // Not the "All" Mails view
+                
                 Account* a = [[Accounts sharedInstance] currentAccount];
                 [self insertConversations:[a getConversationsForFolder:self.folder]];
             }

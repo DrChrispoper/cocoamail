@@ -137,6 +137,8 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performThreadSearch:(NSString*)thread withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
 {
+    DDLogInfo(@"-[SearchRunner performThreadSearch]");
+    
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         self.cancelled = NO;
         
@@ -164,7 +166,7 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:query];
                 
                 while ([results next]) {
-                    CCMLog(@"Have One");
+                    DDLogInfo(@"\tHave One");
                     Mail* email = [Mail resToMail:results];
                     
                     if (!email) {
@@ -195,6 +197,8 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performAllSearch
 {
+    DDLogDebug(@"-[SearchRunner performAllSearch]");
+    
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
         NSInteger __block allFound = 500;
@@ -221,7 +225,7 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:query];
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    CCMLog(@"Checking table");
+                    DDLogDebug(@"Checking table");
                     [Mail tableCheck:db];
                 }
                 
@@ -247,7 +251,7 @@ static SearchRunner * searchSingleton = nil;
                 [results close];
                 
                 for (Mail* m in dels) {
-                    NSLog(@"Lone email deleted");
+                    DDLogInfo(@"Delete mail with subject \"%@\"",m.subject);
                     [db executeUpdate:kQueryDelete, m.msgID];
                 }
             }];
@@ -274,7 +278,7 @@ static SearchRunner * searchSingleton = nil;
                     break;
                 }
                 else {
-                    NSLog(@"Deleting Batch");
+                    DDLogInfo(@"Deleting Batch of Uids");
                     
                     NSInteger group = 0;
                     
@@ -288,7 +292,7 @@ static SearchRunner * searchSingleton = nil;
                             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:p.dbNum]]];
                             [queue inDatabase:^(FMDatabase* db) {
                                 if ([db executeUpdate:kQueryDelete, p.msgID]) {
-                                    //NSLog(@"email deleted");
+                                    DDLogInfo(@"Email deleted.");
                                 }
                             }];
                         }
@@ -309,6 +313,8 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
 {
+    DDLogInfo(@"-[SearchRunner performFolderSearch]");
+    
     NSMutableArray* uidsInGroups;
     
     NSInteger realFolderNum = folderNum;
@@ -329,7 +335,7 @@ static SearchRunner * searchSingleton = nil;
         dispatch_queue_t global_default_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
         RACScheduler *scheduler = [[RACTargetQueueScheduler alloc] initWithName:@"testScheduler" targetQueue:global_default_queue];
         return [RACSignal startEagerlyWithScheduler:scheduler block:^(id<RACSubscriber> subscriber) {
-            NSLog(@"Done with 0");
+            DDLogInfo(@"\tDone with 0");
             [subscriber sendCompleted];
         }];
     }
@@ -342,7 +348,7 @@ static SearchRunner * searchSingleton = nil;
             NSInteger dbNum = ((UidEntry*)[pagedUids firstObject]).dbNum;
             
             if (self.cancelled) {
-                NSLog(@"Cancel Search");
+                DDLogInfo(@"\tCancel Search");
                 [subscriber sendCompleted];
                 
                 return;
@@ -367,7 +373,7 @@ static SearchRunner * searchSingleton = nil;
 //                NSDate *fetchStartG = [NSDate date];
 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    NSLog(@"Error querying table. Checking table");
+                    DDLogError(@"\tError querying table. Checking table");
                     [Mail tableCheck:db];
                 }
                 
@@ -414,7 +420,7 @@ static SearchRunner * searchSingleton = nil;
         
         NSDate *fetchEnd = [NSDate date];
         NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-        NSLog(@"Emails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
+        DDLogInfo(@"\tEmails Fetch Duration: %f seconds. Groups: %lu", timeElapsed, (unsigned long)uidsInGroups.count);
         
         [subscriber sendCompleted];
     }];

@@ -76,7 +76,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) rolloverAddEmailDBTo:(NSInteger)dbNum
 {
-    DDLogInfo(@"rolloverAddEmailDBTo:");
+    DDLogDebug(@"-[EmailProcessor rolloverAddEmailDBTo:dbNum]");
 
 	//[[[EmailDBAccessor sharedManager] databaseQueue] close];
 	
@@ -84,13 +84,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	NSString* fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
 	NSString* dbPath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
     
-    DDLogInfo(@"dbNum    = %ld",(long)dbNum);
-    DDLogInfo(@"filename = \"%@\"",fileName);
-    DDLogInfo(@"dbPath   = \"%@\"",dbPath);
+    DDLogDebug(@"\tdbNum    = %ld",(long)dbNum);
+    DDLogDebug(@"\tfilename = \"%@\"",fileName);
+//    DDLogDebug(@"\tdbPath   = \"%@\"",dbPath);
     
 	if (![[NSFileManager defaultManager] fileExistsAtPath:dbPath]) {
         [[NSFileManager defaultManager] createFileAtPath:dbPath contents:nil attributes:@{NSFileProtectionKey: NSFileProtectionNone}];
-        DDLogInfo(@"dbPath doesn't exist, creating");
+        DDLogDebug(@"\tdatabase doesn't exist, creating");
 	}
     
 	[[EmailDBAccessor sharedManager] setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:fileName]];

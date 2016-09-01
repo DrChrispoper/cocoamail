@@ -705,9 +705,9 @@ static NSDateFormatter * s_df_hour = nil;
         _user = [AppSettings userWithNum:[self getFirstUIDE].accountNum];
     }
     
-    if (!_user) {
-        DDLogError(@"WHAT!NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-    }
+//    if (!_user) {
+//        DDLogError(@"WHAT!NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+//    }
     
     return _user;
 }
@@ -775,6 +775,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) tableCheck:(FMDatabase*)db
 {
+    DDLogDebug(@"+[Mail tableCheck:(FMDatabase *)]");
     
     if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS email "
           "(pk INTEGER PRIMARY KEY,"
@@ -942,6 +943,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(Mail*) resToMail:(FMResultSet*)result
 {
+//    DDLogDebug(@"+[Mail (Mail *)resToMail:(FMResultSet*)result");
+    
     Mail* email = [[Mail alloc] init];
     
     email.pk = [result intForColumnIndex:0];
@@ -964,11 +967,13 @@ static NSDateFormatter * s_df_hour = nil;
     
     email.subject = subject;
     
+    DDLogDebug(@"\temail subject =\"%@\"",subject);
+    
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
     if (!email.user || email.user.isDeleted) {
-        DDLogInfo(@"Should delete this:%@", email.subject);
+        DDLogInfo(@"\tShould delete email, Subject=\"%@\"", email.subject);
         return nil;
     }
     
