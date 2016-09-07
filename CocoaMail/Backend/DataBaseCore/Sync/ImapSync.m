@@ -408,6 +408,8 @@ static NSArray * sharedServices = nil;
 //        }
 //    }
     
+#warning "FolderTypeInbox" looks wrong here!
+    
     NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeInbox];
     if ( [self folderIsNotSynced:favorisFolderNumber] ){
         DDLogDebug(@"\tFavoris Folder Not Synced, do next");
