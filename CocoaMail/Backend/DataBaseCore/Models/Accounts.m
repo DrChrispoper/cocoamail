@@ -24,7 +24,7 @@
 @interface Accounts()
 
 @property (nonatomic, retain) NSOperationQueue* localFetchQueue;
-@property (nonatomic, strong) NSArray* accounts;
+@property (nonatomic, strong) NSArray<Account*>* accounts;
 @property (nonatomic) BOOL canUI;
 
 @end
@@ -34,7 +34,9 @@
     BOOL _runningUpToDateTest;
 }
 
-@property (nonatomic, strong) NSMutableArray* allsMails;        // All Mail Messages
+typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
+
+@property (nonatomic, strong) CCMMutableConversationArray* allsMails;        // All Mail Conversations for this account
 @property (nonatomic, strong) NSMutableSet* convIDs;
 
 @property (nonatomic, strong) NSArray* userFoldersContent;      // user folder mail index sets
@@ -71,7 +73,11 @@
         
         if ( numActiveAccounts > 0) {
             
-            for (UserSettings* user in [AppSettings getSingleton].users) {
+            AppSettings *appSettings = [AppSettings getSingleton];
+            
+            DDAssert(appSettings, @"AppSettings must exist.");
+            
+            for (UserSettings* user in appSettings.users) {
                 //for (int accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
                 if (user.isDeleted) {
                     continue;
@@ -109,6 +115,8 @@
     NSArray* tmpFolders = [ac.user allNonImportantFoldersName];
     
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
+    
+#warning Is '/' guaranteed to be the only mailbox path connector?
     
     for (NSString* folderName in tmpFolders) {
         [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
@@ -391,7 +399,7 @@
 {
     NSMutableString *desc = [NSMutableString string ];
     
-    [desc appendFormat:@"Accounts has %lu Account:\n",(unsigned long)[self.accounts count]];
+    [desc appendFormat:@"Accounts has %lu accounts.\n",(unsigned long)[self.accounts count]];
     for (Account *acnt in self.accounts) {
         [desc appendString:[acnt description]];
     }
@@ -399,7 +407,8 @@
     return desc;
 }
 
-@end
+
+@end // end Accounts class
 
 
 @interface Account () {
@@ -424,6 +433,8 @@
     
 #warning These are set to be arrays of 500 entries.  We should collect statistics on how many messages most people have
     a.allsMails = [NSMutableArray arrayWithCapacity:500];
+    
+#warning is "convIDs" used anywhere?
     a.convIDs = [NSMutableSet setWithCapacity:500];
     
     return a;
@@ -625,6 +636,8 @@
     // let the drafts
 }
 
+#warning This property is generated every time we call it !?!
+
 -(NSArray*) systemFolderNames
 {
     NSMutableArray* names = [[NSMutableArray alloc]init];
@@ -674,6 +687,7 @@
     }
     
     if ((![[email sonID] isEqualToString:@""] & ![[email sonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email sonID]]) {
+        
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
             
@@ -704,7 +718,7 @@
     }
 }
 
--(NSMutableIndexSet*) mailIndeciesForFolder:(CCMFolderType)folderHandle
+-(NSMutableIndexSet*) _mailIndeciesForFolder:(CCMFolderType)folderHandle
 {
     NSMutableIndexSet *mailIndecies = nil;
     
@@ -721,24 +735,17 @@
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-//    NSMutableIndexSet* set = nil;
-//    
-//    if (type.type == FolderTypeUser) {
-//        set = self.userFoldersContent[type.idx];
-//    }
-//    else {
-//        set = self.systemFoldersContent[type.type];
-//    }
-    NSMutableIndexSet* folderMailIndecies = [self mailIndeciesForFolder:folderHandle];
+    NSMutableIndexSet* folderMailIndecies = [self _mailIndeciesForFolder:folderHandle];
     
     if (![folderMailIndecies containsIndex:idx]) {
+        
         [folderMailIndecies addIndex:idx];
         if (encodeFolderTypeWith(folderHandle) == encodeFolderTypeWith(self.currentFolderType)) {
             
             //NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:self.currentFolderType] accountNum:self.user.accountNum];
             //NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
             
-            if (folderMailIndecies.count == 20) {
+            if ( [folderMailIndecies count] == 20) {
                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                     [self runTestData];
                 }
@@ -758,7 +765,7 @@
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableArray* tmp = [self.allsMails mutableCopy];
+    CCMMutableConversationArray* tmp = [self.allsMails mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
     
     if (index == NSNotFound) {
@@ -788,7 +795,7 @@
 
 #pragma mark - Get Mails
 
--(NSArray*) conversations
+-(CCMMutableConversationArray*) conversations
 {
     return self.allsMails;
 }
@@ -804,16 +811,10 @@
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    //    if (type.type == FolderTypeUser) {
-    //        set = [self.userFoldersContent[type.idx] mutableCopy];
-    //    }
-    //    else {
-    //        set = [self.systemFoldersContent[type.type] mutableCopy];
-    //    }
-    NSMutableIndexSet* set = [[self mailIndeciesForFolder:type] mutableCopy];
+    NSMutableIndexSet* set = [[self _mailIndeciesForFolder:type] mutableCopy];
     
     NSMutableArray* res = [NSMutableArray arrayWithCapacity:[set count]];
-    NSMutableArray* _aMS = [self.allsMails mutableCopy];
+    CCMMutableConversationArray* _aMS = [self.allsMails mutableCopy];
     
     [_aMS enumerateObjectsAtIndexes:set
                             options:0
@@ -922,6 +923,9 @@
                                                                                   recipients:to];
                     
                     op.progress = ^(unsigned int current, unsigned int maximum){
+                        
+#warning look - View Controller's being called inside this model object!
+                        
                         [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum)) andTintColor:self.user.color];
                     };
                     
@@ -1045,6 +1049,7 @@
     }
 }
 
+#warning There is a lot of RW going on in this function, just to determine the number of mail msgs in the Outbox.
 -(NSInteger) outBoxNb
 {
     NSFileManager *filemgr = [NSFileManager defaultManager];
@@ -1081,11 +1086,12 @@
 
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
-    if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
+    DDLogInfo(@"%@ Main Thread",([NSThread isMainThread]?@"Is":@"Isn't"));
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    return [self moveConversation:[self.allsMails objectAtIndex:index] from:folderFrom to:folderTo updateUI:updateUI];
+    Conversation *conv = [self.allsMails objectAtIndex:index];
+    return [self moveConversation:conv from:folderFrom to:folderTo updateUI:updateUI];
 }
 
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
@@ -1095,7 +1101,7 @@
     // Cannot move a converstaion from the All Mails folder
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableArray* tmp = [self.allsMails mutableCopy];
+    CCMMutableConversationArray* tmp = [self.allsMails mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
     if (idx == NSNotFound) {
@@ -1104,17 +1110,10 @@
         return FALSE;
     }
    
-//    NSMutableIndexSet* setTo = nil;
-//    
-//    if (folderTo.type == FolderTypeUser) {
-//        setTo = self.userFoldersContent[folderTo.idx];
-//    }
-//    else {
-//        setTo = self.systemFoldersContent[folderTo.type];
-//    }
-    NSMutableIndexSet* toFolderMailIndecies = [self mailIndeciesForFolder:folderTo];
+    NSMutableIndexSet* toFolderMailIndecies = [self _mailIndeciesForFolder:folderTo];
     
-    // Andy: this block seems kludgy ....
+#warning This seems kludgy.  This kind of knowledge might be better kept in a Type object
+    
     switch (folderTo.type) {
         case FolderTypeInbox:
         case FolderTypeAll:
@@ -1123,22 +1122,12 @@
         case FolderTypeUser:
             break;
         default:
-            DDLogError(@"move to this folder not implemented (To Folder Type = %ld",(long)folderTo.type);
+            DDLogError(@"Move to folder type %ld not implemented.",(long)folderTo.type);
             
             return NO;
     }
     
-//    NSMutableIndexSet* setFrom = nil;
-//    
-//    // NSMutableIndexSet* mailIndecies = [self mailIndeciesForFolder:(CCMFolderType *)folder];
-//    if (folderFrom.type == FolderTypeUser) {
-//        setFrom = self.userFoldersContent[folderFrom.idx];
-//    }
-//    else {
-//        setFrom = self.systemFoldersContent[folderFrom.type];
-//    }
-    
-    NSMutableIndexSet* fromFolderMailIndecies = [self mailIndeciesForFolder:folderFrom];
+    NSMutableIndexSet* fromFolderMailIndecies = [self _mailIndeciesForFolder:folderFrom];
     
     BOOL remove = NO;
     
@@ -1194,7 +1183,9 @@
 //            setTest = self.systemFoldersContent[folderFrom.type];
 //        }
         
-        if (updateUI && encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType)) {
+        BOOL fromFolderIsCurrentFolder = ( encodeFolderTypeWith(folderFrom) == encodeFolderTypeWith(self.currentFolderType) );
+        
+        if (updateUI && fromFolderIsCurrentFolder) {
             [self.mailListSubscriber removeConversationList:@[[ConversationIndex initWithIndex:idx user:self.user]]];
         }
     }
@@ -1209,12 +1200,12 @@
 
 -(void) star:(BOOL)add conversation:(Conversation*)conversation
 {
-    if ([NSThread isMainThread]) DDLogInfo(@"Main Thread");
+    DDLogInfo(@"%@ Main Thread",([NSThread isMainThread]?@"Is":@"Isn't"));
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableArray* tmp = [self.allsMails mutableCopy];
-    NSUInteger idx = [tmp indexOfObject:conversation];
+//    NSMutableArray* tmp = [self.allsMails mutableCopy];
+    NSUInteger idx = [self.allsMails indexOfObject:conversation];
     
     NSMutableIndexSet* favorisFolderMailIndecies = self.systemFoldersContent[FolderTypeFavoris];
     
@@ -1400,17 +1391,9 @@
     
     if (!self.user.isAll && self.allsMails.count != 0 && !_runningUpToDateTest) {
         _runningUpToDateTest = YES;
-        
-//        NSMutableIndexSet* set = nil;
-//        
-//        if (self.currentFolderType.type == FolderTypeUser) {
-//            set = [self.userFoldersContent[self.currentFolderType.idx] mutableCopy];
-//        }
-//        else {
-//            set = [self.systemFoldersContent[self.currentFolderType.type] mutableCopy];
-//        }
+
         NSMutableIndexSet* currentFolderMailIndecies =
-            [[self mailIndeciesForFolder:self.currentFolderType] mutableCopy];
+            [[self _mailIndeciesForFolder:self.currentFolderType] mutableCopy];
         
         NSMutableIndexSet* setAll = [self.systemFoldersContent[FolderTypeAll] mutableCopy];
         NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[setAll count]];
@@ -1462,16 +1445,8 @@
     
     if (!self.user.isAll && self.allsMails.count != 0) {
         
-//        NSMutableIndexSet* set = nil;
-//        
-//        if (self.currentFolderType.type == FolderTypeUser) {
-//            set = [self.userFoldersContent[self.currentFolderType.idx] mutableCopy];
-//        }
-//        else {
-//            set = [self.systemFoldersContent[self.currentFolderType.type] mutableCopy];
-//        }
         NSMutableIndexSet* currentFolderMailIndecies =
-            [[self mailIndeciesForFolder:self.currentFolderType] mutableCopy];
+            [[self _mailIndeciesForFolder:self.currentFolderType] mutableCopy];
         
         NSMutableArray* res = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
         
@@ -1528,16 +1503,8 @@
     }
     
     NSMutableArray* idxs = [[NSMutableArray alloc]initWithCapacity:emails.count];
-//    
-//    NSMutableIndexSet* currentSet = nil;
-//    
-//    if (folderFrom.type == FolderTypeUser) {
-//        currentSet = self.userFoldersContent[folderFrom.idx];
-//    }
-//    else {
-//        currentSet = self.systemFoldersContent[folderFrom.type];
-//    }
-    NSMutableIndexSet* fromFolderMailIndecies = [self mailIndeciesForFolder:folderFrom];
+ 
+    NSMutableIndexSet* fromFolderMailIndecies = [self _mailIndeciesForFolder:folderFrom];
     
     for (Mail* email in emails) {
         BOOL found = NO;
@@ -1575,16 +1542,8 @@
         return NO;
     }
     
-//    NSMutableIndexSet* currentSet = nil;
-//    
-//    if (self.currentFolderType.type == FolderTypeUser) {
-//        currentSet = self.userFoldersContent[self.currentFolderType.idx];
-//    }
-//    else {
-//        currentSet = self.systemFoldersContent[self.currentFolderType.type];
-//    }
     NSMutableIndexSet* currentFolderMailIndecies =
-        [self mailIndeciesForFolder:self.currentFolderType];
+        [self _mailIndeciesForFolder:self.currentFolderType];
     
     if ([currentFolderMailIndecies containsIndex:index]) {
         DDLogError(@"Index %ld was still in set",(long)index);
@@ -1856,7 +1815,7 @@
 {
     NSMutableString *desc = [NSMutableString string];
     
-    [desc appendString:@"\n --- Account ---\n"];
+    [desc appendString:@"\n --- Begin Account ---\n"];
     
     // Account Index
     [desc appendFormat:@"Account Index = %ld\n",[self idx]];
@@ -1866,10 +1825,13 @@
     [desc appendFormat:@"UserSettings: %@",[[self user] description]];
     [desc appendString:@"\n\n"];
 
-    [desc appendFormat:@"User Folders count   = %ld\n",[self.userFolders count]];
-    [desc appendFormat:@"Current Folder Index = %ld\n",(long)self.currentFolderIdx];
-    [desc appendFormat:@"Is Sending Out count = %ld\n",(long)self.isSendingOut];
-    [desc appendFormat:@"Current Folder Type  = %@\n",[self currentFolderTypeValue]];
+    [desc appendString:[self folderSetDescription:@"System" accountFolders:self.systemFoldersContent folderNames:self.systemFolderNames]];
+    
+    [desc appendString:[self folderSetDescription:@"User" accountFolders:self.userFoldersContent folderNames:self.userFolders]];
+    
+    [desc appendFormat:@"Current-Folder Index = %ld\n",(long)self.currentFolderIdx];
+    [desc appendFormat:@"Current-Folder Type  = %@\n",[self currentFolderTypeValue]];
+    [desc appendFormat:@"Is-Sending-Out count = %ld\n",(long)self.isSendingOut];
     [desc appendString:@"\n"];
 
     [desc appendFormat:@"Person: %@",[[self person] description]];
@@ -1878,6 +1840,29 @@
     
     [desc appendString:@"\n --- End Account ---\n"];
     
+    return desc;
+}
+
+-(NSString *)folderSetDescription:(NSString *)folderType accountFolders:(NSArray *)folderArray folderNames:(NSArray *)folderNames
+{
+    NSMutableString *desc = [NSMutableString string];
+    
+    NSUInteger folderCount = [folderArray count];
+    
+    [desc appendFormat:@"%@ Folders count = %ld\n",folderType, folderCount];
+    
+    for (NSUInteger folderIndex = 0; folderIndex < folderCount; folderIndex++) {
+        
+        NSString *folderName = folderNames[folderIndex];
+        
+        NSMutableIndexSet *mailIndecies = folderArray[folderIndex];
+        
+        NSUInteger mailCount = [mailIndecies count];
+        
+        [desc appendFormat:@"\t%@ Folder[%lu] \"%@\" has %lu mail messages\n",
+         folderType,(unsigned long)folderIndex,
+         folderName,(unsigned long)mailCount];
+    }
     return desc;
 }
 
