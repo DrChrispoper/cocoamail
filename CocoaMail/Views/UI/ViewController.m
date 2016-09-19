@@ -157,7 +157,10 @@ static ViewController * s_self;
     UIView* nextView;
     
     if ([Accounts sharedInstance].accountsCount !=  1) {
-        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue) ];
+
+        FolderIndex folderIndex = [[AppSettings lastFolderIndex] integerValue];
+        MailListViewController* inbox =
+            [[MailListViewController alloc] initWithFolder:folderIndex ];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;
     

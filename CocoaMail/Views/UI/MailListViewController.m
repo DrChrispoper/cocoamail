@@ -50,7 +50,7 @@
 @property (nonatomic) BOOL presentAttach;
 @property (nonatomic, strong) UIButton* attachButton;
 @property (nonatomic, retain) NSOperationQueue* localFetchQueue;
-@property (nonatomic) CCMFolderType folder;
+@property (nonatomic) FolderIndex folderIndex;
 @property (nonatomic) BOOL longPressOnCocoabutton;
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 @property (nonatomic) BOOL isDebugMode;
@@ -83,19 +83,18 @@
     return self;
 }
 
--(instancetype) initWithFolder:(CCMFolderType)folder
+-(instancetype) initWithFolder:(FolderIndex)folderIndex
 {
-    NSString* name = nil;
+    Folders *folders = [[[Accounts sharedInstance] currentAccount] imapFolders];
+    DDAssert(folders,@"Folder must exist");
     
-    if (folder.type == FolderTypeUser) {
-        name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-    }
-    else {
-        name = [[[Accounts sharedInstance] currentAccount] systemFolderNames][folder.type];
-    }
+    Folder *folder = [folders folderAtIndex:folderIndex];
+    DDAssert(folder,@"No folder found at bad index %ld",(long)folderIndex);
+    
+    NSString* name = folder.IMAPFolderName;
     
     self = [self initWithName:name];
-    self.folder = folder;
+    self.folderIndex = folderIndex;
     self.presentAttach = NO;
     
     return self;
@@ -106,7 +105,7 @@
     self = [self initWithName:person.name];
     
     self.onlyPerson = person;
-    self.folder = CCMFolderTypeAll;
+    self.folderIndex = FolderTypeAll;
     self.presentAttach = YES;
     
     return self;
@@ -118,14 +117,7 @@
         return self.onlyPerson == other.onlyPerson;
     }
     
-    if (self.folder.type != FolderTypeUser) {
-        return (self.folder.type == other.folder.type);
-    }
-    else if (other.folder.type == FolderTypeUser) {
-        return other.folder.idx == self.folder.idx;
-    }
-    
-    return NO;
+    return (self.folderIndex == other.folderIndex);
 }
 
 -(void) _applyTrueTitleViewTo:(UINavigationItem*)item
@@ -426,14 +418,14 @@
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
             a.mailListSubscriber = self;
-            [self insertConversations:[a getConversationsForFolder:self.folder]];
+            [self insertConversations:[a getConversationsForFolder:self.folderIndex]];
         }
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
         DDLogDebug(@"\tActive Account Index = %ld\n",[a idx]);
         a.mailListSubscriber = self;
-        [self insertConversations:[[Accounts sharedInstance].currentAccount getConversationsForFolder:self.folder]];
+        [self insertConversations:[[Accounts sharedInstance].currentAccount getConversationsForFolder:self.folderIndex]];
     }
 }
 
@@ -601,7 +593,7 @@
     
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
     
-    NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+    NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
     
     if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
         
@@ -623,7 +615,7 @@
             NSLog(@"Insert cell: Conversation with error:%ld",(long)ci.index);
             
             Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-            [a deleteIndex:ci.index fromFolder:self.folder];
+            [a deleteIndex:ci.index fromFolder:self.folderIndex];
             return;
         }
     }
@@ -746,7 +738,7 @@
             
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             
-            NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+            NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
             
             if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
                 
@@ -768,7 +760,7 @@
                     NSLog(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
                     
                     Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-                    [a deleteIndex:conversationIndex.index fromFolder:self.folder];
+                    [a deleteIndex:conversationIndex.index fromFolder:self.folderIndex];
                     continue;
                 }
             }
@@ -1212,7 +1204,7 @@
         }
         
         BOOL isInFolder = NO;
-        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
 
         for (Mail* mail in conv.mails) {
             if ([mail uidEWithFolder:currentFolderIdx]) {
@@ -1383,7 +1375,7 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    if (encodeFolderTypeWith(self.folder) == encodeFolderTypeWith(toFolder)) {
+    if (encodeFolderTypeWith(self.folderIndex) == encodeFolderTypeWith(toFolder)) {
         [self unselectAll];
         return;
     }
@@ -1452,7 +1444,7 @@
             
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
             
-            if([ac moveConversationAtIndex:conversationIndex.index from:self.folder to:toFolder updateUI:FALSE]) {
+            if([ac moveConversationAtIndex:conversationIndex.index from:self.folderIndex to:toFolder updateUI:FALSE]) {
                 [dels addObject:conversationIndex];
             }
             
@@ -1600,14 +1592,14 @@
             if (kisActiveAccountAll) {
                 for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
                     Account* a = [[Accounts sharedInstance] account:idx];
-                    [self insertConversations:[a getConversationsForFolder:self.folder]];
+                    [self insertConversations:[a getConversationsForFolder:self.folderIndex]];
                     
                 }
             }
             else { // Not the "All" Mails view
                 
                 Account* a = [[Accounts sharedInstance] currentAccount];
-                [self insertConversations:[a getConversationsForFolder:self.folder]];
+                [self insertConversations:[a getConversationsForFolder:self.folderIndex]];
             }
         //}
         

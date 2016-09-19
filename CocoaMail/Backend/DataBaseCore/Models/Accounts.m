@@ -17,6 +17,7 @@
 #import "UserSettings.h"
 #import "Draft.h"
 #import "RegExCategories.h"
+#import "Folders.h"
 
 #import <CocoaLumberjack/CocoaLumberjack.h>
 
@@ -39,13 +40,16 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 @property (nonatomic, strong) CCMMutableConversationArray* allsMails;        // All Mail Conversations for this account
 @property (nonatomic, strong) NSMutableSet* convIDs;
 
-@property (nonatomic, strong) NSArray* userFoldersContent;      // user folder mail index sets
-@property (nonatomic, strong) NSArray* systemFoldersContent;    // system folder mail index sets
+//@property (nonatomic, strong) NSArray* userFoldersContent;      // user folder mail index sets
+//@property (nonatomic, strong) NSArray* systemFoldersContent;    // system folder mail index sets
 
 @end
 
 @implementation Accounts
 
+//
+// The Accounts object is a Singleton
+//
 +(Accounts*) sharedInstance
 {
     static dispatch_once_t once;
@@ -89,8 +93,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             }
         }
         
-        Account* all = [self _createAllAccountsFrom:accounts];
-        [accounts addObject:all];
+        Account* allAccount = [self _createAllAccountsFrom:accounts];
+        [accounts addObject:allAccount];
         
         sharedInstance.accounts = accounts;
         
@@ -107,44 +111,62 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 +(Account*) _createAccountWithUserSettings:(UserSettings*)user
 {
-    Account* ac = [Account emptyAccount];
+    Account* newAccount = [Account emptyAccount];
     
-    [ac setNewUser:user];
+    [newAccount setNewUser:user];
+    
+    NSArray *allUserFolderNames = [newAccount.user allNonImportantFoldersName];
+    [self.imapFolders addUserFoldersWithNames:allUserFolderNames];
     
     //Folders Indentation?
-    NSArray* tmpFolders = [ac.user allNonImportantFoldersName];
+//    NSArray* userFolderNames = [newAccount.user allNonImportantFoldersName];
+//    NSUInteger userFolderCount = [userFolderNames count];
     
-    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
+    //
+    // Create an array, where each entry contains
+    // the name of a folder and whether or not the folder contains a
+    // path divider and is therefore part of a tree branch.
+    //
+//    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:userFolderCount];
+//    for (NSString* folderName in userFolderNames) {
+//#warning Is '/' guaranteed to be the only mailbox path connector?
+//        [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
+//    }
+//    newAccount.userFolders = foldersNIndent;
     
-#warning Is '/' guaranteed to be the only mailbox path connector?
+    newAccount.person = [Person createWithName:newAccount.user.name
+                                         email:newAccount.user.username
+                                          icon:nil
+                                      codeName:newAccount.user.initials];
+    [newAccount.person linkToAccount:newAccount];
+    [[Persons sharedInstance] registerPersonWithNegativeID:newAccount.person];
     
-    for (NSString* folderName in tmpFolders) {
-        [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
-    }
-    
-    ac.userFolders = foldersNIndent;
-    
-    ac.person = [Person createWithName:ac.user.name email:ac.user.username icon:nil codeName:ac.user.initials];
-    [ac.person linkToAccount:ac];
-    [[Persons sharedInstance] registerPersonWithNegativeID:ac.person];
-    
-    return ac;
+    return newAccount;
 }
 
 +(Account*) _createAllAccountsFrom:(NSArray*)account
 {
-    Account* ac = [[Account alloc] init];
-    [ac setNewUser:[[AppSettings getSingleton].users lastObject]];
+    Account* newAllAccount = [[Account alloc] init];
     
-    NSMutableArray* userfolders = [NSMutableArray arrayWithCapacity:0];
+    AppSettings *appSettings = [AppSettings getSingleton];
+    NSArray <UserSettings *> *users = [AppSettings users];
+    UserSettings *lastUser = [users lastObject];
+    [newAllAccount setNewUser:lastUser];
+
+    
+//    NSMutableArray* userfolders = [NSMutableArray arrayWithCapacity:0];
     /*for (Account* a in accounts) {
      [userfolders addObjectsFromArray:a.userFolders];
      }*/
     
-    ac.userFolders = userfolders;
-    ac.person = [Person createWithName:nil email:nil icon:nil codeName:@"ALL"];
+//    ac.userFolders = userfolders;
     
-    return ac;
+    newAllAccount.person = [Person createWithName:nil
+                                 email:nil
+                                  icon:nil
+                              codeName:@"ALL"];
+    
+    return newAllAccount;
 }
 
 -(void) runLoadData
@@ -470,29 +492,30 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     _isSyncingCurrentFolder = NO;
     
     //
-    // Initialize the "Standard" IMAP Folders
+    // Create an empty Mutable Array for the "Standard" IMAP Folders
     //
     
     // create structure
-    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:7];
+    NSMutableArray* systemFolderArray = [[NSMutableArray alloc] initWithCapacity:7];
     
     for (int i = 0; i < 7; i++) {
-        [array addObject:[[NSMutableIndexSet alloc] init]];
+        [systemFolderArray addObject:[[NSMutableIndexSet alloc] init]];
     }
-    self.systemFoldersContent = array;
+    self.systemFoldersContent = systemFolderArray;
     
     //
-    // Initialize the "User" IMAP Folders
+    // Create an empty Mutable Array for the "User" IMAP Folders
     //
     
-    const NSInteger limite = self.userFolders.count;
-    
-    NSMutableArray* arrayU = [[NSMutableArray alloc] initWithCapacity:limite];
-    for (int i = 0; i < limite; i++) {
-        [arrayU addObject:[[NSMutableIndexSet alloc] init]];
-    }
-    
-    self.userFoldersContent = arrayU;
+//    const NSInteger userFolderCount = [self.imapFolders userFoldersCount];
+////    self.userFolders.count;
+//    
+//    NSMutableArray* userFolderArray = [[NSMutableArray alloc] initWithCapacity:userFolderCount];
+//    for (int i = 0; i < userFolderCount; i++) {
+//        [userFolderArray addObject:[[NSMutableIndexSet alloc] init]];
+//    }
+//    
+//    self.userFoldersContent = userFolderArray;
     
     
     //Including Non selectable
@@ -504,14 +527,20 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [_lastEmails addObject:[[Mail alloc]init]];
     }
     
-    self.currentFolderType = decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue);
+    self.currentFolderIndex = [[AppSettings lastFolderIndex] integerValue];
+    
+    folderType = []
     
     if (self.currentFolderType.type == FolderTypeUser) {
+        
         if (self.currentFolderType.idx >= self.userFolders.count) {
             self.currentFolderType = CCMFolderTypeInbox;
-            self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
+            
+            [self.imapFolders setCurrentFolder:FolderTypeInbox];
+//            self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
         }
-        else {
+        else { // Current Folder Type Index < Number of User Folders
+            
             NSString* name = self.userFolders[self.currentFolderType.idx][0];
             NSArray* names = [self.user allFoldersDisplayNames];
             for (int i = 0; i < names.count; i++) {
@@ -521,7 +550,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 }
             }
         }
-    } else {
+    } else { // Current Folder Type is a System Folder
+
         self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
     }
 }
@@ -583,24 +613,43 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     }
 }
 
--(void) setCurrentFolder:(CCMFolderType)folder
+-(Folder*)_getCurrentFolder
 {
-    if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
+    Accounts *accounts = [Accounts sharedInstance];
+    DDAssert(accounts,@"Accounts singleton must exist");
+    Account *currentAccount = [accounts currentAccount];
+    DDAssert(currentAccount,@"Current Account must exist.");
+    Folders *currentAccountFolders = [currentAccount imapFolders];
+    DDAssert(currentAccountFolders,@"Current Account Folders must exist");
+    Folder *currentFolder = [currentAccountFolders currentFolder];
+    DDAssert(currentFolder, @"Current Folder must exist");
+    return currentFolder;
+}
+
+-(void) setCurrentFolder:(FolderIndex)toFolderIndex
+{
+    if (self.currentFolderIndex == toFolderIndex) {
         DDLogWarn(@"Same folder");
         return;
     }
     
-    self.currentFolderType = folder;
+//    self.currentFolderType = folder;
+    self.currentFolderIndex = toFolderIndex;
     _currentFolderFullSyncCompleted = NO;
     _hasLoadedAllLocal = NO;
     _isLoadingMore = NO;
     
     [_localFetchQueue cancelAllOperations];
     
-    [AppSettings setLastFolderIndex:@(encodeFolderTypeWith(folder))];
+    [AppSettings setLastFolderIndex:@(toFolderIndex)];
     
-    if (folder.type == FolderTypeUser) {
-        NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
+//    if (folder.type == FolderTypeUser)
+    if ( [Folders ])
+    {
+
+        Folder *currentFolder = [self _getCurrentFolder];
+        
+        NSString* name = [NSString stringWithString:currentFolder.IMAPFolderName];
         NSArray* names = [self.user allFoldersDisplayNames];
         for (int i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]) {
@@ -610,8 +659,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 return;
             }
         }
-    } else {
+    } else { // not a User Folder
+        
         if (self.user.isAll) {
+            
             self.currentFolderIdx = folder.type;
             for (Account* a in [Accounts sharedInstance].accounts) {
                 if (!a.user.isAll) {
@@ -709,33 +760,28 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     }
 }
 
--(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
+-(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folderSet
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    for (NSNumber* Fuser in folders) {
+    for (NSNumber* Fuser in folderSet) { // TODO: AJC not finished
         [self _addIdx:idx inArray:decodeFolderTypeWith([Fuser integerValue])];
     }
 }
 
--(NSMutableIndexSet*) _mailIndeciesForFolder:(CCMFolderType)folderHandle
+-(NSMutableIndexSet*) _mailIndeciesForFolder:(FolderIndex)folderIndex
 {
-    NSMutableIndexSet *mailIndecies = nil;
+    Folder *folder = [self.imapFolders folderAtIndex:folderIndex];
+    DDAssert(folder,@"Bad folder index %d",folderIndex);
     
-    if (folderHandle.type == FolderTypeUser) {
-        mailIndecies = self.userFoldersContent[folderHandle.idx];
-    }
-    else {
-        mailIndecies = self.systemFoldersContent[folderHandle.type];
-    }
-    return mailIndecies;
+    return folder.mailIndecies;
 }
 
--(void) _addIdx:(NSUInteger)idx inArray:(CCMFolderType)folderHandle
+-(void) _addIdx:(NSUInteger)idx inArray:(FolderIndex)folderIndex
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableIndexSet* folderMailIndecies = [self _mailIndeciesForFolder:folderHandle];
+    NSMutableIndexSet* folderMailIndecies = [self _mailIndeciesForFolder:folderIndex];
     
     if (![folderMailIndecies containsIndex:idx]) {
         
@@ -807,11 +853,11 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return [self.allsMails objectAtIndex:index];
 }
 
--(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
+-(NSMutableArray*) getConversationsForFolder:(FolderIndex)folderIndex
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableIndexSet* set = [[self _mailIndeciesForFolder:type] mutableCopy];
+    NSMutableIndexSet* set = [[self _mailIndeciesForFolder:folderIndex] mutableCopy];
     
     NSMutableArray* res = [NSMutableArray arrayWithCapacity:[set count]];
     CCMMutableConversationArray* _aMS = [self.allsMails mutableCopy];
@@ -1392,13 +1438,12 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     if (!self.user.isAll && self.allsMails.count != 0 && !_runningUpToDateTest) {
         _runningUpToDateTest = YES;
 
+        // Make a Mutable copy of the Current Folder Mail Indecies
         NSMutableIndexSet* currentFolderMailIndecies =
             [[self _mailIndeciesForFolder:self.currentFolderType] mutableCopy];
-        
-        NSMutableIndexSet* setAll = [self.systemFoldersContent[FolderTypeAll] mutableCopy];
-        NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[setAll count]];
         NSMutableArray* res = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
         
+        // Make a Mutable copy of the All Mails array
         NSArray* _aMS = [self.allsMails mutableCopy];
         
         [_aMS enumerateObjectsAtIndexes:currentFolderMailIndecies
@@ -1407,7 +1452,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                                  [res addObject:obj];
                              }];
         
-        [[ImapSync sharedServices:self.user] runUpToDateTest:res folderIndex:self.currentFolderIdx completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+        // Make a Mutable copy of the All Mail System Folder Mail Indecies
+        NSMutableIndexSet* allMailSystemFolderMailIndecies = [self.systemFoldersContent[FolderTypeAll] mutableCopy];
+        NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[allMailSystemFolderMailIndecies count]];
+        
+        ImapSync *imapServices = [ImapSync sharedServices:self.user];
+        
+        [imapServices runUpToDateTest:res
+                          folderIndex:self.currentFolderIdx
+                            completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
             //[self.mailListSubscriber removeConversationList:nil];
             
             [self.mailListSubscriber updateDays:days];
@@ -1424,7 +1477,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                     return;
                 }
                 
-                [[ImapSync sharedServices:self.user] runUpToDateTest:resAll folderIndex:[self.user numFolderWithFolder:CCMFolderTypeAll] completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+                NSInteger folderNumber = [self.user numFolderWithFolder:CCMFolderTypeAll];
+                [imapServices runUpToDateTest:resAll
+                                  folderIndex:folderNumber
+                                    completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
                     _runningUpToDateTest = NO;
                     
                     [self.mailListSubscriber updateDays:days];
@@ -1704,82 +1760,87 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     DDLogInfo(@"-[Accounts refreshCurrentFolder]");
     
+    /*
+     * If the User is for the "All" view, 
+     * then refresh the current folder for all accounts that
+     * are not part of an All user.
+     */
     if (self.user.isAll) {
-        for (Account* a in [[Accounts sharedInstance] accounts]) {
-            if (!a.user.isAll) {
-                [a refreshCurrentFolder];
+        for (Account* acnt in [[Accounts sharedInstance] accounts]) {
+            if (!acnt.user.isAll) {
+                [acnt refreshCurrentFolder];  // Recursive call
             }
         }
+        return;
     }
-    else {
-        
-        if (self.user.isDeleted) {
-            return;
-        }
-        
-        if ([ImapSync sharedServices:self.user].connected) {
-            NSInteger __block new = 0;
-            
-            [self.mailListSubscriber serverSearchDone:NO];
-            
-            [self runTestData];
-            
-            DDLogInfo(@"\tRefresh");
-            
-            [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
-             subscribeNext:^(Mail* email) {
-                 DDLogInfo(@"\tEmail Refresh");
-
-                 new++;
-                 [self insertRows:email];
-             } error:^(NSError* error) {
-                 
-                 DDLogError(@"\tError Refresh");
-
-                 [self.mailListSubscriber serverSearchDone:YES];
-                 
-                 if (error.code != 9002 && error.code != 9001) {
-                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
-                 }
-                 else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                         
-                         [self runTestData];
-                         
-                         _currentFolderFullSyncCompleted = YES;
-                         _isSyncingCurrentFolder = NO;
-                         [self importantFoldersRefresh:0];
-                 }
-             } completed:^{
-
-                 DDLogInfo(@"\tDone Refresh");
-
-                 [self.mailListSubscriber serverSearchDone:YES];
-                 
-                 if (new != 0) {
-                    [self.mailListSubscriber reFetch:YES];
-                 }
-                 
-                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                     [self runTestData];
-                     
-                     if (_currentFolderFullSyncCompleted) {
-                         _isSyncingCurrentFolder = NO;
-                         [self importantFoldersRefresh:0];
-                     }
-                     else if (!_isSyncingCurrentFolder) {
-                         _isSyncingCurrentFolder = YES;
-                         [self syncCurrentFolder];
-                     }
-                 }
-             }];
-        }
-        else {
-            [self connect];
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                [self.mailListSubscriber serverSearchDone:YES];
-            }];
-        }
+    
+    if (self.user.isDeleted) {
+        return;
     }
+    
+    if ([ImapSync sharedServices:self.user].connected == FALSE) {
+        [self connect];
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self.mailListSubscriber serverSearchDone:YES];
+        }];
+        return;
+    }
+    
+    NSInteger __block new = 0;
+    
+    [self.mailListSubscriber serverSearchDone:NO];
+    
+    [self runTestData];
+    
+    DDLogInfo(@"\tRefresh");
+    
+    [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
+     subscribeNext:^(Mail* email) {
+         DDLogInfo(@"\tEmail Refresh");
+         
+         new++;
+         [self insertRows:email];
+     } error:^(NSError* error) {
+         
+         DDLogError(@"\tError Refresh");
+         
+         [self.mailListSubscriber serverSearchDone:YES];
+         
+         if (error.code != 9002 && error.code != 9001) {
+             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
+         }
+         else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+             
+             [self runTestData];
+             
+             _currentFolderFullSyncCompleted = YES;
+             _isSyncingCurrentFolder = NO;
+             [self importantFoldersRefresh:0];
+         }
+     } completed:^{
+         
+         DDLogInfo(@"\tDone Refresh");
+         
+         [self.mailListSubscriber serverSearchDone:YES];
+         
+         if (new != 0) {
+             [self.mailListSubscriber reFetch:YES];
+         }
+         
+         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+             [self runTestData];
+             
+             if (_currentFolderFullSyncCompleted) {
+                 _isSyncingCurrentFolder = NO;
+                 [self importantFoldersRefresh:0];
+             }
+             else if (!_isSyncingCurrentFolder) {
+                 _isSyncingCurrentFolder = YES;
+                 [self syncCurrentFolder];
+             }
+         }
+     }];
+    
 }
 
 -(void) syncCurrentFolder

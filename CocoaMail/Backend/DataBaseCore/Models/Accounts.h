@@ -11,6 +11,7 @@
 #import "AppSettings.h"
 #import "MailListViewController.h"
 #import "Conversation.h"
+#import "Folders.h"
 
 @class Conversation;
 @class Account;
@@ -59,11 +60,12 @@
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
-@property (nonatomic, strong) NSArray* userFolders; // Array of (folder name, name contains "/")
-@property (nonatomic) NSInteger currentFolderIdx;
+@property (nonatomic, strong) Folders* imapFolders;
+
 @property (nonatomic) NSInteger isSendingOut;
-@property (nonatomic) CCMFolderType currentFolderType;
--(void) setCurrentFolder:(CCMFolderType)folder;
+@property (nonatomic) FolderIndex currentFolderIndex;
+
+-(void) setCurrentFolder:(BaseFolderType)folder;
 -(void) refreshCurrentFolder;
 @property (nonatomic, strong) Person* person;
 
@@ -87,7 +89,7 @@
 
 -(void) insertRows:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
--(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
+-(NSMutableArray*) getConversationsForFolder:(FolderIndex)folderIndex;
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;

@@ -752,6 +752,7 @@
         [user setImportantFolderNum:[user numFolderWithFolder:CCMFolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
+    // The User object keeps an array of all folder names
     [user setAllFoldersDisplayNames:dispNamesFolders];
     
     NSArray* tmpFolders = [user allNonImportantFoldersName];

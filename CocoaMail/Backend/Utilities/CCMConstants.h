@@ -24,48 +24,50 @@ typedef NS_ENUM(NSUInteger, BaseFolderType) {
     FolderTypeAll,
     FolderTypeDeleted,
     FolderTypeSpam,
+    FolderTypeOutbox,
     FolderTypeUser
 };
+#define kLastSystemFolderIndex (FolderTypeOutbox)
 
-typedef struct CCMFolderType{
-    BaseFolderType type;
-    NSInteger idx;
-} CCMFolderType;
+//typedef struct CCMFolderType{
+//    BaseFolderType type;
+//    NSInteger idx;
+//} CCMFolderType;
+//
+//static CCMFolderType CCMFolderTypeInbox     = { FolderTypeInbox, 0 };
+//static CCMFolderType CCMFolderTypeFavoris   = { FolderTypeFavoris, 0 };
+//static CCMFolderType CCMFolderTypeSent      = { FolderTypeSent, 0 };
+//static CCMFolderType CCMFolderTypeDrafts    = { FolderTypeDrafts, 0 };
+//static CCMFolderType CCMFolderTypeAll       = { FolderTypeAll, 0 };
+//static CCMFolderType CCMFolderTypeDeleted   = { FolderTypeDeleted, 0 };
+//static CCMFolderType CCMFolderTypeSpam      = { FolderTypeSpam, 0 };
 
-static CCMFolderType CCMFolderTypeInbox     = { FolderTypeInbox, 0 };
-static CCMFolderType CCMFolderTypeFavoris   = { FolderTypeFavoris, 0 };
-static CCMFolderType CCMFolderTypeSent      = { FolderTypeSent, 0 };
-static CCMFolderType CCMFolderTypeDrafts    = { FolderTypeDrafts, 0 };
-static CCMFolderType CCMFolderTypeAll       = { FolderTypeAll, 0 };
-static CCMFolderType CCMFolderTypeDeleted   = { FolderTypeDeleted, 0 };
-static CCMFolderType CCMFolderTypeSpam      = { FolderTypeSpam, 0 };
+//static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
+//{
+//    CCMFolderType type;
+//    type.type = t;
+//    type.idx = idx;
+//    
+//    return type;
+//}
 
-static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
-{
-    CCMFolderType type;
-    type.type = t;
-    type.idx = idx;
-    
-    return type;
-}
-
-static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
-{
-    return t.type * 4096 + t.idx;
-}
-
-static inline NSNumber* numberWithFolderType(BaseFolderType t)
-{
-    return @(encodeFolderTypeWith(FolderTypeWith(t, 0)));
-}
-
-static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
-{
-    CCMFolderType type;
-    type.type = (BaseFolderType)(code / 4096);
-    type.idx = code % 4096;
-    
-    return type;
-}
+//static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
+//{
+//    return t.type * 4096 + t.idx;
+//}
+//
+//static inline NSNumber* numberWithFolderType(BaseFolderType t)
+//{
+//    return @(encodeFolderTypeWith(FolderTypeWith(t, 0)));
+//}
+//
+//static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
+//{
+//    CCMFolderType type;
+//    type.type = (BaseFolderType)(code / 4096);
+//    type.idx = code % 4096;
+//    
+//    return type;
+//}
 
 #endif /* CCMConstants_h */

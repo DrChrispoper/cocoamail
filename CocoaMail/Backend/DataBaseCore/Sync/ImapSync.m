@@ -663,12 +663,15 @@ static NSArray * sharedServices = nil;
                     NSMutableArray* all = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
                     [all addObjectsFromArray:dispNamesFolders];
                     
+                    // The User object keeps an array of all folder names
                     [self.user setAllFoldersDisplayNames:all];
                 }
             }
         }];
     });
 }
+
+#warning This method MUST be refactored, as it is WAY TOO LARGE
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {

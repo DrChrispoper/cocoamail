@@ -93,12 +93,14 @@
     return _color;
 }
 
+#warning AJC: Keep for now
 -(NSArray *)importantFolders
 {
     return _importantFolders;
 }
 
--(NSArray *)allFoldersDisplayNames
+#warning AJC: Keep for now
+-(NSArray <NSString  *>*)allFoldersDisplayNames
 {
     return _allFoldersDisplayNames;
 }
@@ -203,12 +205,14 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
+#warning AJC: Keep for now
 -(void)setImportantFolders:(NSMutableArray *)importantFolders
 {
     _importantFolders = importantFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
+#warning AJC: Keep for now
 -(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
     _allFoldersDisplayNames = allFolders;
@@ -357,16 +361,28 @@
     return -1;
 }
 
+//
+// Return a sorted array of all User folder names
+//
 -(NSArray*) allNonImportantFoldersName
 {
+    //
+    // Crate a Mutable copy of the array of all Folder Names
+    //
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
     
+    //
+    // Remove the System Folders from the set of All Folders (leaving the User Folders)
+    //
     for (NSNumber* index in _importantFolders) {
         if ([index intValue] >= 0) {
             [foldersSet removeObject:_allFoldersDisplayNames[[index intValue]]];
         }
     }
     
+    //
+    // Return a sorted array of all User Folders
+    //
     return [[foldersSet allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 

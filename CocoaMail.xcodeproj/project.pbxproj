@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1410FD531D834A9B0095285B /* Folder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1410FD521D834A9B0095285B /* Folder.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
+		14BF64941D804853006ED86B /* Folders.m in Sources */ = {isa = PBXBuildFile; fileRef = 14BF64931D804853006ED86B /* Folders.m */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
 		27026F1A1C1ED6FB00BC2C1A /* jquerylong.js in Resources */ = {isa = PBXBuildFile; fileRef = 27026F191C1ED6FB00BC2C1A /* jquerylong.js */; };
@@ -389,8 +391,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1410FD4A1D834A870095285B /* Folder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Folder.h; sourceTree = "<group>"; };
+		1410FD521D834A9B0095285B /* Folder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Folder.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
+		14BF648B1D80482C006ED86B /* Folders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Folders.h; sourceTree = "<group>"; };
+		14BF64931D804853006ED86B /* Folders.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Folders.m; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
 		2700855A1CB90CE0004069B4 /* AlternateViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlternateViewController.m; sourceTree = "<group>"; };
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
@@ -1059,6 +1065,10 @@
 				27F3C9CD1C807FCE0066116B /* Conversation.m */,
 				277F4C211C859BF500720479 /* Draft.h */,
 				277F4C221C859BF500720479 /* Draft.m */,
+				14BF648B1D80482C006ED86B /* Folders.h */,
+				14BF64931D804853006ED86B /* Folders.m */,
+				1410FD4A1D834A870095285B /* Folder.h */,
+				1410FD521D834A9B0095285B /* Folder.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2123,6 +2133,7 @@
 				27818C4F1BABF22500D26D1A /* CloudViewController.m in Sources */,
 				271D4D551B84721A00D19373 /* PDKeychainBindingsController.m in Sources */,
 				27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */,
+				14BF64941D804853006ED86B /* Folders.m in Sources */,
 				27818C551BABF22500D26D1A /* EditCocoaButtonView.m in Sources */,
 				277108621C61500600A459E1 /* HTMLParser.m in Sources */,
 				271D4D9A1B84758E00D19373 /* EmailProcessor.m in Sources */,
@@ -2131,6 +2142,7 @@
 				2747697C1C48F9DD00BF04DE /* PreviewViewController.m in Sources */,
 				273219E51C466B360019967C /* PKHUDTitleView.swift in Sources */,
 				27A636551CA02EB5000B6D2D /* LoginTableViewCell.m in Sources */,
+				1410FD531D834A9B0095285B /* Folder.m in Sources */,
 				27FABC241B9D8E030089634A /* FrameView.swift in Sources */,
 				27818C5D1BABF22500D26D1A /* UserFolderViewController.m in Sources */,
 				277108651C61500600A459E1 /* HTMLSerialization.m in Sources */,

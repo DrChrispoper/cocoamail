@@ -10,6 +10,7 @@
 #import "CocoaButton.h"
 #import "Persons.h"
 #import "Accounts.h"
+#import "Folders.h"
 #import "InViewController.h"
 #import "AttachmentsViewController.h"
 
@@ -18,7 +19,7 @@
 
 @interface MailListViewController : InViewController <CocoaButtonDatasource>
 
--(instancetype) initWithFolder:(CCMFolderType)folder;
+-(instancetype) initWithFolder:(FolderIndex)folderIndex;
 -(instancetype) initWithPerson:(Person*)person;
 
 -(BOOL) istheSame:(MailListViewController*)other;

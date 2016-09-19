@@ -73,7 +73,10 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user.linkedAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
+    return [self emailForSignal:[[ImapSync sharedServices:user]
+                                 runFolder:[user.linkedAccount currentFolderIdx]
+                                 fromStart:isFromStart
+                                 fromAccount:NO]];
 }
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
