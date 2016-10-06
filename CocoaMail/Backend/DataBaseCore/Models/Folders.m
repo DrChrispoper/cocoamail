@@ -14,7 +14,7 @@
 #define ARIBITRARY_NUMBER_OF_FOLDERS    500
 
 @implementation Folders {
-    NSMutableArray *_folders;
+    NSMutableArray <Folder*>*_folders;
 }
 
 - (instancetype)init
@@ -141,12 +141,6 @@
     return count;
 }
 
--(BOOL) isSystemFolder:(FolderIndex)folder
-{
-    
-}
-
-
 -(BaseFolderType)folderTypeForFolder:(FolderIndex)folderIndex
 {
     if ( folderIndex > kLastSystemFolderIndex ) {
@@ -155,7 +149,7 @@
     return (BaseFolderType)folderIndex;
 }
 
-// Returns NIL on bad inde
+// Returns NIL on bad index
 -(Folder*)folderAtIndex:(FolderIndex)folderIndex
 {
     Folder *folder = nil;
@@ -164,6 +158,31 @@
         folder = _folders[folderIndex];
     }
     return folder;
+}
+
+-(FolderIndex)folderIndexForFolderNamed:(NSString *)folderName
+{
+    NSUInteger folderCount = [_folders count];
+    for (int index = 0; index < folderCount; index++) {
+        Folder *folder = _folders[index];
+        NSString *indexedFolderName = folder.IMAPFolderName;
+        if ([folderName isEqualToString:indexedFolderName]) {
+            return index;
+        }
+    }
+}
+
+-(BOOL)isUserFolder:(FolderIndex)folderIndex
+{
+    Folder *folder = [self folderAtIndex:folderIndex];
+    
+    return [folder isUserFolder] ;
+}
+-(BOOL)isSystemFolder:(FolderIndex)folderIndex
+{
+    Folder *folder = [self folderAtIndex:folderIndex];
+    
+    return ![folder isUserFolder];
 }
 
 

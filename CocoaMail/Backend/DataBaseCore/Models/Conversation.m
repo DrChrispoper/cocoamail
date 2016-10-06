@@ -52,8 +52,8 @@ static NSDateFormatter * s_df_hour = nil;
 {
     NSMutableArray* uids = [[NSMutableArray alloc]init];
     for (Mail* m in self.mails) {
-        if ([m uidEWithFolder:folder]) {
-            [uids addObject:[m uidEWithFolder:folder]];
+        if ([m uidEntryWithFolder:folder]) {
+            [uids addObject:[m uidEntryWithFolder:folder]];
         }
     }
     
@@ -62,7 +62,11 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(BOOL) isInInbox
 {
-    return [self uidsWithFolder:[[self user] numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]].count > 0;
+    Folder *inboxFolder = [Folders ]
+    UserSettings *userSettrings = [self user];
+    
+    // Does the Inbox folder contain messates?
+    return [self uidsWithFolder:[[self user] numFolderWithFolder:FolderTypeInbox]].count > 0;
 }
 
 -(UserSettings*) user
@@ -178,29 +182,34 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToConversation:(Conversation*)object];
 }
 
+// Return a set of indecies of all of the conversations' mail messages folders.
 -(NSMutableSet*) foldersType
 {
-    NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
-    
-    NSArray* tmp = [self.mails copy];
+    NSMutableSet* tempFoldersSet = [[NSMutableSet alloc] init];
     
     if (self.isDraft) {
-        [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
+        [tempFoldersSet addObject:@(FolderTypeDrafts)];
     }
     else {
-    for (Mail* mail in tmp) {
-        mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
         
-        for (UidEntry* uid in mail.uids) {
-            CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
-            [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+        NSArray* tempMail = [self.mails copy];
+        
+        for (Mail* mail in tempMail) {
+            mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
+            
+            for (UidEntry* uid in mail.uids) {
+                
+                UserSettings *settings = [AppSettings userWithNum:uid.accountNum];
+                DDAssert(settings,@"UserSettings must not be null");
+                
+                BaseFolderType userFolder = [settings typeOfFolder:uid.folder];
+                
+                [tempFoldersSet addObject:@(userFolder)];
+            }
         }
     }
-    }
     
-
-    
-    return tempFodles;
+    return tempFoldersSet;
 }
 
 @end

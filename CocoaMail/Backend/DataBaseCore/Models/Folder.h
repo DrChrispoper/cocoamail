@@ -33,4 +33,8 @@
 
 -(instancetype)initWithType:(BaseFolderType)folderType named:(NSString *)folderName;
 
+-(BOOL)isAllFolder;
+-(BOOL)isDraftsFolder;
+-(BOOL)isUserFolder;
+
 @end

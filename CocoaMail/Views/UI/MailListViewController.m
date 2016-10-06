@@ -29,6 +29,7 @@
 #import "UserSettings.h"
 #import "Conversation.h"
 #import "Draft.h"
+#import "Folders.h"
 
 
 #ifdef USING_INSTABUG
@@ -83,7 +84,7 @@
     return self;
 }
 
--(instancetype) initWithFolder:(FolderIndex)folderIndex
+-(Folder *)_folderAtIndex:(FolderIndex)folderIndex
 {
     Folders *folders = [[[Accounts sharedInstance] currentAccount] imapFolders];
     DDAssert(folders,@"Folder must exist");
@@ -91,6 +92,16 @@
     Folder *folder = [folders folderAtIndex:folderIndex];
     DDAssert(folder,@"No folder found at bad index %ld",(long)folderIndex);
     
+    return folder;
+}
+-(Folder *)_indexedFolder
+{
+    return [self _folderAtIndex:self.folderIndex];
+}
+
+-(instancetype) initWithFolder:(FolderIndex)folderIndex
+{
+    Folder *folder = [self _folderAtIndex:folderIndex];
     NSString* name = folder.IMAPFolderName;
     
     self = [self initWithName:name];
@@ -602,7 +613,7 @@
         BOOL isInFolder = NO;
         
         for (Mail* mail in conv.mails) {
-            if ([mail uidEWithFolder:currentFolderIdx]) {
+            if ([mail uidEntryWithFolder:currentFolderIdx]) {
                 isInFolder = YES;
                 break;
             }
@@ -746,8 +757,9 @@
                 
                 BOOL isInFolder = NO;
                 
+#warning REPEATED CODE
                 for (Mail* mail in conv.mails) {
-                    if ([mail uidEWithFolder:currentFolderIdx]) {
+                    if ([mail uidEntryWithFolder:currentFolderIdx]) {
                         isInFolder = YES;
                         break;
                     }
@@ -865,6 +877,7 @@
 
 -(BOOL) isPresentingDrafts
 {
+    
     return self.folder.type == FolderTypeDrafts;
 }
 
@@ -1002,21 +1015,23 @@
         }
         default:
         {
-            CCMFolderType fromtype = self.folder;
+            Folder* ourFolder = [self _indexedFolder];
+            
+            BaseFolderType fromType = ourFolder.IMAPFolderType;
             
             // QuickSwipeArchive / QuickSwipeDelete
-            CCMFolderType totype;
-            totype.type = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
+            BaseFolderType toType
+            = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
             
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             // back action
-            if (self.folder.type == totype.type) {
+            if ( fromType == toType ) {
                 //We archive emails from the archive folder if they are already in the Inbox
                 if(![conv isInInbox]) {
-                    totype.type = FolderTypeInbox;
+                    totype = FolderTypeInbox;
                 }
                 else {
-                    fromtype.type = FolderTypeInbox;
+                    fromtype = FolderTypeInbox;
                 }
             }
             else if ([self isPresentingDrafts]) {
@@ -1195,19 +1210,21 @@
         [cell setupWithDelegate:self];
     }
     
-    if (self.folder.type != FolderTypeAll && self.folder.type != FolderTypeDrafts) {
+    Folder *folder = [self _indexedFolder];
+    
+    if ( [folder isAllFolder] == NO && [folder isDraftsFolder] == NO ) {
         
         NSMutableString* fldrsStill = [NSMutableString string];
         
         for (NSNumber* fldr in conv.foldersType) {
-            [fldrsStill appendFormat:@" %lu",(unsigned long)decodeFolderTypeWith([fldr integerValue]).type];
+            [fldrsStill appendFormat:@" %lu",(unsigned long)[fldr integerValue].type];
         }
         
         BOOL isInFolder = NO;
         NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
 
         for (Mail* mail in conv.mails) {
-            if ([mail uidEWithFolder:currentFolderIdx]) {
+            if ([mail uidEntryWithFolder:currentFolderIdx]) {
                 isInFolder = YES;
                 break;
             }
@@ -1373,9 +1390,9 @@
     [[CocoaButton sharedButton] forceCloseButton];
 }
 
--(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
+-(void) _executeMoveOnSelectedCellsTo:(FolderIndex)toFolderIndex
 {
-    if (encodeFolderTypeWith(self.folderIndex) == encodeFolderTypeWith(toFolder)) {
+    if ( self.folderIndex == toFolder ) {
         [self unselectAll];
         return;
     }
@@ -1422,11 +1439,13 @@
             NSString* fromFolderString;
             NSString* toFolderString;
             
-            if (self.folder.type == FolderTypeUser) {
+            Folder *ourFolder = [self _indexedFolder];
+            
+            if ( [ourFolder isUserFolder] ) {
                 fromFolderString = @"UserFolder";
             }
             else {
-                fromFolderString = [ac systemFolderNames][self.folder.idx];
+                fromFolderString = [ac systemFolderNames][self.folderIndex];
             }
             
             if (toFolder.type == FolderTypeUser) {

@@ -134,7 +134,7 @@ static SyncManager * singleton = nil;
     return [folderStates count];
 }
 
--(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(NSDictionary*) retrieveState:(FolderIndex)folderNum accountNum:(NSInteger)accountNum
 {
     NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
 	

@@ -356,12 +356,7 @@ static NSArray * sharedServices = nil;
     
 }
 
--(NSInteger)folderNumberForType:(NSInteger)folderType
-{
-    return [self.user numFolderWithFolder:FolderTypeWith(folderType, 0)];
-}
-
--(BOOL)folderIsNotSynced:(NSInteger)folderNumber
+-(BOOL)folderIsNotSynced:(FolderIndex)folderNumber
 {
     SyncManager *syncMgr = [SyncManager getSingleton];
         
@@ -371,7 +366,7 @@ static NSArray * sharedServices = nil;
     return ([state[@"fullsynced"] boolValue] == FALSE) ;
 }
 
--(NSInteger) nextFolderToSync
+-(FolderIndex) nextFolderToSync
 {
     DDLogDebug(@"-[ImapSync nextFolderToSync]");
     
@@ -386,20 +381,18 @@ static NSArray * sharedServices = nil;
 //        return folderNumberForType;
 //    }
     
-    NSInteger allFolderNum = [self folderNumberForType:FolderTypeAll];
-    if ( [self folderIsNotSynced:allFolderNum] ){
+    if ( [self folderIsNotSynced:FolderTypeAll] ){
         DDLogDebug(@"\tAll Folder Not Synced, do next");
-        return allFolderNum;
+        return FolderTypeAll;
     }
 
 //    if (![[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)] accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
 //        return [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
 //    }
     
-    NSInteger inboxFolderNumber = [self folderNumberForType:FolderTypeInbox];
-    if ( [self folderIsNotSynced:inboxFolderNumber] ){
+    if ( [self folderIsNotSynced:FolderTypeInbox] ){
         DDLogDebug(@"\tInbox Folder Not Synced, do next");
-        return inboxFolderNumber;
+        return FolderTypeInbox;
     }
     
 //    if (![[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)] accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
@@ -408,27 +401,25 @@ static NSArray * sharedServices = nil;
 //        }
 //    }
     
-#warning "FolderTypeInbox" looks wrong here!
-    
-    NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeInbox];
-    if ( [self folderIsNotSynced:favorisFolderNumber] ){
+    if ( [self folderIsNotSynced:FolderTypeFavoris] ){
         DDLogDebug(@"\tFavoris Folder Not Synced, do next");
-        return favorisFolderNumber;
+        return FolderTypeFavoris;
     }
     
 //    if (![[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeSent, 0)] accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
 //        return [self.user numFolderWithFolder:FolderTypeWith(FolderTypeSent, 0)];
 //    }
     
-    NSInteger sentFolderNumber = [self folderNumberForType:FolderTypeSent];
-    if ( [self folderIsNotSynced:sentFolderNumber] ){
+    if ( [self folderIsNotSynced:FolderTypeSent] ){
         DDLogDebug(@"\tSent Folder Not Synced, do next");
-        return sentFolderNumber;
+        return FolderTypeSent;
     }
     
     // Return the first unsynced user folder
-    NSArray* folders = [self.user allFoldersDisplayNames];
-    for (int indexFolder = 0; indexFolder < folders.count; indexFolder++) {
+    Folders* folders = [Accounts sharedInstance].currentAccount.imapFolders;
+    NSUInteger folderCount = [folders folderCount];
+    
+    for (int indexFolder = 0; indexFolder < folderCount; indexFolder++) {
         if (![[[SyncManager getSingleton] retrieveState:indexFolder accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
             DDLogDebug(@"\tUser Folder %ld Not Synced, do next",(long)indexFolder);
             return indexFolder;
@@ -450,8 +441,8 @@ static NSArray * sharedServices = nil;
             [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
         }
         
-        NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
-        NSString* folderPath = [self.user folderServerName:currentFolder];
+        FolderIndex currentFolderIndex = FolderTypeAll;
+        NSString* folderPath = [self.user folderServerName:currentFolderIndex];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchContent:text];
         MCOIMAPSearchOperation* so = [self.imapSession searchExpressionOperationWithFolder:folderPath expression:expr];
         
@@ -462,7 +453,7 @@ static NSArray * sharedServices = nil;
                     return;
                 }
                 
-                [self _saveSearchResults:searchResult withSubscriber:subscriber inFolder:currentFolder];
+                [self _saveSearchResults:searchResult withSubscriber:subscriber inFolder:currentFolderIndex];
             }];
         });
         
@@ -482,7 +473,7 @@ static NSArray * sharedServices = nil;
             [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
         }
         
-        NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
+        FolderIndex currentFolder = FolderTypeAll;
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:person.email];
         MCOIMAPSearchOperation* so = [self.imapSession searchExpressionOperationWithFolder:[self.user folderServerName:currentFolder]
                                                                                 expression:expr];
@@ -501,7 +492,7 @@ static NSArray * sharedServices = nil;
     }];
 }
 
--(void) _saveSearchResults:(MCOIndexSet*)searchResult withSubscriber:(id<RACSubscriber>)subscriber inFolder:(NSInteger)currentFolder
+-(void) _saveSearchResults:(MCOIndexSet*)searchResult withSubscriber:(id<RACSubscriber>)subscriber inFolder:(FolderIndex)currentFolderIndex
 {
     if (searchResult.count == 0) {
         [subscriber sendCompleted];
@@ -512,7 +503,7 @@ static NSArray * sharedServices = nil;
         [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
     }
     else {
-        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesOperationWithFolder:[self.user folderServerName:currentFolder]
+        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesOperationWithFolder:[self.user folderServerName:currentFolderIndex]
                                                                                                     requestKind:self.user.requestKind
                                                               
                                                                                                            uids:searchResult];
@@ -527,7 +518,10 @@ static NSArray * sharedServices = nil;
                 NSString* lastMsgID = [messages firstObject].header.messageID;
                 
                 for (MCOIMAPMessage* msg in [messages reverseObjectEnumerator]) {
-                    [self _saveSearchedEmail:msg inFolder:currentFolder withSubscriber:subscriber lastMsgID:lastMsgID];
+                    [self _saveSearchedEmail:msg
+                                    inFolder:currentFolderIndex
+                              withSubscriber:subscriber
+                                   lastMsgID:lastMsgID];
                 }
                 
             }];
@@ -537,21 +531,26 @@ static NSArray * sharedServices = nil;
     
 }
 
--(void) _saveSearchedEmail:(MCOIMAPMessage*)msg inFolder:(NSInteger)currentFolder withSubscriber:(id<RACSubscriber>)subscriber lastMsgID:(NSString*)lastMsgID
+-(void) _saveSearchedEmail:(MCOIMAPMessage*)msg inFolder:(FolderIndex)currentFolderIndex withSubscriber:(id<RACSubscriber>)subscriber lastMsgID:(NSString*)lastMsgID
 {
-    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:currentFolder accountNum:self.user.accountNum];
+    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:currentFolderIndex accountNum:self.user.accountNum];
+    
     NSString* folderPath = folderState[@"folderPath"];
     
-    Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
+    Mail* email = [Mail mailWithMCOIMAPMessage:msg
+                                      inFolder:currentFolderIndex
+                                    andAccount:self.user.accountNum];
     
     if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
         
         [email loadBody];
         
-        if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
+        if (![UidEntry hasUidEntrywithMsgId:email.msgID
+                                 withFolder:currentFolderIndex
+                                  inAccount:self.user.accountNum]) {
             // already have this email in other folder than this one -> add folder in uid_entry
             
-            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
+            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryWithFolder:currentFolderIndex]];
             
             nextOp.completionBlock = ^{
                 [subscriber sendNext:email];
@@ -673,7 +672,7 @@ static NSArray * sharedServices = nil;
 
 #warning This method MUST be refactored, as it is WAY TOO LARGE
 
--(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
+-(RACSignal*) runFolder:(FolderIndex)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
     DDLogDebug(@"-[ImapSync runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
                folder,
@@ -691,7 +690,7 @@ static NSArray * sharedServices = nil;
     }
     DDLogDebug(@"\tfolder= %ld",folder);
     
-    NSInteger currentFolder = folder;
+    FolderIndex currentFolder = folder;
     
     if (!self.cachedData) {
         self.cachedData = [[NSMutableArray alloc]initWithCapacity:1];
@@ -713,7 +712,7 @@ static NSArray * sharedServices = nil;
         else if (currentFolder == -1) {
             [subscriber sendError:[NSError errorWithDomain:@"All synced" code:9001 userInfo:nil]];
         }
-        else if (isInBackground && currentFolder != [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]) {
+        else if ( isInBackground && currentFolder != FolderTypeInbox ) {
             [subscriber sendCompleted];
         }
         else {
@@ -838,7 +837,7 @@ static NSArray * sharedServices = nil;
                                 NSString* folderPath = folderState[@"folderPath"];
                                 
                                 MCOIMAPFolderInfoOperation* folder = [self.imapSession folderInfoOperation:folderPath];
-                                NSInteger lastEnded = [folderState[@"lastended"] integerValue];
+                                FolderIndex lastEnded = [folderState[@"lastended"] integerValue];
                                 
                                 [folder start:^(NSError* error, MCOIMAPFolderInfo* info) {
                                     if (error) {
@@ -868,7 +867,7 @@ static NSArray * sharedServices = nil;
                                             [self _writeFinishedFolderState:sm emailCount:[info messageCount] andFolder:currentFolder];
                                             
                                             if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
-                                                NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
+                                                FolderIndex lE = ([info messageCount] == 0)?1:lastEnded;
                                                 [self _writeFinishedFolderState:sm lastEnded:lE andFolder:currentFolder];
                                                 
                                                 [subscriber sendError:[NSError errorWithDomain:@"Folder synced" code:9002 userInfo:nil]];
@@ -876,7 +875,7 @@ static NSArray * sharedServices = nil;
                                             }
                                         }
                                         
-                                        NSInteger from = [info messageCount];
+                                        FolderIndex from = [info messageCount];
                                         
                                         if (!(isFromStart || isInBackground) && lastEnded != 0) {
                                             from = lastEnded-1;
@@ -927,7 +926,7 @@ static NSArray * sharedServices = nil;
                                                         if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
                                                             // already have this email in other folder than this one -> add folder in uid_entry
                                                             
-                                                            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
+                                                            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryWithFolder:currentFolder]];
                                                             
                                                             nextOp.completionBlock = ^{
                                                                 if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
@@ -1024,7 +1023,7 @@ static NSArray * sharedServices = nil;
     }];
 }
 
--(BOOL) _saveEmail:(Mail*)email inBackground:(BOOL)isInBackground folder:(NSInteger)currentFolder
+-(BOOL) _saveEmail:(Mail*)email inBackground:(BOOL)isInBackground folder:(FolderIndex)currentFolder
 {
     //Cache email if in Background
     if (isInBackground) {
@@ -1092,7 +1091,7 @@ static NSArray * sharedServices = nil;
     return [NSMutableSet setWithArray:[[AppSettings getSingleton] cache]];
 }
 
--(void) _writeFinishedFolderState:(SyncManager*)sm emailCount:(NSInteger)count andFolder:(NSInteger)folder
+-(void) _writeFinishedFolderState:(SyncManager*)sm emailCount:(FolderIndex)count andFolder:(FolderIndex)folder
 {
     if (!self.user.isDeleted) {
         
@@ -1104,7 +1103,7 @@ static NSArray * sharedServices = nil;
     }
 }
 
--(void) _writeFinishedFolderState:(SyncManager*)sm lastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folder
+-(void) _writeFinishedFolderState:(SyncManager*)sm lastEnded:(FolderIndex)lastEIndex andFolder:(FolderIndex)folder
 {
     // used by fetchFrom to write the finished state for this round of syncing to disk
     if (!self.user.isDeleted) {
@@ -1202,7 +1201,7 @@ static NSArray * sharedServices = nil;
     return;
 }
 
--(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock
+-(void) runUpToDateTest:(NSArray*)convs folderIndex:(FolderIndex)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
     NSString* path = [self.user folderServerName:folderIdx];
@@ -1211,8 +1210,8 @@ static NSArray * sharedServices = nil;
     
     for (Conversation* conv in convs) {
         for (Mail* mail in conv.mails) {
-            if ([mail uidEWithFolder:folderIdx]) {
-                [uidsIS addIndex:[mail uidEWithFolder:folderIdx].uid];
+            if ([mail uidEntryWithFolder:folderIdx]) {
+                [uidsIS addIndex:[mail uidEntryWithFolder:folderIdx].uid];
                 [mails addObject:mail];
             }
         }
@@ -1265,7 +1264,7 @@ static NSArray * sharedServices = nil;
                  }
                  
                  for (Mail* mail in mails) {
-                     UidEntry* uid_entry = [mail uidEWithFolder:folderIdx];
+                     UidEntry* uid_entry = [mail uidEntryWithFolder:folderIdx];
                      
                      if ([uidsIS containsIndex:uid_entry.uid]) {
                          //Remove email from local folder
@@ -1366,7 +1365,7 @@ static NSArray * sharedServices = nil;
     }
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-        NSInteger currentFolder = [user  numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        FolderIndex currentFolder = [user  numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
         NSString* folder = [user folderServerName:currentFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:folder expression:expr];

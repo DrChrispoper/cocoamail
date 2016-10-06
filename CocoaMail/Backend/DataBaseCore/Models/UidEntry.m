@@ -321,7 +321,7 @@
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
-    UidEntry* uidE = [email uidEWithFolder:folderNum];
+    UidEntry* uidE = [email uidEntryWithFolder:folderNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;

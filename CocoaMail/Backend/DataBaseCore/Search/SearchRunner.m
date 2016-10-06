@@ -384,7 +384,7 @@ static SearchRunner * searchSingleton = nil;
                         continue;
                     }
                     
-                    UidEntry* uidE = [email uidEWithFolder:realFolderNum];
+                    UidEntry* uidE = [email uidEntryWithFolder:realFolderNum];
                     
                     [tmp removeObject:uidE];
                     

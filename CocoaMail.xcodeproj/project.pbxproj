@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1410FD531D834A9B0095285B /* Folder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1410FD521D834A9B0095285B /* Folder.m */; };
+		1413CF741D9034FF00586A88 /* Account.m in Sources */ = {isa = PBXBuildFile; fileRef = 1413CF731D9034FF00586A88 /* Account.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		14BF64941D804853006ED86B /* Folders.m in Sources */ = {isa = PBXBuildFile; fileRef = 14BF64931D804853006ED86B /* Folders.m */; };
@@ -393,6 +394,8 @@
 /* Begin PBXFileReference section */
 		1410FD4A1D834A870095285B /* Folder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Folder.h; sourceTree = "<group>"; };
 		1410FD521D834A9B0095285B /* Folder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Folder.m; sourceTree = "<group>"; };
+		1413CF6B1D9034EE00586A88 /* Account.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Account.h; sourceTree = "<group>"; };
+		1413CF731D9034FF00586A88 /* Account.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Account.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
 		14BF648B1D80482C006ED86B /* Folders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Folders.h; sourceTree = "<group>"; };
@@ -1056,7 +1059,9 @@
 				27818C691BABF28D00D26D1A /* Persons.h */,
 				27818C6A1BABF28D00D26D1A /* Persons.m */,
 				277738091B8B03830030F299 /* Accounts.h */,
+				1413CF6B1D9034EE00586A88 /* Account.h */,
 				2777380A1B8B03830030F299 /* Accounts.m */,
+				1413CF731D9034FF00586A88 /* Account.m */,
 				271D4D7E1B84758D00D19373 /* CCMAttachment.h */,
 				271D4D7F1B84758D00D19373 /* CCMAttachment.m */,
 				271D4D821B84758D00D19373 /* UidEntry.h */,
@@ -1688,6 +1693,7 @@
 					271D4CFD1B846E4500D19373 = {
 						CreatedOnToolsVersion = 6.4;
 						DevelopmentTeam = 2MGU5T4CQD;
+						LastSwiftMigration = 0800;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -2157,6 +2163,7 @@
 				277108631C61500600A459E1 /* HTMLPreprocessedInputStream.m in Sources */,
 				271D4D981B84758E00D19373 /* CachedAction.m in Sources */,
 				27818C541BABF22500D26D1A /* DefaultAccountViewController.m in Sources */,
+				1413CF741D9034FF00586A88 /* Account.m in Sources */,
 				2771085B1C61500600A459E1 /* HTMLDocument.m in Sources */,
 				27FADA3A1C5774FC007A3D14 /* UIView+RenderViewToImage.m in Sources */,
 				277F4C231C859BF500720479 /* Draft.m in Sources */,
@@ -2363,6 +2370,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Debug;
 		};
@@ -2430,6 +2438,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Release;
 		};

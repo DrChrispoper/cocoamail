@@ -25,4 +25,17 @@
     return self;
 }
 
+-(BOOL)isAllFolder
+{
+    return (self.IMAPFolderType == FolderTypeAll);
+}
+-(BOOL)isDraftsFolder
+{
+    return (self.IMAPFolderType == FolderTypeDrafts);
+}
+-(BOOL)isUserFolder
+{
+    return (self.IMAPFolderType >= FolderTypeUser);
+}
+
 @end

@@ -29,16 +29,17 @@ typedef NSInteger FolderIndex;
 
 -(void) setCurrentFolder:(FolderIndex)folder;
 
--(BOOL) isSystemFolder:(FolderIndex)folder;
-
 -(FolderIndex)firstUserFolderIndex;
-
 -(NSUInteger) folderCount;
 -(NSUInteger) userFoldersCount;
 
--(BaseFolderType)folderTypeForFolder:(FolderIndex)folderIndex;
-
 -(Folder*)folderAtIndex:(FolderIndex)folderIndex;
+-(BaseFolderType)folderTypeForFolder:(FolderIndex)folderIndex;
+-(BOOL)isUserFolder:(FolderIndex)folderIndex;
+-(BOOL)isSystemFolder:(FolderIndex)folderIndex;
+
+
+-(FolderIndex)folderIndexForFolderNamed:(NSString *)folderName;
 
 
 @end

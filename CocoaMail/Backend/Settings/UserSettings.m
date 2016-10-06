@@ -299,7 +299,7 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(CCMFolderType) typeOfFolder:(NSInteger)folder
+-(FolderIndex) typeOfFolder:(NSInteger)folder
 {
     if (_all) {
         return FolderTypeWith(folder, 0);
@@ -333,9 +333,9 @@
     return [self folderDisplayNameForIndex:[self numFolderWithFolder:folder]];
 }
 
--(NSString*) folderServerName:(NSInteger)folder
+-(NSString*) folderServerName:(FolderIndex)folderIndex
 {
-    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folder accountNum:_accountNum];
+    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folderIndex accountNum:_accountNum];
     NSString* name = folderState[@"folderPath"];
     if (!name) {
         NSLog(@"NO NAME!");
@@ -343,23 +343,29 @@
     return name;
 }
 
--(NSInteger) numFolderWithFolder:(CCMFolderType)folder
-{
-    NSString* folderName;
-    
-    if (folder.type == FolderTypeUser) {
-        folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-        for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
-            if ([folderName isEqualToString:_allFoldersDisplayNames[index]]) {
-                return index;
-            }
-        }
-    } else {
-        return [self importantFolderNumforBaseFolder:folder.type];
-    }
-    
-    return -1;
-}
+//-(NSInteger) numFolderWithFolder:(BaseFolderType)folderIndex
+//{
+//    NSString* folderName;
+//    
+//    
+//    
+//    if (folder.type == FolderTypeUser) {
+//        Folders *folders = [[Accounts sharedInstance] currentAccount].imapFolders;
+//        folderName =
+//        folderName = [[Accounts sharedInstance] currentAccount].userFolders[folderIndex][0];
+//        
+//        return [folders ]
+//        for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
+//            if ([folderName isEqualToString:_allFoldersDisplayNames[index]]) {
+//                return index;
+//            }
+//        }
+//    } else {
+//        return [self importantFolderNumforBaseFolder:folder.type];
+//    }
+//    
+//    return -1;
+//}
 
 //
 // Return a sorted array of all User folder names

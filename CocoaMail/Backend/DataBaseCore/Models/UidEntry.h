@@ -9,12 +9,13 @@
 #import <MailCore/MailCore.h>
 
 @class Mail;
+@class Folder;
 
 @interface UidEntry : NSObject <NSCopying>
 
 @property (assign) NSInteger pk;
 @property (nonatomic, readwrite) uint32_t uid;
-@property (nonatomic, readwrite) NSInteger folder;
+@property (nonatomic, readwrite) FolderIndex folder;
 @property (nonatomic, readwrite) NSInteger accountNum;
 @property (nonatomic, readwrite,copy) NSString* msgID;
 @property (nonatomic, readwrite,copy) NSString* sonMsgID;

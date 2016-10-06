@@ -174,7 +174,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
     
 	for (Mail* mail in emails) {
-        [UidEntry removeFromFolderUid:[mail uidEWithFolder:folderIdx]];
+        [UidEntry removeFromFolderUid:[mail uidEntryWithFolder:folderIdx]];
     }
     
     UserSettings* user  = [emails firstObject].user;
@@ -221,7 +221,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     [Mail insertMail:mail];
     
     if ([mail.user.name isEqualToString:@""]) {
-        UidEntry* u = [mail uidEWithFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
+        UidEntry* u = [mail uidEntryWithFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
         if (u) {
             if (![mail.sender.displayName isEqualToString:@""] || ![mail.sender.displayName isEqualToString:mail.sender.mailbox]) {
                 NSLog(@"New display name:%@",mail.sender.displayName);
