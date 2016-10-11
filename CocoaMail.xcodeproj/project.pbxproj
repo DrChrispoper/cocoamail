@@ -1678,6 +1678,7 @@
 					271D4CFD1B846E4500D19373 = {
 						CreatedOnToolsVersion = 6.4;
 						DevelopmentTeam = 2MGU5T4CQD;
+						LastSwiftMigration = 0800;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -2351,6 +2352,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Debug;
 		};
@@ -2418,6 +2420,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Release;
 		};
