@@ -489,5 +489,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>CocoaSoft needs access to your contacts for email addresses and such.</string>
 </dict>
 </plist>
