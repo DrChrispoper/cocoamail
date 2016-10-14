@@ -833,7 +833,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     DDAssert(!self.user.isAll, @"Should not be called by \"all\" Account");
     
-    DDLogInfo(@"Sending Draft to %lu Accounts",(unsigned long)toPersonIDs.count);
+    DDLogInfo(@"Sending Draft to %lu Persons",(unsigned long)toPersonIDs.count);
     
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
     
@@ -857,7 +857,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         smtpSession.connectionType = smtpService.connectionType;
     }
     
-    DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
+    DDLogInfo(@"Send Draft with Host=\"%@\" Port:%u Auth Type:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
     //[CCMStatus showStatus:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...") dismissAfter:2 code:0];
     
     UserSettings* user = [AppSettings userWithNum:draft.accountNum];
@@ -1047,7 +1047,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) sendOutboxs
 {
-    DDLogInfo(@"sendOutboxs");
+    DDLogInfo(@"ENTERED sendOutboxs");
     
     if (self.isSendingOut == 0) {
         
@@ -1069,7 +1069,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 draft.msgID = @"0";
             }
             
-            DDLogInfo(@"Draft To entries = %lu",(unsigned long)draft.toPersons.count);
+            DDLogInfo(@"Sending Draft to %lu Persons",(unsigned long)draft.toPersons.count);
             
             if (draft.toPersons.count == 0) {
                 [draft deleteOutboxDraft];
@@ -1085,6 +1085,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 }
                 
                 [self sendDraft:draft to:toPIDs];
+            } else {
+                DDLogWarn(@"Draft Acnt # %lu DOES NOT EQUAL User Acnt # %lu",
+                             draft.accountNum,self.user.accountNum);
             }
         }
     }
@@ -1822,11 +1825,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) syncCurrentFolder
 {
+    DDLogInfo(@"ENTERED syncCurrentFolder");
+    
     if (self.user.isDeleted) {
+        DDLogWarn(@"Returning because self.user.isDeleted is FALSE");
         return;
     }
     
     if (![ImapSync canFullSync]){
+        DDLogWarn(@"Returning because [ImapSync canFullSyc] returned YES and we negated it??");
         return;
     }
     
