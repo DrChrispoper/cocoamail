@@ -752,14 +752,7 @@
                 
                 [conv foldersType];
                 
-                BOOL isInFolder = NO;
-                
-                for (Mail* mail in conv.mails) {
-                    if ([mail uidEWithFolder:currentFolderIdx]) {
-                        isInFolder = YES;
-                        break;
-                    }
-                }
+                BOOL isInFolder = [conv isInFolder:currentFolderIdx];
                 
                 if (!isInFolder) {
 #ifdef USING_INSTABUG

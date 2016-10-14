@@ -18,6 +18,7 @@
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;
+-(BOOL) isInFolder:(NSInteger)folderNum;
 -(BOOL) isInInbox;
 -(UserSettings*) user;
 -(void) toggleFav;
