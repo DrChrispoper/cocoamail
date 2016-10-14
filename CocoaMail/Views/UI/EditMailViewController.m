@@ -353,7 +353,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                               [self.selectedAccount refreshCurrentFolder];
                                                                           }
                                                                           else {
-                                                                              [self.draft save];
+                                                                              [self.draft saveToDraftsFolder];
                                                                           }
                                                                       }];
                                                                           
@@ -389,7 +389,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       
                                                                       //[self.selectedAccount insertRows:self.mail];
                                                                       
-                                                                      [self.draft save];
+                                                                      [self.draft saveToDraftsFolder];
                                                                   }
                                                               }];
         [ac addAction:defaultAction];

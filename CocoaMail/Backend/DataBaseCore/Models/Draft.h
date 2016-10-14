@@ -30,7 +30,7 @@
 
 -(NSArray*)attachments;
 
--(void) save;
+-(void)saveToDraftsFolder;
 -(BOOL) saveOuboxDraft;
 -(void) deleteDraft;
 -(void) deleteOutboxDraft;

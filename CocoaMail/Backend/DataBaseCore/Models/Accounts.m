@@ -827,29 +827,34 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
 }
 
-#pragma mark - Drafting
+#pragma mark - Sending Draft to PersonIDs
 
 -(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs
 {
-    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called by \"all\" Account");
+    
+    DDLogInfo(@"Sending Draft to %lu Accounts",(unsigned long)toPersonIDs.count);
     
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
     
-    NSArray* smtpServicesArray = accountProvider.smtpServices;
-    MCONetService* service = smtpServicesArray[0];
+    NSInteger smtpServicesCount = accountProvider.smtpServices.count;
+    DDAssert(smtpServicesCount>0, @"At least one SMTP service must exist");
+    
+    MCONetService* smtpService = accountProvider.smtpServices.firstObject;
     
     MCOSMTPSession* smtpSession = [[MCOSMTPSession alloc] init];
-    smtpSession.hostname = service.hostname ;
-    smtpSession.port = service.port;
+    smtpSession.hostname = smtpService.hostname ;
+    smtpSession.port     = smtpService.port;
     smtpSession.username = self.user.username;
+    
     if (self.user.isUsingOAuth) {
-        smtpSession.OAuth2Token = self.user.oAuth;
-        smtpSession.authType = MCOAuthTypeXOAuth2;
+        smtpSession.OAuth2Token    = self.user.oAuth;
+        smtpSession.authType       = MCOAuthTypeXOAuth2;
         smtpSession.connectionType = MCOConnectionTypeStartTLS;
     }
     else {
-        smtpSession.password = self.user.password;
-        smtpSession.connectionType = service.connectionType;
+        smtpSession.password       = self.user.password;
+        smtpSession.connectionType = smtpService.connectionType;
     }
     
     DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSession.hostname, smtpSession.port, (long)MCOAuthTypeSASLNone);
@@ -857,8 +862,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     UserSettings* user = [AppSettings userWithNum:draft.accountNum];
     
-    NSMutableArray* to = [[NSMutableArray alloc] init];
+    NSMutableArray<MCOAddress *> * to = [[NSMutableArray alloc] init];
     
+    // Create an array of MCOAddress's to send the Draft to
     for (NSNumber* personID in toPersonIDs) {
         Person* p = [[Persons sharedInstance] getPersonWithID:[personID intValue]];
         MCOAddress* newAddress = [MCOAddress addressWithMailbox:p.email];
@@ -867,14 +873,17 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSString* rfc822DataFilename = [draft rfc822DataTo:toPersonIDs];
     
-    MCOSMTPSendOperation * op = [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
-                                                                        from:[MCOAddress addressWithDisplayName:[user name] mailbox:[user username]]
-                                                                  recipients:to];
+    MCOAddress *addressWithDispName = [MCOAddress addressWithDisplayName:[user name] mailbox:[user username]];
+    
+    MCOSMTPSendOperation * op =
+    [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
+                                            from:addressWithDispName
+                                      recipients:to];
     
     op.progress = ^(unsigned int current, unsigned int maximum){
-        [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum)) andTintColor:self.user.color];
+        [self._getInVC setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum))
+                                  andTintColor:self.user.color];
     };
-    
     
     self.isSendingOut++;
 
@@ -886,30 +895,20 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             
             if (error) {
                 if (error.code == MCOErrorNeedsConnectToWebmail) {
-                    UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
-                                                                                message:@"Authorization in webmail needed"
-                                                                         preferredStyle:UIAlertControllerStyleAlert];
-                    
-                    UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault
-                                                                         handler:nil];
-                    [ac addAction:cancelAction];
-                    
-                    ViewController* vc = [ViewController mainVC];
-                    
-                    [vc presentViewController:ac animated:YES completion:nil];
+                    [self _authorizeWebmail];
                 }
                 
                 DDLogError(@"%@ Error sending email:%@", self.user.username, error);
                 
-                if (smtpServicesArray.count == 2) {
+                if ( smtpServicesCount == 2) {
                     
-                    [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:50 andTintColor:self.user.color];
+                    [self._getInVC setSGProgressPercentage:50 andTintColor:self.user.color];
 
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.sending-email", @"Sending email...") dismissAfter:2 code:0];
                     
                     MCOSMTPSession* smtpSessionAux = [[MCOSMTPSession alloc] init];
                     
-                    MCONetService* serviceAux = smtpServicesArray[1];
+                    MCONetService* serviceAux = accountProvider.smtpServices[1];
                     smtpSessionAux.hostname = serviceAux.hostname ;
                     smtpSessionAux.port = serviceAux.port;
                     smtpSessionAux.connectionType = serviceAux.connectionType;
@@ -918,40 +917,33 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                     
                     DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
                     
-                    MCOSMTPSendOperation * op = [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
-                                                                                        from:[MCOAddress addressWithDisplayName:[user name] mailbox:[user username]]
-                                                                                  recipients:to];
+                    MCOAddress *addr = [MCOAddress addressWithDisplayName:[user name] mailbox:[user username]];
+                    MCOSMTPSendOperation * op =
+                    [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
+                                                            from:addr
+                                                      recipients:to];
                     
                     op.progress = ^(unsigned int current, unsigned int maximum){
                         
-#warning look - View Controller's being called inside this model object!
-                        
-                        [(InViewController*)[[ViewController mainVC] topIVC] setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum)) andTintColor:self.user.color];
+                        [self._getInVC setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum))
+                                         andTintColor:self.user.color];
                     };
                     
                     [op start:^(NSError* error) {
                         if (error) {
                             if (error.code == MCOErrorNeedsConnectToWebmail) {
-                                UIAlertController* ac = [UIAlertController alertControllerWithTitle:nil
-                                                                                            message:@"Authorization in webmail needed"
-                                                                                     preferredStyle:UIAlertControllerStyleAlert];
-                                
-                                UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault
-                                                                                     handler:nil];
-                                [ac addAction:cancelAction];
-                                
-                                ViewController* vc = [ViewController mainVC];
-                                
-                                [vc presentViewController:ac animated:YES completion:nil];
+                                [self _authorizeWebmail];
                             }
-                            [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
+                            
+                            [self._getInVC finishSGProgress];
                             DDLogError(@"%@ Error sending email:%@", self.user.username, error);
+                            
                             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2 code:2];
                             self.isSendingOut--;
                             [self endBackgroundUpdateTask];
                         }
                         else {
-                            [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
+                            [self._getInVC finishSGProgress];
                             DDLogInfo(@"%@ Successfully sent email!", self.user.username);
                             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.") dismissAfter:2 code:1];
                             [draft deleteOutboxDraft];
@@ -962,15 +954,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                     }];
                 }
                 else {
-                    [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
+                    [self._getInVC finishSGProgress];
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2 code:2];
                     self.isSendingOut--;
                     [self endBackgroundUpdateTask];
                 }
             }
             else {
-                [(InViewController*)[[ViewController mainVC] topIVC] finishSGProgress];
-                DDLogInfo(@"%@ Successfully sent email!", self.user.username);
+                [self._getInVC finishSGProgress];
+                DDLogInfo(@"%@: Successfully sent email", self.user.username);
                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.email-sent", @"Email sent.")  dismissAfter:2 code:1];
                 [draft deleteOutboxDraft];
                 [draft appendToSent:rfc822DataFilename];
@@ -981,6 +973,30 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     });
 }
 
+-(InViewController*)_getInVC
+{
+    // TODO: If this can be proven not to change, then set it once and store it
+    return (InViewController*)[[ViewController mainVC] topIVC];
+}
+
+-(void)_authorizeWebmail
+{
+    NSString *authNeededMsg = NSLocalizedString(@"Authorization in webmail needed", @"Authorization in webmail needed");
+    UIAlertController* ac =
+    [UIAlertController alertControllerWithTitle:nil
+                                        message:authNeededMsg
+                                 preferredStyle:UIAlertControllerStyleAlert];
+    
+    NSString *titleText = NSLocalizedString(@"Ok", @"Ok");
+    UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:titleText
+                                                           style:UIAlertActionStyleDefault
+                                                         handler:nil];
+    [ac addAction:cancelAction];
+    
+    ViewController* vc = [ViewController mainVC];
+    
+    [vc presentViewController:ac animated:YES completion:nil];
+}
 - (void) beginBackgroundUpdateTask
 {
     _backgroundUpdateTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
@@ -1007,72 +1023,89 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     [self moveConversation:conversation from:folderFrom to:folderTo updateUI:YES];
 }
 
+// TODO: This should be +[Folder folderFileFolder] (or such)
+-(NSString *)_outboxFolderPath
+{
+    NSString *outboxPath = NSLocalizedString(@"outbox", @"outbox");
+    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString* outboxFolder = [documentsDirectory stringByAppendingPathComponent:outboxPath];
+    
+    NSFileManager *filemgr = [NSFileManager defaultManager];
+
+    // If the Outbox Folder does not exist then create it
+    if (![filemgr fileExistsAtPath:outboxFolder]) {
+        
+        [filemgr createDirectoryAtPath:outboxFolder
+           withIntermediateDirectories:NO
+                            attributes:nil
+                                 error:nil];
+        
+        DDLogInfo(@"Created \"%@\"",outboxFolder);
+    }
+    return outboxFolder;
+}
+
 -(void) sendOutboxs
 {
+    DDLogInfo(@"sendOutboxs");
+    
     if (self.isSendingOut == 0) {
-    NSFileManager *filemgr = [NSFileManager defaultManager];
-    NSString *draftPath = @"outbox";
-    
-    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:draftPath];
-    
-    if (![filemgr fileExistsAtPath:folderPath]) {
-        [filemgr createDirectoryAtPath:folderPath withIntermediateDirectories:NO attributes:nil error:nil];
-    }
-    
-    NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:folderPath error:nil];
-    
-    for (NSString* fileName in dirFiles) {
-        NSString* localPath = [folderPath stringByAppendingPathComponent:fileName];
-        Draft* draft = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
         
-        if (!draft.msgID) {
-            draft.msgID = @"0";
-        }
+        DDLogInfo(@"isSendingOut EQUALS 0");
         
-        if (draft.toPersons.count == 0) {
-            [draft deleteOutboxDraft];
-            [draft save];
-            continue;
-        }
+        NSString *outboxFolder = [self _outboxFolderPath];  // creates if not found
         
-        if (draft.accountNum == self.user.accountNum) {
-            NSMutableArray* toPIDs = [[NSMutableArray alloc] initWithCapacity:draft.toPersons.count];
-            Persons* ps = [Persons sharedInstance];
-            for (NSString* email in draft.toPersons) {
-                [toPIDs addObject:@([ps indexForEmail:email])];
+        NSFileManager *filemgr = [NSFileManager defaultManager];
+        NSArray<NSString *> *outboxFilenames = [filemgr contentsOfDirectoryAtPath:outboxFolder
+                                                                     error:nil];
+        
+        for (NSString* fileName in outboxFilenames) {
+            
+            NSString* localPath = [outboxFolder stringByAppendingPathComponent:fileName];
+            Draft* draft = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
+            
+            // TODO: msgID is an NSString, therefore does !msgID mean if its NULL?
+            if (!draft.msgID) {
+                draft.msgID = @"0";
             }
             
-            [self sendDraft:draft to:toPIDs];
+            DDLogInfo(@"Draft To entries = %lu",(unsigned long)draft.toPersons.count);
+            
+            if (draft.toPersons.count == 0) {
+                [draft deleteOutboxDraft];
+                [draft saveToDraftsFolder];
+                continue;
+            }
+            
+            if (draft.accountNum == self.user.accountNum) {
+                NSMutableArray* toPIDs = [[NSMutableArray alloc] initWithCapacity:draft.toPersons.count];
+                Persons* ps = [Persons sharedInstance];
+                for (NSString* email in draft.toPersons) {
+                    [toPIDs addObject:@([ps indexForEmail:email])];
+                }
+                
+                [self sendDraft:draft to:toPIDs];
+            }
         }
     }
+    else {
+        DDLogInfo(@"isSendingOut DOES NOT EQUAL 0");
     }
 }
 
-#warning There is a lot of RW going on in this function, just to determine the number of mail msgs in the Outbox.
 -(NSInteger) outBoxNb
 {
     NSFileManager *filemgr = [NSFileManager defaultManager];
-    NSString *draftPath = @"outbox";
-    
-    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:draftPath];
-    
-    if (![filemgr fileExistsAtPath:folderPath]) {
-        [filemgr createDirectoryAtPath:folderPath withIntermediateDirectories:NO attributes:nil error:nil];
-    }
-    
-    NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:folderPath error:nil];
+    NSString *outboxPath   = [self _outboxFolderPath]; // creates if not found
+    NSArray *dirFiles      = [filemgr contentsOfDirectoryAtPath:outboxPath error:nil];
     
     NSInteger count = 0;
     
     for (NSString* fileName in dirFiles) {
-        NSString* localPath = [folderPath stringByAppendingPathComponent:fileName];
-        Draft* draft = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
+        NSString* localPath = [outboxPath stringByAppendingPathComponent:fileName];
         
-        if (!draft.msgID) {
-            draft.msgID = @"0";
-        }
+        // TODO: We unarchive the entire file to get one value - can we get just the value?  Perhaps if we added it to the Draft Archive Name??
+        Draft* draft = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
         
         if (draft.accountNum == self.user.accountNum) {
             count++;
@@ -1082,7 +1115,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return count;
 }
 
-#pragma mark - Move
+#pragma mark - Move Indexed Conversation from Folder to Folder
 
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
@@ -1093,6 +1126,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     Conversation *conv = [self.allsMails objectAtIndex:index];
     return [self moveConversation:conv from:folderFrom to:folderTo updateUI:updateUI];
 }
+
+#pragma mark - Move Conversation from Folder to Folder
 
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
@@ -1113,6 +1148,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     NSMutableIndexSet* toFolderMailIndecies = [self _mailIndeciesForFolder:folderTo];
     
 #warning This seems kludgy.  This kind of knowledge might be better kept in a Type object
+    // Re above warning - structure with type could include CanMoveFrom and CanMoveTo BOOLs
     
     switch (folderTo.type) {
         case FolderTypeInbox:
@@ -1129,25 +1165,25 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSMutableIndexSet* fromFolderMailIndecies = [self _mailIndeciesForFolder:folderFrom];
     
-    BOOL remove = NO;
+    BOOL okayToRemoveFromFolder = NO;
     
     switch (folderFrom.type) {
         case FolderTypeInbox:
         case FolderTypeUser:
         case FolderTypeDrafts:
-            remove = YES;
+            okayToRemoveFromFolder = YES;
             break;
             
         case FolderTypeFavoris:
         case FolderTypeAll:
-            remove = (folderTo.type == FolderTypeDeleted || folderTo.type == FolderTypeSpam);
+            okayToRemoveFromFolder = (folderTo.type == FolderTypeDeleted || folderTo.type == FolderTypeSpam);
             break;
         case FolderTypeDeleted:
         case FolderTypeSpam:
-            remove = (folderTo.type != FolderTypeDeleted && folderTo.type != FolderTypeSpam);
+            okayToRemoveFromFolder = (folderTo.type != FolderTypeDeleted && folderTo.type != FolderTypeSpam);
             break;
         case FolderTypeSent:
-            remove = (folderTo.type == FolderTypeDeleted);
+            okayToRemoveFromFolder = (folderTo.type == FolderTypeDeleted);
             break;
         default:
             DDLogError(@"move from this folder not implemented (From Folder Type = %ld)",folderFrom.type);
@@ -1169,7 +1205,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                             ToFolder:[self.user numFolderWithFolder:folderTo]];
     }
     
-    if (remove) {
+    if (okayToRemoveFromFolder) {
         [fromFolderMailIndecies removeIndex:idx];
         
 //#warning setTest not used!?!
@@ -1195,8 +1231,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     [toFolderMailIndecies addIndex:idx];
     
-    return remove;
+    return okayToRemoveFromFolder;
 }
+
+#pragma mark - Flag a Conversation
 
 -(void) star:(BOOL)add conversation:(Conversation*)conversation
 {
