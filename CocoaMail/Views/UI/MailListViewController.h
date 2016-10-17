@@ -26,7 +26,7 @@
 -(void) removeConversationList:(NSArray*)convs;
 
 @property (nonatomic, weak) UITableView* table;
-@property (nonatomic, strong) NSMutableArray* convByDay;
+@property (nonatomic, strong) NSMutableArray<NSDictionary *> *convByDay;
 @property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
 @property (nonatomic, weak) AttachmentsViewController* attachSubscriber;
 

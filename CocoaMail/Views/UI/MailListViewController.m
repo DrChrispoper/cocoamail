@@ -1138,13 +1138,14 @@
 
 -(void) reload
 {
+    DDLogDebug(@"ENTERED MailListView reload");
     //self.deletedSections = 0;
     
     [self.table reloadData];
     
     dispatch_async(dispatch_get_main_queue(),^{
         if (self.deletes.count > 0) {
-            NSLog(@"%ld Conversations to delete", (unsigned long)self.deletes.count);
+            DDLogDebug(@"%ld Conversations to delete", (unsigned long)self.deletes.count);
             [self removeConversationList:[self.deletes allObjects]];
         }
     });
@@ -1578,7 +1579,7 @@
 
 - (void)reFetch:(BOOL)forceRefresh
 {
-    DDLogDebug(@"-[MailListViewController reFetch:(BOOL)forceRefresh=%@",
+    DDLogDebug(@"ENTERED reFetch:(BOOL)forceRefresh=%@",
                (forceRefresh?@"TRUE":@"FALSE"));
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -1624,8 +1625,13 @@
             /*[self.table performSelectorOnMainThread:@selector(reloadEmptyDataSet)
                                          withObject:nil
                                       waitUntilDone:NO];*/
+            
+            DDLogDebug(@"NOT Refreshing MailListView because forceRefresh is FALSE, AND ( countBeforeLoadMore(%lu) EQUALS mailCountAfter(%lu) )",
+                       self.countBeforeLoadMore,mailCountAfer);
             return;
         }
+        
+        DDLogDebug(@"*** Refresing MailListView ***");
         
         //self.pageIndex++;
         [self performSelectorOnMainThread:@selector(reload)
