@@ -36,11 +36,17 @@
 
 typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
-@property (nonatomic, strong) CCMMutableConversationArray* allsMails;        // All Mail Conversations for this account
+// All Mail Conversations for this Account
+@property (nonatomic, strong) CCMMutableConversationArray* allsMails;
+
+// All Conversation ID's, used only(?) in InsertRows() function.
 @property (nonatomic, strong) NSMutableSet* convIDs;
 
-@property (nonatomic, strong) NSArray* userFoldersContent;      // user folder mail index sets
-@property (nonatomic, strong) NSArray* systemFoldersContent;    // system folder mail index sets
+// User Folders Mail Index Sets
+@property (nonatomic, strong) NSArray* userFoldersContent;
+
+// System Folders Mail Index Sets
+@property (nonatomic, strong) NSArray* systemFoldersContent;
 
 @end
 
@@ -116,8 +122,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
     
-#warning Is '/' guaranteed to be the only mailbox path connector?
-    
+    // MARK: Is '/' guaranteed to be the only mailbox path connector?
+
     for (NSString* folderName in tmpFolders) {
         [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
     }
@@ -393,7 +399,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     _canUI = YES;
 }
 
-#pragma mark - Accounts description
+#pragma mark Accounts description
 
 -(NSString *)description
 {
@@ -431,7 +437,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     Account* a = [[Account alloc] init];
     
-#warning These are set to be arrays of 500 entries.  We should collect statistics on how many messages most people have
+    // MARK: We should collect statistics on how many messages most people have
     a.allsMails = [NSMutableArray arrayWithCapacity:500];
     
 #warning is "convIDs" used anywhere?
@@ -1018,7 +1024,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     [conversation addMail:m];
     
     CCMFolderType folderFrom = CCMFolderTypeDrafts;
-    CCMFolderType folderTo = CCMFolderTypeDeleted;
+    CCMFolderType folderTo   = CCMFolderTypeDeleted;
     
     [self moveConversation:conversation from:folderFrom to:folderTo updateUI:YES];
 }
