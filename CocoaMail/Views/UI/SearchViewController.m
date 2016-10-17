@@ -50,6 +50,15 @@
 
 @implementation SearchViewController
 
+-(void) updateDays:(NSArray*)days
+{
+    DDLogWarn(@"Empty updateDays: called");
+}
+-(void) insertConversationIndex:(ConversationIndex*)ci
+{
+    DDLogWarn(@"Empty insertConversationIndex: called");
+}
+
 -(void) viewDidLoad
 {
     [super viewDidLoad];

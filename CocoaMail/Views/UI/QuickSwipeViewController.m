@@ -137,7 +137,7 @@
         
         NSString* idToUse = kMAIL_CELL_ID;
         
-        ConversationTableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:idToUse];
+        ConversationTableViewCell* cell = nil; //[tableView dequeueReusableCellWithIdentifier:idToUse];
         
         //if (cell == nil) {
             cell = [[ConversationTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:idToUse];

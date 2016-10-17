@@ -60,6 +60,16 @@ static NSDateFormatter * s_df_hour = nil;
     return uids;
 }
 
+-(BOOL) isInFolder:(NSInteger)folderNum
+{
+    for (Mail* mail in self.mails) {
+        if ([mail isInFolder:folderNum]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 -(BOOL) isInInbox
 {
     Folder *inboxFolder = [Folders ]

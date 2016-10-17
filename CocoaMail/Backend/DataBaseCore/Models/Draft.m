@@ -73,7 +73,8 @@
     return [CCMAttachment getAttachmentsWithMsgID:self.msgID];
 }
 
--(void)save
+// Save Draft to "drafts" folder as "draft_<msgID>"
+-(void)saveToDraftsFolder
 {
     self.datetime = [NSDate date];
     

@@ -749,21 +749,21 @@ static NSDateFormatter * s_df_hour = nil;
 -(UidEntry*) uidInFolder:(NSInteger)folderNum
 {
     if (folderNum == -1) {
-        for (UidEntry* uidE in self.uids) {
-            if (uidE.folder == 0) {
-                return uidE;
-            }
-        }
+        folderNum = 0;
     }
-    else {
-        for (UidEntry* uidE in self.uids) {
-            if (uidE.folder == folderNum) {
-                return uidE;
-            }
+
+    for (UidEntry* uidE in self.uids) {
+        if (uidE.folder == folderNum) {
+            return uidE;
         }
     }
     
     return nil;
+}
+
+-(BOOL)isInFolder:(NSInteger)folderNum
+{
+    return [self uidEWithFolder:folderNum] > 0;
 }
 
 +(void) tableCheck
