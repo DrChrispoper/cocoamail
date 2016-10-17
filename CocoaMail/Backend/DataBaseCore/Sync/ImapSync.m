@@ -135,8 +135,7 @@ static NSArray * sharedServices = nil;
     }
 }
 
-#warning this function is candidiate for break-up, as it is 185 lines long.
-
+// TODO: this function is candidiate for break-up, as it is 185 lines long.
 +(RACSignal*) doLogin:(UserSettings*)user
 {
     DDLogDebug(@"+[ImapSync doLogin:user]");
@@ -407,10 +406,8 @@ static NSArray * sharedServices = nil;
 //            return [self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)];
 //        }
 //    }
-    
-#warning "FolderTypeInbox" looks wrong here!
-    
-    NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeInbox];
+        
+    NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeFavoris];
     if ( [self folderIsNotSynced:favorisFolderNumber] ){
         DDLogDebug(@"\tFavoris Folder Not Synced, do next");
         return favorisFolderNumber;
