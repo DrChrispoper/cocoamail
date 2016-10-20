@@ -51,12 +51,12 @@
 
 /// Indexes are: 0-INBOX 1-Starred 2-Sent Mail 3-Draft 4-All Mail 5-Trash  6-Spam
 //-(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder;
--(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder;
--(BaseFolderType) typeOfFolder:(FolderIndex)folder;
+-(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(FolderIndex)baseFolder;
+-(FolderIndex) typeOfFolder:(FolderIndex)folder;
 //-(FolderIndex) numFolderWithFolder:(BaseFolderType)folder;
 
 -(NSString*) folderDisplayNameForIndex:(FolderIndex)folder;
--(NSString*) folderDisplayNameForType:(BaseFolderType)folder;
+-(NSString*) folderDisplayNameForType:(FolderIndex)folder;
 
 -(NSString*) folderServerName:(FolderIndex)folder;
 -(NSArray*) allNonImportantFoldersName;

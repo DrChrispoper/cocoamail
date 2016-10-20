@@ -8,6 +8,7 @@
 
 #import "Persons.h"
 #import "Mail.h"
+#import "Folder.h"
 #import "AppSettings.h"
 #import "MailListViewController.h"
 #import "Conversation.h"
@@ -32,7 +33,7 @@
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) FolderIndex currentFolderIndex;
 
--(void) setCurrentFolder:(BaseFolderType)folder;
+-(void) setCurrentFolder:(FolderIndex)toFolderIndex;  
 -(void) refreshCurrentFolder;
 @property (nonatomic, strong) Person* person;
 

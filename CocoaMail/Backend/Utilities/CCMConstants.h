@@ -16,18 +16,6 @@ typedef NS_ENUM(NSUInteger, QuickSwipeType) {
     QuickSwipeMark
 };
 
-typedef NS_ENUM(NSUInteger, BaseFolderType) {
-    FolderTypeInbox,
-    FolderTypeFavoris,
-    FolderTypeSent,
-    FolderTypeDrafts,
-    FolderTypeAll,
-    FolderTypeDeleted,
-    FolderTypeSpam,
-    FolderTypeOutbox,
-    FolderTypeUser
-};
-#define kLastSystemFolderIndex (FolderTypeOutbox)
 
 //typedef struct CCMFolderType{
 //    BaseFolderType type;

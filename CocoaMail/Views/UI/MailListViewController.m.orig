@@ -53,7 +53,7 @@
 @property (nonatomic, retain) NSOperationQueue* localFetchQueue;
 @property (nonatomic) FolderIndex folderIndex;
 @property (nonatomic) BOOL longPressOnCocoabutton;
-@property (nonatomic, strong) UserFolderViewController* chooseUserFolderVC;
+@property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
 @property (nonatomic) BOOL isDebugMode;
 @property (nonatomic) BOOL initialLoading;
 @property (nonatomic) BOOL localSearchDone;
@@ -604,18 +604,17 @@
     
     Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
     
-    NSInteger currentFolderIdx = self.folderIndex;
+    NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
     
-    if (currentFolderIdx != FolderTypeAll) {
+    if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
         
-        [conv folders];
+        [conv foldersType];
         
         BOOL isInFolder = NO;
         
-        // Are any of the messages in the conversation in the current folder?
         for (Mail* mail in conv.mails) {
-            isInFolder = [mail isInFolder:currentFolderIdx];
-            if ( isInFolder ) {
+            if ([mail uidEntryWithFolder:currentFolderIdx]) {
+                isInFolder = YES;
                 break;
             }
         }
@@ -750,13 +749,25 @@
             
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             
-            NSInteger currentFolderIdx = self.folderIndex;
+            NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
             
-            if (currentFolderIdx != FolderTypeAll) {
+            if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
                 
-                [conv folders];
+                [conv foldersType];
                 
+<<<<<<< HEAD
+                BOOL isInFolder = NO;
+                
+#warning REPEATED CODE
+                for (Mail* mail in conv.mails) {
+                    if ([mail uidEntryWithFolder:currentFolderIdx]) {
+                        isInFolder = YES;
+                        break;
+                    }
+                }
+=======
                 BOOL isInFolder = [conv isInFolder:currentFolderIdx];
+>>>>>>> Develop
                 
                 if (!isInFolder) {
 #ifdef USING_INSTABUG
@@ -870,7 +881,8 @@
 
 -(BOOL) isPresentingDrafts
 {
-    return (self.folderIndex == FolderTypeDrafts);
+    
+    return self.folder.type == FolderTypeDrafts;
 }
 
 -(UIImageView*) imageViewForQuickSwipeAction
@@ -878,14 +890,14 @@
     NSArray* imgNames = @[@"swipe_archive", @"swipe_delete", @"swipe_reply_single", @"swipe_read", @"swipe_inbox"];
     NSInteger swipetype = [Accounts sharedInstance].quickSwipeType;
     
-//    FolderIndex folderIndex;
-//    
-//    if (swipetype == QuickSwipeArchive) {
-//        folderIndex = FolderTypeAll;
-//    }
-//    else if (swipetype == QuickSwipeDelete) {
-//        folderIndex = FolderTypeDeleted;
-//    }
+    CCMFolderType type;
+    
+    if (swipetype == QuickSwipeArchive) {
+        type.type = FolderTypeAll;
+    }
+    else if (swipetype == QuickSwipeDelete) {
+        type.type = FolderTypeDeleted;
+    }
     
     /*if (self.folder.type == type.type) {
      swipetype = 4;
@@ -903,7 +915,7 @@
     else if (swipetype == QuickSwipeMark) {
         arch.highlightedImage = [UIImage imageNamed:@"swipe_unread"];
     }
-    else if((self.folderIndex == FolderTypeAll && swipetype == QuickSwipeArchive) || (self.folderIndex == FolderTypeDeleted && swipetype == QuickSwipeDelete)) {
+    else if((self.folder.type == FolderTypeAll && swipetype == QuickSwipeArchive) || (self.folder.type == FolderTypeDeleted && swipetype == QuickSwipeDelete)) {
         //We archive emails from the archive folder if they are already in the Inbox
         arch.highlightedImage = [UIImage imageNamed:@"swipe_inbox"];
     }
@@ -1009,46 +1021,47 @@
         {
             Folder* ourFolder = [self _indexedFolder];
             
-            FolderIndex fromFolderIndex = ourFolder.IMAPFolderType;
+            BaseFolderType fromType = ourFolder.IMAPFolderType;
             
             // QuickSwipeArchive / QuickSwipeDelete
-            FolderIndex toFolderIndex = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
+            BaseFolderType toType
+            = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
             
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             // back action
-            if ( fromFolderIndex == toFolderIndex ) {
+            if ( fromType == toType ) {
                 //We archive emails from the archive folder if they are already in the Inbox
                 if(![conv isInInbox]) {
-                    toFolderIndex = FolderTypeInbox;
+                    totype = FolderTypeInbox;
                 }
                 else {
-                    fromFolderIndex = FolderTypeInbox;
+                    fromtype = FolderTypeInbox;
                 }
             }
             else if ([self isPresentingDrafts]) {
-                toFolderIndex = FolderTypeDeleted;
+                totype.type = FolderTypeDeleted;
             }
             
 #ifdef USING_INSTABUG
             IBGLog([NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
 #endif
-             NSLog(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromFolderIndex, (unsigned long)toFolderIndex);
+             NSLog(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
             NSString* fromFolderString;
             NSString* toFolderString;
             
-            if (self.folderIndex == FolderTypeUser) {
+            if (self.folder.type == FolderTypeUser) {
                 fromFolderString = @"UserFolder";
             }
             else {
-                fromFolderString = [conv.user.linkedAccount systemFolderNames][self.folderIndex];
+                fromFolderString = [conv.user.linkedAccount systemFolderNames][self.folder.idx];
             }
             
-            if (toFolderIndex == FolderTypeUser) {
+            if (totype.type == FolderTypeUser) {
                 toFolderString = @"UserFolder";
             }
             else {
-                toFolderString = [conv.user.linkedAccount systemFolderNames][toFolderIndex];
+                toFolderString = [conv.user.linkedAccount systemFolderNames][totype.type];
             }
             
             
@@ -1060,13 +1073,8 @@
             
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
             
-            if ([conversationIndex.user.linkedAccount
-                 moveConversationAtIndex:conversationIndex.index
-                 from:fromFolderIndex
-                 to:toFolderIndex
-                 updateUI:FALSE]) {
-                
-                if ( fromFolderIndex == self.folderIndex ) {
+            if ([conversationIndex.user.linkedAccount moveConversationAtIndex:conversationIndex.index from:fromtype to:totype updateUI:FALSE]) {
+                if (encodeFolderTypeWith(fromtype) == encodeFolderTypeWith(self.folder)) {
                     NSIndexPath* ip = [self.table indexPathForCell:cell];
                     [self _commonRemoveConvs:[@[ip] mutableCopy]];
                 }
@@ -1213,14 +1221,12 @@
         
         NSMutableString* fldrsStill = [NSMutableString string];
         
-        for (NSNumber* fldr in conv.folders) {
-            NSUInteger folderIndex = [fldr integerValue];
-            
-            [fldrsStill appendFormat:@" %lu",folderIndex];
+        for (NSNumber* fldr in conv.foldersType) {
+            [fldrsStill appendFormat:@" %lu",(unsigned long)[fldr integerValue].type];
         }
         
         BOOL isInFolder = NO;
-        NSInteger currentFolderIdx = self.folderIndex;
+        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folderIndex];
 
         for (Mail* mail in conv.mails) {
             if ([mail uidEntryWithFolder:currentFolderIdx]) {
@@ -1316,6 +1322,8 @@
     const CGRect baseRect = cocoaButton.bounds;
     UIColor* color = [[Accounts sharedInstance] currentAccount].user.color;
     
+    NSInteger folderType = self.folder.type;
+    
     NSString* delete_icon = @"swipe_cocoabutton_delete";
     NSString* archive_icon = @"swipe_cocoabutton_archive";
     NSString* spam_icon = @"swipe_cocoabutton_spam";
@@ -1326,13 +1334,13 @@
     
     if (![self isPresentingDrafts]) {
         
-        if (self.folderIndex==FolderTypeAll) {
+        if (folderType==FolderTypeAll) {
             archive_icon = inbox_icon;
         }
-        else if (self.folderIndex==FolderTypeDeleted) {
+        else if (folderType==FolderTypeDeleted) {
             delete_icon = inbox_icon;
         }
-        else if (self.folderIndex==FolderTypeSpam) {
+        else if (folderType==FolderTypeSpam) {
             spam_icon = inbox_icon;
         }
         
@@ -1389,7 +1397,7 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(FolderIndex)toFolderIndex
 {
-    if ( self.folderIndex == toFolderIndex ) {
+    if ( self.folderIndex == toFolder ) {
         [self unselectAll];
         return;
     }
@@ -1432,7 +1440,7 @@
 #ifdef USING_INSTABUG
             IBGLog([NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
 #endif
-            NSLog(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folderIndex, (unsigned long)toFolderIndex);
+            NSLog(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
             NSString* fromFolderString;
             NSString* toFolderString;
             
@@ -1445,11 +1453,11 @@
                 fromFolderString = [ac systemFolderNames][self.folderIndex];
             }
             
-            if (toFolderIndex == FolderTypeUser) {
+            if (toFolder.type == FolderTypeUser) {
                 toFolderString = @"UserFolder";
             }
             else {
-                toFolderString = [ac systemFolderNames][toFolderIndex];
+                toFolderString = [ac systemFolderNames][toFolder.idx];
             }
             
             NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -1460,7 +1468,7 @@
             
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
             
-            if([ac moveConversationAtIndex:conversationIndex.index from:self.folderIndex to:toFolderIndex updateUI:FALSE]) {
+            if([ac moveConversationAtIndex:conversationIndex.index from:self.folderIndex to:toFolder updateUI:FALSE]) {
                 [dels addObject:conversationIndex];
             }
             
@@ -1478,22 +1486,20 @@
     });
 }
 
-
-// TODO: - Revisit this function
 -(void) _chooseAction:(UIButton*)button
 {
     [CocoaButton animateHorizontalButtonCancelTouch:button];
     
-    FolderIndex toFolderIndex;
-    toFolderIndex = 0;
+    CCMFolderType toFolder;
+    toFolder.idx = 0;
     BOOL doNothing = NO;
     
     switch (button.tag) {
         case 0:
-            toFolderIndex = (self.folderIndex == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
+            toFolder.type = (self.folder.type == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
             break;
         case 1:
-            toFolderIndex = (self.folderIndex == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
+            toFolder.type = (self.folder.type == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
             break;
         case 2:
         {
@@ -1506,7 +1512,7 @@
             
             [self.view addSubview:ufvc.view];
             
-            self.chooseUserFolderVC = ufvc;
+            self.chooseUserFolder = ufvc;
             
             [ViewController temporaryHideCocoaButton:YES];
             
@@ -1519,7 +1525,7 @@
             break;
         }
         case 3:
-            toFolderIndex = (self.folderIndex == FolderTypeSpam) ? FolderTypeInbox : FolderTypeSpam;
+            toFolder.type = (self.folder.type == FolderTypeSpam) ? FolderTypeInbox : FolderTypeSpam;
             break;
         default:
             NSLog(@"WTF !!!");
@@ -1528,12 +1534,11 @@
     }
     
     if (!doNothing) {
-        [self _executeMoveOnSelectedCellsTo:toFolderIndex];
+        [self _executeMoveOnSelectedCellsTo:toFolder];
     }
 }
 
-// FIXME: - function name same as UserFolderViewController * ???
--(void) chooseUserFolder:(FolderIndex)folder 
+-(void) chooseUserFolder:(CCMFolderType)folder
 {
     [self _executeMoveOnSelectedCellsTo:folder];
     [self chooseUserFolderCancel];
@@ -1541,7 +1546,7 @@
 
 -(void) chooseUserFolderCancel
 {
-    UserFolderViewController* ufvc = self.chooseUserFolderVC;
+    UserFolderViewController* ufvc = self.chooseUserFolder;
     
     [ViewController temporaryHideCocoaButton:NO];
     
@@ -1551,7 +1556,7 @@
                      }
                      completion:^(BOOL fini){
                          [ufvc.view removeFromSuperview];
-                         self.chooseUserFolderVC = nil;
+                         self.chooseUserFolder = nil;
                      }];
 }
 
@@ -1733,7 +1738,7 @@
 
 -(BOOL) isInbox
 {
-    return (self.folderIndex == FolderTypeInbox);
+    return (self.folder.type == FolderTypeInbox);
 }
 
 @end

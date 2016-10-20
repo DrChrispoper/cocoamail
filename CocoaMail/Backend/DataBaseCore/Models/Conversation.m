@@ -154,7 +154,7 @@ static NSDateFormatter * s_df_hour = nil;
         [m moveFromFolder:fromFolderIdx ToFolder:toFolderIdx];
     }
     
-    [self foldersType];
+    [self folders];
 }
 
 -(void) trash
@@ -163,7 +163,7 @@ static NSDateFormatter * s_df_hour = nil;
         [m trash];
     }
     
-    [self foldersType];
+    [self folders];
 }
 
 -(BOOL) isEqualToConversation:(Conversation*)conv
@@ -192,34 +192,37 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToConversation:(Conversation*)object];
 }
 
-// Return a set of indecies of all of the conversations' mail messages folders.
--(NSMutableSet*) foldersType
+// Return the indecies of all the folders contains this conversation's mail messages
+// MARK: - Why is this called, ignoring the return, in several places??
+-(NSMutableSet*) folders
 {
-    NSMutableSet* tempFoldersSet = [[NSMutableSet alloc] init];
-    
+    // A draft conversation is only in the draft folder
     if (self.isDraft) {
-        [tempFoldersSet addObject:@(FolderTypeDrafts)];
+        NSMutableSet *draftFolderOnly = [[NSMutableSet alloc] init];
+        [draftFolderOnly addObject:@(FolderTypeDrafts)];
+        return draftFolderOnly;
     }
-    else {
+    
+    NSMutableSet* mailFolderIndeciesForConvMail = [[NSMutableSet alloc] init];
+    
+    NSArray* tempMail = [self.mails copy];
+    
+    // For each mail message in this conversation
+    for (Mail* mail in tempMail) {
         
-        NSArray* tempMail = [self.mails copy];
+        // get the uids associated with the message,
+        // and update them in the message itself
+        mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
         
-        for (Mail* mail in tempMail) {
-            mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
+        // For each UID
+        for (UidEntry* uid in mail.uids) {
             
-            for (UidEntry* uid in mail.uids) {
-                
-                UserSettings *settings = [AppSettings userWithNum:uid.accountNum];
-                DDAssert(settings,@"UserSettings must not be null");
-                
-                BaseFolderType userFolder = [settings typeOfFolder:uid.folder];
-                
-                [tempFoldersSet addObject:@(userFolder)];
-            }
+            // Add the UID's folder index
+            [mailFolderIndeciesForConvMail addObject:@(uid.folder)];
         }
     }
-    
-    return tempFoldersSet;
+ 
+    return mailFolderIndeciesForConvMail;
 }
 
 @end

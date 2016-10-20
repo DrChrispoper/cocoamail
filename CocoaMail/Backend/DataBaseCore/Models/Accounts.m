@@ -30,26 +30,26 @@
 
 @end
 
-@interface Account () {
-    BOOL _currentFolderFullSyncCompleted;
-    BOOL _runningUpToDateTest;
-}
-
-typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
-
-// All Mail Conversations for this Account
-@property (nonatomic, strong) CCMMutableConversationArray* allsMails;
-
-// All Conversation ID's, used only(?) in InsertRows() function.
-@property (nonatomic, strong) NSMutableSet* convIDs;
-
-// User Folders Mail Index Sets
-@property (nonatomic, strong) NSArray* userFoldersContent;
-
-// System Folders Mail Index Sets
-@property (nonatomic, strong) NSArray* systemFoldersContent;
-
-@end
+//@interface Account () {
+//    BOOL _currentFolderFullSyncCompleted;
+//    BOOL _runningUpToDateTest;
+//}
+//
+//typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
+//
+//// All Mail Conversations for this Account
+//@property (nonatomic, strong) CCMMutableConversationArray* allsMails;
+//
+//// All Conversation ID's, used only(?) in InsertRows() function.
+//@property (nonatomic, strong) NSMutableSet* convIDs;
+//
+//// User Folders Mail Index Sets
+//@property (nonatomic, strong) NSArray* userFoldersContent;
+//
+//// System Folders Mail Index Sets
+//@property (nonatomic, strong) NSArray* systemFoldersContent;
+//
+//@end
 
 @implementation Accounts
 

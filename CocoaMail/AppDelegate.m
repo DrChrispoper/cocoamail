@@ -187,7 +187,7 @@
             ConversationIndex *cIndex = [ConversationIndex initWithIndex:index user:user];
             Conversation* conversation = [cIndex.user.linkedAccount getConversationForIndex:cIndex.index];
             
-            [conversation foldersType];
+            [conversation folders];
             
             NSLog(@"Opening email:%@", [conversation firstMail].subject);
             NSLog(@"Index: %ld",(long)cIndex.index);
@@ -249,7 +249,10 @@
         
         CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
 
-        [convIndex.user.linkedAccount moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
+        [convIndex.user.linkedAccount moveConversation:conversation
+                                                  from:FolderTypeInbox
+                                                    to:FolderTypeDeleted
+                                              updateUI:YES];
         
         NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
         
@@ -456,15 +459,13 @@ didSignInForUser:(GIDGoogleUser*)user
     NSLog(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
     
     if ([shortcutItem.type isEqualToString:@"com.fav"]) {
-        CCMFolderType type = CCMFolderTypeFavoris;
-        [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
-        NSNumber* encodedType = @(encodeFolderTypeWith(type));
+        [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeFavoris];
+        NSNumber* encodedType = @(FolderTypeFavoris);
         [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
     }
     else if ([shortcutItem.type isEqualToString:@"com.inbox"]) {
-        CCMFolderType type = CCMFolderTypeInbox;
-        [[Accounts sharedInstance].currentAccount setCurrentFolder:type];
-        NSNumber* encodedType = @(encodeFolderTypeWith(type));
+        [[Accounts sharedInstance].currentAccount setCurrentFolder:FolderTypeInbox];
+        NSNumber* encodedType = @(FolderTypeInbox);
         [[NSNotificationCenter defaultCenter] postNotificationName:kQUICK_ACTION_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
     }
     else if ([shortcutItem.type isEqualToString:@"com.search"]) {

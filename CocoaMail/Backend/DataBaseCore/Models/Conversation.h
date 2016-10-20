@@ -11,10 +11,13 @@
 
 @interface Conversation : NSObject
 
+// Mails in this Conversation
+// TODO: Might the "mails" array be a "Folder"?
 @property (nonatomic, strong, readonly) NSMutableArray* mails;
 @property (nonatomic) BOOL isDraft;
 
--(NSMutableSet*) foldersType;
+-(NSMutableSet*) folders;
+
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;

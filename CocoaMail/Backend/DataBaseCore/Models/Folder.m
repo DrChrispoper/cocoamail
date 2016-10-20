@@ -13,7 +13,7 @@
 
 @implementation Folder
 
--(instancetype)initWithType:(BaseFolderType)folderType named:(NSString *)folderName
+-(instancetype)initWithType:(FolderType)folderType named:(NSString *)folderName
 {
     self = [super init];
     if (self) {

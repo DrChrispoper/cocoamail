@@ -338,7 +338,7 @@ static AppSettings * singleton = nil;
 }
 
 
-+(UserSettings*) userWithIndex:(NSInteger)accountIndex;
++(UserSettings*) userWithIndex:(NSInteger)accountIndex
 {
     if (accountIndex < [AppSettings activeUsers].count) {
         return [AppSettings activeUsers][accountIndex];

@@ -355,11 +355,6 @@ static NSArray * sharedServices = nil;
     
 }
 
-//-(NSInteger)folderNumberForType:(NSInteger)folderType
-//{
-//    return [self.user numFolderWithFolder:FolderTypeWith(folderType, 0)];
-//}
-
 -(BOOL)folderIsNotSynced:(FolderIndex)folderNumber
 {
     SyncManager *syncMgr = [SyncManager getSingleton];
@@ -404,9 +399,14 @@ static NSArray * sharedServices = nil;
 //            return [self.user numFolderWithFolder:FolderTypeWith(FolderTypeFavoris, 0)];
 //        }
 //    }
-        
-//    NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeFavoris];
+<<<<<<< HEAD
+    
     if ( [self folderIsNotSynced:FolderTypeFavoris] ){
+=======
+        
+    NSInteger favorisFolderNumber = [self folderNumberForType:FolderTypeFavoris];
+    if ( [self folderIsNotSynced:favorisFolderNumber] ){
+>>>>>>> Develop
         DDLogDebug(@"\tFavoris Folder Not Synced, do next");
         return FolderTypeFavoris;
     }
@@ -675,7 +675,7 @@ static NSArray * sharedServices = nil;
     });
 }
 
-// FIXME: This method MUST be refactored, as it is WAY TOO LARGE
+#warning This method MUST be refactored, as it is WAY TOO LARGE
 
 -(RACSignal*) runFolder:(FolderIndex)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
@@ -777,8 +777,9 @@ static NSArray * sharedServices = nil;
                                 //Check for another
                                 if ([sm isFolderDeleted:currentFolder accountNum:self.user.accountNum]) {
                                     
+                                    CCMFolderType f = [self.user typeOfFolder:currentFolder];
                                     
-                                    if (currentFolder != FolderTypeUser) {
+                                    if (f.type != FolderTypeUser) {
                                         
                                         MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
                                         
@@ -790,31 +791,31 @@ static NSArray * sharedServices = nil;
                                             
                                             NSString* newFolderPath = @"";
                                             
-                                            if (currentFolder == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"])) {
+                                            if (f.type == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"])) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
                                             } //Starred
-                                            else if(currentFolder == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
+                                            else if(f.type == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
                                             } //Sent
-                                            else if(currentFolder == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
+                                            else if(f.type == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
                                             } //Draft
-                                            else if(currentFolder == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
+                                            else if(f.type == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
                                             } //Archive
-                                            else if(currentFolder == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
+                                            else if(f.type == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
                                             } //Trash
-                                            else if(currentFolder == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))) {
+                                            else if(f.type == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
                                             } //Spam
-                                            else if(currentFolder == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))) {
+                                            else if(f.type == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))) {
                                                 newFolderPath = folder.path;
                                                 //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
                                             }
@@ -827,7 +828,7 @@ static NSArray * sharedServices = nil;
                                                     NSString* folderPath = folderState[@"folderPath"];
                                                     
                                                     if ([newFolderPath isEqualToString:folderPath]) {
-                                                        [self.user setImportantFolderNum:i forBaseFolder:currentFolder];
+                                                        [self.user setImportantFolderNum:i forBaseFolder:f.type];
                                                     }
                                                     
                                                     i++;
@@ -933,7 +934,7 @@ static NSArray * sharedServices = nil;
                                                             NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryWithFolder:currentFolder]];
                                                             
                                                             nextOp.completionBlock = ^{
-                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIndex) | getAll) {
+                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
                                                                     [email loadBody];
                                                                     [subscriber sendNext:email];
                                                                 }
@@ -969,7 +970,7 @@ static NSArray * sharedServices = nil;
                                                         if ([email.datetime compare:month] == NSOrderedAscending) {
                                                             BOOL isNew = [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
                                                             
-                                                            if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIndex) | getAll) {
+                                                            if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
                                                                 if (isInBackground) {
                                                                     if (isNew) {
                                                                         [subscriber sendNext:email];
@@ -993,7 +994,7 @@ static NSArray * sharedServices = nil;
                                                                 
                                                                 BOOL isNew = [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
                                                                 
-                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIndex) | getAll) {
+                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
                                                                     if (isInBackground) {
                                                                         if (isNew) {
                                                                             [subscriber sendNext:email];
@@ -1032,7 +1033,7 @@ static NSArray * sharedServices = nil;
     //Cache email if in Background
     if (isInBackground) {
         
-        BOOL isInInbox = (currentFolder == FolderTypeInbox);
+        BOOL isInInbox = (currentFolder == [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]);
         BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
         
         if (isInInbox & isUnread) {
@@ -1123,16 +1124,14 @@ static NSArray * sharedServices = nil;
 -(void) runUpToDateCachedTest:(NSArray*)emails
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
-    Accounts *acntsSingleton = [Accounts sharedInstance];
-    FolderIndex currentFolder = acntsSingleton.currentAccount.currentFolderIndex;
-    NSString* path = [self.user folderServerName:currentFolder];
+    NSString* path = [self.user folderServerName:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
     
     NSMutableArray* datas = [[NSMutableArray alloc]init];
     
     for (Mail* email in emails) {
         //TODO: Get the right uid corresponding to the message id and folder
         
-        UidEntry* uid_entry = [UidEntry getUidEntryWithFolder:currentFolder msgID:email.msgID];
+        UidEntry* uid_entry = [UidEntry getUidEntryWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] msgID:email.msgID];
         [uidsIS addIndex:uid_entry.uid];
         
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
@@ -1194,8 +1193,7 @@ static NSArray * sharedServices = nil;
                      }
                  }
                  
-                 NSDictionary* data = [[NSDictionary alloc]initWithObjects:
-  @[delDatas,] forKeys:@[@"datas",@"folderIdx"]];
+                 NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[delDatas,@([[Accounts sharedInstance].currentAccount currentFolderIdx])] forKeys:@[@"datas",@"folderIdx"]];
                  NSInvocationOperation* nextOpDel = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeFromFolderWrapper:) object:data];
                  [ep.operationQueue addOperation:nextOpDel];
                  
@@ -1372,7 +1370,7 @@ static NSArray * sharedServices = nil;
     }
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-        FolderIndex currentFolder = FolderTypeInbox;
+        FolderIndex currentFolder = [user  numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
         NSString* folder = [user folderServerName:currentFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:folder expression:expr];

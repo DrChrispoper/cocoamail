@@ -59,7 +59,7 @@
     return ( folderIndex >= 0 && folderIndex <= [self _lastFolderIndex]);
 }
 
-// ALL add Folder calls should go through here
+// *all* add Folder calls should go through here
 -(void)addFolder:(NSString *)folderName ofType:(BaseFolderType)folderType;
 {
     Folder *newFolder = [[Folder alloc] initWithType:folderType
@@ -141,12 +141,14 @@
     return count;
 }
 
--(BaseFolderType)folderTypeForFolder:(FolderIndex)folderIndex
+-(FolderType)folderTypeForFolderAtIndex:(FolderIndex)folderIndex
 {
-    if ( folderIndex > kLastSystemFolderIndex ) {
-        return FolderTypeUser;
+    Folder *folder = [self folderAtIndex:folderIndex];
+    if ( folder == nil ) {
+        DDAssert(@"Could not find a Folder at Index %ul", (long)folderIndex);
+        return FolderTypeNotSet;
     }
-    return (BaseFolderType)folderIndex;
+    return folder.IMAPFolderType;
 }
 
 // Returns NIL on bad index
@@ -185,6 +187,10 @@
     return ![folder isUserFolder];
 }
 
+-(void)setFolders:(NSArray *)folders
+{
+    
+}
 
 @end
 

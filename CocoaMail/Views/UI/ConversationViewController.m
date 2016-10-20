@@ -52,10 +52,10 @@
 
 @property (nonatomic, strong) NSMutableArray* allMailViews;
 
-@property (nonatomic) CCMFolderType folder;
+@property (nonatomic) FolderIndex folderIndex;
 @property (nonatomic) CGPoint contentOffset;
 
-@property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
+@property (nonatomic, strong) UserFolderViewController* chooseUserFolderVC;
 
 @end
 
@@ -91,15 +91,20 @@
     
     self.contentOffset = CGPointMake(0,0);
     
-    Persons* p = [Persons sharedInstance];
+    Persons* allPersons = [Persons sharedInstance];
     
-    if (p.idxMorePerson == 0) {
-        Person* more = [Person createWithName:nil email:nil icon:[UIImage imageNamed:@"recipients_off"] codeName:nil];
-        p.idxMorePerson = [p addPerson:more];
+    if (allPersons.idxMorePerson == 0) {
+        Person* aPerson = [Person createWithName:nil
+                                           email:nil
+                                            icon:[UIImage imageNamed:@"recipients_off"]
+                                        codeName:nil];
+        
+        allPersons.idxMorePerson = [allPersons addPerson:aPerson];
     }
     // TODO put it elsewhere
     
-    self.folder = [[AppSettings userWithIndex:kActiveFolderIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
+    FolderIndex activeFolderIndex = kActiveFolderIndex;
+    self.folderIndex = [[AppSettings userWithIndex:activeFolderIndex] typeOfFolder:activeFolderIndex];
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
@@ -523,11 +528,12 @@
     b4.tag = 0;
     [b4 addTarget:self action:@selector(_chooseAction:) forControlEvents:UIControlEventTouchUpInside];
     
-    if (self.folder.type==FolderTypeDeleted) {
+    FolderType folderType = [self _folderTypeAtIndex:self.folderIndex];
+    if (folderType==FolderTypeDeleted) {
         [b4 setImage:[UIImage imageNamed:@"button_folder_off"] forState:UIControlStateNormal];
         [b4 setImage:[UIImage imageNamed:@"button_folder_on"] forState:UIControlStateHighlighted];
     }
-    else if (self.folder.type==FolderTypeAll) {
+    else if (folder.type==FolderTypeAll) {
         [b2 setImage:[UIImage imageNamed:@"button_inbox_off"] forState:UIControlStateNormal];
         [b2 setImage:[UIImage imageNamed:@"button_inbox_on"] forState:UIControlStateHighlighted];
     }
@@ -540,17 +546,22 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil];
 }
 
--(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
+-(void) _executeMoveOnSelectedCellsTo:(FolderIndex)toFolder
 {
+    Account* mailAccount = self.conversation.user.linkedAccount;
+    DDAssert(mailAccount, @"Account must exist");
+    
+    Folders* mailFolders = mailAccount.imapFolders;
+    DDAssert(mailFolders, @"Folders must exist");
     
     NSString* fromFolderString;
     NSString* toFolderString;
     
-    if (self.folder.type == FolderTypeUser) {
+    if ( [mailFolders isUserFolder:self.folderIndex] ) {
         fromFolderString = @"UserFolder";
     }
     else {
-        fromFolderString = [self.conversation.user.linkedAccount systemFolderNames][self.folder.idx];
+        fromFolderString = [mailAccount systemFolderNames][self.folderIndex];
     }
     
     if (toFolder.type == FolderTypeUser) {
@@ -568,27 +579,44 @@
     
     [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
     
-    [self.conversation.user.linkedAccount moveConversation:self.conversation from:self.folder to:toFolder updateUI:YES];
+    [self.conversation.user.linkedAccount moveConversation:self.conversation from:self.folderIndex to:toFolder updateUI:YES];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
     
     [[CocoaButton sharedButton] forceCloseButton];
 }
 
+-(FolderType)_folderTypeAtIndex:(FolderIndex)folderIndex
+{
+    Account* mailAccount = self.conversation.user.linkedAccount;
+    DDAssert(mailAccount, @"Account must exist");
+    
+    Folders* mailFolders = mailAccount.imapFolders;
+    DDAssert(mailFolders, @"Folders must exist");
+    
+    return [mailFolders folderTypeForFolderAtIndex:folderIndex]; // -1 == BAD_FOLDER_TYPE
+}
 -(void) _chooseAction:(UIButton*)button
 {
     //[CocoaButton animateHorizontalButtonCancelTouch:button];
     
-    CCMFolderType toFolder;
-    toFolder.idx = 0;
+    Account* mailAccount = self.conversation.user.linkedAccount;
+    DDAssert(mailAccount, @"Account must exist");
+    
+    Folders* mailFolders = mailAccount.imapFolders;
+    DDAssert(mailFolders, @"Folders must exist");
+    
+
+    FolderIndex toFolder = 0;
     BOOL doNothing = NO;
     
+    FolderType folderType = [self]
     switch (button.tag) {
         case 0:
-            toFolder.type = (self.folder.type == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
+            toFolder = (self.folderIndex == FolderTypeDeleted) ? FolderTypeInbox : FolderTypeDeleted;
             break;
         case 1:
-            toFolder.type = (self.folder.type == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
+            toFolder = (self.folderIndex == FolderTypeAll) ? FolderTypeInbox : FolderTypeAll;
             break;
         case 2:
         {
@@ -601,7 +629,7 @@
             
             [self.view addSubview:ufvc.view];
             
-            self.chooseUserFolder = ufvc;
+            self.chooseUserFolderVC = ufvc;
             
             
             [ViewController temporaryHideCocoaButton:YES];
@@ -625,7 +653,7 @@
     }
 }
 
--(void) chooseUserFolder:(CCMFolderType)folder
+-(void) chooseUserFolder:(FolderIndex)folder
 {
     [self _executeMoveOnSelectedCellsTo:folder];
     [self chooseUserFolderCancel];
@@ -633,7 +661,7 @@
 
 -(void) chooseUserFolderCancel
 {
-    UserFolderViewController* ufvc = self.chooseUserFolder;
+    UserFolderViewController* ufvc = self.chooseUserFolderVC;
     
     [ViewController temporaryHideCocoaButton:NO];
     
@@ -643,7 +671,7 @@
                      }
                      completion:^(BOOL fini){
                          [ufvc.view removeFromSuperview];
-                         self.chooseUserFolder = nil;
+                         self.chooseUserFolderVC = nil;
                      }];
     
     

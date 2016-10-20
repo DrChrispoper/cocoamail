@@ -299,15 +299,15 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(FolderIndex) typeOfFolder:(NSInteger)folder
+-(FolderIndex) typeOfFolder:(FolderIndex)folder
 {
     if (_all) {
-        return FolderTypeWith(folder, 0);
+        return folder;
     }
     
     for (int idx = (int)_importantFolders.count-1 ; idx >= 0 ; idx--) {
         if (folder == [_importantFolders[idx] integerValue]) {
-            return FolderTypeWith(idx, 0);
+            return idx;
         }
     }
     
@@ -316,11 +316,11 @@
     
     for (int idx = 0; idx < nonImportantFolders.count;idx++) {
         if ([folderName isEqualToString:nonImportantFolders[idx]]) {
-            return FolderTypeWith(FolderTypeUser, idx);
+            return idx;
         }
     }
     
-    return CCMFolderTypeAll;
+    return FolderTypeAll;
 }
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder
@@ -328,9 +328,9 @@
     return _allFoldersDisplayNames[folder];
 }
 
--(NSString*) folderDisplayNameForType:(CCMFolderType)folder
+-(NSString*) folderDisplayNameForType:(FolderIndex)folder
 {
-    return [self folderDisplayNameForIndex:[self numFolderWithFolder:folder]];
+    return [self folderDisplayNameForIndex:folder];
 }
 
 -(NSString*) folderServerName:(FolderIndex)folderIndex

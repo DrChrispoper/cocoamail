@@ -712,8 +712,11 @@
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
     NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
-    NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
     
+    NSMutableArray<MCOIMAPFolder*>* sortedFolders = [[NSMutableArray alloc] init];
+    
+    // Creates an array of all MCOIMAPFolder: Inbox, alpha sorted system folders,
+    //    alpha sorted user folders, all mail folder.
     [sortedFolders addObject:inboxfolder];
     [sortedFolders addObjectsFromArray:[flagedFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
     [sortedFolders addObjectsFromArray:[otherFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
@@ -725,6 +728,8 @@
     
     [[SyncManager getSingleton] addAccountState];
     
+    // MARK: I think this is designed to create the array of
+    // all folders in the order they are in sortedFolders
     for (MCOIMAPFolder* folder in sortedFolders) {
         
         //Inbox
@@ -776,8 +781,9 @@
         indexPath++;
     }
     
-    if ([user numFolderWithFolder:CCMFolderTypeFavoris] == -1) {
-        [user setImportantFolderNum:[user numFolderWithFolder:CCMFolderTypeAll] forBaseFolder:FolderTypeFavoris];
+    // FIXME: Not sure what originally happened here
+    if ( FolderTypeFavoris == -1) {  // -1 for ALL here
+        [user setImportantFolderNum:FolderTypeAll forBaseFolder:FolderTypeFavoris];
     }
     
     // The User object keeps an array of all folder names
@@ -789,7 +795,7 @@
         [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"/"])]];
     }
     
-    ac.userFolders = foldersNIndent;
+    [ac.imapFolders setFolders:foldersNIndent];
     
     [[Accounts sharedInstance] addAccount:ac];
     

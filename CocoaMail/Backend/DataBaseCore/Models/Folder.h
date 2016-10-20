@@ -8,15 +8,31 @@
 
 #import "AppSettings.h"
 
+typedef NSUInteger FolderIndex;
+#define UNSET_INDEX (-1)
+
+typedef NS_ENUM(NSInteger, FolderType) {
+    FolderTypeNotSet = 0,
+    FolderTypeInbox,
+    FolderTypeFavoris,
+    FolderTypeSent,
+    FolderTypeDrafts,
+    FolderTypeAll,
+    FolderTypeDeleted,
+    FolderTypeSpam,
+    FolderTypeOutbox,
+    FolderTypeUser
+};
+#define kLastSystemFolderIndex (FolderTypeOutbox)
 
 @interface Folder : NSObject   // IMAP Folder
-// Factored out of Account:
+
 //      Folder Name
 @property (nonatomic) NSString* IMAPFolderName;
+//      Folder Type (System vs. User)
+@property (nonatomic) FolderType IMAPFolderType;
 //      Folder Name Contains "/"
 @property (nonatomic) BOOL IMAPFolderNameContainsIndentation;
-//      Folder Type (System vs. User)
-@property (nonatomic) BaseFolderType IMAPFolderType;
 //      Folder Icon & Pad  Icon
 @property (nonatomic) NSString *icon;
 @property (nonatomic) NSString *padIcon;
@@ -31,7 +47,7 @@
 
 //-(instancetype)initWithName:(NSString *)name;
 
--(instancetype)initWithType:(BaseFolderType)folderType named:(NSString *)folderName;
+-(instancetype)initWithType:(FolderType)folderType named:(NSString *)folderName;
 
 -(BOOL)isAllFolder;
 -(BOOL)isDraftsFolder;

@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 Christopher Hockley. All rights reserved.
 //
 
+#import "Folders.h"
 #import <MailCore/MailCore.h>
 
 @class Mail;
