@@ -8,6 +8,16 @@
 #import <MailCore/MailCore.h>
 #import "Persons.h"
 
+// CocoaMail Error Domain and Errors
+#define CCMErrorDomain          @"com.cocoasoft.cocoamail"
+#define CCMConnectionError      9000
+#define CCMAllSyncedError       9001
+#define CCMFolderSyncedError    9002
+#define CCMCredentialsError     9003
+#define CCMNoSharedServiceError 9009
+#define CCMDeletedError         9004
+
+
 @class RACSignal;
 @class UserSettings;
 
@@ -20,7 +30,7 @@
 @property (nonatomic) dispatch_queue_t s_queue;
 
 +(ImapSync*) sharedServices:(UserSettings*)user;
-+(NSArray*) allSharedServices:(MCOIMAPSession*)updated;
++(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated;
 +(RACSignal*) doLogin:(UserSettings*)user;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;

@@ -44,12 +44,16 @@ static NSArray * sharedServices = nil;
 
 @implementation ImapSync
 
+// Returns the IMAP Sync Service for the given User's Account
+// Returns nil if not matching account
+//
 +(ImapSync*) sharedServices:(UserSettings*)user
 {
-    NSAssert(user, @"No user at accountNum:%ld",(long)user.accountNum);
+    DDAssert(user, @"No user at accountNum:%ld",(long)user.accountNum);
     
-    NSAssert(!user.isDeleted, @"AccountNum:%ld is deleted",(long)user.accountNum);
+    DDAssert(!user.isDeleted, @"AccountNum:%ld is deleted",(long)user.accountNum);
     
+    // Find the shared IMAP Sync Service with the matching Account Number
     for (ImapSync* sharedService in [ImapSync allSharedServices:nil]) {
         if (sharedService.user.accountNum == user.accountNum) {
             return sharedService;
@@ -59,13 +63,15 @@ static NSArray * sharedServices = nil;
     return nil;
 }
 
-+(NSArray*) allSharedServices:(MCOIMAPSession*)updated
++(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated
 {
     if (updated) {
         sharedServices = nil;
     }
+    
     @synchronized(self) {
         if (sharedServices == nil || sharedServices.count == 0) {
+            
             NSMutableArray* sS = [[NSMutableArray alloc]init];
             
             for (UserSettings* user in [AppSettings getSingleton].users) {
@@ -135,196 +141,254 @@ static NSArray * sharedServices = nil;
     }
 }
 
-// TODO: this function is candidiate for break-up, as it is 185 lines long.
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogDebug(@"+[ImapSync doLogin:user]");
+    DDLogDebug(@"+[ImapSync doLogin:\"%@\"]",user.username);
     
     if (!user || user.isDeleted) {
         
         DDLogDebug(@"\tHave no user or user is deleted");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
-            [subscriber sendError:[NSError errorWithDomain:@"Deleted" code:1 userInfo:nil]];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMDeletedError userInfo:nil]];
         }];
     }
-    else {
-        ImapSync* sharedService = [ImapSync sharedServices:user];
+
+    ImapSync* sharedService = [ImapSync sharedServices:user];
+    
+    if (!sharedService) {
         
-        if (!sharedService) {
-            return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
-                DDLogDebug(@"\tNo shared IMAP Service!");
+        DDLogDebug(@"\tHave no Shared ImapSync Services for User \"%@\"",user.username);
+        
+        return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
 #ifdef USING_INSTABUG
-                NSException* myE = [NSException exceptionWithName:@"No shared Service" reason:@"Can't login no shared service" userInfo:nil];
-                [Instabug reportException:myE];
+            NSException* myE = [NSException exceptionWithName:@"No shared Service" reason:@"Can't login no shared service" userInfo:nil];
+            [Instabug reportException:myE];
 #endif
-                [subscriber sendError:[NSError errorWithDomain:@"No shared service" code:9009 userInfo:nil]];
-            }];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain
+                                                      code:CCMNoSharedServiceError
+                                                  userInfo:nil]];
+        }];
+    }
+    
+    DDLogDebug(@"CURIOUS: user %@ sharedSettings.user",(user==sharedService.user?@"EQUAL":@"DOES NOT EQUAL"));
+
+    if (![ImapSync isNetworkAvailable]) {
+        
+        DDLogDebug(@"\t+[ImapSync isNetworkAvailable] returned NO");
+        
+        return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
+            sharedService.connected = NO;
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain
+                                                      code:CCMConnectionError
+                                                  userInfo:nil]];
+        }];
+    }
+    
+    
+    if ( sharedService.signal ) {
+        
+        DDLogDebug(@"\tReturning (existing) Shared IMAP Sync Service Signal");
+        
+        return sharedService.signal;
+    }
+    
+    DDLogDebug(@"\tCREATE NEW Shared IMAP Sync Service Signal.");
+    
+    sharedService.signal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler]
+                      block:^(id<RACSubscriber> subscriber)
+    {
+        if (sharedService.connected) {
+            DDLogDebug(@"\tShared IMAP Sync Service is Connected");
+            [subscriber sendCompleted];
+            return;
         }
-        else if (![ImapSync isNetworkAvailable]) {
-            DDLogDebug(@"\tError connecting, no network available");
-            
-            return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
-                sharedService.connected = NO;
-                [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
-            }];
+
+        DDLogDebug(@"\tShared IMAP Sync Service is NOT Connected");
+
+        if ([sharedService.user isUsingOAuth]) {
+            DDLogDebug(@"\tAttempting to log in with OAuth.");
+
+            [self _loginWithOAuth:sharedService forUser:user withSubscriber:subscriber];
         }
-        else if (!sharedService.signal) {
-            sharedService.signal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
+        else { //Not using OAuth
+            DDLogDebug(@"\tAttempting to log in with Password.");
+
+            [self _loginWithPassword:sharedService forUser:user withSubscriber:subscriber];
+        }
+    }];
+    return sharedService.signal;
+
+}
+
+//+ (RACSignal*)_createSignalForSharedIMAPSyncService:(ImapSync*)sharedService forUser:(UserSettings *)user
+//{
+//    return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler]
+//                                          block:^(id<RACSubscriber> subscriber) {
+//        
+//        if (sharedService.connected) {
+//            DDLogDebug(@"\tShared IMAP Sync Service is Connected");
+//            [subscriber sendCompleted];
+//            
+//            return;
+//        }
+//    
+//        DDLogDebug(@"\tShared IMAP Sync Service is NOT Connected");
+//
+//        if ([sharedService.user isUsingOAuth]) {
+//            DDLogDebug(@"\tAttempting to log in with OAuth.");
+//            
+//            [self _loginWithOAuth:sharedService forUser:user withSubscriber:subscriber];
+//        }
+//        else { //Not using OAuth
+//            DDLogDebug(@"\tAttempting to log in with Password.");
+//            
+//            [self _loginWithPassword:sharedService forUser:user withSubscriber:subscriber];
+//        }
+//    }];
+//
+//}
+
++(void) _loginWithOAuth:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
+{
+    DDLogDebug(@"\tLogging with OAuth (with token:%@)", [sharedService.user oAuth]);
+    
+    sharedService.imapSession.OAuth2Token = [sharedService.user oAuth];
+    sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
+    sharedService.imapSession.connectionType = MCOConnectionTypeTLS;
+    sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
+    
+    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+        [sharedService.imapCheckOp start:^(NSError* error) {
+            if (error) {
                 
-                if (sharedService.connected) {
-                    [subscriber sendCompleted];
+                DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
+                                                                                                       clientID:CLIENT_ID
+                                                                                                   clientSecret:CLIENT_SECRET];
+                
+                DDLogDebug(@"\tUser:%@",[auth userEmail]);
+                
+                [auth setUserEmail:sharedService.user.username];
+                
+                if (![auth canAuthorize]) {
+                    DDLogDebug(@"\tCan't Authorize");
+                    
+                    auth.clientID = CLIENT_ID;
+                    auth.clientSecret = CLIENT_SECRET;
+                    
+                    BOOL didAuth = [GTMOAuth2ViewControllerTouch authorizeFromKeychainForName:USR_TKN_KEYCHAIN_NAME
+                                                                               authentication:auth
+                                                                                        error:NULL];
+                    if (didAuth) {
+                        DDLogDebug(@"\tDid Authorize");
+                        [GTMOAuth2ViewControllerTouch saveParamsToKeychainForName:USR_TKN_KEYCHAIN_NAME authentication:auth];
+                    }
+                    else {
+                        sharedService.connected = NO;
+                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                    }
                 }
                 else {
-                    if ([sharedService.user isUsingOAuth]) {
+                    DDLogDebug(@"\tAuthorization successfull, tesign & refresh token.");
+                    
+                    NSURL *tokenURL = auth.tokenURL;
+                    
+                    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:tokenURL];
+                    [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+                    
+                    NSString *userAgent = [auth userAgent];
+                    [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
+                    
+                    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                         
-                        DDLogDebug(@"\tLogging with OAuth (with token:%@)", [sharedService.user oAuth]);
-                        
-                        sharedService.imapSession.OAuth2Token = [sharedService.user oAuth];
-                        sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
-                        sharedService.imapSession.connectionType = MCOConnectionTypeTLS;
-                        sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
-                        
-                        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-                            [sharedService.imapCheckOp start:^(NSError* error) {
-                                if (error) {
+                        [auth authorizeRequest:request completionHandler:^(NSError *error) {
+                            
+                            if ([auth accessToken] && ![[auth accessToken] isEqualToString:@""]) {
+                                DDLogDebug(@"\tNew Token");
+                                
+                                DDLogDebug(@"\tRefresh Token:%@",[auth refreshToken]);
+                                
+                                [sharedService.user setOAuth:[auth accessToken]];
+                                sharedService.imapSession = [AppSettings imapSession:sharedService.user];
+                                sharedService.imapSession.dispatchQueue = sharedService.s_queue;
+                                
+                                dispatch_async([ImapSync sharedServices:user].s_queue, ^{
                                     
-                                    DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
-                                    GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
-                                                                                                                           clientID:CLIENT_ID
-                                                                                                                       clientSecret:CLIENT_SECRET];
+                                    DDLogDebug(@"\tLoggin Again with OAuth with token:%@", [sharedService.user oAuth]);
                                     
-                                    DDLogDebug(@"\tUser:%@",[auth userEmail]);
-                                    
-                                    [auth setUserEmail:sharedService.user.username];
-                                    
-                                    if (![auth canAuthorize]) {
-                                        DDLogDebug(@"\tCan't Authorize");
-                                        
-                                        auth.clientID = CLIENT_ID;
-                                        auth.clientSecret = CLIENT_SECRET;
-                                        
-                                        BOOL didAuth = [GTMOAuth2ViewControllerTouch authorizeFromKeychainForName:USR_TKN_KEYCHAIN_NAME
-                                                                                                   authentication:auth
-                                                                                                            error:NULL];
-                                        if (didAuth) {
-                                            NSLog(@"Did Authorize");
-                                            [GTMOAuth2ViewControllerTouch saveParamsToKeychainForName:USR_TKN_KEYCHAIN_NAME authentication:auth];
+                                    sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
+                                    [sharedService.imapCheckOp start:^(NSError* error) {
+                                        if (!error) {
+                                            DDLogDebug(@"\tAccount:%ld check OK", (long)sharedService.user.accountNum);
+                                            sharedService.connected = YES;
+                                            [sharedService.user.linkedAccount setConnected];
+                                            [sharedService checkForCachedActions];
+                                            [sharedService checkFolders];
+                                            
+                                            [subscriber sendCompleted];
                                         }
                                         else {
-                                            sharedService.connected = NO;
-                                            [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+                                            DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                                            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                                         }
-                                    }
-                                    else {
-                                        DDLogDebug(@"\tAuthorization successfull, tesign & refresh token.");
-                                        
-                                        NSURL *tokenURL = auth.tokenURL;
-                                        
-                                        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:tokenURL];
-                                        [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
-                                        
-                                        NSString *userAgent = [auth userAgent];
-                                        [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
-                                        
-                                        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                                            
-                                            [auth authorizeRequest:request completionHandler:^(NSError *error) {
-                                                
-                                                if ([auth accessToken] && ![[auth accessToken] isEqualToString:@""]) {
-                                                    DDLogDebug(@"\tNew Token");
-                                                    
-                                                    DDLogDebug(@"\tRefresh Token:%@",[auth refreshToken]);
-                                                    
-                                                    [sharedService.user setOAuth:[auth accessToken]];
-                                                    sharedService.imapSession = [AppSettings imapSession:sharedService.user];
-                                                    sharedService.imapSession.dispatchQueue = sharedService.s_queue;
-                                                    
-                                                    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-                                                        
-                                                        DDLogDebug(@"\tLoggin Again with OAuth with token:%@", [sharedService.user oAuth]);
-                                                        
-                                                        sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
-                                                        [sharedService.imapCheckOp start:^(NSError* error) {
-                                                            if (!error) {
-                                                                DDLogDebug(@"\tAccount:%ld check OK", (long)sharedService.user.accountNum);
-                                                                sharedService.connected = YES;
-                                                                [sharedService.user.linkedAccount setConnected];
-                                                                [sharedService checkForCachedActions];
-                                                                [sharedService checkFolders];
-                                                                
-                                                                [subscriber sendCompleted];
-                                                            }
-                                                            else {
-                                                                DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
-                                                                [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
-                                                            }
-                                                        }];
-                                                    });
-                                                }
-                                                else {
-                                                    DDLogDebug(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
-                                                    [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
-                                                }
-                                            }];
-                                        }];
-                                    }
-                                }
-                                else {
-                                    DDLogDebug(@"Account:%ld check OK", (long)sharedService.user.accountNum);
-                                    sharedService.connected = YES;
-                                    [sharedService.user.linkedAccount setConnected];
-                                    [sharedService checkForCachedActions];
-                                    [sharedService checkFolders];
-                                    
-                                    [subscriber sendCompleted];
-                                    
-                                }
-                            }];
-                        });
-                    }
-                    else { //Not using OAuth
-                        sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
-                        
-                        DDLogDebug(@"\tPassworded Account (not OAuth)");
-                        
-                        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-                            
-                            [sharedService.imapCheckOp start:^(NSError* error) {
-                                if (error) {
-                                    sharedService.connected = NO;
-                                    DDLogError(@"Error:%@ loading account:%@", error, sharedService.user.username);
-                                    
-                                    if (error.code == MCOErrorAuthentication) {
-                                        [subscriber sendError:[NSError errorWithDomain:@"Credentials" code:9003 userInfo:nil]];
-                                    }
-                                    else {
-                                        [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
-                                    }
-                                }
-                                else {
-                                    DDLogDebug(@"\tAccount:%ld CONNECTED", (long)sharedService.user.accountNum);
-                                    sharedService.connected = YES;
-                                    [sharedService.user.linkedAccount setConnected];
-                                    [sharedService checkForCachedActions];
-                                    [sharedService checkFolders];
-                                    
-                                    [subscriber sendCompleted];
-                                }
-                                
-                            }];
-                        });
-                    }
+                                    }];
+                                });
+                            }
+                            else {
+                                DDLogDebug(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                            }
+                        }];
+                    }];
                 }
-            }];
+            }
+            else {
+                DDLogDebug(@"Account:%ld check OK", (long)sharedService.user.accountNum);
+                sharedService.connected = YES;
+                [sharedService.user.linkedAccount setConnected];
+                [sharedService checkForCachedActions];
+                [sharedService checkFolders];
+                
+                [subscriber sendCompleted];
+                
+            }
+        }];
+    });
+}
+
++(void) _loginWithPassword:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
+{
+    sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
+    
+    DDLogDebug(@"\tLogging in with Password (not oAuth)");
+    
+    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+        
+        [sharedService.imapCheckOp start:^(NSError* error) {
+            if (error) {
+                sharedService.connected = NO;
+                DDLogError(@"Error:%@ loading account:\"%@\"", error, sharedService.user.username);
+                
+                if (error.code == MCOErrorAuthentication) {
+                    [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMCredentialsError userInfo:nil]];
+                }
+                else {
+                    [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                }
+            }
+            else {
+                DDLogDebug(@"\tAccount:%ld CONNECTED", (long)sharedService.user.accountNum);
+                sharedService.connected = YES;
+                [sharedService.user.linkedAccount setConnected];
+                [sharedService checkForCachedActions];
+                [sharedService checkFolders];
+                
+                [subscriber sendCompleted];
+            }
             
-            return sharedService.signal;
-        }
-        else {
-            //NSLog(@"Using signal");
-            return sharedService.signal;
-        }
-    }
+        }];
+    });
 }
 
 -(void) cancel
@@ -372,7 +436,7 @@ static NSArray * sharedServices = nil;
 
 -(NSInteger) nextFolderToSync
 {
-    DDLogDebug(@"-[ImapSync nextFolderToSync]");
+    DDLogInfo(@">>ENTERING ImapSync nextFolderToSync");
     
 //    SyncManager *syncMgr = [SyncManager getSingleton];
 //        
@@ -437,6 +501,8 @@ static NSArray * sharedServices = nil;
 
 -(RACSignal*) runSearchText:(NSString*)text
 {
+    DDLogInfo(@">>ENTERING runSearchText:\"%@\"",text);
+    
     @weakify(self);
     
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
@@ -444,7 +510,7 @@ static NSArray * sharedServices = nil;
         
         if (![ImapSync isNetworkAvailable]) {
             self.connected = NO;
-            [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
         NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
@@ -476,7 +542,7 @@ static NSArray * sharedServices = nil;
         
         if (![ImapSync isNetworkAvailable]) {
             self.connected = NO;
-            [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
         NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
@@ -506,7 +572,7 @@ static NSArray * sharedServices = nil;
     }
     
     if (!self.connected) {
-        [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
     }
     else {
         MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesOperationWithFolder:[self.user folderServerName:currentFolder]
@@ -669,7 +735,7 @@ static NSArray * sharedServices = nil;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
-    DDLogDebug(@"-[ImapSync runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
+    DDLogInfo(@">> ENTERING ImapSync runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
                folder,
                (isFromStart==TRUE?@"TRUE":@"FALSE"),
                (getAll==TRUE?@"TRUE":@"FALSE"));
@@ -681,7 +747,7 @@ static NSArray * sharedServices = nil;
     
     if (folder == -1) {
         folder = [self nextFolderToSync];
-        DDLogDebug(@"\tfolder was -1, calling -[self nextFolderToSync]");
+        DDLogDebug(@"\tfolder was -1, CALLED -[self nextFolderToSync]");
     }
     DDLogDebug(@"\tfolder= %ld",folder);
     
@@ -702,10 +768,10 @@ static NSArray * sharedServices = nil;
         }
         else if (![ImapSync isNetworkAvailable]) {
             self.connected = NO;
-            [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         else if (currentFolder == -1) {
-            [subscriber sendError:[NSError errorWithDomain:@"All synced" code:9001 userInfo:nil]];
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
         }
         else if (isInBackground && currentFolder != [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]) {
             [subscriber sendCompleted];
@@ -719,7 +785,7 @@ static NSArray * sharedServices = nil;
                         [subscriber sendCompleted];
                     }
                     else {
-                        [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                     }
                 }
                 else {
@@ -727,10 +793,10 @@ static NSArray * sharedServices = nil;
                     dispatch_async(self.s_queue, ^{
                         [fio start:^(NSError* error, NSArray* folders) {
                             if (error) {
-                                CCMLog(@"Error %@ with fetching all folders",error.description);
+                                DDLogError(@"Error %@ with fetching all folders",error.description);
                                 
                                 self.connected = NO;
-                                [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                                 
                                 return;
                             }
@@ -836,10 +902,10 @@ static NSArray * sharedServices = nil;
                                 
                                 [folder start:^(NSError* error, MCOIMAPFolderInfo* info) {
                                     if (error) {
-                                        CCMLog(@"Error %@ fetching folder %@",error.description, folderPath);
+                                        DDLogError(@"Error %@ fetching folder %@",error.description, folderPath);
                                         
                                         self.connected = NO;
-                                        [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+                                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                                         
                                         return;
                                     }
@@ -856,7 +922,7 @@ static NSArray * sharedServices = nil;
                                         batchsize = 50;
                                         //}
                                         
-                                        //NSLog(@"Folder:%@ has %d emails", folderPath, [info messageCount]);
+                                        DDLogDebug(@"Folder:%@ has %d emails", folderPath, [info messageCount]);
                                         
                                         if (!isInBackground) {
                                             [self _writeFinishedFolderState:sm emailCount:[info messageCount] andFolder:currentFolder];
@@ -865,7 +931,7 @@ static NSArray * sharedServices = nil;
                                                 NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
                                                 [self _writeFinishedFolderState:sm lastEnded:lE andFolder:currentFolder];
                                                 
-                                                [subscriber sendError:[NSError errorWithDomain:@"Folder synced" code:9002 userInfo:nil]];
+                                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
                                                 return;
                                             }
                                         }
@@ -891,12 +957,13 @@ static NSArray * sharedServices = nil;
                                         MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesByNumberOperationWithFolder:folderPath
                                                                                                                                             requestKind:self.user.requestKind
                                                                                                                                                 numbers:numbers];
+                                        
                                         [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* messages, MCOIndexSet* vanishedMessages) {
                                             if (error) {
-                                                CCMLog(@"Error %@ fetching messages in folder %@",error.description, folderPath);
+                                                DDLogError(@"Error %@ fetching messages in folder %@",error.description, folderPath);
                                                 
                                                 self.connected = NO;
-                                                [subscriber sendError:[NSError errorWithDomain:@"Connect" code:9000 userInfo:nil]];
+                                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                                                 
                                                 return;
                                             }
@@ -904,6 +971,8 @@ static NSArray * sharedServices = nil;
                                             dispatch_async(self.s_queue, ^{
                                                 
                                                 NSString* lastMsgID = [messages lastObject].header.messageID;
+                                                
+                                                DDLogInfo(@"Retrieve %lu Messages from IMAP Server",(unsigned long)messages.count);
                                                 
                                                 for (MCOIMAPMessage* msg in messages) {
                                                     if (self.isCanceled) {
@@ -1352,6 +1421,7 @@ static NSArray * sharedServices = nil;
     [ImapSync runInboxUnread:user completed:^{}];
 }
 
+// Get the Unread Count for User's Inbox
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock
 {
     if (![ImapSync isNetworkAvailable] | user.isAll) {
@@ -1360,13 +1430,15 @@ static NSArray * sharedServices = nil;
     }
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-        NSInteger currentFolder = [user  numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
-        NSString* folder = [user folderServerName:currentFolder];
+        NSInteger inboxFolder = [user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        NSString* serverFolderPath = [user folderServerName:inboxFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
-        MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:folder expression:expr];
+        MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
         
         [so start:^(NSError* error, MCOIndexSet* searchResult) {
             if (!error) {
+                DDLogDebug(@"Got Inbox Unread search results, count = %u",searchResult.count);
+                
                 [AppSettings setInboxUnread:searchResult.count accountIndex:user.accountIndex];
             }
             completedBlock();
