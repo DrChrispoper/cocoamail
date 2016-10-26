@@ -11,6 +11,7 @@
 #import "AppSettings.h"
 #import "MailListViewController.h"
 #import "Conversation.h"
+#import "CCMConstants.h"
 
 @class Conversation;
 @class Account;
@@ -39,12 +40,12 @@
 
 -(Account*) currentAccount;
 -(NSArray*) accounts;
--(Account*) account:(NSInteger)accountIndex;
+-(Account*) account:(NSUInteger)accountIndex;
 -(NSInteger) accountsCount;
 -(void) addAccount:(Account*)account;
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
--(NSInteger) getPersonID:(NSInteger)accountIndex;
+-(NSInteger) getPersonID:(NSUInteger)accountIndex;
 -(void) getDrafts;
 -(void) appeared;
 

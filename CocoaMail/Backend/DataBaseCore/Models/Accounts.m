@@ -163,6 +163,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
             [[[SearchRunner getSingleton] activeFolderSearch:nil inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
+                 DDLogDebug(@"IN runLoadData, called SearchRunner, recieved subscribeNext, so sorting email (1)");
                  [self sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
@@ -170,6 +171,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                  //}
              }
              completed:^{
+                 DDLogDebug(@"IN runLoadData, called SearchRunner, recieved completed, so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
                  [self.currentAccount.mailListSubscriber localSearchDone:YES];
                  [self.currentAccount.mailListSubscriber reFetch:YES];
              }];
@@ -180,11 +182,13 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Mail* email) {
+             DDLogDebug(@"IN runLoadData, called SearchRunner, recieved subscribeNext, so sorting email (2)");
              if (email.user && !email.user.isDeleted) {
                  [self sortEmail:email];
              }
          }
          completed:^{
+              DDLogDebug(@"IN runLoadData, called SearchRunner, recieved completed");
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  if (self.currentAccount.user.isAll) {
                      for (NSInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
@@ -228,7 +232,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [[SearchRunner getSingleton] cancel];
         
         [[[SearchRunner getSingleton] deleteEmailsInAccountNum:account.user.accountNum]
-         subscribeNext:^(Mail* email) {}
+         subscribeNext:^(Mail* email) {
+             int breakpoint = 1;
+         }
          completed:^{
              
              NSMutableArray* tmp = [self.accounts mutableCopy];
@@ -258,8 +264,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     });
 }
 
--(Account*) account:(NSInteger)accountIndex
+-(Account*) account:(NSUInteger)accountIndex
 {
+    DDAssert(accountIndex>=0, @"Account Index must not be -1");
+    
     if (accountIndex < self.accounts.count) {
         return self.accounts[accountIndex];
     }
@@ -269,9 +277,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return nil;
 }
 
--(NSInteger) getPersonID:(NSInteger)accountIndex
+-(NSInteger) getPersonID:(NSUInteger)accountIndex
 {
-    if (accountIndex >= self.accountsCount || accountIndex < 0) {
+    if (accountIndex >= self.accountsCount /* || accountIndex < 0 */) {
         Persons* p = [Persons sharedInstance];
         
         if (p.idxCocoaPerson == 0) {
@@ -440,7 +448,6 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     // MARK: We should collect statistics on how many messages most people have
     a.allsMails = [NSMutableArray arrayWithCapacity:500];
     
-#warning is "convIDs" used anywhere?
     a.convIDs = [NSMutableSet setWithCapacity:500];
     
     return a;
@@ -555,10 +562,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         //if (!self.isConnected) {
         [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
             if ([Accounts sharedInstance].canUI) {
-                if (error.code == 9000) {
+                if (error.code == CCMConnectionError) {
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
                 }
-                else if (error.code == 9003){
+                else if (error.code == CCMCredentialsError){
                     [CCMStatus showStatus:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Credentials")  dismissAfter:2.0 code:2];
                 }
                 else {
@@ -692,6 +699,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         return;
     }
     
+#warning Is this really suppossed to be a bitwise and?
     if ((![[email sonID] isEqualToString:@""] & ![[email sonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email sonID]]) {
         
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
@@ -769,7 +777,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(NSUInteger) addConversation:(Conversation*)conv
 {
-    DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
+    DDAssert(!self.user.isAll, @"Should not be called for All Account");
     
     CCMMutableConversationArray* tmp = [self.allsMails mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
@@ -815,6 +823,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
 {
+    DDLogInfo(@">>ENTERED getConversationsForFolder");
+    
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableIndexSet* set = [[self _mailIndeciesForFolder:type] mutableCopy];
@@ -1333,8 +1343,11 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 #pragma mark - Fetch Data
 
+// Refresh contents of IMAP System Folders
 -(void) importantFoldersRefresh:(NSInteger)pFolder
 {
+    DDLogInfo(@">> ENTERING importantFolderRefresh:folder=%ld",(long)pFolder);
+    
     if (self.user.isDeleted) {
         return;
     }
@@ -1360,13 +1373,13 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
          }
          error:^(NSError* error) {
              
-             if (error.code != 9002 && error.code != 9001) {
+             if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
                  [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
              }
              
              _isSyncing = NO;
              
-             if (error.code == 9002 && [Accounts sharedInstance].currentAccountIdx == self.idx) {
+             if (error.code == CCMFolderSyncedError && [Accounts sharedInstance].currentAccountIdx == self.idx) {
                  [self importantFoldersRefresh:++folder];
              }
          }
@@ -1381,15 +1394,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) doLoadServer
 {
-    DDLogDebug(@"-[Accounts doLoadServer]");
+    DDLogInfo(@">> ENTERING doLoadServer");
     
-    if (self.user.isDeleted) {
-        DDLogDebug(@"\tUser is deleted, doLoadServer returning.");
+    if ( self.user.isDeleted ) {
+        DDLogDebug(@"\tdoLoadServer: User-is-deleted, returning.");
         return;
     }
     
-    if (![ImapSync canFullSync]){
-        DDLogDebug(@"\tCannot Full Sync, doLoadServer returning.");
+    if ( ![ImapSync canFullSync] ){
+        DDLogDebug(@"\tdoLoadServer: Cannot Full Sync, returning.");
         return;
     }
     
@@ -1399,21 +1412,22 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [[[[SyncManager getSingleton] syncFoldersUser:self.user] deliverOn:[RACScheduler scheduler]]
          subscribeNext:^(Mail* email) {
              //[self insertRows:email];
+             DDLogDebug(@"\tsubscribeNext^(email)");
          }
          error:^(NSError* error) {
              _isSyncing = NO;
              
+             DDLogDebug(@"\tError: %@",error);
              
-             if (error.code != 9002 && error.code != 9001) {
-                 DDLogError(@"\tSyncing error, error code = %ld",error.code);
-                 DDLogError(@"\t\tError description = \'%@\"", error.localizedDescription);
-             }
+//             if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
+//                 DDLogError(@"\tSyncing error, error = %@",error);
+//             }
              
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                 if (error.code == 9001) {
-                     DDLogDebug(@"\tError code 9001, ALLLLLL Synced!?");
+                 if (error.code == CCMAllSyncedError) {
+                     DDLogDebug(@"\tError code CCMAllSyncedError");
                  }
-                 else if (error.code == 9002) {
+                 else if (error.code == CCMFolderSyncedError) {
                      DDLogDebug(@"\tError code 9002, calling self recursively");
                      [self doLoadServer];;
                  }
@@ -1432,6 +1446,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) runTestData
 {
+    DDLogInfo(@">> ENTERING runTestData");
+    
     if (self.user.isDeleted) {
         return;
     }
@@ -1785,7 +1801,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
                  [self.mailListSubscriber serverSearchDone:YES];
                  
-                 if (error.code != 9002 && error.code != 9001) {
+                 if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
                      [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
                  }
                  else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
@@ -1831,7 +1847,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) syncCurrentFolder
 {
-    DDLogInfo(@"ENTERED syncCurrentFolder");
+    DDLogInfo(@"ENTERING >>syncCurrentFolder");
     
     if (self.user.isDeleted) {
         DDLogWarn(@"Returning because self.user.isDeleted is FALSE");
@@ -1849,7 +1865,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
      } error:^(NSError* error) {
          DDLogError(@"Error: %@", error.localizedDescription);
          _isSyncingCurrentFolder = NO;
-         if (error.code == 9002) {
+         if (error.code == CCMFolderSyncedError) {
              _currentFolderFullSyncCompleted = YES;
              [self importantFoldersRefresh:0];
          }
