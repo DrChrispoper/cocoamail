@@ -188,6 +188,7 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToConversation:(Conversation*)object];
 }
 
+// Return a Set of all the Folder Types of all the Mails in this Conversation
 -(NSMutableSet*) foldersType
 {
     NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
@@ -198,18 +199,15 @@ static NSDateFormatter * s_df_hour = nil;
         [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
     }
     else {
-    for (Mail* mail in tmp) {
-        mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
-        
-        for (UidEntry* uid in mail.uids) {
-            CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
-            [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+        for (Mail* mail in tmp) {
+            mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
+            
+            for (UidEntry* uid in mail.uids) {
+                CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
+                [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+            }
         }
     }
-    }
-    
-
-    
     return tempFodles;
 }
 

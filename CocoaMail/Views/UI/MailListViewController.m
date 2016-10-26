@@ -420,7 +420,7 @@
 
 -(void) setupData
 {
-    DDLogDebug(@"-[MailListViewController setupData]");
+    DDLogDebug(@"\n\n-[MailListViewController setupData]");
     if (kisActiveAccountAll) {
         DDLogDebug(@"\tActive Account is \"All\" Account");
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
@@ -430,10 +430,12 @@
         }
     }
     else {
-        Account* a = [[Accounts sharedInstance] currentAccount];
-        DDLogDebug(@"\tActive Account Index = %ld\n",[a idx]);
-        a.mailListSubscriber = self;
-        [self insertConversations:[[Accounts sharedInstance].currentAccount getConversationsForFolder:self.folder]];
+        Account* acnt = [[Accounts sharedInstance] currentAccount];
+        NSInteger acntIndex = acnt.idx;
+        DDLogDebug(@"\tActive Account Index = %ld\n",acntIndex);
+        acnt.mailListSubscriber = self;
+        NSMutableArray *conversations = [acnt getConversationsForFolder:self.folder];
+        [self insertConversations:conversations];
     }
 }
 
@@ -444,10 +446,17 @@
         [self _removeConversation:convs];
     }
     else {
-        [self performSelectorOnMainThread:@selector(reload)
-                               withObject:nil
-                            waitUntilDone:NO];
+        [self _reloadTableViewOnMainThread];
     }
+}
+
+-(void)_reloadTableViewOnMainThread
+{
+    DDLogDebug(@"*** Reloading MailListView on main thread ***");
+
+    [self performSelectorOnMainThread:@selector(reload)
+                           withObject:nil
+                        waitUntilDone:NO];
 }
 
 -(void) _removeConversation:(NSArray*)convs
@@ -724,15 +733,16 @@
 
 -(void) insertConversations:(NSArray*)pConvs
 {
-    DDLogDebug(@"-[MailListViewController insertConverstations:]");
-    DDLogDebug(@"\tConversations array count = %ld",(long)[pConvs count]);
+    DDLogInfo(@">>ENTERING insertConversations: \n\tWill put %ld Conversations into Mail List Table",(long)pConvs.count);
     
     if (self.onlyPerson) {
+        DDLogDebug(@"\tonlyPerson == TRUE");
         pConvs = [self _filterResultsForPerson:pConvs];
     }
     
     NSMutableArray* convs = [NSMutableArray arrayWithArray:pConvs];
     
+    // TODO: If pConvs/convs only has one entry, then sort by date seems unnedsecary
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
     [convs sortUsingDescriptors:@[sortByDate]];
     
@@ -758,7 +768,7 @@
 #ifdef USING_INSTABUG
                     IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
 #endif
-                    NSLog(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
+                    DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
                     
                     Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
                     [a deleteIndex:conversationIndex.index fromFolder:self.folder];
@@ -1138,7 +1148,7 @@
 
 -(void) reload
 {
-    DDLogDebug(@"ENTERED MailListView reload");
+    DDLogDebug(@"ENTERED MailListViewController.reload, CALLING tableView.reloadData");
     //self.deletedSections = 0;
     
     [self.table reloadData];
@@ -1160,6 +1170,8 @@
 {
     NSDictionary* dayContent = self.convByDay[section];
     NSArray* content = dayContent[@"list"];
+    
+    DDLogDebug(@"tableView section %ld has %lu rows",(long)section,(unsigned long)content.count);
     
     return content.count;
 }
@@ -1184,7 +1196,7 @@
     }
     
     if (self.localSearchDone && !self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
-        NSLog(@"Last and Searching");
+        DDLogInfo(@"Last and Searching");
         [[Accounts sharedInstance].currentAccount localFetchMore:YES];
     }
     
@@ -1631,13 +1643,7 @@
             return;
         }
         
-        DDLogDebug(@"*** Refresing MailListView ***");
-        
-        //self.pageIndex++;
-        [self performSelectorOnMainThread:@selector(reload)
-                               withObject:nil
-                            waitUntilDone:NO];
-        
+        [self _reloadTableViewOnMainThread];
     }];
 }
 

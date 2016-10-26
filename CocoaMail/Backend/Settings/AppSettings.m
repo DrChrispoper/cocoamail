@@ -264,9 +264,9 @@ static AppSettings * singleton = nil;
 }*/
 
 //numIndex:0 - 1 - 2 ...
-+(NSInteger) indexForAccountNum:(NSInteger)accountNum
++(NSUInteger) indexForAccountNum:(NSInteger)accountNum
 {
-    NSInteger index = 0;
+    NSUInteger index = 0;
     
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (!user.isDeleted) {

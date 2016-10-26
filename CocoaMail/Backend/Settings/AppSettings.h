@@ -44,7 +44,7 @@
 +(UserSettings*) userWithEmail:(NSString*)email;
 
 //+(NSInteger) numAccountForIndex:(NSInteger)accountIndex;
-+(NSInteger) indexForAccountNum:(NSInteger)accountNum;
++(NSUInteger) indexForAccountNum:(NSInteger)accountNum;  // returns -1 on failure
 
 //Account Server Settings
 +(MCOIMAPSession*) imapSession:(UserSettings*)user;

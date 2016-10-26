@@ -197,14 +197,17 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performAllSearch
 {
-    DDLogDebug(@"-[SearchRunner performAllSearch]");
+    DDLogInfo(@">>ENTERED performAllSearch");
     
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
         NSInteger __block allFound = 500;
         NSArray* dbNums = [SearchRunner _dbNumsInAllAccountNums];
         
-        NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
+        NSSortDescriptor* sortOrder =
+        [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self))
+                                      ascending:NO];
+        
         dbNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
         
         for (NSNumber* dbNum in dbNums) {
@@ -216,7 +219,12 @@ static SearchRunner * searchSingleton = nil;
             
             NSMutableArray* dels = [[NSMutableArray alloc] init];
             
-            FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
+            NSString *dbFilename = [GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]];
+            NSString *dbFilenameInDocDir = [StringUtil
+                                            filePathInDocumentsDirectoryForFileName:dbFilename];
+            FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:dbFilenameInDocDir];
+            
+            DDLogDebug(@"FM DB Queue file \"%@\" in Doc Dir.",dbFilename);
             
             [queue inDatabase:^(FMDatabase* db) {
                 NSMutableString* query = [NSMutableString string];
@@ -228,6 +236,8 @@ static SearchRunner * searchSingleton = nil;
                     DDLogDebug(@"Checking table");
                     [Mail tableCheck:db];
                 }
+                
+                DDLogDebug(@"\tHave FM DB Queue file results");
                 
                 while ([results next]) {
                     Mail* email = [Mail resToMail:results];

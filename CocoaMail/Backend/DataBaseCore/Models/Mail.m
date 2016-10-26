@@ -814,6 +814,8 @@ static NSDateFormatter * s_df_hour = nil;
 {
     __block sqlite_int64 success = -1 ;
     
+    DDLogDebug(@"Insert mail \"%@\" into FM db",email.subject);
+    
     [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         
         FMResultSet* results = [db executeQuery:@"SELECT * FROM email WHERE email.msg_id = ?", email.msgID];

@@ -333,6 +333,9 @@
 {
     NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folder accountNum:_accountNum];
     NSString* name = folderState[@"folderPath"];
+    
+    DDAssert (name,@"Folder Path Name must exist");
+    
     if (!name) {
         NSLog(@"NO NAME!");
     }
@@ -372,7 +375,11 @@
 
 -(Account*) linkedAccount
 {
-    return [[Accounts sharedInstance] account:[AppSettings indexForAccountNum:_accountNum]];
+    NSUInteger appSettingsIndexForAccount = [AppSettings indexForAccountNum:_accountNum];
+    
+    DDAssert(appSettingsIndexForAccount >= 0, @"AppSettings Account Index must be found");
+    
+    return [[Accounts sharedInstance] account:appSettingsIndexForAccount];
 }
 
 - (MCOIMAPMessagesRequestKind)requestKind

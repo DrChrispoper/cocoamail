@@ -40,26 +40,44 @@ static SyncManager * singleton = nil;
 -(id) init
 {
 	if (self = [super init]) {
-		//Get the persistent state
+		// Get the persistent state
 		self.syncStates = [NSMutableArray arrayWithCapacity:2];
+        
+        // For each UserSettings referenced by the AppSettings singleton
         for (UserSettings* user in [AppSettings getSingleton].users) {
+            
             if (user.isAll) {
+                // This UserSettings is for the special All Accounts Mail view
                 [self.syncStates insertObject:[NSMutableDictionary dictionaryWithCapacity:1] atIndex:0];
             }
             else if (user.isDeleted) {
+                // This UserSetting's Account has been deleted
 				[self.syncStates addObject:[NSMutableDictionary dictionaryWithCapacity:1]];
 			}
             else {
-				NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)user.accountNum]];
+                // This UserSettings is for a (non-All non-Deleted) Account
+                NSString* fileName = [NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)user.accountNum];
+				NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
 				
 				if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+                    DDLogDebug(@"File %@ does Exist",fileName);
+                    
+                    // Get the data contained in the file
 					NSData* fileData = [[NSData alloc] initWithContentsOfFile:filePath];
+                    
+                    // Read the property dictionary from the file data
 					NSDictionary* props = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
 					
+                    // Add the property dictionary to the syncStates array.
 					[self.syncStates addObject:props];
 				}
                 else {
+                    DDLogDebug(@"File %@ does NOT Exist",fileName);
+
+                    // Create a new property dictionary
 					NSMutableDictionary* props = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"2", @"__version", [NSMutableArray array], FOLDER_STATES_KEY, nil];
+                    
+                    // Add the property dictionary to the syncStates array
 					[self.syncStates addObject:props];
 				}
 			}
@@ -73,7 +91,13 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user.linkedAccount currentFolderIdx] fromStart:isFromStart fromAccount:NO]];
+    ImapSync *imapSyncService = [ImapSync sharedServices:user];
+    
+    NSInteger currentFolderIndex = [user.linkedAccount currentFolderIdx];
+    
+    return [self emailForSignal:[imapSyncService runFolder:currentFolderIndex
+                                                 fromStart:isFromStart
+                                               fromAccount:NO]];
 }
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user

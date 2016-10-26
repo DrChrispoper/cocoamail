@@ -20,7 +20,7 @@
 
 @interface SyncManager : NSObject {    
 	// sync-related stuff
-	NSMutableArray* syncStates;
+	NSMutableArray<NSMutableDictionary*>* syncStates;
 	BOOL syncInProgress;
 }
 
