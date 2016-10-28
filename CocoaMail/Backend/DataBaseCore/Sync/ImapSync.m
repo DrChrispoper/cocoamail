@@ -124,7 +124,8 @@ static NSArray * sharedServices = nil;
         if (service.user.accountNum == deleteUser.accountNum) {
             dispatch_async(service.s_queue, ^{
                 [[service.imapSession disconnectOperation] start:^(NSError * _Nullable error) {
-                    NSLog(@"Disconnected");
+                    DDLogDebug(@"IMAP Sync Session Disconnect Operation for Acnt# %lu",
+                               (unsigned long)deleteUser.accountNum);
                 }];
             });
         }
@@ -141,9 +142,11 @@ static NSArray * sharedServices = nil;
     }
 }
 
+// MARK: - Login to IMAP Server
+
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogDebug(@"+[ImapSync doLogin:\"%@\"]",user.username);
+    DDLogDebug(@"ENTERED IMAP Sync Servier: Do Login for \"%@\"]",user.username);
     
     if (!user || user.isDeleted) {
         
@@ -154,6 +157,7 @@ static NSArray * sharedServices = nil;
         }];
     }
 
+    // TODO: Consider moving this off the stack
     ImapSync* sharedService = [ImapSync sharedServices:user];
     
     if (!sharedService) {
@@ -259,6 +263,7 @@ static NSArray * sharedServices = nil;
     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+        
         [sharedService.imapCheckOp start:^(NSError* error) {
             if (error) {
                 
@@ -324,7 +329,7 @@ static NSArray * sharedServices = nil;
                                             sharedService.connected = YES;
                                             [sharedService.user.linkedAccount setConnected];
                                             [sharedService checkForCachedActions];
-                                            [sharedService checkFolders];
+                                            [sharedService _checkFolders];
                                             
                                             [subscriber sendCompleted];
                                         }
@@ -348,7 +353,7 @@ static NSArray * sharedServices = nil;
                 sharedService.connected = YES;
                 [sharedService.user.linkedAccount setConnected];
                 [sharedService checkForCachedActions];
-                [sharedService checkFolders];
+                [sharedService _checkFolders];
                 
                 [subscriber sendCompleted];
                 
@@ -382,7 +387,7 @@ static NSArray * sharedServices = nil;
                 sharedService.connected = YES;
                 [sharedService.user.linkedAccount setConnected];
                 [sharedService checkForCachedActions];
-                [sharedService checkFolders];
+                [sharedService _checkFolders];
                 
                 [subscriber sendCompleted];
             }
@@ -436,7 +441,7 @@ static NSArray * sharedServices = nil;
 
 -(NSInteger) nextFolderToSync
 {
-    DDLogInfo(@">>ENTERING ImapSync nextFolderToSync");
+    DDLogInfo(@"ENTERING ImapSync nextFolderToSync");
     
 //    SyncManager *syncMgr = [SyncManager getSingleton];
 //        
@@ -499,9 +504,11 @@ static NSArray * sharedServices = nil;
     return -1;
 }
 
+// MARK: - IMAP Sync Service - Search for Text
+
 -(RACSignal*) runSearchText:(NSString*)text
 {
-    DDLogInfo(@">>ENTERING runSearchText:\"%@\"",text);
+    DDLogInfo(@"ENTERING ImapSync runSearchText:\"%@\"",text);
     
     @weakify(self);
     
@@ -510,17 +517,20 @@ static NSArray * sharedServices = nil;
         
         if (![ImapSync isNetworkAvailable]) {
             self.connected = NO;
+            DDLogError(@"\tIMAP Sync - Network is not available");
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
         NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
         NSString* folderPath = [self.user folderServerName:currentFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchContent:text];
-        MCOIMAPSearchOperation* so = [self.imapSession searchExpressionOperationWithFolder:folderPath expression:expr];
+        
+        MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:folderPath expression:expr];
         
         dispatch_async(self.s_queue, ^{
-            [so start:^(NSError* error, MCOIndexSet* searchResult) {
+            [searchOperation start:^(NSError* error, MCOIndexSet* searchResult) {
                 if (error) {
+                    DDLogError(@"searchOperation error = %@",error);
                     [subscriber sendError:error];
                     return;
                 }
@@ -533,8 +543,12 @@ static NSArray * sharedServices = nil;
     }];
 }
 
+// MARK: - IMAP Sync Service - Search for Person
+
 -(RACSignal*) runSearchPerson:(Person*)person
 {
+    DDLogInfo(@"ENTERING ImapSync runSearchPerson: name=\"%@\"",person.name);
+
     @weakify(self);
     
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
@@ -542,16 +556,22 @@ static NSArray * sharedServices = nil;
         
         if (![ImapSync isNetworkAvailable]) {
             self.connected = NO;
+            DDLogError(@"IMAP Sync Service Network is not available error");
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
         NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:person.email];
-        MCOIMAPSearchOperation* so = [self.imapSession searchExpressionOperationWithFolder:[self.user folderServerName:currentFolder]
+        MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:[self.user folderServerName:currentFolder]
                                                                                 expression:expr];
         dispatch_async(self.s_queue, ^{
-            [so start:^(NSError* error, MCOIndexSet* searchResult) {
+            [searchOperation start:^(NSError* error, MCOIndexSet* searchResult) {
+                
+                DDLogDebug(@"STARTED IMAP Search Expression Operation");
+
                 if (error) {
+                    DDLogError(@"Search Expression Operation error = %@",error);
+                    
                     [subscriber sendError:error];
                     return;
                 }
@@ -567,36 +587,51 @@ static NSArray * sharedServices = nil;
 -(void) _saveSearchResults:(MCOIndexSet*)searchResult withSubscriber:(id<RACSubscriber>)subscriber inFolder:(NSInteger)currentFolder
 {
     if (searchResult.count == 0) {
+        DDLogError(@"Save Search Results error, count of results = 0");
+        
         [subscriber sendCompleted];
         return;
     }
     
     if (!self.connected) {
+        DDLogError(@"Save Search Results error, IMAP Sync Service not connected");
+        
         [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+        return;
     }
-    else {
-        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesOperationWithFolder:[self.user folderServerName:currentFolder]
-                                                                                                    requestKind:self.user.requestKind
-                                                              
-                                                                                                           uids:searchResult];
-        dispatch_async(self.s_queue, ^{
-            [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* messages, MCOIndexSet* vanishedMessages){
-                
-                if (error) {
-                    [subscriber sendError:error];
-                    return;
-                }
-                
-                NSString* lastMsgID = [messages firstObject].header.messageID;
-                
-                for (MCOIMAPMessage* msg in [messages reverseObjectEnumerator]) {
-                    [self _saveSearchedEmail:msg inFolder:currentFolder withSubscriber:subscriber lastMsgID:lastMsgID];
-                }
-                
-            }];
+    
+
+    NSString *folderServerName = [self.user folderServerName:currentFolder];
+    
+    MCOIMAPFetchMessagesOperation* imapMessagesFetchOp
+    = [self.imapSession fetchMessagesOperationWithFolder:folderServerName
+                                             requestKind:self.user.requestKind
+                                                    uids:searchResult];
+    
+    dispatch_async(self.s_queue, ^{
+        [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* messages, MCOIndexSet* vanishedMessages){
             
-        });
-    }
+            DDLogInfo(@"STARTED IMAP Messages Fetch Operation");
+            
+            if (error) {
+                DDLogError(@"IMAP Messages Fetch Operation error = %@",error);
+                
+                [subscriber sendError:error];
+                return;
+            }
+            
+            NSString* lastMsgID = [messages firstObject].header.messageID;
+            
+            for (MCOIMAPMessage* msg in [messages reverseObjectEnumerator]) {
+                [self _saveSearchedEmail:msg
+                                inFolder:currentFolder
+                          withSubscriber:subscriber
+                               lastMsgID:lastMsgID];
+            }
+            
+        }];
+        
+    });
     
 }
 
@@ -636,6 +671,9 @@ static NSArray * sharedServices = nil;
     dispatch_async(self.s_queue, ^{
         
         [[self.imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
+            
+            DDLogInfo(@"START IMAP Session Text Body Rendering Operation");
+            
             if (plainTextBodyString) {
                 plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
                 
@@ -648,7 +686,10 @@ static NSArray * sharedServices = nil;
             [[self.imapSession htmlBodyRenderingOperationWithMessage:msg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
                 email.htmlBody = htmlString;
                 
+                DDLogInfo(@"START IMAP Session HTML Body Rendering Operation");
+                
                 NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:email];
+                
                 [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
                 
                 [nextOp waitUntilFinished];
@@ -664,74 +705,106 @@ static NSArray * sharedServices = nil;
     });
 }
 
--(void) checkFolders
+-(void) _checkFolders
 {
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
     
     dispatch_async(self.s_queue, ^{
         [fio start:^(NSError* error, NSArray* folders) {
-            if (!error && !folders && folders.count > 0) {
-                SyncManager* sm = [SyncManager getSingleton];
-                
-                int indexPath = 0;
-                
-                NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
-                
-                for (MCOIMAPFolder* folder in folders) {
-                    BOOL exists = NO;
-                    
-                    int i = 0;
-                    
-                    while (i < [sm folderCount:self.user.accountNum]) {
-                        NSDictionary* folderState = [sm retrieveState:i accountNum:self.user.accountNum];
-                        NSString* folderPath = folderState[@"folderPath"];
-                        
-                        if ([[folder path] isEqualToString:folderPath]) {
-                            exists = YES;
-                            break;
-                        }
-                        
-                        i++;
-                    }
-                    
-                    if (!exists) {
-                        NSString* dispName = [[[self.imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:@"/"];
-                        [dispNamesFolders addObject:dispName];
-                        
-                        NSDictionary* folderState = @{ @"accountNum" : @(self.user.accountNum),
-                                                       @"folderDisplayName":dispName,
-                                                       @"folderPath":folder.path,
-                                                       @"deleted":@false,
-                                                       @"fullsynced":@false,
-                                                       @"lastended":@0,
-                                                       @"flags":@(folder.flags),
-                                                       @"emailCount":@(0)};
-                        
-                        [sm addFolderState:folderState accountNum:self.user.accountNum];
-                        
-                        MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folder.path];
-                        [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
-                            if (!error) {
-                                NSMutableDictionary* syncState = [sm retrieveState:indexPath accountNum:self.user.accountNum];
-                                syncState[@"emailCount"] = @([info messageCount]);
-                                [sm persistState:syncState forFolderNum:indexPath accountNum:self.user.accountNum];
-                            }
-                        }];
-                    }
-                    
-                    indexPath++;
-                }
-                
-                if (dispNamesFolders.count > 0) {
-                    NSMutableArray* all = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
-                    [all addObjectsFromArray:dispNamesFolders];
-                    
-                    [self.user setAllFoldersDisplayNames:all];
-                }
+            
+            DDLogInfo(@"STARTED IMAP Session Fetch All Folders Operation");
+            
+            if ( error ) {
+                DDLogError(@"IMAP Session Fetch All Folders Operation error = %@",error);
+                return;
+            }
+            
+            if (folders && folders.count > 0) {
+                [self _checkFolderNamesForUpdates:folders];
             }
         }];
     });
 }
+
+-(void)_checkFolderNamesForUpdates:(NSArray *)folders
+{
+    DDAssert(folders, @"Folders Array must not be empty");
+    DDAssert(folders.count>0, @"Folders Array must contain folders");
+    
+    // I believe this code block updates local IMAP Folder Names if any have
+    // changed to the server (or something like that).
+    
+    // Appears not to handle DELETED folders.  What about folders with name CHANGES?
+    
+#warning more work to do here!
+    SyncManager* sm = [SyncManager getSingleton];
+    
+    int indexPath = 0;
+    
+    NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
+    
+    for (MCOIMAPFolder* folder in folders) {
+        BOOL folderPathInAccountsExistingFolders = NO;
+        
+        NSUInteger existingFolderCount = [sm folderCount:self.user.accountNum];
+        
+        // For each existing folder
+        for (NSUInteger fIndex = 0; fIndex < existingFolderCount; fIndex++) {
+            
+            NSDictionary* folderState = [sm retrieveState:fIndex
+                                               accountNum:self.user.accountNum];
+            
+            NSString* folderPath = folderState[@"folderPath"];
+            
+            if ([[folder path] isEqualToString:folderPath]) {
+                folderPathInAccountsExistingFolders = YES;
+                break;
+            }
+        }
+        
+        if ( folderPathInAccountsExistingFolders == FALSE ) {
+            
+            NSString* dispName = [[[self.imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:@"/"];
+            [dispNamesFolders addObject:dispName];
+            
+#warning Found this code in three places!
+            NSDictionary* folderState = @{ @"accountNum" : @(self.user.accountNum),
+                                           @"folderDisplayName":dispName,
+                                           @"folderPath":folder.path,
+                                           @"deleted":@false,
+                                           @"fullsynced":@false,
+                                           @"lastended":@0,
+                                           @"flags":@(folder.flags),
+                                           @"emailCount":@(0)};
+            
+            [sm addFolderState:folderState accountNum:self.user.accountNum];
+            
+            MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folder.path];
+            [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
+                if (!error) {
+                    NSMutableDictionary* syncState = [sm retrieveState:indexPath accountNum:self.user.accountNum];
+                    syncState[@"emailCount"] = @([info messageCount]);
+                    [sm persistState:syncState forFolderNum:indexPath accountNum:self.user.accountNum];
+                }
+            }];
+        }
+        
+        indexPath++;
+    }
+    
+    if (dispNamesFolders.count > 0) {
+        
+        DDLogDebug(@"Adding Folders %@ to All Folder Names",dispNamesFolders);
+        
+        NSMutableArray* all = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
+        [all addObjectsFromArray:dispNamesFolders];
+        
+        [self.user setAllFoldersDisplayNames:all];
+    }
+}
+
+// MARK: - IMAP Sync Service - Iterate through folders, syncing each
+#warning Function is 1920 lines long!!!
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll
 {
@@ -760,20 +833,28 @@ static NSArray * sharedServices = nil;
     @weakify(self);
     
     return [RACSignal startLazilyWithScheduler:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground] block:^(id<RACSubscriber> subscriber) {
+        
         @strongify(self);
         // get list of all folders
         
         if (self.isCanceled) {
+            DDLogInfo(@"IMAP Sync Service: CANCELLED, runFolder COMPLETED");
             [subscriber sendCompleted];
         }
         else if (![ImapSync isNetworkAvailable]) {
+            DDLogError(@"IMAP Sync Service: Network is not available error");
+            
             self.connected = NO;
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         else if (currentFolder == -1) {
+            DDLogError(@"IMAP Sync Service: All Synced Error");
+            
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
         }
         else if (isInBackground && currentFolder != [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]) {
+            DDLogInfo(@"IMAP Sync Service: runFolder COMPLETED");
+
             [subscriber sendCompleted];
         }
         else {
@@ -782,18 +863,24 @@ static NSArray * sharedServices = nil;
             } completed:^{
                 if (!self.connected) {
                     if (isInBackground) {
+                        DDLogInfo(@"IMAP Sync Service: Not Connected, but in Background, so runFolder COMPLETED");
+
                         [subscriber sendCompleted];
                     }
                     else {
+                        DDLogError(@"IMAP Sync Service: Not Connection Error");
+                        
                         [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                     }
                 }
                 else {
                     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
                     dispatch_async(self.s_queue, ^{
+                        DDLogInfo(@"STARTING IMAP Sync Service: Fetch Folder Operation");
+                        
                         [fio start:^(NSError* error, NSArray* folders) {
                             if (error) {
-                                DDLogError(@"Error %@ with fetching all folders",error.description);
+                                DDLogError(@"IMAP Sync Service: Fetch Folder op error = %@",error.description);
                                 
                                 self.connected = NO;
                                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
@@ -801,6 +888,8 @@ static NSArray * sharedServices = nil;
                                 return;
                             }
                             else if (!folders || folders.count == 0) {
+                                DDLogInfo(@"IMAP Sync Service: No Folders, so Completed");
+                                
                                 [subscriber sendCompleted];
                                 
                                 return;
@@ -808,6 +897,8 @@ static NSArray * sharedServices = nil;
                             
                             dispatch_async(self.s_queue, ^{
                                 
+                                
+#warning Look: Almost the same code as _checkFolders again!
                                 SyncManager* sm = [SyncManager getSingleton];
                                 // mark folders that were deleted on the server as deleted on the client
                                 int i = 0;
@@ -1265,6 +1356,9 @@ static NSArray * sharedServices = nil;
     return;
 }
 
+
+// MARK: - Up to Date Test
+
 -(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
@@ -1400,11 +1494,35 @@ static NSArray * sharedServices = nil;
     }
 }
 
++(NSString *)_networkStatusText:(NetworkStatus)status
+{
+    NSMutableString *msg = [NSMutableString stringWithString:@"Network Status: "];
+    switch (status) {
+        case NotReachable:
+            [msg appendString:@"NotReachable"];
+            break;
+        case ReachableViaWiFi:
+            [msg appendString:@"ReachableViaWiFi"];
+            break;
+        case ReachableViaWWAN:
+            [msg appendString:@"ReachableViaWWAN"];
+            break;
+        default:
+            [msg appendString:@"Unknown Value"];
+            break;
+    }
+    if ([[AppSettings getSingleton] canSyncOverData]) {
+        [msg appendString:@" and canSyncOverData"];
+    }
+    return msg;
+}
 +(BOOL) isNetworkAvailable
 {
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
-    
+
+    DDLogInfo(@"%@",[self _networkStatusText:networkStatus]);
+
     return (networkStatus != NotReachable);
 }
 
@@ -1413,6 +1531,8 @@ static NSArray * sharedServices = nil;
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
+    DDLogInfo(@"%@",[self _networkStatusText:networkStatus]);
+
     return [[AppSettings getSingleton] canSyncOverData] || (networkStatus == ReachableViaWiFi);
 }
 
@@ -1424,7 +1544,10 @@ static NSArray * sharedServices = nil;
 // Get the Unread Count for User's Inbox
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock
 {
+    DDLogInfo(@"ENTERED Get Inbox Unread Count");
+    
     if (![ImapSync isNetworkAvailable] | user.isAll) {
+        DDLogInfo(@"\tNetwork is not available OR this is All account");
         completedBlock();
         return;
     }
@@ -1436,10 +1559,15 @@ static NSArray * sharedServices = nil;
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
         
         [so start:^(NSError* error, MCOIndexSet* searchResult) {
+            DDLogInfo(@"STARTED Search for All Unread Mails Operation");
+            
             if (!error) {
-                DDLogDebug(@"Got Inbox Unread search results, count = %u",searchResult.count);
+                DDLogInfo(@"Got Inbox Unread search results, count = %u",searchResult.count);
                 
                 [AppSettings setInboxUnread:searchResult.count accountIndex:user.accountIndex];
+            }
+            else {
+                DDLogError(@"Search for All Unread Mails Operation Failed, error = %@",error);
             }
             completedBlock();
         }];
