@@ -313,7 +313,7 @@ static AppSettings * singleton = nil;
     
     for (UserSettings* user in _users) {
         if (user.isAll) {
-            continue;
+            continue;  // There is no account for the User record
         }
         
         accountNum++;

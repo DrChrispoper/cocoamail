@@ -22,9 +22,11 @@ static SyncManager * singleton = nil;
 
 @implementation SyncManager
 
-@synthesize aNewEmailDelegate;
+//@synthesize aNewEmailDelegate;      // is this used ANYWHERE?
 @synthesize syncStates;
-@synthesize syncInProgress;
+//@synthesize syncInProgress;         // is this used ANYWHERE?
+
+// MARK: - Singleton
 
 +(SyncManager*) getSingleton
 {
@@ -37,108 +39,184 @@ static SyncManager * singleton = nil;
 	return singleton;
 }
 
+// MARK: - Initialization
+
 -(id) init
 {
 	if (self = [super init]) {
-		// Get the persistent state
-		self.syncStates = [NSMutableArray arrayWithCapacity:2];
-        
-        // For each UserSettings referenced by the AppSettings singleton
-        for (UserSettings* user in [AppSettings getSingleton].users) {
-            
-            if (user.isAll) {
-                // This UserSettings is for the special All Accounts Mail view
-                [self.syncStates insertObject:[NSMutableDictionary dictionaryWithCapacity:1] atIndex:0];
-            }
-            else if (user.isDeleted) {
-                // This UserSetting's Account has been deleted
-				[self.syncStates addObject:[NSMutableDictionary dictionaryWithCapacity:1]];
-			}
-            else {
-                // This UserSettings is for a (non-All non-Deleted) Account
-                NSString* fileName = [NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)user.accountNum];
-				NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
-				
-				if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
-                    DDLogDebug(@"File %@ does Exist",fileName);
-                    
-                    // Get the data contained in the file
-					NSData* fileData = [[NSData alloc] initWithContentsOfFile:filePath];
-                    
-                    // Read the property dictionary from the file data
-					NSDictionary* props = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
-					
-                    // Add the property dictionary to the syncStates array.
-					[self.syncStates addObject:props];
-				}
-                else {
-                    DDLogDebug(@"File %@ does NOT Exist",fileName);
-
-                    // Create a new property dictionary
-					NSMutableDictionary* props = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"2", @"__version", [NSMutableArray array], FOLDER_STATES_KEY, nil];
-                    
-                    // Add the property dictionary to the syncStates array
-					[self.syncStates addObject:props];
-				}
-			}
-		}
+        [self _loadSyncSettingsForAllUserAccounts];
 	}
 	
 	return self;
 }
 
-#pragma mark Request sync
+-(void)_loadSyncSettingsForAllUserAccounts
+{
+    // Get the persistent state
+    self.syncStates = [NSMutableArray arrayWithCapacity:2];
+    
+    // For each UserSettings referenced by the AppSettings singleton
+    for (UserSettings* user in [AppSettings getSingleton].users) {
+        
+        if (user.isAll) {
+            // This UserSettings is for the special All Accounts Mail view
+            // Insert and empty "record" at the start of the Sync States mutable array
+            [self.syncStates insertObject:[NSMutableDictionary dictionaryWithCapacity:1] atIndex:0];
+        }
+        else if (user.isDeleted) {
+            // This UserSetting's Account has been deleted
+            // Add and empty "record" for the Sync States mutable array
+            [self.syncStates addObject:[NSMutableDictionary dictionaryWithCapacity:1]];
+        }
+        else {
+            // This UserSettings is for a regular IMAP Account
+            
+            NSString* syncStateFullPathFilename
+            = [self _syncStateFullPathFilenameForUser:user];
+            
+            // If this user's Sync Settings preferences file exists ...
+            if ([[NSFileManager defaultManager] fileExistsAtPath:syncStateFullPathFilename]){
+                DDLogDebug(@"File %@ does Exist",[self _syncStateFilenameForUser:user]);
+                
+                // Get the data contained in the file
+                NSData* fileData = [[NSData alloc] initWithContentsOfFile:syncStateFullPathFilename];
+                
+                // Read the property dictionary from the file data
+                NSDictionary* syncSettingPropertiesFromFile = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
+                
+                // Add the properties read from the file into the syncStates array.
+                [self.syncStates addObject:syncSettingPropertiesFromFile];
+            }
+            else {
+                DDLogDebug(@"File \"%@\" does NOT Exist",[self _syncStateFilenameForUser:user]);
+                
+                // Create a NEW property dictionary
+                NSMutableDictionary* newSyncSettingsProperties = [self _newSyncStateProperties];
+                
+                // Add the property dictionary to the syncStates array
+                [self.syncStates addObject:newSyncSettingsProperties];
+            }
+        }
+    }
+}
+
+- (NSMutableDictionary *)_newSyncStateProperties
+{
+    return [[NSMutableDictionary alloc] initWithObjectsAndKeys:
+                @"2", @"__version",
+                [NSMutableArray array], FOLDER_STATES_KEY,
+                nil ];
+}
+
+-(NSString *)_syncStateFilenameForUser:(UserSettings *)user
+{
+    return [NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE,
+       (long)user.accountNum];
+}
+
+-(NSString *)_syncStateFullPathFilenameForUser:(UserSettings *)user
+{
+    // This UserSettings is for a (non-All non-Deleted) Account
+    NSString* syncStateFilename = [self _syncStateFilenameForUser:user];
+    
+    return [StringUtil filePathInDocumentsDirectoryForFileName:syncStateFilename];
+}
+
+#pragma mark - Folder Sync Requests
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
+    // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
-    NSInteger currentFolderIndex = [user.linkedAccount currentFolderIdx];
+    NSInteger currentFolderIndex = [user.linkedAccount currentFolderIdx];  
     
-    return [self emailForSignal:[imapSyncService runFolder:currentFolderIndex
-                                                 fromStart:isFromStart
-                                               fromAccount:NO]];
+    RACSignal *racSignal = [imapSyncService runFolder:currentFolderIndex
+                                            fromStart:isFromStart
+                                           gettingAll:NO];
+    
+    return [self emailForSignal:racSignal];
 }
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:[user numFolderWithFolder:FolderTypeWith(baseFolder, 0)] fromStart:YES fromAccount:NO]];
+    // Get the IMAP Sync Service for this user's account
+    ImapSync *imapSyncService = [ImapSync sharedServices:user];
+    
+    NSUInteger folderIndex = [user numFolderWithFolder:FolderTypeWith(baseFolder, 0)];
+    
+    RACSignal *racSignal = [imapSyncService runFolder:folderIndex
+                                            fromStart:YES
+                                           gettingAll:NO];
+    
+    return [self emailForSignal:racSignal];
 }
 
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runFolder:-1 fromStart:NO fromAccount:YES]];
+    // Get the IMAP Sync Service for this user's account
+    ImapSync *imapSyncService = [ImapSync sharedServices:user];
+    
+    RACSignal *racSignal = [imapSyncService runFolder:-1
+                                            fromStart:NO
+                                           gettingAll:YES];
+    
+    return [self emailForSignal:racSignal];
 }
 
 -(RACSignal*) syncInboxFoldersBackground
 {
-    NSMutableArray* newEmailsSignalArray = [[NSMutableArray alloc]init];
+    NSMutableArray* newEmailsSignalsArray = [[NSMutableArray alloc]init];
 
     for (UserSettings* user in [AppSettings getSingleton].users) {
+        
         if (user.isDeleted) {
-            continue;
+            continue;  // Don't do anything with a User that is deleted
         }
     //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         
         [ImapSync runInboxUnread:user];
         
-        NSInteger folder = [user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
-        [newEmailsSignalArray addObject:[self emailForSignal:[[ImapSync sharedServices:user] runFolder:folder fromStart:YES fromAccount:NO]]];
+        NSInteger inboxFolderIndex = [user inboxFolderNumber];
+        
+        // Get the IMAP Sync Service for this user's account
+        ImapSync *imapSyncService = [ImapSync sharedServices:user];
+        
+        RACSignal *racSignal = [imapSyncService runFolder:inboxFolderIndex
+                                                fromStart:YES
+                                               gettingAll:NO];
+        
+        RACSignal *emailRacSignal = [self emailForSignal:racSignal];
+        
+        [newEmailsSignalsArray addObject:emailRacSignal];
     }
     
-    return [RACSignal merge:newEmailsSignalArray];
+    return [RACSignal merge:newEmailsSignalsArray];
 }
+
+#pragma mark - Search for Text and Person via the IMAP Sync Service
 
 -(RACSignal*) searchText:(NSString*)text user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runSearchText:text]];
+    // Get the IMAP Sync Service for this user's account
+    ImapSync *imapSyncService = [ImapSync sharedServices:user];
+    
+    RACSignal *racSignal = [imapSyncService runSearchText:text];
+
+    return [self emailForSignal:racSignal];
 }
 
 -(RACSignal*) searchPerson:(Person*)person user:(UserSettings*)user
 {
-    return [self emailForSignal:[[ImapSync sharedServices:user] runSearchPerson:person]];
+    // Get the IMAP Sync Service for this user's account
+    ImapSync *imapSyncService = [ImapSync sharedServices:user];
+    
+    RACSignal *racSignal = [imapSyncService runSearchPerson:person];
+    
+    return [self emailForSignal:racSignal];
 }
 
+#warning need to understand what this is doing ...
 -(RACSignal*) emailForSignal:(RACSignal*)signal
 {
     return  [signal map:^(Mail* email) {
@@ -146,18 +224,37 @@ static SyncManager * singleton = nil;
     }];
 }
 
-#pragma	mark Update and retrieve syncState
+// MARK: - Update and Retrieve Sync State
+-(NSInteger)_getAccountCount
+{
+    // The "All messages" UserSettings does not have an associated
+    // Account record, so we subtract one from the user count
+    return [AppSettings getSingleton].users.count - 1;
+}
 
+-(NSArray *)_folderStatesForAccountNumber:(NSInteger)accountNum
+{
+    NSInteger accountCount = [self _getAccountCount];
+    
+#warning Not sure this line is correct yet - is account # 0 or 1 based?
+    DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",accountCount);
+    
+    return self.syncStates[accountNum][FOLDER_STATES_KEY];
+}
+
+// Return the number of folders in the account from the local local Sync State
 -(NSInteger) folderCount:(NSInteger)accountNum
 {
-    NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
+    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
     return [folderStates count];
 }
 
--(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+// Given an account and a folder in that account,
+// return a mutable copy of its Folder State dictionary from the local Sync States
+-(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
+    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
 	if (folderNum >= [folderStates count]) {
 		return nil;
@@ -166,46 +263,39 @@ static SyncManager * singleton = nil;
 	return [folderStates[folderNum] mutableCopy];
 }
 
+// Add a New account Sync State entry
 -(void) addAccountState
 {
-    NSInteger numAccounts = [AppSettings getSingleton].users.count - 1;
+    NSInteger numAccounts = [self _getAccountCount];
 	
-    NSMutableDictionary* props = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"2", @"__version", [NSMutableArray array], FOLDER_STATES_KEY, nil];
+    NSMutableDictionary* props = [self _newSyncStateProperties];
     
     if (numAccounts == 1) {
         self.syncStates [0] = props;
-        NSInteger z = 0;
-        NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)z]];
-        
-        if (![self.syncStates[0] writeToFile:filePath atomically:YES]) {
-            CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
-        }
+
+        [self _writeSyncStateToFileForAccount:0L];
     }
     
 	[self.syncStates addObject:props];
-	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)numAccounts]];
     
-	if (![self.syncStates[numAccounts] writeToFile:filePath atomically:YES]) {
-		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
-	}
+    [self _writeSyncStateToFileForAccount:numAccounts];
 }
 
+// Add the given data dictionary as Folder State in the account's Sync State
 -(void) addFolderState:(NSDictionary*)data accountNum:(NSInteger)accountNum
 {
-	[self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:data];
-	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum]];
-	
-    if (![self.syncStates[accountNum] writeToFile:filePath atomically:YES]) {
-		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
-	}
+    [self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:data];
+    
+    [self _writeSyncStateToFileForAccount:accountNum];
 }
+
+
 
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-	NSArray* folderStates = self.syncStates[accountNum][FOLDER_STATES_KEY];
+    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
+    // If the folder number is not valid
 	if (folderNum >= [folderStates count]) {
 		return YES;
 	}
@@ -219,23 +309,34 @@ static SyncManager * singleton = nil;
 {
     self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum][@"deleted"] = @YES;
 	
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum]];
-	
-    if (![self.syncStates[accountNum] writeToFile:filePath atomically:YES]) {
-		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
-	}
+    [self _writeSyncStateToFileForAccount:accountNum];
 }
 
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
 	self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum] = data;
 		
-	NSString* filePath = [StringUtil filePathInDocumentsDirectoryForFileName:[NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum]];
-    
-    if (![self.syncStates[accountNum] writeToFile:filePath atomically:YES]) {
-		CCMLog(@"Unsuccessful in persisting state to file %@", filePath);
-	}
+    [self _writeSyncStateToFileForAccount:accountNum];
 }
+
+// MARK: - local function to write out Sync State
+
+-(void)_writeSyncStateToFileForAccount:(NSInteger)accountNum
+{
+    NSString *fileName = [NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum];
+    
+    NSString *filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
+    
+    if ( ![self.syncStates[accountNum] writeToFile:filePath atomically:YES] ) {
+        
+        DDLogError(@"Error: Could not save account %ld Sync State to \"%@\"",
+                   accountNum,filePath);
+        return;
+    }
+    
+    DDLogInfo(@"Saved account %ld Sync State to \"%@\"",accountNum,fileName);
+}
+
 
 
 @end

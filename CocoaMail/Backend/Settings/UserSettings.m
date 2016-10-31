@@ -342,6 +342,10 @@
     return name;
 }
 
+-(NSInteger)inboxFolderNumber
+{
+    return [self numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+}
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder
 {
     NSString* folderName;
@@ -373,9 +377,9 @@
     return [[foldersSet allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
--(Account*) linkedAccount
+-(Account*) linkedAccount   // Returns the Account object for self.accountNum
 {
-    NSUInteger appSettingsIndexForAccount = [AppSettings indexForAccountNum:_accountNum];
+    NSUInteger appSettingsIndexForAccount = [self accountIndex];
     
     DDAssert(appSettingsIndexForAccount >= 0, @"AppSettings Account Index must be found");
     

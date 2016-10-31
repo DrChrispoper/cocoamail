@@ -29,11 +29,11 @@
 @property (nonatomic) BOOL premiumPurchased;
 @property (nonatomic) NSInteger globalDBVersion;
 
-@property (nonatomic, strong) NSMutableArray* users; // array of UserSettings*
+@property (nonatomic, strong) NSMutableArray<UserSettings *>* users;
 
 +(AppSettings*) getSingleton;
 
-+(NSInteger) numActiveAccounts;
++(NSInteger) numActiveAccounts; // number of non-deleted accounts
 +(NSMutableArray*) activeUsers;
 
 -(UserSettings*) createNewUser;

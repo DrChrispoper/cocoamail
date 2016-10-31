@@ -21,13 +21,13 @@
 @interface SyncManager : NSObject {    
 	// sync-related stuff
 	NSMutableArray<NSMutableDictionary*>* syncStates;
-	BOOL syncInProgress;
+//	BOOL syncInProgress;
 }
 
-@property (nonatomic, weak) id aNewEmailDelegate;
-@property (nonatomic, strong) NSMutableArray* syncStates;
-@property (assign) BOOL syncInProgress;
-@property (assign) BOOL isFromStart;
+//@property (nonatomic, weak) id aNewEmailDelegate;
+@property (nonatomic, strong) NSMutableArray<NSMutableDictionary*>* syncStates;
+//@property (assign) BOOL syncInProgress;
+//@property (assign) BOOL isFromStart;
 
 +(SyncManager*) getSingleton;
 

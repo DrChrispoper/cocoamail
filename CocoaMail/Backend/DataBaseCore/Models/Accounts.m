@@ -699,28 +699,50 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         return;
     }
     
-#warning Is this really suppossed to be a bitwise and?
-    if ((![[email sonID] isEqualToString:@""] & ![[email sonID] isEqualToString:@"0"]) && [_convIDs containsObject:[email sonID]]) {
+    NSString *sonID = [email sonID];
+    
+    if ( [sonID isEqualToString:@""] ||
+         [sonID isEqualToString:@"0"] ||
+         ![_convIDs containsObject:sonID] ) {
         
+        [self _addNewConversationWithMail:email];
+        
+    } else {
+        
+        // Find the conversation with the matching sonID,
+        // and add this mail message to the conversation,
+        // and
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
             
-            if ([[[conv firstMail] sonID] isEqualToString:[email sonID]]) {
+            // Find the conversation with the matching sonID
+            if ([[[conv firstMail] sonID] isEqualToString:sonID]) {
+                
+                // Add the mail message to the conversation
                 [conv addMail:email];
-                [self _addCon:idx toFoldersContent:conv.foldersType];
-                return;
+                
+                [self _addCon:idx toFoldersContent:[conv foldersType]];
+                
+                return; // we match only once (could be break;)
             }
         }
     }
-    else {
-        Conversation* conv = [[Conversation alloc]init];
-        [conv addMail:email];
-        if ([RX(@"^[0-9]+?$") isMatch:email.msgID]) {
-            conv.isDraft = YES;
-        }
-        [_convIDs addObject:[email sonID]];
-        [self addConversation:conv];
+    
+}
+
+-(void)_addNewConversationWithMail:(Mail*)email
+{
+    Conversation* conv = [[Conversation alloc]init];
+    
+    [conv addMail:email];
+    
+    if ([RX(@"^[0-9]+?$") isMatch:email.msgID]) {
+        conv.isDraft = YES;
     }
+    
+    [_convIDs addObject:[email sonID]];
+    
+    [self addConversation:conv];
 }
 
 -(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
@@ -751,9 +773,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSMutableIndexSet* folderMailIndecies = [self _mailIndeciesForFolder:folderHandle];
     
-    if (![folderMailIndecies containsIndex:idx]) {
+    if ( ![folderMailIndecies containsIndex:idx] ) {
         
         [folderMailIndecies addIndex:idx];
+        
         if (encodeFolderTypeWith(folderHandle) == encodeFolderTypeWith(self.currentFolderType)) {
             
             //NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:self.currentFolderType] accountNum:self.user.accountNum];

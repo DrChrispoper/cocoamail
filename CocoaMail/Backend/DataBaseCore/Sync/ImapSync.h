@@ -33,7 +33,7 @@
 +(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated;
 +(RACSignal*) doLogin:(UserSettings*)user;
 
--(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart fromAccount:(BOOL)getAll;
+-(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
 -(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock;

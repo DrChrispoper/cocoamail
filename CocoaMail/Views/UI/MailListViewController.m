@@ -469,7 +469,9 @@
         
         if ([self.indexSet[pConversationIndex.user.accountIndex] containsIndex:pConversationIndex.index]) {
             
-            NSLog(@"ConversationIndex:%ld in Account:%ld", (long)pConversationIndex.index, (unsigned long)pConversationIndex.user.accountNum);
+            DDLogInfo(@"ConversationIndex:%ld in Account:%ld",
+                      (long)pConversationIndex.index,
+                      (unsigned long)pConversationIndex.user.accountNum);
             
             BOOL found = NO;
             
@@ -1148,7 +1150,7 @@
 
 -(void) reload
 {
-    DDLogDebug(@"ENTERED MailListViewController.reload, CALLING tableView.reloadData");
+    DDLogDebug(@"\tENTERED MailListViewController.reload\n\tCALLING tableView.reloadData");
     //self.deletedSections = 0;
     
     [self.table reloadData];
