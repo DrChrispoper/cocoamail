@@ -152,22 +152,29 @@ static ViewController * s_self;
 
 -(void) setup
 {
-    FolderViewController* f = [[FolderViewController alloc] init];
+    FolderViewController* fvc = [[FolderViewController alloc] init];
 
     UIView* nextView;
     
+    // If there is only 1 account,  - Because 1 account is "ALL" dummy account???
+    //      show the Folder View Controller,
+    // otherwise
+    //      show the Inbox Mail List View Controller.
     if ([Accounts sharedInstance].accountsCount !=  1) {
+        // other than 1 account
+        
         MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue) ];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;
     
-        self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
+        self.viewControllers = [NSMutableArray arrayWithObjects:fvc, inbox, nil];
     }
-    else {
-        f.view.frame = self.contentView.bounds;
-        nextView = f.view;
+    else { // only 1 account
         
-        self.viewControllers = [NSMutableArray arrayWithObjects:f, nil];
+        fvc.view.frame = self.contentView.bounds;
+        nextView = fvc.view;
+        
+        self.viewControllers = [NSMutableArray arrayWithObjects:fvc, nil];
     }
     
     [self _manageCocoaButton:YES];
@@ -472,6 +479,7 @@ static ViewController * s_self;
     return NO;
 }
 
+#warning - REFACTOR: setupNavigation has 486 lines.
 -(void) setupNavigation
 {
     [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
@@ -481,8 +489,8 @@ static ViewController * s_self;
 #endif
         DDLogInfo(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
-        AddFirstAccountViewController* f = [[AddFirstAccountViewController alloc] init];
-        f.firstRunMode = YES;
+        AddFirstAccountViewController* favc = [[AddFirstAccountViewController alloc] init];
+        favc.firstRunMode = YES;
         
         if (self.viewControllers.count==1) {
             
@@ -490,7 +498,7 @@ static ViewController * s_self;
                 return;
             }
             
-            [self _animatePushVC:f];
+            [self _animatePushVC:favc];
             return;
         }
         
@@ -501,7 +509,7 @@ static ViewController * s_self;
             [self.viewControllers removeObjectsInRange:toRemove];
         }
         
-        [self.viewControllers insertObject:f atIndex:1];
+        [self.viewControllers insertObject:favc atIndex:1];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         
@@ -522,15 +530,15 @@ static ViewController * s_self;
         //[[SearchRunner getSingleton] cancel];
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
 
-        MailListViewController* f = nil;
+        MailListViewController* mlvc = nil;
         Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
         
         if (person != nil) {
-            f = [[MailListViewController alloc] initWithPerson:person];
+            mlvc = [[MailListViewController alloc] initWithPerson:person];
         }
         else {
             NSNumber* codedType = [notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE];
-            f = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
+            mlvc = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
         }
         
         // don't open the same view twice
@@ -540,7 +548,7 @@ static ViewController * s_self;
         if ([last isKindOfClass:[MailListViewController class]]) {
             MailListViewController* mlvc = (MailListViewController*)last;
             
-            if ([f istheSame:mlvc]) {
+            if ([mlvc istheSame:mlvc]) {
                 doNothing = YES;
             }
         }
@@ -549,7 +557,7 @@ static ViewController * s_self;
             [[UIApplication sharedApplication] endIgnoringInteractionEvents];
         }
         else {
-            [self _animatePushVC:f];
+            [self _animatePushVC:mlvc];
         }
     }];
     
@@ -914,25 +922,30 @@ static ViewController * s_self;
 
         //[[Parser sharedParser] cleanConversations];
         
-        BOOL inFolders = self.viewControllers.count == 1;
+        InViewController* ivc = [self.viewControllers lastObject];
+        UIView* lastView = ivc.view;
         
-        InViewController* vc = [self.viewControllers lastObject];
-        UIView* lastView = vc.view;
+        FolderViewController* fvc = [[FolderViewController alloc] init];
+        UIView* nextView = fvc.view;
         
-        FolderViewController* f = [[FolderViewController alloc] init];
-        
-        UIView* nextView = f.view;
-        
-        if (inFolders) {
-            self.viewControllers = [NSMutableArray arrayWithObject:f];
+        if ( self.viewControllers.count == 1 ) {
+            self.viewControllers = [NSMutableArray arrayWithObject:fvc];
         }
-        else {
-            [[[Accounts sharedInstance] currentAccount] cancelSearch];
-            MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:[[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:kActiveFolderIndex]];
-            inbox.view.frame = self.contentView.bounds;
-            nextView = inbox.view;
+        else { // more than one view controller
             
-            self.viewControllers = [NSMutableArray arrayWithObjects:f, inbox, nil];
+            [[[Accounts sharedInstance] currentAccount] cancelSearch];
+            
+            // Get the folder type of the current account and current folder
+            UserSettings *user = [AppSettings userWithIndex:kActiveAccountIndex];
+            CCMFolderType folderType = [user typeOfFolder:kActiveFolderIndex];
+            
+            MailListViewController* mlvc
+            = [[MailListViewController alloc] initWithFolder:folderType];
+            
+            mlvc.view.frame = self.contentView.bounds;
+            nextView = mlvc.view;
+            
+            self.viewControllers = [NSMutableArray arrayWithObjects:fvc, mlvc, nil];
         }
         
         [self _manageCocoaButton:YES];

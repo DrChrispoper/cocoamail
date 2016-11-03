@@ -239,11 +239,13 @@
     p.codeName = codeName;
     p.email = mail;
     
-    if (!name) {
+    
+    // MARK: Added "mail &&" to both of these lines - revisit.
+    if (mail && !name) {
         p.name = mail;
     }
     
-    if (!codeName) {
+    if (mail && !codeName) {
         p.codeName = [[mail substringToIndex:3] uppercaseString];
     }
     

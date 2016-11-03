@@ -705,6 +705,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
          [sonID isEqualToString:@"0"] ||
          ![_convIDs containsObject:sonID] ) {
         
+        // No conversation with a matching sonID ...
         [self _addNewConversationWithMail:email];
         
     } else {
@@ -809,7 +810,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [self.allsMails addObject:conv];
         index  = self.allsMails.count - 1;
         
-        if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] && ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)] && ![conv.foldersType containsObject:numberWithFolderType(FolderTypeDrafts)]) {
+        if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] &&
+            ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)]    &&
+            ![conv.foldersType containsObject:numberWithFolderType(FolderTypeDrafts)]) {
+            
             [self _addIdx:index inArray:CCMFolderTypeAll];
         }
         
@@ -1366,7 +1370,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 #pragma mark - Fetch Data
 
-// Refresh contents of IMAP System Folders
+// Refresh contents of IMAP System Folders 
 -(void) importantFoldersRefresh:(NSInteger)pFolder
 {
     DDLogInfo(@">> ENTERING importantFolderRefresh:folder=%ld",(long)pFolder);
