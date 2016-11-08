@@ -82,7 +82,7 @@ static SyncManager * singleton = nil;
                 NSData* fileData = [[NSData alloc] initWithContentsOfFile:syncStateFullPathFilename];
                 
                 // Read the property dictionary from the file data
-                NSDictionary* syncSettingPropertiesFromFile = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
+                NSMutableDictionary* syncSettingPropertiesFromFile = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
                 
                 // Add the properties read from the file into the syncStates array.
                 [self.syncStates addObject:syncSettingPropertiesFromFile];
