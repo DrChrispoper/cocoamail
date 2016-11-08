@@ -60,10 +60,13 @@
     }
     
     // Send debug info to log files
-//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
-//    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
-//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-//    [DDLog addLogger:fileLogger];
+    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
+    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
+    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+    [DDLog addLogger:fileLogger];
+
+    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
+    DDLogInfo(@"Log FilePath: %@",[lfi filePath]);
     
     // Show the Xcode console colors
     DDLogError(  @"Color Demo: DDLogError");    // Red
