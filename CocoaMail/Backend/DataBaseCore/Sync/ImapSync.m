@@ -820,6 +820,7 @@ static NSArray * sharedServices = nil;
     NSString* dispName = [namespaceComponenets componentsJoinedByString:@"/"];
     
     char testChar = [folder delimiter];
+    DDLogInfo(@"Folder Delimiter = \"%c\"",testChar);
     
 //    [dispNamesFolders addObject:dispName];
     
@@ -957,7 +958,9 @@ static NSArray * sharedServices = nil;
                                 [subscriber sendCompleted];
                                 
                                 return;
-                            }//Fetch folder issue
+                            } else {
+                                DDLogInfo(@"IMAP Sync Service: have %lu folders.",(unsigned long)folders.count);
+                            }
                             
                             dispatch_async(self.s_queue, ^{
                                 
@@ -1082,6 +1085,7 @@ static NSArray * sharedServices = nil;
                                         if (!isInBackground) {
                                             [self _writeFinishedFolderState:sm emailCount:[info messageCount] andFolder:currentFolder];
                                             
+#warning still not sure what this 'if' statement is doing
                                             if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
                                                 NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
                                                 [self _writeFinishedFolderState:sm lastEnded:lE andFolder:currentFolder];

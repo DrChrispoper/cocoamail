@@ -197,7 +197,7 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performAllSearch
 {
-    DDLogInfo(@">>ENTERED performAllSearch");
+    DDLogInfo(@">> ENTERED performAllSearch");
     
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
@@ -336,7 +336,8 @@ static SearchRunner * searchSingleton = nil;
     if (email) {
         uidsInGroups = [UidEntry getUidEntriesFrom:email withFolder:realFolderNum inAccountNum:accountNum];
     }
-    else {
+    else { // email == nil
+        
         uidsInGroups = [UidEntry getUidEntriesWithFolder:realFolderNum inAccountNum:accountNum];
     }
     
@@ -451,12 +452,16 @@ static SearchRunner * searchSingleton = nil;
 -(RACSignal*) activeFolderSearch:(Mail*)email inAccountNum:(NSInteger)accountNum
 {
     self.cancelled = NO;
-    
-    if (!email.msgID) {
+
+    if (email && !email.msgID) {
         email = nil;
     }
     
-    return [self searchForSignal:[self performFolderSearch:[Accounts sharedInstance].currentAccount.currentFolderIdx inAccountNum:accountNum from:email]];
+    NSInteger folderIndex = [Accounts sharedInstance].currentAccount.currentFolderIdx;
+    
+    return [self searchForSignal:[self performFolderSearch:folderIndex
+                                              inAccountNum:accountNum
+                                                      from:email]];
 }
 
 -(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum

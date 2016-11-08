@@ -61,6 +61,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = [[AppSettings getSingleton] quickSwipe];
         sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];
+        
         sharedInstance.localFetchQueue = [NSOperationQueue new];
         [sharedInstance.localFetchQueue setMaxConcurrentOperationCount:1];
         [sharedInstance.localFetchQueue setQualityOfService:NSQualityOfServiceUserInitiated];
@@ -104,8 +105,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             [sharedInstance runLoadData];
         }
         
-        DDLogInfo(@"Accounts Loaded, count = %ld",[accounts count]);
-        DDLogInfo(@"Accounts:\n%@",[sharedInstance description]);
+        DDLogInfo(@"Accounts Singleton Initialized, count = %ld",[accounts count]);
+        DDLogInfo(@"Accounts:%@",[sharedInstance description]);
     });
     
     return sharedInstance;
@@ -155,40 +156,48 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) runLoadData
 {
+    DDLogInfo(@"BEGIN runLoadData");
+    
+    // If this is NOT the All Mails user account ..
     if (!self.currentAccount.user.isAll) {
+
+        DDLogInfo(@"\tNOT All Mail Messages");
+        
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             //NSInteger refBatch = 5;
             //NSInteger __block batch = refBatch;
             [self.currentAccount.mailListSubscriber localSearchDone:NO];
 
-            [[[SearchRunner getSingleton] activeFolderSearch:nil inAccountNum:self.currentAccount.user.accountNum]
+            [[[SearchRunner getSingleton] activeFolderSearch:nil
+                                                inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
-                 DDLogDebug(@"IN runLoadData, called SearchRunner, recieved subscribeNext, so sorting email (1)");
-                 [self sortEmail:email];
+                 DDLogDebug(@"\tSearchRunner Active Folder Search RCVD subscribeNext, so sorting email (1)");
+                 [self _sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
                     //[self.currentAccount.mailListSubscriber reFetch:YES];
                  //}
-             }
+             } // end SearchRunner subscribeNext block
              completed:^{
-                 DDLogDebug(@"IN runLoadData, called SearchRunner, recieved completed, so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
+                 DDLogDebug(@"\tSearchRunner RCVD \"completed\", so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
                  [self.currentAccount.mailListSubscriber localSearchDone:YES];
                  [self.currentAccount.mailListSubscriber reFetch:YES];
-             }];
-        }];
-    }
+             }]; // end SearchRunner completed block
+        }]; // end mainQueue block
+    } // end All Mail
     
     
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Mail* email) {
-             DDLogDebug(@"IN runLoadData, called SearchRunner, recieved subscribeNext, so sorting email (2)");
-             if (email.user && !email.user.isDeleted) {
-                 [self sortEmail:email];
+             DDLogDebug(@"\tSearchRunner All Mails Search RCVD subscribeNext, so sorting email (2)");
+             if (email && email.user && !email.user.isDeleted) {
+                 [self _sortEmail:email];
              }
          }
          completed:^{
-              DDLogDebug(@"IN runLoadData, called SearchRunner, recieved completed");
+            DDLogDebug(@"\tSearchRunner All Mails Search RCVD \"completed\"");
+             
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  if (self.currentAccount.user.isAll) {
                      for (NSInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
@@ -204,14 +213,27 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
 }
 
--(void) sortEmail:(Mail*)email
+-(void) _sortEmail:(Mail*)email
 {
+    DDAssert(email,@"email must not be null");
+    
+    // If no email user or email's user/account is deleted ...
     if (!email.user || email.user.isDeleted) {
+        
         DDLogInfo(@"Houston on a un probleme avec l'email:%@", email.subject);
-        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(clean:) object:email];
-        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+        
+        // Delete this email message from the database
+        EmailProcessor* emailProcessor = [EmailProcessor getSingleton];
+        
+        NSInvocationOperation* nextOpUp
+        = [[NSInvocationOperation alloc] initWithTarget:emailProcessor
+                                               selector:@selector(clean:)
+                                                 object:email];
+        
+        [emailProcessor.operationQueue addOperation:nextOpUp];
     }
     else {
+        // Add email message to user account
         [email.user.linkedAccount insertRows:email];
     }
 }
@@ -696,6 +718,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 -(void) insertRows:(Mail*)email
 {
     if (self.user.isDeleted) {
+        DDLogWarn(@"insertRows:(Mail*)mail, but self.user.isDeleted");
         return;
     }
     
@@ -716,7 +739,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
             Conversation* conv = self.allsMails[idx];
             
-            // Find the conversation with the matching sonID
+            // If the indexed conversation matche's the email sonID
             if ([[[conv firstMail] sonID] isEqualToString:sonID]) {
                 
                 // Add the mail message to the conversation
@@ -1800,76 +1823,88 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 [a refreshCurrentFolder];
             }
         }
+        DDLogInfo(@"\tAll Folders refreshed, returing");
+        return;
     }
-    else {
-        
-        if (self.user.isDeleted) {
-            return;
-        }
-        
-        if ([ImapSync sharedServices:self.user].connected) {
-            NSInteger __block new = 0;
-            
-            [self.mailListSubscriber serverSearchDone:NO];
-            
-            [self runTestData];
-            
-            DDLogInfo(@"\tRefresh");
-            
-            [[[[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user] deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
-             subscribeNext:^(Mail* email) {
-                 DDLogInfo(@"\tEmail Refresh");
-
-                 new++;
-                 [self insertRows:email];
-             } error:^(NSError* error) {
-                 
-                 DDLogError(@"\tError Refresh");
-
-                 [self.mailListSubscriber serverSearchDone:YES];
-                 
-                 if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
-                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
-                 }
-                 else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                         
-                         [self runTestData];
-                         
-                         _currentFolderFullSyncCompleted = YES;
-                         _isSyncingCurrentFolder = NO;
-                         [self importantFoldersRefresh:0];
-                 }
-             } completed:^{
-
-                 DDLogInfo(@"\tDone Refresh");
-
-                 [self.mailListSubscriber serverSearchDone:YES];
-                 
-                 if (new != 0) {
-                    [self.mailListSubscriber reFetch:YES];
-                 }
-                 
-                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                     [self runTestData];
-                     
-                     if (_currentFolderFullSyncCompleted) {
-                         _isSyncingCurrentFolder = NO;
-                         [self importantFoldersRefresh:0];
-                     }
-                     else if (!_isSyncingCurrentFolder) {
-                         _isSyncingCurrentFolder = YES;
-                         [self syncCurrentFolder];
-                     }
-                 }
-             }];
-        }
-        else {
-            [self connect];
-            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                [self.mailListSubscriber serverSearchDone:YES];
-            }];
-        }
+    
+    if (self.user.isDeleted) {
+        DDLogInfo(@"\tFolder is Deleted, returning");
+        return;
     }
+    
+    if ([ImapSync sharedServices:self.user].connected == FALSE) {
+        [self connect];
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self.mailListSubscriber serverSearchDone:YES];
+        }];
+        DDLogInfo(@"\tIMAP Services not connected, connecting and returning");
+        return;
+    }
+    
+    NSInteger __block new = 0;
+    
+    [self.mailListSubscriber serverSearchDone:NO];
+    
+    [self runTestData];
+    
+    DDLogInfo(@"\tRefresh");
+    
+    RACSignal *signal = [[SyncManager getSingleton] syncActiveFolderFromStart:YES
+                                                                         user:self.user];
+    
+    [[signal deliverOn:
+      [RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
+     
+     subscribeNext:^(Mail* email) {
+         
+         DDLogInfo(@"\tsubscribeNext(Mail*)");
+
+         new++;
+         [self insertRows:email];
+     }
+     error:^(NSError* error) {
+         
+         DDLogError(@"\tError = %@",error);
+
+         [self.mailListSubscriber serverSearchDone:YES];
+         
+         if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
+             
+             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
+         }
+         else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+                 
+             [self runTestData];
+             
+             _currentFolderFullSyncCompleted = YES;
+             _isSyncingCurrentFolder = NO;
+             [self importantFoldersRefresh:0];
+         }
+     }
+     completed:^{
+
+         DDLogInfo(@"\tDone Refresh");
+
+         [self.mailListSubscriber serverSearchDone:YES];
+         
+         if (new != 0) {
+            [self.mailListSubscriber reFetch:YES];
+         }
+         
+         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+             
+             [self runTestData];
+             
+             if (_currentFolderFullSyncCompleted) {
+                 _isSyncingCurrentFolder = NO;
+                 [self importantFoldersRefresh:0];
+             }
+             else if (!_isSyncingCurrentFolder) {
+                 _isSyncingCurrentFolder = YES;
+                 [self syncCurrentFolder];
+             }
+         }
+     }];
 }
 
 -(void) syncCurrentFolder
