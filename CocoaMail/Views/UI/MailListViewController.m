@@ -49,7 +49,6 @@
 @property (nonatomic, strong) Person* onlyPerson;
 @property (nonatomic) BOOL presentAttach;
 @property (nonatomic, strong) UIButton* attachButton;
-@property (nonatomic, retain) NSOperationQueue* localFetchQueue;
 @property (nonatomic) CCMFolderType folder;
 @property (nonatomic) BOOL longPressOnCocoabutton;
 @property (nonatomic, strong) UserFolderViewController* chooseUserFolder;
@@ -144,9 +143,6 @@
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
-    self.localFetchQueue = [NSOperationQueue new];
-    [self.localFetchQueue setMaxConcurrentOperationCount:1];
-    
     self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
     self.indexSet = [[NSMutableArray alloc]initWithCapacity:[Accounts sharedInstance].accountsCount];
     self.deletes = [[NSMutableSet alloc]init];
@@ -169,7 +165,9 @@
         
         UIButton* attach = [WhiteBlurNavBar navBarButtonWithImage:@"attachment_off" andHighlighted:@"attachment_on"];
         [attach setHidden:YES];
-        [attach addTarget:self action:@selector(_attach) forControlEvents:UIControlEventTouchUpInside];
+        [attach addTarget:self
+                   action:@selector(_attach)
+         forControlEvents:UIControlEventTouchUpInside];
         item.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:attach];
         self.attachButton = attach;
     }
