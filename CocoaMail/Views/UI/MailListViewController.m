@@ -144,9 +144,16 @@
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
     self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
+    
+    // indexSet is an array of index sets, one for each account
+    //      indexSet[account] -> mutable index set
     self.indexSet = [[NSMutableArray alloc]initWithCapacity:[Accounts sharedInstance].accountsCount];
+    
+    // Set of conversation indecies
     self.deletes = [[NSMutableSet alloc]init];
 
+    // if one of the accounts is the All Mail account,
+    // then add an empty index set for it.
     for (Account* a in [Accounts sharedInstance].accounts) {
         if (!a.user.isAll) {
             [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
@@ -579,6 +586,30 @@
 
 #warning Needs refactoring - Method is 161 lines long
 
+- (BOOL)_findMessageToOrFromPerson:(Person*)person inConversation:(ConversationIndex*)ci
+{
+    Person *currentAccountPerson = [Accounts sharedInstance].currentAccount.person;
+    
+    NSInteger personID = [[Persons sharedInstance] indexForPerson:person];
+    NSInteger meID     = [[Persons sharedInstance] indexForPerson:currentAccountPerson;
+    
+    for (Mail* mail in [[[Accounts sharedInstance] conversationForCI:ci] mails]) {
+      
+        // if this message is From this person
+        if (mail.fromPersonID == personID) {
+            return TRUE;
+        }
+        
+        // If this message is from "me" and to "person"
+        if (mail.fromPersonID == meID && [mail.toPersonIDs containsObject:@(personID)]) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+                          
+                          
+
 -(void) insertConversationIndex:(ConversationIndex*)ci
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -588,51 +619,35 @@
         }
        
         if (self.onlyPerson) {
-            
-            NSInteger personID = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
-            NSInteger meID = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
-            
-            BOOL found = false;
-
-            for (Mail* mail in [[[Accounts sharedInstance] conversationForCI:ci] mails]) {
+            // If the conversation does not contain a message to or from onlyPerson ...
+            if (![self _findMessageToOrFromPerson:self.onlyPerson
+                                   inConversation:ci]) {
                 
-                if (mail.fromPersonID == personID) {
-                    found = true;
-                }
-                else if (mail.fromPersonID == meID) {
-                    for (NSNumber* toPersonID in mail.toPersonIDs) {
-                        if ([toPersonID integerValue] == personID) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                
-                if (found) {
-                    break;
-                }
-            }
-            
-            if(!found){
                 return;
             }
         }
     
+        // If this view already contains this conversation ...
         if ([self.indexSet[ci.user.accountIndex] containsIndex:ci.index]) {
             return;
         }
         
         Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
         
+        // folder currently being displayed in the view
         NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
         
+        // if the current folder is the All messages folder ...
         if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
             
-            [conv foldersType];
+            [conv foldersType];  // return igored ... queries DB to get uid's for msgId????
             
             BOOL isInFolder = NO;
             
+            // Do any of the messages in the conversation 
             for (Mail* mail in conv.mails) {
+                
+                // is the mail in this folder?
                 if ([mail uidEWithFolder:currentFolderIdx]) {
                     isInFolder = YES;
                     break;
@@ -643,7 +658,7 @@
     #ifdef USING_INSTABUG
                 IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
     #endif
-                NSLog(@"Insert cell: Conversation with error:%ld",(long)ci.index);
+                DDLogError(@"Conversation with index %ld",(long)ci.index);
                 
                 Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
                 [a deleteIndex:ci.index fromFolder:self.folder];

@@ -191,9 +191,9 @@ static NSDateFormatter * s_df_hour = nil;
 // Return a Set of all the Folder Types of all the Mails in this Conversation
 -(NSMutableSet*) foldersType
 {
-    NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
+    NSMutableSet* tempFodles = [[NSMutableSet alloc] init];
     
-    NSArray* tmp = [self.mails copy];
+    NSArray* tmp = [self.mails copy];  // copy in case self.mails changes while in this func?
     
     if (self.isDraft) {
         [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
