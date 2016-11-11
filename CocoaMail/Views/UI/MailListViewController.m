@@ -37,7 +37,7 @@
 
 @interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate/*, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate*/>
 
-@property (nonatomic, strong) NSMutableArray<NSMutableIndexSet*>* indexSet;
+@property (nonatomic, strong) NSMutableArray<NSMutableIndexSet*>* indexSet; // may want to put this into its own class
 @property (nonatomic, strong) NSMutableSet<ConversationIndex*>* deletes;
 
 //@property (nonatomic) NSInteger pageIndex;
@@ -46,7 +46,11 @@
 @property (nonatomic) NSInteger indexCount;
 @property (nonatomic, strong) NSString* folderName;
 @property (nonatomic, strong) NSMutableSet* selectedCells;
-@property (nonatomic, strong) Person* onlyPerson;
+
+// When the user is searching for mails to or from a Person,
+// this contains that person.
+@property (nonatomic, strong) Person* showOnlyThisPerson;
+
 @property (nonatomic) BOOL presentAttach;
 @property (nonatomic, strong) UIButton* attachButton;
 @property (nonatomic) CCMFolderType folder;
@@ -69,16 +73,18 @@
 -(instancetype) _initWithName:(NSString*)name
 {
     self = [super init];
-    self.folderName = name;
-    
-    self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
-    //self.pageIndex = 1;
-    //self.deletedSections = 0;
-    self.countBeforeLoadMore = 0;
-    self.indexCount = 0;
-    self.isDebugMode = NO;
-    self.initialLoading = YES;
-    self.viewIsClosing = NO;
+    if (self) {
+        self.folderName = name;
+        self.showOnlyThisPerson = nil;
+        self.selectedCells = [[NSMutableSet alloc] initWithCapacity:25];
+        //self.pageIndex = 1;
+        //self.deletedSections = 0;
+        self.countBeforeLoadMore = 0;
+        self.indexCount = 0;
+        self.isDebugMode = NO;
+        self.initialLoading = YES;
+        self.viewIsClosing = NO;
+    }
     return self;
 }
 
@@ -101,21 +107,23 @@
     return self;
 }
 
+// This is called when the user has searched for a Person, and we are
+// displaying emails to or from that person.
 -(instancetype) initWithPerson:(Person*)person
 {
     self = [self _initWithName:person.name];
     
-    self.onlyPerson = person;
-    self.folder = CCMFolderTypeAll;
-    self.presentAttach = YES;
+    self.folder = CCMFolderTypeAll;     // Show all emails
+    self.showOnlyThisPerson = person;   // that are to or from ths person
+    self.presentAttach = YES;           // and show the attachments button
     
     return self;
 }
 
 -(BOOL) istheSame:(MailListViewController*)other
 {
-    if (self.onlyPerson!=nil) {
-        return self.onlyPerson == other.onlyPerson;
+    if (self.showOnlyThisPerson!=nil) {
+        return self.showOnlyThisPerson == other.showOnlyThisPerson;
     }
     
     if (self.folder.type != FolderTypeUser) {
@@ -143,7 +151,7 @@
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
-    self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];
+    self.convByDay = [[NSMutableArray alloc]initWithCapacity:100];  // 100 days
     
     // indexSet is an array of index sets, one for each account
     //      indexSet[account] -> mutable index set
@@ -152,10 +160,9 @@
     // Set of conversation indecies
     self.deletes = [[NSMutableSet alloc]init];
 
-    // if one of the accounts is the All Mail account,
-    // then add an empty index set for it.
     for (Account* a in [Accounts sharedInstance].accounts) {
         if (!a.user.isAll) {
+            // Add an account mail index set for each non-All account
             [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
         }
     }
@@ -188,22 +195,22 @@
     
     CGFloat offsetToUse = 44.f;
     
-    if (self.onlyPerson) {
+    if (self.showOnlyThisPerson) {
         
-        // TODO: Note use of FIXED point locations.
+        // TODO: Note use of FIXED point locations!
         
         // TODO: edit content + add edit codeName
         UIView* header = [[UIView alloc] initWithFrame:CGRectMake(0, -92, screenBounds.size.width, 92)];
         header.backgroundColor = [UIColor whiteColor];
         
-        UIView* badge = [self.onlyPerson doubleBadgeView];
+        UIView* badge = [self.showOnlyThisPerson doubleBadgeView];
         badge.center = CGPointMake(33 + 13, 46);
         //badge.transform = CGAffineTransformMakeScale(2.f, 2.f);
         [header addSubview:badge];
         
         UILabel* l = [[UILabel alloc] initWithFrame:CGRectMake(26 + 66, 31, screenBounds.size.width -(66 + 26) - 13, 30)];
         l.backgroundColor = header.backgroundColor;
-        l.text = self.onlyPerson.email;
+        l.text = self.showOnlyThisPerson.email;
         l.font = [UIFont systemFontOfSize:16];
         l.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         [l setUserInteractionEnabled:YES];
@@ -257,7 +264,9 @@
     
     self.table.tableFooterView = headerView;
     
-    if (!self.onlyPerson) {
+    // If NOT displaying only this one person's emails ...
+    if (!self.showOnlyThisPerson) {
+        
         self.refreshC = [[UIRefreshControl alloc] init];
         [self.table addSubview:self.refreshC];
         [self.refreshC addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
@@ -298,7 +307,7 @@
 {
     Conversation* c = [[Conversation alloc] init];
     
-    // keep only mail sent by onlyPerson with attachment
+    // keep only mail sent by showOnlyThisPerson with attachment
     //NSMutableArray* tmp = [NSMutableArray arrayWithCapacity:500];
     
     for (NSDictionary* d in self.convByDay) {
@@ -308,7 +317,7 @@
             Conversation* con = [[Accounts sharedInstance] conversationForCI:cI];
             for (Mail* m in con.mails) {
                 if ([m hasAttachments]) {
-                    //if ([m.email.sender.mailbox isEqualToString:self.onlyPerson.email]) {
+                    //if ([m.email.sender.mailbox isEqualToString:self.showOnlyThisPerson.email]) {
                     [c addMail:m];
                     //   break;
                     //}
@@ -320,7 +329,7 @@
     //c.mails = tmp;
     
     // to have the right title in next VC
-    //[c firstMail].subject = self.onlyPerson.name;
+    //[c firstMail].subject = self.showOnlyThisPerson.name;
     
     if (self.attachSubscriber) {
         [self.attachSubscriber reloadWithConversation:c];
@@ -339,19 +348,23 @@
 
 -(void) _longPress:(UILongPressGestureRecognizer*)lpgr
 {
+    DDAssert(self.showOnlyThisPerson,@"showOnlyThisPerson must be set");
+    
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     pasteboard.persistent = YES;
-    pasteboard.string = self.onlyPerson.email;
+    pasteboard.string = self.showOnlyThisPerson.email;
     [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad") dismissAfter:2 code:0];
 }
 
 -(void) _press:(UITapGestureRecognizer*)tgr
 {
+    DDAssert(self.showOnlyThisPerson, @"showOnlyThisPerson must be set");
+    
     Draft* draft = [Draft newDraftFormCurrentAccount];
     
-    //NSInteger personIndex = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
+    //NSInteger personIndex = [[Persons sharedInstance] indexForPerson:self.showOnlyThisPerson];
     
-    draft.toPersons = [NSMutableArray arrayWithArray:@[self.onlyPerson.email]];
+    draft.toPersons = [NSMutableArray arrayWithArray:@[self.showOnlyThisPerson.email]];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
 }
@@ -407,8 +420,8 @@
     //[[CocoaButton sharedButton] enterLevel:1];
     //[[Accounts sharedInstance].currentAccount showProgress];
     
-    if (self.onlyPerson) {
-        [[Accounts sharedInstance].currentAccount doPersonSearch:self.onlyPerson];
+    if (self.showOnlyThisPerson) {
+        [[Accounts sharedInstance].currentAccount doPersonSearch:self.showOnlyThisPerson];
     }
 }
 
@@ -420,10 +433,10 @@
     
     //[[Accounts sharedInstance] currentAccount].mailListSubscriber = nil;
 
-    if (!self.onlyPerson) {
+//    if (!self.showOnlyThisPerson) {
         //self.table.emptyDataSetSource = nil;
         //self.table.emptyDataSetDelegate = nil;
-    }
+//    }
     
     
     [ViewController animateCocoaButtonRefresh:NO];
@@ -431,23 +444,33 @@
 
 -(void) setupData
 {
-    DDLogDebug(@"\n\n-[MailListViewController setupData]");
+    DDLogDebug(@"BEGIN -[MailListViewController setupData]");
+    
+    // If we are showing the All Mail account ...
     if (kisActiveAccountAll) {
+        
         DDLogDebug(@"\tActive Account is \"All\" Account");
+        
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
-            Account* a = [[Accounts sharedInstance] account:idx];
-            a.mailListSubscriber = self;
-            [self insertConversations:[a getConversationsForFolder:self.folder]];
+            Account* acnt = [[Accounts sharedInstance] account:idx];
+            [self _addConversationsForAccount:acnt folder:self.folder];
+
         }
     }
-    else {
+    else { // We are showing the Current account ...
+        
         Account* acnt = [[Accounts sharedInstance] currentAccount];
-        NSInteger acntIndex = acnt.idx;
-        DDLogDebug(@"\tActive Account Index = %ld\n",acntIndex);
-        acnt.mailListSubscriber = self;
-        NSMutableArray *conversations = [acnt getConversationsForFolder:self.folder];
-        [self insertConversations:conversations];
+        DDLogDebug(@"\tActive Account Index = Current Account = %ld\n",acnt.idx);
+        [self _addConversationsForAccount:acnt folder:self.folder];
     }
+}
+
+-(void) _addConversationsForAccount:(Account*)account folder:(CCMFolderType)folder
+{
+    account.mailListSubscriber = self;
+    
+    NSMutableArray *conversations = [account getConversationsForFolder:folder];
+    [self insertConversations:conversations];
 }
 
 -(void) removeConversationList:(NSArray<ConversationIndex*>*)convs
@@ -522,13 +545,15 @@
             
             NSDate* tmpDay = self.convByDay[dayIndex][@"day"];
             
-            NSMutableArray* list = self.convByDay[dayIndex][@"list"];
+            NSMutableArray<ConversationIndex*>* list = self.convByDay[dayIndex][@"list"];
             
             for (int j = 0 ; j < list.count ; j++) {
                 ConversationIndex* cI = list[j];
                 
+                // If this converstation index's date matches the dayIndex date
                 NSComparisonResult dayresult = [cI.day compare:tmpDay];
                 
+                // If the two dates are NOT equal
                 if (dayresult != NSOrderedSame) {
                     [reAddConvs addObject:cI];
                     continue;
@@ -547,7 +572,7 @@
         }
         
         if (reAddConvs.count > 0) {
-            NSLog(@"%ld Conversation Time Updated",(unsigned long)reAddConvs.count);
+            DDLogDebug(@"%ld Conversation Time Updated",(unsigned long)reAddConvs.count);
             [self _removeConversation:reAddConvs];
             [self insertConversations:reAddConvs];
         }
@@ -591,7 +616,7 @@
     Person *currentAccountPerson = [Accounts sharedInstance].currentAccount.person;
     
     NSInteger personID = [[Persons sharedInstance] indexForPerson:person];
-    NSInteger meID     = [[Persons sharedInstance] indexForPerson:currentAccountPerson;
+    NSInteger meID     = [[Persons sharedInstance] indexForPerson:currentAccountPerson];
     
     for (Mail* mail in [[[Accounts sharedInstance] conversationForCI:ci] mails]) {
       
@@ -610,7 +635,7 @@
                           
                           
 
--(void) insertConversationIndex:(ConversationIndex*)ci
+-(void) insertConversationIndex:(ConversationIndex*)conIndex
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
        
@@ -618,59 +643,49 @@
             return;
         }
        
-        if (self.onlyPerson) {
-            // If the conversation does not contain a message to or from onlyPerson ...
-            if (![self _findMessageToOrFromPerson:self.onlyPerson
-                                   inConversation:ci]) {
-                
+        if (self.showOnlyThisPerson) {
+            // If the conversation does not contain a message to or from showOnlyThisPerson ...
+            if (![self _findMessageToOrFromPerson:self.showOnlyThisPerson
+                                   inConversation:conIndex]) {
                 return;
             }
         }
     
         // If this view already contains this conversation ...
-        if ([self.indexSet[ci.user.accountIndex] containsIndex:ci.index]) {
+        if ([self.indexSet[conIndex.user.accountIndex] containsIndex:conIndex.index]) {
             return;
         }
         
-        Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
+        Conversation* conv = [[Accounts sharedInstance] conversationForCI:conIndex];
         
         // folder currently being displayed in the view
-        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+        NSInteger curFolderIndex = [conv.user numFolderWithFolder:self.folder];
+        NSInteger allFolderIndex = [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
         
-        // if the current folder is the All messages folder ...
-        if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+        // if the current folder is NOT the All messages folder ...
+        if (curFolderIndex != allFolderIndex) {
             
             [conv foldersType];  // return igored ... queries DB to get uid's for msgId????
             
-            BOOL isInFolder = NO;
-            
-            // Do any of the messages in the conversation 
-            for (Mail* mail in conv.mails) {
-                
-                // is the mail in this folder?
-                if ([mail uidEWithFolder:currentFolderIdx]) {
-                    isInFolder = YES;
-                    break;
-                }
-            }
+            BOOL isInFolder = [conv isInFolder:curFolderIndex];
             
             if (!isInFolder) {
     #ifdef USING_INSTABUG
                 IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
     #endif
-                DDLogError(@"Conversation with index %ld",(long)ci.index);
+                DDLogError(@"Conversation with index %ld",(long)conIndex.index);
                 
                 Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-                [a deleteIndex:ci.index fromFolder:self.folder];
+                [a deleteIndex:conIndex.index fromFolder:self.folder];
                 return;
             }
         }
     
         NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
 
-        [self.indexSet[ci.user.accountIndex] addIndex:ci.index];
+        [self.indexSet[conIndex.user.accountIndex] addIndex:conIndex.index];
         
-        NSDate* convDay = ci.day;
+        NSDate* convDay = conIndex.day;
         
         BOOL added = NO;
         
@@ -680,9 +695,9 @@
             NSComparisonResult result = [convDay compare:tmpDay];
             
             if (result == NSOrderedDescending) {
-                //Email Before //Insert section before date //+ email
+                //Email Before //Insert section before date //+ email  << Not Andy's comment
                 
-                NSDictionary* earlier = @{@"list": [NSMutableArray arrayWithObject:ci], @"day":convDay};
+                NSDictionary* earlier = @{@"list": [NSMutableArray arrayWithObject:conIndex], @"day":convDay};
                 [self.convByDay insertObject:earlier atIndex:dayIndex];
                 
                 //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
@@ -709,10 +724,10 @@
                     
                     ConversationIndex* cI = list[j];
                     
-                    NSComparisonResult result = [ci.date compare:cI.date];
+                    NSComparisonResult result = [conIndex.date compare:cI.date];
                     
                     if (result == NSOrderedDescending) {
-                        [list insertObject:ci atIndex:j];
+                        [list insertObject:conIndex atIndex:j];
                         [self.table beginUpdates];
                         
                         if (self.convByDay.count > dayIndex) {
@@ -728,7 +743,7 @@
                 }
                 
                 if (!added) {
-                    [list addObject:ci];
+                    [list addObject:conIndex];
                     
                     [self.table beginUpdates];
                     
@@ -749,7 +764,7 @@
         
         if (!added) {
             //Date section not existing //Add new date //Add email to new date
-            NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:ci], @"day":convDay};
+            NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:conIndex], @"day":convDay};
             [self.convByDay addObject:later];
             
             //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
@@ -776,8 +791,8 @@
 {
     DDLogInfo(@">>ENTERING insertConversations: \n\tWill put %ld Conversations into Mail List Table",(long)pConvs.count);
     
-    if (self.onlyPerson) {
-        DDLogDebug(@"\tonlyPerson == TRUE");
+    if (self.showOnlyThisPerson) {
+        DDLogDebug(@"\tshowOnlyThisPerson == TRUE");
         pConvs = [self _filterResultsForPerson:pConvs];
     }
     
@@ -881,7 +896,7 @@
 {
     NSMutableArray* current = [convs mutableCopy];
     
-    NSInteger personID = [[Persons sharedInstance] indexForPerson:self.onlyPerson];
+    NSInteger personID = [[Persons sharedInstance] indexForPerson:self.showOnlyThisPerson];
     NSInteger meID = [[Persons sharedInstance] indexForPerson:[Accounts sharedInstance].currentAccount.person];
     NSMutableArray* next = [NSMutableArray arrayWithCapacity:current.count];
     
@@ -1193,10 +1208,10 @@
     
     [self.table reloadData];  // in UITableViewDataSource
     
-    DDLogDebug(@"DISPATCH ASYNC remove conversations (count = %ld)",self.deletes.count);
-    
     dispatch_async(dispatch_get_main_queue(),^{
         if (self.deletes.count > 0) {
+            DDLogDebug(@"self.deletes.count = %ld, removing from conversation list",
+                       self.deletes.count);
             [self removeConversationList:[self.deletes allObjects]];
         }
     });
@@ -1220,8 +1235,13 @@
     return content.count;
 }
 
+// MARK: - cellForRowAtIndexPath
+
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
+    DDLogInfo(@"BEGIN MailListViewControl cellForRowAtIndexPath for row=%ld section=%ld",
+              indexPath.row,indexPath.section);
+    
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
     
@@ -1232,17 +1252,32 @@
         [self.attachButton setHidden:NO];
     }
     
+    
+    
     BOOL lastSection = (indexPath.section == self.convByDay.count - 1);//(indexPath.section == pageCount * self.pageIndex || indexPath.section == self.convByDay.count - 1);
-    BOOL lastRow = indexPath.row == ([convs count] - 1);
+    BOOL lastRow = (indexPath.row == ([convs count] - 1) );
     
-    if (!self.onlyPerson && self.indexCount != self.countBeforeLoadMore && lastSection && lastRow) {
-        [self reFetch:NO];
+    if ( lastSection && lastRow && !self.showOnlyThisPerson ) {
+        
+        DDLogInfo(@"Last Section && Last Row && NOT showing person search results");
+        DDLogInfo(@"\tLast Section = (indexPath.section (%ld) == self.convByDay.count (%ld) - 1)",
+                  indexPath.section,self.convByDay.count);
+        DDLogInfo(@"\tLast Row = (indexPath.row (%ld) == ( [convs count] (%ld) -1 ))",
+                  indexPath.row,[convs count]);
+        
+        if (self.indexCount != self.countBeforeLoadMore) {
+            DDLogInfo(@"\tindex count NOT equal to count before load more, so calling reFetch");
+            [self reFetch:NO];
+        }
+        else if (self.localSearchDone) {
+            DDLogInfo(@"\tLocal Search Done, calling account.localFetchMore");
+            [[Accounts sharedInstance].currentAccount localFetchMore:YES];
+        }
+        else {
+            DDLogInfo(@"\tNOT (indexCount != countBeforeLoadMore)\n\tNOT (localSearchDone)");
+        }
     }
     
-    if (self.localSearchDone && !self.onlyPerson && self.indexCount == self.countBeforeLoadMore && lastSection && lastRow) {
-        DDLogInfo(@"Last and Searching");
-        [[Accounts sharedInstance].currentAccount localFetchMore:YES];
-    }
     
     NSString* idToUse = (conv.mails.count > 1) ? kCONVERSATION_CELL_ID : kMAIL_CELL_ID;
     
@@ -1253,6 +1288,8 @@
         [cell setupWithDelegate:self];
     }
     
+    
+    // If this is not the All Folder or the Drafts Folder ...
     if (self.folder.type != FolderTypeAll && self.folder.type != FolderTypeDrafts) {
         
         NSMutableString* fldrsStill = [NSMutableString string];
@@ -1261,18 +1298,12 @@
             [fldrsStill appendFormat:@" %lu",(unsigned long)decodeFolderTypeWith([fldr integerValue]).type];
         }
         
-        BOOL isInFolder = NO;
         NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
 
-        for (Mail* mail in conv.mails) {
-            if ([mail uidEWithFolder:currentFolderIdx]) {
-                isInFolder = YES;
-                break;
-            }
-        }
+        BOOL isInFolder = [conv isInFolder:currentFolderIdx];
         
         if (!isInFolder) {
-            NSLog(@"%@",[NSString stringWithFormat:@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ", (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill]);
+            DDLogInfo(@"%@",[NSString stringWithFormat:@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ", (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill]);
             
             // Add this Conversation Index to those to be deleted
             [self.deletes addObject:conversationIndex];
@@ -1303,7 +1334,7 @@
     return dateS;
 }
 
-// MARK: - UITableViewDataSource
+// MARK: - UITableViewDelegate
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     return 90;
@@ -1715,7 +1746,7 @@
 
 - (NSAttributedString *)titleForEmptyDataSet:(UIScrollView *)scrollView
 {
-    NSString *text = self.initialLoading?@"":self.onlyPerson?NSLocalizedString(@"No emails.", @"No emails."):NSLocalizedString(@"No more emails.", @"No more emails.");
+    NSString *text = self.initialLoading?@"":self.showOnlyThisPerson?NSLocalizedString(@"No emails.", @"No emails."):NSLocalizedString(@"No more emails.", @"No more emails.");
     
     NSDictionary *attributes = @{NSFontAttributeName: [UIFont boldSystemFontOfSize:18.0f],
                                  NSForegroundColorAttributeName: [UIColor darkGrayColor]};
@@ -1723,7 +1754,7 @@
     return [[NSAttributedString alloc] initWithString:text attributes:attributes];
 }
 
-- (NSAttributedString *)descriptionForEmptyDataSet:(UIScrollView *)scrollView
+- (NSAttributedString *)ForEmptyDataSet:(UIScrollView *)scrollView
 {
     NSString *text = self.initialLoading?@"":[self isInbox]?NSLocalizedString(@"Go get some cocoa!", @"Go get some cocoa!"):@"";
     
@@ -1770,4 +1801,37 @@
     return (self.folder.type == FolderTypeInbox);
 }
 
+-(NSString *) description
+{
+    NSMutableString *txt = [NSMutableString string];
+    
+    [txt appendString:@"BEGIN MailListViewController"];
+    
+    // convByDay is a Mutable Array of Dictionaries
+    NSInteger convCount = [self.convByDay count];
+    [txt appendFormat:@"\n\tconvByDay has %ld entries",convCount];
+    
+    for ( NSInteger conv = 0; conv < convCount; conv++ ) {
+        NSDictionary *convDict = self.convByDay[conv];
+        
+        [txt appendFormat:@"\tconvByDay[%ld]: %@",conv,convDict];
+    }
+    
+    NSInteger indexSetCount = [self.indexSet count];
+    [txt appendFormat:@"\n\nindexSets has %ld NSMutableIndexSet:",indexSetCount];
+    for (NSInteger indexSetIndex = 0; indexSetIndex < indexSetCount; indexSetIndex++) {
+        [txt appendFormat:@"\n\tIndex Set for Account %ld:",indexSetIndex];
+        
+        NSMutableIndexSet *accountMailIndecies = self.indexSet[indexSetIndex];
+        NSInteger indexSetCount = [accountMailIndecies count];
+        [txt appendFormat:@"\n\t\tindex count = %ld",indexSetCount];
+        
+        [accountMailIndecies enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+            [txt appendFormat:@"\n\t\tindex = %ld",idx];
+        }];
+    }
+    
+    [txt appendString:@"\nEND MailListViewController"];
+    return txt;
+}
 @end
