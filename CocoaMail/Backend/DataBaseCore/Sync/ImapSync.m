@@ -436,7 +436,12 @@ static NSArray * sharedServices = nil;
     NSDictionary *state = [syncMgr retrieveState:folderNumber
                                       accountNum:self.user.accountNum];
     
-    return ([state[@"fullsynced"] boolValue] == FALSE) ;
+    BOOL retVal = ([state[@"fullsynced"] boolValue] == FALSE);
+    
+    DDLogInfo(@"Folder %ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",folderNumber,state[@"fullsynced"],(retVal?@"YES":@"NO"));
+    
+    
+    return retVal;
 }
 
 -(NSInteger) _nextFolderToSync
@@ -496,7 +501,7 @@ static NSArray * sharedServices = nil;
     NSArray* folders = [self.user allFoldersDisplayNames];
     for (int indexFolder = 0; indexFolder < folders.count; indexFolder++) {
         
-        if ( [self folderIsNotSynced:indexFolder] == FALSE ) {
+        if ( [self folderIsNotSynced:indexFolder] ) {
             DDLogInfo(@"\tUser Folder %ld Not Synced, do next",(long)indexFolder);
             return indexFolder;
         }
