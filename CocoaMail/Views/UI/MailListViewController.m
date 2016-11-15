@@ -407,7 +407,7 @@
     
     [self serverSearchDone:YES];
 
-    //[self reFetch:YES];
+    [self reFetch:YES];  // was commented out; AJC uncommented it
 }
 
 -(void) viewDidAppear:(BOOL)animated
