@@ -281,6 +281,7 @@
 }
 
 - (void)refreshTable {
+    DDLogInfo(@">> ENTERED MailListViewController refreshTable");
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
     //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
     //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
@@ -460,7 +461,7 @@
     else { // We are showing the Current account ...
         
         Account* acnt = [[Accounts sharedInstance] currentAccount];
-        DDLogDebug(@"\tActive Account Index = Current Account = %ld\n",acnt.idx);
+        DDLogDebug(@"\tActive Account Index = Current Account = %ld\n",(long)acnt.idx);
         [self _addConversationsForAccount:acnt folder:self.folder];
     }
 }
@@ -608,8 +609,6 @@
     }];
 
 }
-
-#warning Needs refactoring - Method is 161 lines long
 
 - (BOOL)_findMessageToOrFromPerson:(Person*)person inConversation:(ConversationIndex*)ci
 {
@@ -1203,15 +1202,19 @@
 
 -(void) reload
 {
-    DDLogDebug(@"ENTERED reload / calls -[UITableViewDataSource reloadData]");
+    DDLogDebug(@">> ENTERED TableViewDataSource reload");
     //self.deletedSections = 0;
+    
+    DDLogInfo(@">> CALLNG self.table reloadData");
+    
+    DDAssert(self.table,@"self.table must be set.");
     
     [self.table reloadData];  // in UITableViewDataSource
     
     dispatch_async(dispatch_get_main_queue(),^{
         if (self.deletes.count > 0) {
-            DDLogDebug(@"self.deletes.count = %ld, removing from conversation list",
-                       self.deletes.count);
+            DDLogDebug(@"\tself.deletes.count = %ld, removing from conversation list",
+                       (unsigned long)self.deletes.count);
             [self removeConversationList:[self.deletes allObjects]];
         }
     });
@@ -1240,7 +1243,7 @@
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     DDLogInfo(@"BEGIN MailListViewControl cellForRowAtIndexPath for row=%ld section=%ld",
-              indexPath.row,indexPath.section);
+              (long)indexPath.row,indexPath.section);
     
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
@@ -1261,9 +1264,9 @@
         
         DDLogInfo(@"Last Section && Last Row && NOT showing person search results");
         DDLogInfo(@"\tLast Section = (indexPath.section (%ld) == self.convByDay.count (%ld) - 1)",
-                  indexPath.section,self.convByDay.count);
+                  (long)indexPath.section,self.convByDay.count);
         DDLogInfo(@"\tLast Row = (indexPath.row (%ld) == ( [convs count] (%ld) -1 ))",
-                  indexPath.row,[convs count]);
+                  (long)indexPath.row,[convs count]);
         
         if (self.indexCount != self.countBeforeLoadMore) {
             DDLogInfo(@"\tindex count NOT equal to count before load more, so calling reFetch");
@@ -1715,7 +1718,7 @@
                                       waitUntilDone:NO];*/
             
             DDLogDebug(@"NOT Refreshing MailListView because forceRefresh is FALSE, AND ( countBeforeLoadMore(%lu) EQUALS mailCountAfter(%lu) )",
-                       self.countBeforeLoadMore,mailCountAfer);
+                       (long)self.countBeforeLoadMore,mailCountAfer);
             return;
         }
         
@@ -1809,25 +1812,25 @@
     
     // convByDay is a Mutable Array of Dictionaries
     NSInteger convCount = [self.convByDay count];
-    [txt appendFormat:@"\n\tconvByDay has %ld entries",convCount];
+    [txt appendFormat:@"\n\tconvByDay has %ld entries",(long)convCount];
     
     for ( NSInteger conv = 0; conv < convCount; conv++ ) {
         NSDictionary *convDict = self.convByDay[conv];
         
-        [txt appendFormat:@"\tconvByDay[%ld]: %@",conv,convDict];
+        [txt appendFormat:@"\tconvByDay[%ld]: %@",(long)conv,convDict];
     }
     
     NSInteger indexSetCount = [self.indexSet count];
-    [txt appendFormat:@"\n\nindexSets has %ld NSMutableIndexSet:",indexSetCount];
+    [txt appendFormat:@"\n\nindexSets has %ld NSMutableIndexSet:",(long)indexSetCount];
     for (NSInteger indexSetIndex = 0; indexSetIndex < indexSetCount; indexSetIndex++) {
-        [txt appendFormat:@"\n\tIndex Set for Account %ld:",indexSetIndex];
+        [txt appendFormat:@"\n\tIndex Set for Account %ld:",(long)indexSetIndex];
         
         NSMutableIndexSet *accountMailIndecies = self.indexSet[indexSetIndex];
         NSInteger indexSetCount = [accountMailIndecies count];
-        [txt appendFormat:@"\n\t\tindex count = %ld",indexSetCount];
+        [txt appendFormat:@"\n\t\tindex count = %ld",(long)indexSetCount];
         
         [accountMailIndecies enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-            [txt appendFormat:@"\n\t\tindex = %ld",idx];
+            [txt appendFormat:@"\n\t\tindex = %ld",(unsigned long)idx];
         }];
     }
     

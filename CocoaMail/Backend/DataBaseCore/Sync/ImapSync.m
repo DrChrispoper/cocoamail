@@ -438,7 +438,7 @@ static NSArray * sharedServices = nil;
     
     BOOL retVal = ([state[@"fullsynced"] boolValue] == FALSE);
     
-    DDLogInfo(@"Folder %ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",folderNumber,state[@"fullsynced"],(retVal?@"YES":@"NO"));
+    DDLogVerbose(@"Folder #%ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",(long)folderNumber,state[@"fullsynced"],(retVal?@"YES":@"NO"));
     
     
     return retVal;
@@ -779,7 +779,7 @@ static NSArray * sharedServices = nil;
             NSString* folderPath = folderState[@"folderPath"];
             
             DDLogInfo(@"\tFolder %lu has Folder Path \"%@\"",
-                      existingFolderIndex,folderPath);
+                      (unsigned long)existingFolderIndex,folderPath);
             
             // if the path of the folder being checked, matches the path of the existing folder
             if ([[folder path] isEqualToString:folderPath]) {
@@ -873,7 +873,7 @@ static NSArray * sharedServices = nil;
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
 {
     DDLogInfo(@"BEGIN runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
-               folder,
+               (long)folder,
                (isFromStart==TRUE?@"TRUE":@"FALSE"),
                (getAll==TRUE?@"TRUE":@"FALSE"));
     
@@ -886,7 +886,7 @@ static NSArray * sharedServices = nil;
         DDLogInfo(@"\tfolderIndex = -1, calling folderIndex = _nextFolderToSync");
         folder = [self _nextFolderToSync];
     }
-    DDLogDebug(@"\tfolderIndex = %ld",folder);
+    DDLogDebug(@"\tfolderIndex = %ld",(long)folder);
     
     NSInteger currentFolder = folder;
     
@@ -915,7 +915,7 @@ static NSArray * sharedServices = nil;
         else if (currentFolder == -1) {
             
             // This will happen when the folder passed into the function was -1,
-            // and _nextFolderToSync returned -1.
+            // and _nextFolderToSync returns -1.
             DDLogError(@"IMAP Sync Service Error: All Synced");
             
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
@@ -971,21 +971,20 @@ static NSArray * sharedServices = nil;
                                 
                                 
 #warning Look: Almost the same code as _checkFolders again!
-                                SyncManager* sm = [SyncManager getSingleton];
+                                SyncManager* syncMgr = [SyncManager getSingleton];
                                 // mark folders that were deleted on the server as deleted on the client
                                 int i = 0;
                                 
-                                while (i < [sm folderCount:self.user.accountNum]) {
-                                    NSDictionary* folderState = [sm retrieveState:i accountNum:self.user.accountNum];
+                                while (i < [syncMgr folderCount:self.user.accountNum]) {
+                                    NSDictionary* folderState = [syncMgr retrieveState:i accountNum:self.user.accountNum];
                                     NSString* folderPath = folderState[@"folderPath"];
                                     
-                                    if ([sm isFolderDeleted:i accountNum:self.user.accountNum]) {
-                                        //NSLog(@"Folder %i in account %ld is deleted", i, (long)self.user.accountNum);
+                                    if ([syncMgr isFolderDeleted:i accountNum:self.user.accountNum]) {
+                                        DDLogInfo(@"Folder %i in account %ld is deleted", i, (long)self.user.accountNum);
                                     }
-                                    
-                                    if (![sm isFolderDeleted:i accountNum:self.user.accountNum] && ![[folders valueForKey:@"path"] containsObject:folderPath]) {
-                                        CCMLog(@"Folder %@ has been deleted - deleting FolderState", folderPath);
-                                        [sm markFolderDeleted:i accountNum:self.user.accountNum];
+                                    else if (![[folders valueForKey:@"path"] containsObject:folderPath]) {
+                                        DDLogInfo(@"Folder %@ has been deleted - deleting FolderState", folderPath);
+                                        [syncMgr markFolderDeleted:i accountNum:self.user.accountNum];
                                         i = 0;
                                     }
                                     
@@ -994,7 +993,7 @@ static NSArray * sharedServices = nil;
                                 
                                 //If the folder is Deleted & it's an important Folder
                                 //Check for another
-                                if ([sm isFolderDeleted:currentFolder accountNum:self.user.accountNum]) {
+                                if ([syncMgr isFolderDeleted:currentFolder accountNum:self.user.accountNum]) {
                                     
                                     CCMFolderType f = [self.user typeOfFolder:currentFolder];
                                     
@@ -1042,8 +1041,8 @@ static NSArray * sharedServices = nil;
                                             if (![newFolderPath isEqualToString:@""]) {
                                                 int i = 0;
                                                 
-                                                while (i < [sm folderCount:self.user.accountNum]) {
-                                                    NSDictionary* folderState = [sm retrieveState:i accountNum:self.user.accountNum];
+                                                while (i < [syncMgr folderCount:self.user.accountNum]) {
+                                                    NSDictionary* folderState = [syncMgr retrieveState:i accountNum:self.user.accountNum];
                                                     NSString* folderPath = folderState[@"folderPath"];
                                                     
                                                     if ([newFolderPath isEqualToString:folderPath]) {
@@ -1057,7 +1056,7 @@ static NSArray * sharedServices = nil;
                                     }//If important folder
                                 }//If folder deleted
                                 
-                                NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountNum:self.user.accountNum];
+                                NSMutableDictionary* folderState = [syncMgr retrieveState:currentFolder accountNum:self.user.accountNum];
                                 NSString* folderPath = folderState[@"folderPath"];
                                 
                                 MCOIMAPFolderInfoOperation* folder = [self.imapSession folderInfoOperation:folderPath];
@@ -1088,12 +1087,12 @@ static NSArray * sharedServices = nil;
                                         DDLogDebug(@"Folder:%@ has %d emails", folderPath, [info messageCount]);
                                         
                                         if (!isInBackground) {
-                                            [self _writeFinishedFolderState:sm emailCount:[info messageCount] andFolder:currentFolder];
+                                            [self _writeFinishedFolderState:syncMgr emailCount:[info messageCount] andFolder:currentFolder];
                                             
 #warning still not sure what this 'if' statement is doing
                                             if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
                                                 NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
-                                                [self _writeFinishedFolderState:sm lastEnded:lE andFolder:currentFolder];
+                                                [self _writeFinishedFolderState:syncMgr lastEnded:lE andFolder:currentFolder];
                                                 
                                                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
                                                 return;
@@ -1144,7 +1143,7 @@ static NSArray * sharedServices = nil;
                                                         return;
                                                     }
                                                     
-                                                    NSMutableDictionary* folderState = [sm retrieveState:currentFolder accountNum:self.user.accountNum];
+                                                    NSMutableDictionary* folderState = [syncMgr retrieveState:currentFolder accountNum:self.user.accountNum];
                                                     NSString* folderPath = folderState[@"folderPath"];
                                                     
                                                     Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
@@ -1168,7 +1167,7 @@ static NSArray * sharedServices = nil;
                                                         
                                                         if ([email.msgID isEqualToString:lastMsgID]) {
                                                             if (!isFromStart && !isInBackground) {
-                                                                [self _writeFinishedFolderState:sm lastEnded:from andFolder:currentFolder];
+                                                                [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
                                                             }
                                                             [subscriber sendCompleted];
                                                         }
@@ -1206,7 +1205,7 @@ static NSArray * sharedServices = nil;
                                                             
                                                             if ([email.msgID isEqualToString:lastMsgID]) {
                                                                 if (!isFromStart && !isInBackground) {
-                                                                    [self _writeFinishedFolderState:sm lastEnded:from andFolder:currentFolder];
+                                                                    [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
                                                                 }
                                                                 [subscriber sendCompleted];
                                                             }
@@ -1230,7 +1229,7 @@ static NSArray * sharedServices = nil;
                                                                 
                                                                 if ([email.msgID isEqualToString:lastMsgID]) {
                                                                     if (!isFromStart && !isInBackground) {
-                                                                        [self _writeFinishedFolderState:sm lastEnded:from andFolder:currentFolder];
+                                                                        [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
                                                                     }
                                                                     [subscriber sendCompleted];
                                                                 }

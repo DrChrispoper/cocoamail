@@ -524,12 +524,12 @@
     [desc appendString:@"\n"];
 
     [desc appendFormat:@"\tImportant Folders count = %ld\n",
-     [self.importantFolders count]];
+     (unsigned long)[self.importantFolders count]];
     for (NSString *importantFolderName in self.importantFolders) {
         [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
     }
     [desc appendFormat:@"\tFolder Display Names count = %ld\n",
-     [self.allFoldersDisplayNames count]];
+     (unsigned long)[self.allFoldersDisplayNames count]];
     for (NSString *folderName in self.allFoldersDisplayNames) {
         [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
     }

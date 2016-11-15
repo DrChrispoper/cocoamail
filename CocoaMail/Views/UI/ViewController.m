@@ -163,6 +163,8 @@ static ViewController * s_self;
     if ([Accounts sharedInstance].accountsCount !=  1) {
         // other than 1 account
         
+        // Show the Mail List for the last folder
+        
         MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue) ];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;
@@ -836,30 +838,37 @@ static ViewController * s_self;
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         //[[SearchRunner getSingleton] cancel];
+        
+        DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
 
         if (self.viewControllers.count == 1) {
+            DDLogInfo(@"\tOnly 1 view controller, returning.");
             return;
         }
         
         if ([self _checkInteractionAndBlock]) {
+            DDLogInfo(@"\tAlready blocking interactions, returning.");
             return;
         }
         
 #ifdef USING_INSTABUG
         IBGLog(kBACK_NOTIFICATION);
 #endif
-        DDLogInfo(kBACK_NOTIFICATION);
+//        DDLogInfo(kBACK_NOTIFICATION);
 
+        // Get the current (top) view controller, clean up and remove controller from stack.
         InViewController* vc = [self.viewControllers lastObject];
         [vc cleanBeforeGoingBack];
-        UIView* lastView = vc.view;
+        UIView* lastView = vc.view; // save current view
         [self.viewControllers removeLastObject];
         
         UIView* nextView = nil;
         InViewController* f = [self.viewControllers lastObject];
         
         // tweak to realod nav bar after settings view
-        if ([vc isKindOfClass:[SettingsViewController class]] && [f isKindOfClass:[FolderViewController class]]) {
+        if ([vc isKindOfClass:[SettingsViewController class]] &&
+            [f isKindOfClass:[FolderViewController class]]) {
+            
             FolderViewController* f = [[FolderViewController alloc] init];
             f.view.frame = self.contentView.bounds;
             nextView = f.view;
@@ -914,11 +923,13 @@ static ViewController * s_self;
     }];
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
-        
+    
+        DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
+
 #ifdef USING_INSTABUG
         IBGLog(kACCOUNT_CHANGED_NOTIFICATION);
 #endif
-        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
+//        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
 
         //[[Parser sharedParser] cleanConversations];
         
@@ -957,10 +968,12 @@ static ViewController * s_self;
     
     [[NSNotificationCenter defaultCenter] addObserverForName:kQUICK_ACTION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
+        DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
+
 #ifdef USING_INSTABUG
         IBGLog(kQUICK_ACTION_NOTIFICATION);
 #endif
-        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
+//        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
         
         BOOL inFolders = self.viewControllers.count == 1;
         

@@ -237,7 +237,7 @@ static SyncManager * singleton = nil;
     NSInteger accountCount = [self _getAccountCount];
     
 #warning Not sure this line is correct yet - is account # 0 or 1 based?
-    DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",accountCount);
+    DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",(long)accountCount);
     
     return self.syncStates[accountNum][FOLDER_STATES_KEY];
 }
@@ -330,11 +330,11 @@ static SyncManager * singleton = nil;
     if ( ![self.syncStates[accountNum] writeToFile:filePath atomically:YES] ) {
         
         DDLogError(@"Error: Could not save account %ld Sync State to \"%@\"",
-                   accountNum,filePath);
+                   (long)accountNum,filePath);
         return;
     }
     
-    DDLogInfo(@"Saved account %ld Sync State to \"%@\"",accountNum,fileName);
+    DDLogInfo(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
 }
 
 

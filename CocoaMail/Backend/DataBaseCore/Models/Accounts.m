@@ -105,7 +105,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             [sharedInstance runLoadData];
         }
         
-        DDLogInfo(@"Accounts Singleton Initialized, count = %ld",[accounts count]);
+        DDLogInfo(@"Accounts Singleton Initialized, count = %ld",(unsigned long)[accounts count]);
         DDLogInfo(@"Accounts:%@",[sharedInstance description]);
     });
     
@@ -1153,7 +1153,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 [self sendDraft:draft to:toPIDs];
             } else {
                 DDLogWarn(@"Draft Acnt # %lu DOES NOT EQUAL User Acnt # %lu",
-                             draft.accountNum,self.user.accountNum);
+                             (long)draft.accountNum,self.user.accountNum);
             }
         }
     }
@@ -1255,7 +1255,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             okayToRemoveFromFolder = (folderTo.type == FolderTypeDeleted);
             break;
         default:
-            DDLogError(@"move from this folder not implemented (From Folder Type = %ld)",folderFrom.type);
+            DDLogError(@"move from this folder not implemented (From Folder Type = %ld)",(unsigned long)folderFrom.type);
             
             return NO;
     }
@@ -1488,7 +1488,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
              _isSyncing = NO;
              if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                  DDLogDebug(@"\tCalling self recursively");
-                 [self doLoadServer];
+                 [self doLoadServer];  // recursion
              }
          }];
     }
@@ -1815,9 +1815,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) refreshCurrentFolder
 {
-    DDLogInfo(@"-[Accounts refreshCurrentFolder]");
+    DDLogInfo(@">> ENTERED Accounts refreshCurrentFolder");
     
     if (self.user.isAll) {
+        DDLogInfo(@"\tWe are ALL folders");
         for (Account* a in [[Accounts sharedInstance] accounts]) {
             if (!a.user.isAll) {
                 [a refreshCurrentFolder];
@@ -1909,15 +1910,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) syncCurrentFolder
 {
-    DDLogInfo(@"ENTERING >>syncCurrentFolder");
+    DDLogInfo(@">> ENTERING Accounts syncCurrentFolder");
     
     if (self.user.isDeleted) {
-        DDLogWarn(@"Returning because self.user.isDeleted is FALSE");
+        DDLogWarn(@"\tReturning because self.user.isDeleted is FALSE");
         return;
     }
     
     if (![ImapSync canFullSync]){
-        DDLogWarn(@"Returning because [ImapSync canFullSyc] returned YES and we negated it??");
+        DDLogWarn(@"\tReturning because [ImapSync canFullSyc] returned YES and we negated it??");
         return;
     }
     
@@ -1947,7 +1948,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     [desc appendString:@"\n --- Begin Account ---\n"];
     
     // Account Index
-    [desc appendFormat:@"Account Index = %ld\n",[self idx]];
+    [desc appendFormat:@"Account Index = %ld\n",(long)[self idx]];
     [desc appendString:@"\n"];
 
     // UserSettings
@@ -1978,7 +1979,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSUInteger folderCount = [folderArray count];
     
-    [desc appendFormat:@"%@ Folders count = %ld\n",folderType, folderCount];
+    [desc appendFormat:@"%@ Folders count = %ld\n",folderType, (unsigned long)folderCount];
     
     for (NSUInteger folderIndex = 0; folderIndex < folderCount; folderIndex++) {
         
