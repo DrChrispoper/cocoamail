@@ -43,7 +43,7 @@
 //Update recorded state
 -(NSInteger) folderCount:(NSInteger)accountNum;
 -(void) addAccountState;
--(void) addFolderState:(NSDictionary*)data accountNum:(NSInteger)accountNum;
+-(void) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum;
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum;

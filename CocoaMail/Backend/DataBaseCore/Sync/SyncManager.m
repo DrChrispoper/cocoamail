@@ -281,14 +281,21 @@ static SyncManager * singleton = nil;
     [self _writeSyncStateToFileForAccount:numAccounts];
 }
 
-// Add the given data dictionary as Folder State in the account's Sync State
--(void) addFolderState:(NSDictionary*)data accountNum:(NSInteger)accountNum
+-(void) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum
 {
-    [self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:data];
+    NSDictionary* folderState = @{ @"accountNum" : @(accountNum),
+                                   @"folderDisplayName": folderName,
+                                   @"folderPath":folder.path,
+                                   @"deleted":@false,
+                                   @"fullsynced":@false,
+                                   @"lastended":@0,
+                                   @"flags":@(folder.flags),
+                                   @"emailCount":@(0)};
+    
+    [self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:folderState];
     
     [self _writeSyncStateToFileForAccount:accountNum];
 }
-
 
 
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum

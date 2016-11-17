@@ -722,28 +722,21 @@
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
         
-        NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:[NSString stringWithFormat:@"%c",[folder delimiter]]];
+        ImapSync *imapSync = [ImapSync sharedServices:user];
+        
+        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath];
+
+//        NSString *dispName = [imapSync displayNameForFolder:folder];
+        
         [dispNamesFolders addObject:dispName];
         
-        NSDictionary* folderState = @{ @"accountNum" : @(user.accountNum),
-                                       @"folderDisplayName":dispName,
-                                       @"folderPath":folder.path,
-                                       @"deleted":@false,
-                                       @"fullsynced":@false,
-                                       @"lastended":@0,
-                                       @"flags":@(folder.flags),
-                                       @"emailCount":@(0)};
-        
-        [[SyncManager getSingleton] addFolderState:folderState accountNum:user.accountNum];
-        
-        MCOIMAPFolderInfoOperation* folderOp = [imapSession folderInfoOperation:folder.path];
-        [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
-            if (!error) {
-                NSMutableDictionary* syncState = [[SyncManager getSingleton] retrieveState:indexPath accountNum:user.accountNum];
-                syncState[@"emailCount"] = @([info messageCount]);
-                [[SyncManager getSingleton] persistState:syncState forFolderNum:indexPath accountNum:user.accountNum];
-            }
-        }];
+//        [[SyncManager getSingleton] addNewStateForFolder:folder
+//                                                   named:dispName
+//                                              forAccount:user.accountNum];
+//        
+//        [imapSync updatePersistentStateOfFolder:folder
+//                                        atIndex:indexPath
+//                               forAccountNumber:user.accountNum];
         
         indexPath++;
     }

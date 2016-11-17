@@ -748,7 +748,7 @@ static NSArray * sharedServices = nil;
     
     // Appears not to handle DELETED folders.  What about folders with name CHANGES?
     
-    DDLogInfo(@"BEGIN Check Folder Names for Updates, folder count = %lu",
+    DDLogInfo(@">> BEGIN Check Folder Names for Updates, folder count = %lu",
               (unsigned long)folders.count);
     
 #warning more work to do here!
@@ -758,14 +758,13 @@ static NSArray * sharedServices = nil;
     
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
-    for (MCOIMAPFolder* folder in folders) {
+    for (MCOIMAPFolder* imapFolder in folders) {
         BOOL folderPathInAccountsExistingFolders = NO;
         
         NSUInteger existingFolderCount = [syncManager folderCount:self.user.accountNum];
         
-        DDLogInfo(@"\tExisting Folder Count for Account # %lu / Folder Path %@ is %lu",
+        DDLogInfo(@"\tExisting Folder Count for Account # %lu is %lu",
                   (unsigned long)self.user.accountNum,
-                  folder.path,
                   (unsigned long)existingFolderCount);
         
         // For each existing folder
@@ -782,23 +781,28 @@ static NSArray * sharedServices = nil;
                       (unsigned long)existingFolderIndex,folderPath);
             
             // if the path of the folder being checked, matches the path of the existing folder
-            if ([[folder path] isEqualToString:folderPath]) {
-                DDLogInfo(@"\t *** Paths Match ***");
+            if ([[imapFolder path] isEqualToString:folderPath]) {
+                DDLogInfo(@"\t *** IMAP Folder == Local Folder ***");
                 folderPathInAccountsExistingFolders = YES;
                 break;
             }
         }
     
         // If the folder being checked did not have a matching path
-        // to any of the existing folders
+        // to any of the existing folders, then it is a NEW folder and needs
+        // to be added.
         if ( folderPathInAccountsExistingFolders == FALSE ) {
             
             DDLogInfo(@"Folder Path \"%@\" NOT FOUND in account's existing folder paths",
-                      [folder path]);
+                      [imapFolder path]);
             
-            NSString *dispName = [self addFolder:folder toUser:self.user atIndex:indexPath];
+            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:indexPath];
             if ( dispName && dispName.length > 0 ) {
                 [dispNamesFolders addObject:dispName];
+            }
+            else {
+                // addFolder failed
+                DDLogError(@"\tImapSync addFolder:toUser:atIndex: failed!");
             }
          }
         
@@ -818,32 +822,38 @@ static NSArray * sharedServices = nil;
 
 -(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath
 {
-    SyncManager* syncManager = [SyncManager getSingleton];
 
-    MCOIMAPNamespace *imapNamespace = [self.imapSession defaultNamespace];
-    NSArray *namespaceComponenets = [imapNamespace componentsFromPath:[folder path]];
-    NSString* dispName = [namespaceComponenets componentsJoinedByString:@"/"];
-    
-    char testChar = [folder delimiter];
-    DDLogInfo(@"Folder Delimiter = \"%c\"",testChar);
+    NSString* dispName = [self displayNameForFolder:folder];
     
 //    [dispNamesFolders addObject:dispName];
     
-#warning Found this code in three places!
-    NSDictionary* folderState = @{ @"accountNum" : @(user.accountNum),
-                                   @"folderDisplayName":dispName,
-                                   @"folderPath":folder.path,
-                                   @"deleted":@false,
-                                   @"fullsynced":@false,
-                                   @"lastended":@0,
-                                   @"flags":@(folder.flags),
-                                   @"emailCount":@(0)};
+    SyncManager* syncManager = [SyncManager getSingleton];
+    [syncManager addNewStateForFolder:folder
+                                named:dispName
+                           forAccount:user.accountNum];
     
-    [syncManager addFolderState:folderState accountNum:user.accountNum];
+    [self updatePersistentStateOfFolder:folder
+                                atIndex:indexPath
+                       forAccountNumber:user.accountNum];
     
-    // Get the message count for folder from IMAP server,
-    // and update it in the folder's State, as stored in the SyncManager persistent store.
+    return dispName;
+}
+
+-(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder
+{
+    MCOIMAPNamespace *imapNamespace = [self.imapSession defaultNamespace];
+    NSArray *namespaceComponenets = [imapNamespace componentsFromPath:[folder path]];
     
+    NSString* pathDelimiter = [NSString stringWithFormat:@"%c",[folder delimiter]];
+    NSString* dispName = [namespaceComponenets componentsJoinedByString:pathDelimiter];
+    
+    return dispName;
+}
+
+-(void) updatePersistentStateOfFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNum
+{
+    SyncManager* syncManager = [SyncManager getSingleton];
+
     MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folder.path];
     [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
         DDLogInfo(@"BEGAN IMAP Folder Get Info Operation on %@",folder.path);
@@ -851,7 +861,7 @@ static NSArray * sharedServices = nil;
         if (error) {
             DDLogError(@"IMAP Folder Get Info Operation Error = %@",error);
         } else {
-            NSMutableDictionary* syncState = [syncManager retrieveState:indexPath accountNum:user.accountNum];
+            NSMutableDictionary* syncState = [syncManager retrieveState:indexPath accountNum:accountNum];
             
             DDLogInfo(@"IMAP Folder Get Info Operation got Sync State\"%@\"",syncState);
             
@@ -859,11 +869,9 @@ static NSArray * sharedServices = nil;
             syncState[@"emailCount"] = @(msgCount);
             DDLogInfo(@"\tupdating Sync State [ Email Count ] to %d",msgCount);
             
-            [syncManager persistState:syncState forFolderNum:indexPath accountNum:user.accountNum];
+            [syncManager persistState:syncState forFolderNum:indexPath accountNum:accountNum];
         }
     }];
-    
-    return dispName;
 }
 
 // MARK: - IMAP Sync Service - Iterate through folders, syncing each
@@ -1293,8 +1301,8 @@ static NSArray * sharedServices = nil;
                                                    @"cIndexAccountNum":@(index.user.accountNum)};
                     localNotification.category = @"MAIL_CATEGORY";
                     
-                    NSLog(@"Index: %ld",(long)index.index);
-                    NSLog(@"Conversation: %@",[conv firstMail].subject);
+                    DDLogDebug(@"Index: %ld",(long)index.index);
+                    DDLogDebug(@"Conversation: %@",[conv firstMail].subject);
                     
                     [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
                 }
@@ -1377,7 +1385,7 @@ static NSArray * sharedServices = nil;
                  
                  if (error) {
                      [self setConnected:NO];
-                     NSLog(@"error testing cached emails in %@, %@", path, error);
+                     DDLogError(@"error testing cached emails in %@, %@", path, error);
                      return;
                  }
                  
@@ -1447,7 +1455,7 @@ static NSArray * sharedServices = nil;
         }
     }
     
-    //NSLog(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.currentAccountIndex);
+    DDLogDebug(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.user.accountNum);
     
     if (uidsIS.count == 0) {
         completedBlock(nil, nil, nil);
@@ -1474,14 +1482,14 @@ static NSArray * sharedServices = nil;
                  
                  if (error) {
                      [self setConnected:NO];
-                     NSLog(@"error testing emails in %@, %@", path, error);
+                     DDLogError(@"error testing emails in %@, %@", path, error);
                      completedBlock(delDatas, upDatas, days);
                      return;
                  }
                  
                  
                  
-                 //NSLog(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.currentAccountIndex);
+                 DDLogDebug(@"Connected and Testing folder %@ in accountIndex:%ld", path, (long)self.user.accountNum);
                  
                  EmailProcessor* ep = [EmailProcessor getSingleton];
                  
@@ -1511,14 +1519,14 @@ static NSArray * sharedServices = nil;
                  }
                  
                  if (delDatas.count > 0) {
-                     //NSLog(@"Delete %lu emails", (unsigned long)delDatas.count);
+                     DDLogDebug(@"Delete %lu emails", (unsigned long)delDatas.count);
                      NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[delDatas,@(folderIdx)] forKeys:@[@"datas",@"folderIdx"]];
                      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeFromFolderWrapper:) object:data];
                      [ep.operationQueue addOperation:nextOp];
                  }
                  
                  if (upDatas.count > 0) {
-                     //NSLog(@"Update %lu emails", (unsigned long)upDatas.count);
+                     DDLogDebug(@"Update %lu emails", (unsigned long)upDatas.count);
                      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(updateFlag:) object:upDatas];
                      [ep.operationQueue addOperation:nextOp];
                  }
