@@ -1153,7 +1153,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 [self sendDraft:draft to:toPIDs];
             } else {
                 DDLogWarn(@"Draft Acnt # %lu DOES NOT EQUAL User Acnt # %lu",
-                             (long)draft.accountNum,self.user.accountNum);
+                             (long)draft.accountNum,(unsigned long)self.user.accountNum);
             }
         }
     }

@@ -977,23 +977,24 @@ static NSArray * sharedServices = nil;
 #warning Look: Almost the same code as _checkFolders again!
                                 SyncManager* syncMgr = [SyncManager getSingleton];
                                 // mark folders that were deleted on the server as deleted on the client
-                                int i = 0;
-#warning - we retrieve folder count each time through loop?  Not sure.
-                                while (i < [syncMgr folderCount:self.user.accountNum]) {
+                                NSInteger folderIndex = 0;
+                                NSInteger folderCount = [syncMgr folderCount:self.user.accountNum];
+
+                                while (folderIndex < folderCount) {
                                     
-                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:i
+                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:folderIndex
                                                                     accountNum:self.user.accountNum];
                                     
-                                    if ([syncMgr isFolderDeleted:i accountNum:self.user.accountNum]) {
-                                        DDLogInfo(@"Folder %i in account %ld is deleted", i, (long)self.user.accountNum);
+                                    if ([syncMgr isFolderDeleted:folderIndex accountNum:self.user.accountNum]) {
+                                        DDLogInfo(@"Folder %i in account %ld is deleted", folderIndex, (long)self.user.accountNum);
                                     }
                                     else if (![folders containsObject:folderPath]) {
                                         DDLogInfo(@"Folder %@ has been deleted - deleting FolderState", folderPath);
-                                        [syncMgr markFolderDeleted:i accountNum:self.user.accountNum];
-                                        i = 0;
+                                        [syncMgr markFolderDeleted:folderIndex accountNum:self.user.accountNum];
+                                        folderIndex = 0;
                                     }
                                     
-                                    i++;
+                                    folderIndex++;
                                 }
                                 
                                 //If the folder is Deleted & it's an important Folder

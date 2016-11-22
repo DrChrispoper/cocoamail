@@ -430,7 +430,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>153</string>
+	<string>161</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
@@ -458,6 +458,8 @@
 	</dict>
 	<key>NSContactsUsageDescription</key>
 	<string>CocoaSoft needs access to your contacts for email addresses and such.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This will allow the application to save photo attachments to Photos, and to attach photos to mail messages.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

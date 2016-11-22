@@ -1243,7 +1243,7 @@
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     DDLogInfo(@"BEGIN MailListViewControl cellForRowAtIndexPath for row=%ld section=%ld",
-              (long)indexPath.row,indexPath.section);
+              (long)indexPath.row,(long)indexPath.section);
     
     NSDictionary* mailsDay = self.convByDay[indexPath.section];
     NSArray* convs = mailsDay[@"list"];
@@ -1264,9 +1264,9 @@
         
         DDLogInfo(@"Last Section && Last Row && NOT showing person search results");
         DDLogInfo(@"\tLast Section = (indexPath.section (%ld) == self.convByDay.count (%ld) - 1)",
-                  (long)indexPath.section,self.convByDay.count);
+                  (long)indexPath.section,(unsigned long)self.convByDay.count);
         DDLogInfo(@"\tLast Row = (indexPath.row (%ld) == ( [convs count] (%ld) -1 ))",
-                  (long)indexPath.row,[convs count]);
+                  (long)indexPath.row,(unsigned long)[convs count]);
         
         if (self.indexCount != self.countBeforeLoadMore) {
             DDLogInfo(@"\tindex count NOT equal to count before load more, so calling reFetch");
@@ -1718,7 +1718,7 @@
                                       waitUntilDone:NO];*/
             
             DDLogDebug(@"NOT Refreshing MailListView because forceRefresh is FALSE, AND ( countBeforeLoadMore(%lu) EQUALS mailCountAfter(%lu) )",
-                       (long)self.countBeforeLoadMore,mailCountAfer);
+                       (long)self.countBeforeLoadMore,(long)mailCountAfer);
             return;
         }
         

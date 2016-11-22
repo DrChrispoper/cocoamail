@@ -481,8 +481,9 @@ static ViewController * s_self;
     return NO;
 }
 
-#warning - REFACTOR: setupNavigation has 486 lines.
--(void) setupNavigation
+#pragma mark - setup notifications
+
+-(void) _setupFirstAccountNotification
 {
     [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
@@ -516,8 +517,9 @@ static ViewController * s_self;
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         
     }];
-    
-    
+}
+-(void) _setupPresentFolderNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_FOLDER_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
         if ([self _checkInteractionAndBlock]) {
@@ -528,10 +530,10 @@ static ViewController * s_self;
         IBGLog(kPRESENT_FOLDER_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_FOLDER_NOTIFICATION);
-
+        
         //[[SearchRunner getSingleton] cancel];
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
-
+        
         MailListViewController* mlvc = nil;
         Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
         
@@ -562,7 +564,9 @@ static ViewController * s_self;
             [self _animatePushVC:mlvc];
         }
     }];
-    
+}
+-(void) _setupPresentSettingsNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SETTINGS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -576,7 +580,9 @@ static ViewController * s_self;
         SettingsViewController* f = [[SettingsViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsCreditNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -590,7 +596,9 @@ static ViewController * s_self;
         CreditViewController* f = [[CreditViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsCredit2Notification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CREDIT2_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -605,7 +613,9 @@ static ViewController * s_self;
         f.type = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsSpamtestNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_SPAMTEST_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -619,7 +629,9 @@ static ViewController * s_self;
         SpamListViewController* f = [[SpamListViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsCloudNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_CLOUD_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -635,6 +647,9 @@ static ViewController * s_self;
         [self _animatePushVC:f];
     }];
     
+}
+-(void) _setupSettingsMainAccountNotificaiton
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_MAIN_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -647,7 +662,9 @@ static ViewController * s_self;
         DefaultAccountViewController* f = [[DefaultAccountViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsSwipeNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_SWIPE_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -660,7 +677,9 @@ static ViewController * s_self;
         QuickSwipeViewController* f = [[QuickSwipeViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsNotifNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_NOTIF_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -674,6 +693,9 @@ static ViewController * s_self;
         [self _animatePushVC:f];
     }];
     
+}
+-(void) _setupSettingsAccountNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -687,7 +709,9 @@ static ViewController * s_self;
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsAccountSignNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ACCOUNT_SIGN_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -701,7 +725,9 @@ static ViewController * s_self;
         f.account = [notif.userInfo objectForKey:kSETTINGS_KEY];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupSettingsAddAccountNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kSETTINGS_ADD_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -715,6 +741,9 @@ static ViewController * s_self;
         [self _animatePushVC:f];
     }];
     
+}
+-(void) _setupPresentConversationNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -728,7 +757,9 @@ static ViewController * s_self;
         f.conversation = [notif.userInfo objectForKey:kPRESENT_CONVERSATION_KEY];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupPresentConversationAttachmentsNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -746,11 +777,11 @@ static ViewController * s_self;
         if ([vc isKindOfClass:[MailListViewController class]]) {
             ((MailListViewController*)vc).attachSubscriber = f;
         }
-        
-        
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupPresentContactsNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_CONTACTS_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -765,6 +796,9 @@ static ViewController * s_self;
         [self _animatePushVC:f];
     }];
     
+}
+-(void) _setupPresentSearchNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_SEARCH_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -775,11 +809,13 @@ static ViewController * s_self;
         DDLogInfo(kPRESENT_SEARCH_NOTIFICATION);
         
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
-
+        
         SearchViewController* f = [[SearchViewController alloc] init];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupPresentEditMailNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_EDITMAIL_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -793,7 +829,9 @@ static ViewController * s_self;
         f.draft = [notif.userInfo objectForKey:kPRESENT_MAIL_KEY];
         [self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupPresentDropboxNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kPRESENT_DROPBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         if ([self _checkInteractionAndBlock]) {
             return;
@@ -810,14 +848,16 @@ static ViewController * s_self;
         
         //[self _animatePushVC:f];
     }];
-    
+}
+-(void) _setupBackToInboxNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
 #ifdef USING_INSTABUG
         IBGLog(kBACK_TO_INBOX_NOTIFICATION);
 #endif
         DDLogInfo(kBACK_TO_INBOX_NOTIFICATION);
-
+        
         //[[SearchRunner getSingleton] cancel];
         
         if (self.viewControllers.count>3) {
@@ -835,12 +875,14 @@ static ViewController * s_self;
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
     }];
-    
+}
+-(void) _setupBackNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         //[[SearchRunner getSingleton] cancel];
         
         DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
-
+        
         if (self.viewControllers.count == 1) {
             DDLogInfo(@"\tOnly 1 view controller, returning.");
             return;
@@ -854,8 +896,8 @@ static ViewController * s_self;
 #ifdef USING_INSTABUG
         IBGLog(kBACK_NOTIFICATION);
 #endif
-//        DDLogInfo(kBACK_NOTIFICATION);
-
+        //        DDLogInfo(kBACK_NOTIFICATION);
+        
         // Get the current (top) view controller, clean up and remove controller from stack.
         InViewController* vc = [self.viewControllers lastObject];
         [vc cleanBeforeGoingBack];
@@ -921,16 +963,18 @@ static ViewController * s_self;
                              [self _manageCocoaButton:[f haveCocoaButton]];
                          }];
     }];
-    
+}
+-(void) _setupAccountChangedNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
-    
+        
         DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
-
+        
 #ifdef USING_INSTABUG
         IBGLog(kACCOUNT_CHANGED_NOTIFICATION);
 #endif
-//        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
-
+        //        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
+        
         //[[Parser sharedParser] cleanConversations];
         
         InViewController* ivc = [self.viewControllers lastObject];
@@ -965,15 +1009,17 @@ static ViewController * s_self;
         
         [lastView removeFromSuperview];
     }];
-    
+}
+-(void) _setupQuickActionNotification
+{
     [[NSNotificationCenter defaultCenter] addObserverForName:kQUICK_ACTION_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
         DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
-
+        
 #ifdef USING_INSTABUG
         IBGLog(kQUICK_ACTION_NOTIFICATION);
 #endif
-//        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
+        //        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
         
         BOOL inFolders = self.viewControllers.count == 1;
         
@@ -985,6 +1031,32 @@ static ViewController * s_self;
         }
         
     }];
+}
+-(void) setupNavigation
+{
+    [self _setupFirstAccountNotification];
+    [self _setupPresentFolderNotification];
+    [self _setupPresentSettingsNotification];
+    [self _setupSettingsCreditNotification];
+    [self _setupSettingsCredit2Notification];
+    [self _setupSettingsSpamtestNotification];
+    [self _setupSettingsCloudNotification];
+    [self _setupSettingsMainAccountNotificaiton];
+    [self _setupSettingsSwipeNotification];
+    [self _setupSettingsNotifNotification];
+    [self _setupSettingsAccountNotification];
+    [self _setupSettingsAccountSignNotification];
+    [self _setupSettingsAddAccountNotification];
+    [self _setupPresentConversationNotification];
+    [self _setupPresentConversationAttachmentsNotification];
+    [self _setupPresentContactsNotification];
+    [self _setupPresentSearchNotification];
+    [self _setupPresentEditMailNotification];
+    [self _setupPresentDropboxNotification];
+    [self _setupBackToInboxNotification];
+    [self _setupBackNotification];
+    [self _setupAccountChangedNotification];
+    [self _setupQuickActionNotification];
 }
 
 -(void) _animatePushVC:(InViewController*)nextVC
