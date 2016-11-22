@@ -263,6 +263,64 @@ static SyncManager * singleton = nil;
 	return [folderStates[folderNum] mutableCopy];
 }
 
+#pragma mark - Folder State Keyed Value "Accessors"
+
+-(id)_folderStateValueForKey:(NSString *)key account:(NSInteger)accountNum folder:(NSInteger)folderNum
+{
+    DDAssert(key, @"Key argument must exist");
+    
+    NSMutableDictionary* folderState = [self retrieveState:folderNum accountNum:accountNum];
+    if ( folderState == nil ) {
+        DDLogError(@"Cannot Retrieve State for folder=%ld account=%ld",(long)folderNum,(long)accountNum);
+        return nil;
+    }
+    
+    id folderStateValue = folderState[kFolderStateFolderPathKey];
+    if ( folderStateValue == nil ) {
+        DDLogError(@"Key \"%@\" not found in Folder State for folder %ld in account %ld",
+                   kFolderStateFolderPathKey,(long)folderNum,(long)accountNum);
+        return nil;
+    }
+    
+    return folderStateValue;
+}
+
+-(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+{
+    id valForKey = [self _folderStateValueForKey:kFolderStateLastEndedKey
+                                        account:accountNum
+                                         folder:folderNum];
+    if ( valForKey == nil )
+    {
+        return -1;
+    }
+    
+    NSInteger lastEnded = (NSInteger)valForKey;
+    
+    DDLogDebug(@"FolderState[%@] returning \"%ld\"",kFolderStateLastEndedKey,(long)lastEnded);
+                           
+    return lastEnded;
+   
+}
+-(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+{
+    id valForKey = [self _folderStateValueForKey:kFolderStateFolderPathKey
+                                        account:accountNum
+                                         folder:folderNum];
+    if ( valForKey == nil )
+    {
+        return nil;
+    }
+
+    NSString *folderPath = (NSString*)valForKey;
+    
+    DDLogDebug(@"FolderState[%@] returning \"%@\"",kFolderStateLastEndedKey,folderPath);
+    
+    return folderPath;
+}
+
+#pragma mark - Add account state
+
 // Add a New account Sync State entry
 -(void) addAccountState
 {
@@ -281,22 +339,22 @@ static SyncManager * singleton = nil;
     [self _writeSyncStateToFileForAccount:numAccounts];
 }
 
+
 -(void) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum
 {
-    NSDictionary* folderState = @{ @"accountNum" : @(accountNum),
-                                   @"folderDisplayName": folderName,
-                                   @"folderPath":folder.path,
-                                   @"deleted":@false,
-                                   @"fullsynced":@false,
-                                   @"lastended":@0,
-                                   @"flags":@(folder.flags),
-                                   @"emailCount":@(0)};
+    NSDictionary* folderState = @{ kFolderStateAccountNumberKey : @(accountNum),
+                                   kFolderStateFolderDisplayNameKey: folderName,
+                                   kFolderStateFolderPathKey:folder.path,
+                                   kFolderStateFullSyncKey:@false,
+                                   kFolderStateFullSyncKey:@false,
+                                   kFolderStateLastEndedKey:@0,
+                                   kFolderStateFolderFlagsKey:@(folder.flags),
+                                   kFolderStateEmailCountKey:@(0)};
     
     [self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:folderState];
     
     [self _writeSyncStateToFileForAccount:accountNum];
 }
-
 
 -(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
@@ -307,14 +365,14 @@ static SyncManager * singleton = nil;
 		return YES;
 	}
 	
-	NSNumber* y =  folderStates[folderNum][@"deleted"];
+	NSNumber* y =  folderStates[folderNum][kFolderStateDeletedKey];
 	
 	return (y == nil) || [y boolValue];
 }
 
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum][@"deleted"] = @YES;
+    self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum][kFolderStateDeletedKey] = @YES;
 	
     [self _writeSyncStateToFileForAccount:accountNum];
 }

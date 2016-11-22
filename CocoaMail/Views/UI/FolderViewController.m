@@ -226,6 +226,8 @@
         cell.separatorInset = UIEdgeInsetsMake(0, 53 + 27 * indentation, 0, 0);
     }
     
+    DDLogDebug(@"\t ---- FolderView TableCell = \"%@\"",text);
+    
     cell.textLabel.text = text;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
@@ -295,14 +297,14 @@
          } error:^(NSError* error) {
              NSDate *fetchEnd = [NSDate date];
              NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
              _completionHandler(hasNewEmail);
          } completed:^{
              NSDate *fetchEnd = [NSDate date];
              NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
              _completionHandler(hasNewEmail);
@@ -317,7 +319,7 @@
      
      if (reason) {
      NSInteger reasonValue = [reason integerValue];
-     NSLog(@"storeChanged with reason %ld", (long)reasonValue);
+     DDLogDebug(@"storeChanged with reason %ld", (long)reasonValue);
      
      if ((reasonValue == NSUbiquitousKeyValueStoreServerChange) ||
      (reasonValue == NSUbiquitousKeyValueStoreInitialSyncChange)) {
@@ -329,7 +331,7 @@
      for (NSString *key in keys) {
      id value = [store objectForKey:key];
      [userDefaults setObject:value forKey:key];
-     NSLog(@"storeChanged updated value for %@",key);
+     DDLogDebug(@"storeChanged updated value for %@",key);
      }
      }
      }*/

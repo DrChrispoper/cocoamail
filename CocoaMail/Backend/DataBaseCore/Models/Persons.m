@@ -570,7 +570,7 @@
     [desc appendFormat:@"\tCodename   = \"%@\"\n",self.codeName];
     [desc appendFormat:@"\tEmail      = \"%@\"\n",self.email];
     [desc appendFormat:@"\tIs Generic = %@\n",(self.isGeneric?@"TRUE":@"FALSE")];
-    [desc appendFormat:@"\tImage Data:\n%@",[self.imageData description]];
+//    [desc appendFormat:@"\tImage Data:\n%@",[self.imageData description]];
     
     [desc appendString:@" --- End Person ---\n"];
     

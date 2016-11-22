@@ -11,6 +11,7 @@
 #import "UserSettings.h"
 #import "RegExCategories.h"
 #import "ImapSync.h"
+#import "SyncManager.h"
 
 @implementation Draft
 
@@ -20,7 +21,7 @@
         return nil;
     }
     
-    self.accountNum = [decoder decodeIntegerForKey:@"accountNum"];
+    self.accountNum = [decoder decodeIntegerForKey:kFolderStateAccountNumberKey];
     self.toPersons = [decoder decodeObjectForKey:@"toPersons"];
     self.isBcc = [decoder decodeBoolForKey:@"isBcc"];
     self.transferContent = [decoder decodeObjectForKey:@"transferContent"];
@@ -35,7 +36,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
-    [encoder encodeInteger:self.accountNum forKey:@"accountNum"];
+    [encoder encodeInteger:self.accountNum forKey:kFolderStateAccountNumberKey];
     [encoder encodeObject:self.toPersons forKey:@"toPersons"];
     [encoder encodeBool:self.isBcc forKey:@"isBcc"];
     [encoder encodeObject:self.transferContent forKey:@"transferContent"];

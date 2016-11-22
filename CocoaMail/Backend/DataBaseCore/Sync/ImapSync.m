@@ -436,9 +436,9 @@ static NSArray * sharedServices = nil;
     NSDictionary *state = [syncMgr retrieveState:folderNumber
                                       accountNum:self.user.accountNum];
     
-    BOOL retVal = ([state[@"fullsynced"] boolValue] == FALSE);
+    BOOL retVal = ([state[kFolderStateFullSyncKey] boolValue] == FALSE);
     
-    DDLogVerbose(@"Folder #%ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",(long)folderNumber,state[@"fullsynced"],(retVal?@"YES":@"NO"));
+    DDLogVerbose(@"Folder #%ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",(long)folderNumber,state[kFolderStateFullSyncKey],(retVal?@"YES":@"NO"));
     
     
     return retVal;
@@ -530,6 +530,7 @@ static NSArray * sharedServices = nil;
         
         NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
         NSString* folderPath = [self.user folderServerName:currentFolder];
+        
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchContent:text];
         
         MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:folderPath expression:expr];
@@ -644,8 +645,7 @@ static NSArray * sharedServices = nil;
 
 -(void) _saveSearchedEmail:(MCOIMAPMessage*)msg inFolder:(NSInteger)currentFolder withSubscriber:(id<RACSubscriber>)subscriber lastMsgID:(NSString*)lastMsgID
 {
-    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:currentFolder accountNum:self.user.accountNum];
-    NSString* folderPath = folderState[@"folderPath"];
+    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
     
     Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
     
@@ -751,7 +751,6 @@ static NSArray * sharedServices = nil;
     DDLogInfo(@">> BEGIN Check Folder Names for Updates, folder count = %lu",
               (unsigned long)folders.count);
     
-#warning more work to do here!
     SyncManager* syncManager = [SyncManager getSingleton];
     
     int indexPath = 0;
@@ -770,13 +769,10 @@ static NSArray * sharedServices = nil;
         // For each existing folder
         for (NSUInteger existingFolderIndex = 0; existingFolderIndex < existingFolderCount; existingFolderIndex++) {
             
-            // retrieve the folder's state from the sync manager persistent store
-            NSDictionary* folderState = [syncManager retrieveState:existingFolderIndex
-                                                        accountNum:self.user.accountNum];
-            
-            // get the folder path from this folders state
-            NSString* folderPath = folderState[@"folderPath"];
-            
+            // retrieve the folder's path from the sync manager persistent store
+            NSString* folderPath = [syncManager retrieveFolderPathFromFolderState:existingFolderIndex
+                                                accountNum:self.user.accountNum];
+
             DDLogInfo(@"\tFolder %lu has Folder Path \"%@\"",
                       (unsigned long)existingFolderIndex,folderPath);
             
@@ -793,7 +789,7 @@ static NSArray * sharedServices = nil;
         // to be added.
         if ( folderPathInAccountsExistingFolders == FALSE ) {
             
-            DDLogInfo(@"Folder Path \"%@\" NOT FOUND in account's existing folder paths",
+            DDLogInfo(@"Folder Path \"%@\" IS NEW (not in account's existing folder's paths)",
                       [imapFolder path]);
             
             NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:indexPath];
@@ -811,12 +807,12 @@ static NSArray * sharedServices = nil;
     
     if (dispNamesFolders.count > 0) {
         
-        DDLogDebug(@"Adding New Folder Names \"%@\" to All Folder Names",dispNamesFolders);
+        DDLogDebug(@"Adding New Folder Names \"%@\" to ALL Folder Names",dispNamesFolders);
         
-        NSMutableArray* all = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
-        [all addObjectsFromArray:dispNamesFolders];
-        
-        [self.user setAllFoldersDisplayNames:all];
+        // Add dispNamesFolders to saved All Folder Names
+        NSMutableArray* allFolderNames = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
+        [allFolderNames addObjectsFromArray:dispNamesFolders];
+        [self.user setAllFoldersDisplayNames:allFolderNames];
     }
 }
 
@@ -866,7 +862,7 @@ static NSArray * sharedServices = nil;
             DDLogInfo(@"IMAP Folder Get Info Operation got Sync State\"%@\"",syncState);
             
             int msgCount = [info messageCount];
-            syncState[@"emailCount"] = @(msgCount);
+            syncState[kFolderStateEmailCountKey] = @(msgCount);
             DDLogInfo(@"\tupdating Sync State [ Email Count ] to %d",msgCount);
             
             [syncManager persistState:syncState forFolderNum:indexPath accountNum:accountNum];
@@ -982,15 +978,16 @@ static NSArray * sharedServices = nil;
                                 SyncManager* syncMgr = [SyncManager getSingleton];
                                 // mark folders that were deleted on the server as deleted on the client
                                 int i = 0;
-                                
+#warning - we retrieve folder count each time through loop?  Not sure.
                                 while (i < [syncMgr folderCount:self.user.accountNum]) {
-                                    NSDictionary* folderState = [syncMgr retrieveState:i accountNum:self.user.accountNum];
-                                    NSString* folderPath = folderState[@"folderPath"];
+                                    
+                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:i
+                                                                    accountNum:self.user.accountNum];
                                     
                                     if ([syncMgr isFolderDeleted:i accountNum:self.user.accountNum]) {
                                         DDLogInfo(@"Folder %i in account %ld is deleted", i, (long)self.user.accountNum);
                                     }
-                                    else if (![[folders valueForKey:@"path"] containsObject:folderPath]) {
+                                    else if (![folders containsObject:folderPath]) {
                                         DDLogInfo(@"Folder %@ has been deleted - deleting FolderState", folderPath);
                                         [syncMgr markFolderDeleted:i accountNum:self.user.accountNum];
                                         i = 0;
@@ -1050,8 +1047,9 @@ static NSArray * sharedServices = nil;
                                                 int i = 0;
                                                 
                                                 while (i < [syncMgr folderCount:self.user.accountNum]) {
-                                                    NSDictionary* folderState = [syncMgr retrieveState:i accountNum:self.user.accountNum];
-                                                    NSString* folderPath = folderState[@"folderPath"];
+                                                    
+                                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:i
+                                                                                        accountNum:self.user.accountNum];
                                                     
                                                     if ([newFolderPath isEqualToString:folderPath]) {
                                                         [self.user setImportantFolderNum:i forBaseFolder:f.type];
@@ -1064,11 +1062,11 @@ static NSArray * sharedServices = nil;
                                     }//If important folder
                                 }//If folder deleted
                                 
-                                NSMutableDictionary* folderState = [syncMgr retrieveState:currentFolder accountNum:self.user.accountNum];
-                                NSString* folderPath = folderState[@"folderPath"];
+                                NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
                                 
                                 MCOIMAPFolderInfoOperation* folder = [self.imapSession folderInfoOperation:folderPath];
-                                NSInteger lastEnded = [folderState[@"lastended"] integerValue];
+                                
+                                NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder accountNum:self.user.accountNum];
                                 
                                 [folder start:^(NSError* error, MCOIMAPFolderInfo* info) {
                                     if (error) {
@@ -1151,8 +1149,7 @@ static NSArray * sharedServices = nil;
                                                         return;
                                                     }
                                                     
-                                                    NSMutableDictionary* folderState = [syncMgr retrieveState:currentFolder accountNum:self.user.accountNum];
-                                                    NSString* folderPath = folderState[@"folderPath"];
+                                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
                                                     
                                                     Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
                                                     
@@ -1332,7 +1329,7 @@ static NSArray * sharedServices = nil;
         
         // used by fetchFrom to write the finished state for this round of syncing to disk
         NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
-        syncState[@"emailCount"] = @(count);
+        syncState[kFolderStateEmailCountKey] = @(count);
         
         [sm persistState:syncState forFolderNum:folder accountNum:self.user.accountNum];
     }
@@ -1343,8 +1340,8 @@ static NSArray * sharedServices = nil;
     // used by fetchFrom to write the finished state for this round of syncing to disk
     if (!self.user.isDeleted) {
         NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
-        syncState[@"lastended"] = @(lastEIndex);
-        syncState[@"fullsynced"] = @(lastEIndex == 1);
+        syncState[kFolderStateLastEndedKey] = @(lastEIndex);
+        syncState[kFolderStateFullSyncKey]  = @(lastEIndex == 1);
         
         [sm persistState:syncState forFolderNum:folder accountNum:self.user.accountNum];
         //[[[Accounts sharedInstance] getAccount:self.currentAccountIndex] showProgress];
@@ -1633,6 +1630,7 @@ static NSArray * sharedServices = nil;
     }
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+        
         NSInteger inboxFolder = [user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
         NSString* serverFolderPath = [user folderServerName:inboxFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];

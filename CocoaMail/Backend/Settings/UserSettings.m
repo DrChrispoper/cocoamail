@@ -331,15 +331,9 @@
 
 -(NSString*) folderServerName:(NSInteger)folder
 {
-    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folder accountNum:_accountNum];
-    NSString* name = folderState[@"folderPath"];
-    
-    DDAssert (name,@"Folder Path Name must exist");
-    
-    if (!name) {
-        NSLog(@"NO NAME!");
-    }
-    return name;
+    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:folder
+                                                       accountNum:_accountNum];
+    return folderPath;
 }
 
 -(NSInteger)inboxFolderNumber

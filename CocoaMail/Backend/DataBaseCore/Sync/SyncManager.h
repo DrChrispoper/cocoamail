@@ -15,6 +15,15 @@
 #import <MailCore/Mailcore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+#define kFolderStateAccountNumberKey        @"accountNum"
+#define kFolderStateFolderDisplayNameKey    @"folderDisplayName"    // used anywhere??
+#define kFolderStateFolderPathKey           @"folderPath"
+#define kFolderStateDeletedKey              @"deleted"
+#define kFolderStateFullSyncKey             @"fullsynced"
+#define kFolderStateLastEndedKey            @"lastended"
+#define kFolderStateFolderFlagsKey          @"flags"                // where used?
+#define kFolderStateEmailCountKey           @"emailCount"
+
 @class UserSettings;
 @class Person;
 
@@ -49,6 +58,8 @@
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 
+-(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 
 @end
 

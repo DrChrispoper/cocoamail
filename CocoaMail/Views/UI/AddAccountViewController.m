@@ -428,7 +428,7 @@
     NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
     
     if (error) {
-        CCMLog(@"%@", error.description);
+        DDLogError(@"%@", error.description);
     }
     
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
@@ -512,8 +512,8 @@
             [strongSelf saveSettings];
         }
         else {
-            CCMLog(@"error loading imap account: %@", strongSelf.accountVal.imapError);
-            CCMLog(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
+            DDLogError(@"error loading imap account: %@", strongSelf.accountVal.imapError);
+            DDLogError(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
             
             [[PKHUD sharedHUD] hideWithAnimated:YES];
             
@@ -541,7 +541,7 @@
 
 -(void) saveSettings
 {
-    CCMLog(@"2 - Start setting Folders");
+    DDLogInfo(@"2 - Start setting Folders");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.account-in-config", @"HUD Message: Account Configuration...")];
     [[PKHUD sharedHUD] show];
@@ -562,7 +562,7 @@
     MCOIMAPFetchNamespaceOperation* namespaceOp = [imapSession fetchNamespaceOperation];
     [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
         if (error) {
-            CCMLog(@"%@", error.description);
+            DDLogError(@"%@", error.description);
             [[PKHUD sharedHUD] hideWithAnimated:YES];
             
             return ;
@@ -574,7 +574,7 @@
         
         [op start:^(NSError*  error, NSArray* folders) {
             if (error) {
-                CCMLog(@"%@", error.description);
+                DDLogError(@"%@", error.description);
                 [[PKHUD sharedHUD] hideWithAnimated:YES];
                 
                 return ;
@@ -594,19 +594,19 @@
                 }
                 
                 if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
-                    CCMLog(@"Inbox:%@", folder.path);
+                    DDLogDebug(@"Inbox:%@", folder.path);
                     inboxfolder = folder;
                 }
                 else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folder.path]) {
-                    CCMLog(@"All:%@", folder.path);
+                    DDLogDebug(@"All:%@", folder.path);
                     allMailFolder = folder;
                 }
                 else if (![@(folder.flags) isEqualToNumber:@0]) {
-                    CCMLog(@"Flagged:%@", folder.path);
+                    DDLogDebug(@"Flagged:%@", folder.path);
                     [flagedFolders addObject:folder];
                 }
                 else {
-                    CCMLog(@"other:%@", folder.path);
+                    DDLogDebug(@"other:%@", folder.path);
                     [otherFolders addObject:folder];
                 }
             }
@@ -666,7 +666,7 @@
 
 -(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
 {
-    CCMLog(@"3 - Finish Folders");
+    DDLogInfo(@"3 - Finish Folders");
     
     //User Settings
     UserSettings* user = [[AppSettings getSingleton] createNewUser];
@@ -708,10 +708,11 @@
     
     DDLogInfo(@"Adding first Account:\n%@",[ac description]);
 
-    //Folder Settings
+    // Folder Settings
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
     NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
+    
     NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
     
     [sortedFolders addObject:inboxfolder];
@@ -728,7 +729,8 @@
     for (MCOIMAPFolder* folder in sortedFolders) {
         
         //Inbox
-        if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
+        if ( (folder.flags == MCOIMAPFolderFlagInbox) ||
+             ([folder.path  isEqualToString: @"INBOX"]) ) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
         } //Starred
         else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
@@ -786,7 +788,7 @@
     
     [[Accounts sharedInstance] addAccount:ac];
     
-    CCMLog(@"4 - Go!");
+    DDLogInfo(@"4 - Go!");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
     [[PKHUD sharedHUD] show];
@@ -842,7 +844,7 @@
     [[OnePasswordExtension sharedExtension] findLoginForURLString:@"https://putcocoa.in" forViewController:self sender:sender completion:^(NSDictionary *loginDictionary, NSError *error) {
         if (loginDictionary.count == 0) {
             if (error.code != AppExtensionErrorCodeCancelledByUser) {
-                NSLog(@"Error invoking 1Password App Extension for find login: %@", error);
+                DDLogError(@"Error invoking 1Password App Extension for find login: %@", error);
             }
             return;
         }
