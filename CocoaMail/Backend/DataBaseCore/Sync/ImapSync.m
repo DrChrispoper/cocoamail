@@ -714,6 +714,8 @@ static NSArray * sharedServices = nil;
 
 -(void) getImapFolderNamesAndUpdateLocal
 {
+    // NB: Called only from Login methods
+    
     DDLogInfo(@"BEGIN getImapFolderNamesAndUpdateLocal");
     
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
@@ -739,6 +741,8 @@ static NSArray * sharedServices = nil;
 // added, renamed, or deleted, and update
 -(void)_checkFolderNamesForUpdates:(NSArray <MCOIMAPFolder *>*)folders
 {
+    // NB: This handles Added Folders, but does not handle Deleted Folders or Renamed Folders.
+    
     DDAssert(folders, @"Folders Array must not be empty");
     DDAssert(folders.count>0, @"Folders Array must contain folders");
     
@@ -755,22 +759,23 @@ static NSArray * sharedServices = nil;
     
     int indexPath = 0;
     
+    NSUInteger existingFolderCount = [syncManager folderCount:self.user.accountNum];
+    
+    DDLogInfo(@"\tExisting Folder Count for Account # %lu is %lu",
+              (unsigned long)self.user.accountNum,
+              (unsigned long)existingFolderCount);
+    
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
     for (MCOIMAPFolder* imapFolder in folders) {
         BOOL folderPathInAccountsExistingFolders = NO;
         
-        NSUInteger existingFolderCount = [syncManager folderCount:self.user.accountNum];
-        
-        DDLogInfo(@"\tExisting Folder Count for Account # %lu is %lu",
-                  (unsigned long)self.user.accountNum,
-                  (unsigned long)existingFolderCount);
-        
         // For each existing folder
         for (NSUInteger existingFolderIndex = 0; existingFolderIndex < existingFolderCount; existingFolderIndex++) {
             
             // retrieve the folder's path from the sync manager persistent store
-            NSString* folderPath = [syncManager retrieveFolderPathFromFolderState:existingFolderIndex
+            NSString* folderPath =
+            [syncManager retrieveFolderPathFromFolderState:existingFolderIndex
                                                 accountNum:self.user.accountNum];
 
             DDLogInfo(@"\tFolder %lu has Folder Path \"%@\"",
@@ -789,10 +794,13 @@ static NSArray * sharedServices = nil;
         // to be added.
         if ( folderPathInAccountsExistingFolders == FALSE ) {
             
-            DDLogInfo(@"Folder Path \"%@\" IS NEW (not in account's existing folder's paths)",
+            DDLogInfo(@"IMAP Folder Path \"%@\" IS NEW (not in account's model folder paths)",
                       [imapFolder path]);
             
-            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:indexPath];
+            NSString *dispName = [self addFolder:imapFolder
+                                          toUser:self.user
+                                         atIndex:indexPath];
+            
             if ( dispName && dispName.length > 0 ) {
                 [dispNamesFolders addObject:dispName];
             }
