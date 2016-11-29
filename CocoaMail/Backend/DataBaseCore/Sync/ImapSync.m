@@ -881,66 +881,9 @@ static NSArray * sharedServices = nil;
 // MARK: - IMAP Sync Service - Iterate through folders, syncing each
 #warning Function is 1920 lines long!!!
 
-// "folder" is a Folder Index, or -1
--(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
+- (void)_updateImapFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isInBackground:(BOOL)isInBackground isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
-    DDLogInfo(@"BEGIN runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
-               (long)folder,
-               (isFromStart==TRUE?@"TRUE":@"FALSE"),
-               (getAll==TRUE?@"TRUE":@"FALSE"));
-    
-    BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
-    
-    DDLogDebug(@"\tApp isInBackground = %@",
-               (isInBackground==TRUE?@"TRUE":@"FALSE") );
-    
-    if (folder == -1) {
-        DDLogInfo(@"\tfolderIndex = -1, calling folderIndex = _nextFolderToSync");
-        folder = [self _nextFolderToSync];
-    }
-    DDLogDebug(@"\tfolderIndex = %ld",(long)folder);
-    
-    NSInteger currentFolder = folder;
-    
-    if (!self.cachedData) {
-        self.cachedData = [[NSMutableArray alloc]initWithCapacity:1];
-    }
-    
-    @weakify(self);
-    
-    return [RACSignal startLazilyWithScheduler:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground] block:^(id<RACSubscriber> subscriber) {
-        
-        @strongify(self);
-        
-        // get list of all folders from the IMAP Server
-        
-        if (self.isCanceled) {
-            DDLogInfo(@"IMAP Sync Service CANCELLED, runFolder COMPLETED");
-            [subscriber sendCompleted];
-        }
-        else if (![ImapSync isNetworkAvailable]) {
-            DDLogError(@"IMAP Sync Service ERROR: Network is not available");
-            
-            self.connected = NO;
-            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-        }
-        else if (currentFolder == -1) {
-            
-            // This will happen when the folder passed into the function was -1,
-            // and _nextFolderToSync returns -1.
-            DDLogError(@"IMAP Sync Service Error: All Synced");
-            
-            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
-        }
-        else if (isInBackground && currentFolder != [self.user inboxFolderNumber]) {
-            
-            DDLogInfo(@"Running in Background && folder is not Inbox folder.");
-            DDLogInfo(@"\tso we are completed.");
-
-            [subscriber sendCompleted];
-        }
-        else {
-            [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
+  [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
                 [subscriber sendError:error];
             } completed:^{
                 if (!self.connected) {
@@ -955,7 +898,8 @@ static NSArray * sharedServices = nil;
                         [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                     }
                 }
-                else {
+                else { // we are connected
+                    
                     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
                     dispatch_async(self.s_queue, ^{
                         DDLogInfo(@"STARTING IMAP Sync Service: Fetch Folder Operation");
@@ -1260,6 +1204,68 @@ static NSArray * sharedServices = nil;
                     });
                 }
             }];
+}
+
+// "folder" is a Folder Index, or -1
+-(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
+{
+    DDLogInfo(@"BEGIN runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
+               (long)folder,
+               (isFromStart==TRUE?@"TRUE":@"FALSE"),
+               (getAll==TRUE?@"TRUE":@"FALSE"));
+    
+    BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
+    
+    DDLogDebug(@"\tApp isInBackground = %@",
+               (isInBackground==TRUE?@"TRUE":@"FALSE") );
+    
+    if (folder == -1) {
+        DDLogInfo(@"\tfolderIndex = -1, calling folderIndex = _nextFolderToSync");
+        folder = [self _nextFolderToSync];
+    }
+    DDLogDebug(@"\tfolderIndex = %ld",(long)folder);
+    
+    NSInteger currentFolder = folder;
+    
+    if (!self.cachedData) {
+        self.cachedData = [[NSMutableArray alloc]initWithCapacity:1];
+    }
+    
+    @weakify(self);
+    
+    return [RACSignal startLazilyWithScheduler:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground] block:^(id<RACSubscriber> subscriber) {
+        
+        @strongify(self);
+        
+        // get list of all folders from the IMAP Server
+        
+        if (self.isCanceled) {
+            DDLogInfo(@"IMAP Sync Service CANCELLED, runFolder COMPLETED");
+            [subscriber sendCompleted];
+        }
+        else if (![ImapSync isNetworkAvailable]) {
+            DDLogError(@"IMAP Sync Service ERROR: Network is not available");
+            
+            self.connected = NO;
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+        }
+        else if (currentFolder == -1) {
+            
+            // This will happen when the folder passed into the function was -1,
+            // and _nextFolderToSync returns -1.
+            DDLogError(@"IMAP Sync Service Error: All Synced");
+            
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
+        }
+        else if (isInBackground && currentFolder != [self.user inboxFolderNumber]) {
+            
+            DDLogInfo(@"Running in Background && folder is not Inbox folder.");
+            DDLogInfo(@"\tso we are completed.");
+
+            [subscriber sendCompleted];
+        }
+        else {
+            [self _updateImapFoldersAndMessages:subscriber currentFolder:currentFolder isInBackground:isInBackground isFromStart:isFromStart getAll:getAll];
         }
     }];
 }
