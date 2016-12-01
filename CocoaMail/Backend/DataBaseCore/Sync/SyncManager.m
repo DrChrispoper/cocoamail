@@ -314,7 +314,7 @@ static SyncManager * singleton = nil;
 
     NSString *folderPath = (NSString*)valForKey;
     
-    DDLogDebug(@"FolderState[%@] returning \"%@\"",kFolderStateLastEndedKey,folderPath);
+    DDLogDebug(@"FolderState[%@] returning \"%@\"",kFolderStateFolderPathKey,folderPath);
     
     return folderPath;
 }
