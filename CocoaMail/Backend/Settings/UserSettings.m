@@ -322,6 +322,9 @@
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder
 {
+    DDAssert(_allFoldersDisplayNames,@"_addFoldersDisplayNames must be initialized.");
+    DDAssert(folder>=0, @"folder index must not be negative.");
+    
     return _allFoldersDisplayNames[folder];
 }
 
