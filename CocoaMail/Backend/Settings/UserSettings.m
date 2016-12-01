@@ -211,7 +211,8 @@
 
 -(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
-    _allFoldersDisplayNames = allFolders;
+    _allFoldersDisplayNames = allFolders;   // does this copy or assign?
+    
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
