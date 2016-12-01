@@ -351,7 +351,8 @@
     if (folder.type == FolderTypeUser) {
         folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
-            if ([folderName isEqualToString:_allFoldersDisplayNames[index]]) {
+            NSString *indexedFolderDisplayName = [self folderDisplayNameForIndex:index];
+            if ([folderName isEqualToString:indexedFolderDisplayName]) {
                 return index;
             }
         }
@@ -362,8 +363,14 @@
     return -1;
 }
 
+#warning **** FAILING HERE
+
 -(NSArray*) allNonImportantFoldersName
 {
+    DDAssert(_allFoldersDisplayNames, @"_allFolderDisplayNames must be initialized.");
+#warning Seems to be failing between these two lines.  Appears related to run loops
+    DDAssert(_importantFolders, @"_importantFolders must be initialized.");
+    
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
     
     for (NSNumber* index in _importantFolders) {
@@ -426,7 +433,9 @@
 
     _importantFolders = [decoder decodeObjectForKey:@"importantFolders"];
     _allFoldersDisplayNames = [decoder decodeObjectForKey:@"allFolders"];
-
+    
+#warning _allFoldersDisplayNames should not be nil.  We get errors if it is.  What should we do?
+    
     _deleted = [decoder decodeBoolForKey:@"deleted"];
     _all = [decoder decodeBoolForKey:@"all"];
 
@@ -437,7 +446,7 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
-    DDLogInfo(@"Decoded UserSettings: %@",[self description]);
+    DDLogInfo(@"DECODED UserSettings: %@",[self description]);
 
     return self;
 }
