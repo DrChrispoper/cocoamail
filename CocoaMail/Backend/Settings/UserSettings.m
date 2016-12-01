@@ -521,15 +521,25 @@
     [desc appendFormat:@"\tcolor     = \"%@\"\n",[self.color description]];
     [desc appendString:@"\n"];
 
-    [desc appendFormat:@"\tImportant Folders count = %ld\n",
-     (unsigned long)[self.importantFolders count]];
-    for (NSString *importantFolderName in self.importantFolders) {
-        [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
+    if (self.importantFolders == nil) {
+        [desc appendFormat:@"\tImportant Folders array is nil!\n"];
+    } else {
+        [desc appendFormat:@"\tImportant Folders count = %ld\n",
+         (unsigned long)[self.importantFolders count]];
+        for (NSString *importantFolderName in self.importantFolders) {
+            [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
+        }
     }
-    [desc appendFormat:@"\tFolder Display Names count = %ld\n",
-     (unsigned long)[self.allFoldersDisplayNames count]];
-    for (NSString *folderName in self.allFoldersDisplayNames) {
-        [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
+    
+    if ( self.allFoldersDisplayNames == nil ) {
+        [desc appendFormat:@"\tFolder Display Names array is nil!\n"];
+    } else {
+        [desc appendFormat:@"\tFolder Display Names count = %ld\n",
+         (unsigned long)[self.allFoldersDisplayNames count]];
+        for (NSString *folderName in self.allFoldersDisplayNames) {
+            [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
+        }
+    
     }
     [desc appendString:@"\n"];
 
