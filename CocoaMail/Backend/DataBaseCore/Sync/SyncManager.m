@@ -345,7 +345,7 @@ static SyncManager * singleton = nil;
     NSDictionary* folderState = @{ kFolderStateAccountNumberKey : @(accountNum),
                                    kFolderStateFolderDisplayNameKey: folderName,
                                    kFolderStateFolderPathKey:folder.path,
-                                   kFolderStateFullSyncKey:@false,
+                                   kFolderStateDeletedKey:@false,
                                    kFolderStateFullSyncKey:@false,
                                    kFolderStateLastEndedKey:@0,
                                    kFolderStateFolderFlagsKey:@(folder.flags),
@@ -356,7 +356,7 @@ static SyncManager * singleton = nil;
     [self _writeSyncStateToFileForAccount:accountNum];
 }
 
--(BOOL) isFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
