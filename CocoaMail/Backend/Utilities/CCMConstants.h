@@ -68,4 +68,13 @@ static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
     return type;
 }
 
+static inline BOOL folderTypeIsUserFolder(CCMFolderType folder)
+{
+    return ( folder.type == FolderTypeUser );
+}
+static inline BOOL folderTypeIsSystemFolder(CCMFolderType folder)
+{
+    // If a folder is not a user folder, then it is a system folder
+    return ( ! folderTypeIsUserFolder(folder) );
+}
 #endif /* CCMConstants_h */
