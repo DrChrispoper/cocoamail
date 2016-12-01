@@ -1491,7 +1491,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                  }
                  else if (error.code == CCMFolderSyncedError) {
                      DDLogDebug(@"\tError code 9002, calling self recursively");
-                     [self doLoadServer];;
+                     [self doLoadServer]; // recursion
                  }
              }
          }
@@ -1930,7 +1930,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     }
     
     if (![ImapSync canFullSync]){
-        DDLogWarn(@"\tReturning because [ImapSync canFullSyc] returned YES and we negated it??");
+        DDLogWarn(@"\tReturning because [ImapSync canFullSyc] == FALSE");
         return;
     }
     
@@ -1946,7 +1946,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
          }
      } completed:^{
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-             [self syncCurrentFolder];
+             [self syncCurrentFolder];  // Recursive!
          }
      }];
 }
