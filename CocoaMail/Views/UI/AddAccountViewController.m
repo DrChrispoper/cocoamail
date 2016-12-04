@@ -755,9 +755,9 @@
 
         ImapSync *imapSync = [ImapSync sharedServices:user];
         
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath];
+        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
         
-//        NSString *dispName = [imapSync displayNameForFolder:folder];
+//        NSString *dispName = [imapSync displayNameForFolder:folder  usingSession:imapSession];
         
         [dispNamesFolders addObject:dispName];
 

@@ -538,9 +538,9 @@
         }
         
         MCOIMAPNamespace*  nameSpace = namespaces[MCOIMAPNamespacePersonal];
-        MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
         [imapSession setDefaultNamespace:nameSpace];
         
+        MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
         [op start:^(NSError*  error, NSArray* folders) {
             if (error) {
                 DDLogError(@"MCOIMAPFetchFoldersOperation Error: %@", error.description);
@@ -724,11 +724,15 @@
         
         ImapSync *imapSync = [ImapSync sharedServices:user];
         
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath];
+        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
 
-//        NSString *dispName = [imapSync displayNameForFolder:folder];
+//        NSString *dispName = [imapSync displayNameForFolder:folder usingSession:imapSession];
         
         [dispNamesFolders addObject:dispName];
+   
+// WAS:
+//        NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:[NSString stringWithFormat:@"%c",[folder delimiter]]];
+//        [dispNamesFolders addObject:dispName];
         
 //        [[SyncManager getSingleton] addNewStateForFolder:folder
 //                                                   named:dispName
