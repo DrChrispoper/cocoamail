@@ -29,11 +29,21 @@
 
 @interface SyncManager : NSObject {    
 	// sync-related stuff
-	NSMutableArray<NSMutableDictionary*>* syncStates;
+//	NSMutableArray <NSMutableDictionary*>* syncStates;
 //	BOOL syncInProgress;
 }
 
 //@property (nonatomic, weak) id aNewEmailDelegate;
+
+// syncStates ISA mutable array, indexed by account number,
+//      returning accountStates
+// accountStates ISA mutable dictionary,
+//      in which the key "folderStates" returns accountFolderStates
+// accountFolderStates ISA mutable array, indexed by folder number,
+//      returning folderStates
+// folderStates is a mutable dictionary,
+//      in which the key "deleted" returns a BOOL folderDeleted
+//
 @property (nonatomic, strong) NSMutableArray<NSMutableDictionary*>* syncStates;
 //@property (assign) BOOL syncInProgress;
 //@property (assign) BOOL isFromStart;

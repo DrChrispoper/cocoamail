@@ -232,7 +232,8 @@ static SyncManager * singleton = nil;
     return [AppSettings getSingleton].users.count - 1;
 }
 
--(NSArray *)_folderStatesForAccountNumber:(NSInteger)accountNum
+
+-(NSMutableArray *)_folderStatesForAccountNumber:(NSInteger)accountNum
 {
     NSInteger accountCount = [self _getAccountCount];
     
@@ -245,16 +246,17 @@ static SyncManager * singleton = nil;
 // Return the number of folders in the account from the local local Sync State
 -(NSInteger) folderCount:(NSInteger)accountNum
 {
-    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
+    
+    NSMutableArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
     return [folderStates count];
 }
 
 // Given an account and a folder in that account,
-// return a mutable copy of its Folder State dictionary from the local Sync States
+// return a mutable COPY of its Folder State dictionary from the local Sync States
 -(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
+    NSMutableArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
 	
 	if (folderNum >= [folderStates count]) {
 		return nil;
@@ -351,36 +353,47 @@ static SyncManager * singleton = nil;
                                    kFolderStateFolderFlagsKey:@(folder.flags),
                                    kFolderStateEmailCountKey:@(0)};
     
-    [self.syncStates[accountNum][FOLDER_STATES_KEY] addObject:folderState];
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    
+    NSMutableDictionary *folderStates = [NSMutableDictionary dictionaryWithDictionary:folderState];
+    [accountFolderStates addObject:folderStates];
     
     [self _writeSyncStateToFileForAccount:accountNum];
 }
 
 -(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
 	
-    // If the folder number is not valid
-	if (folderNum >= [folderStates count]) {
-		return YES;
-	}
-	
-	NSNumber* y =  folderStates[folderNum][kFolderStateDeletedKey];
+	NSNumber* y =  folderStates[kFolderStateDeletedKey];
 	
 	return (y == nil) || [y boolValue];
 }
 
+
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum][kFolderStateDeletedKey] = @YES;
-	
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
+    
+    NSNumber *folderDeleted = @(YES);
+    
+    [folderStates setValue:folderDeleted forKey:kFolderStateDeletedKey];
+
     [self _writeSyncStateToFileForAccount:accountNum];
 }
 
 -(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-	self.syncStates[accountNum][FOLDER_STATES_KEY][folderNum] = data;
-		
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    
+    accountFolderStates[folderNum] = data;
+    
     [self _writeSyncStateToFileForAccount:accountNum];
 }
 
