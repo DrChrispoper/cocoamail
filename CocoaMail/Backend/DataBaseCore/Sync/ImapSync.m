@@ -778,28 +778,31 @@ static NSArray * sharedServices = nil;
             [syncManager retrieveFolderPathFromFolderState:existingFolderIndex
                                                 accountNum:self.user.accountNum];
 
-            DDLogInfo(@"\tFolder %lu has Folder Path \"%@\"",
+            DDLogInfo(@"\tLocal Folder %lu has Folder Path \"%@\"",
                       (unsigned long)existingFolderIndex,folderPath);
             
             // if the path of the folder being checked, matches the path of the existing folder
             if ([[imapFolder path] isEqualToString:folderPath]) {
                 DDLogInfo(@"\t *** IMAP Folder == Local Folder ***");
-                folderPathInAccountsExistingFolders = YES;
+                folderPathInAccountsExistingFolders = TRUE;
                 break;
             }
         }
     
-        // If the folder being checked did not have a matching path
-        // to any of the existing folders, then it is a NEW folder and needs
-        // to be added.
+        // If the IMAP Folder being checked was not found in the Local Folders
+        // then it is a NEW folder and needs to be added.
         if ( folderPathInAccountsExistingFolders == FALSE ) {
             
-            DDLogInfo(@"IMAP Folder Path \"%@\" IS NEW (not in account's model folder paths)",
+            DDLogInfo(@"IMAP Folder Path \"%@\" IS NEW (not in account's Local Folders)",
                       [imapFolder path]);
+            
+//            ImapSync *imapSync = [ImapSync sharedServices:self.user];
+//            MCOIMAPSession *imapSession = 
             
             NSString *dispName = [self addFolder:imapFolder
                                           toUser:self.user
-                                         atIndex:indexPath];
+                                         atIndex:indexPath
+                                usingImapSession:self.imapSession];
             
             if ( dispName && dispName.length > 0 ) {
                 [dispNamesFolders addObject:dispName];
@@ -824,10 +827,10 @@ static NSArray * sharedServices = nil;
     }
 }
 
--(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath
+-(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath usingImapSession:(MCOIMAPSession*)imapSession
 {
 
-    NSString* dispName = [self displayNameForFolder:folder];
+    NSString* dispName = [self _displayNameForFolder:folder usingSession:imapSession];
     
 //    [dispNamesFolders addObject:dispName];
     
@@ -843,13 +846,18 @@ static NSArray * sharedServices = nil;
     return dispName;
 }
 
--(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder
+-(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession *)imapSession
 {
-    MCOIMAPNamespace *imapNamespace = [self.imapSession defaultNamespace];
-    NSArray *namespaceComponenets = [imapNamespace componentsFromPath:[folder path]];
+    MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
+    DDAssert(imapNamespace, @"IMAP Namespace must exist");
+    
+    NSArray *namespaceComponents = [imapNamespace componentsFromPath:[folder path]];
     
     NSString* pathDelimiter = [NSString stringWithFormat:@"%c",[folder delimiter]];
-    NSString* dispName = [namespaceComponenets componentsJoinedByString:pathDelimiter];
+    NSString* dispName = [namespaceComponents componentsJoinedByString:pathDelimiter];
+    
+    DDAssert(dispName,@"Folder Display Name must be found");
+    DDAssert(dispName.length>0, @"Folder Display Name must exist");
     
     return dispName;
 }
@@ -937,8 +945,8 @@ static NSArray * sharedServices = nil;
                                     NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:folderIndex
                                                                     accountNum:self.user.accountNum];
                                     
-                                    if ([syncMgr isFolderDeleted:folderIndex accountNum:self.user.accountNum]) {
-                                        DDLogInfo(@"Folder %i in account %ld is deleted", folderIndex, (long)self.user.accountNum);
+                                    if ([syncMgr isFolderDeletedLocally:folderIndex accountNum:self.user.accountNum]) {
+                                        DDLogInfo(@"Folder %li in account %ld is deleted", (long)folderIndex, (long)self.user.accountNum);
                                     }
                                     else if (![folders containsObject:folderPath]) {
                                         DDLogInfo(@"Folder %@ has been deleted - deleting FolderState", folderPath);
@@ -951,7 +959,7 @@ static NSArray * sharedServices = nil;
                                 
                                 //If the folder is Deleted & it's an important Folder
                                 //Check for another
-                                if ([syncMgr isFolderDeleted:currentFolder accountNum:self.user.accountNum]) {
+                                if ([syncMgr isFolderDeletedLocally:currentFolder accountNum:self.user.accountNum]) {
                                     
                                     CCMFolderType f = [self.user typeOfFolder:currentFolder];
                                     
