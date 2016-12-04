@@ -386,10 +386,11 @@ static AppSettings * singleton = nil;
     }
     
     imapSession.maximumConnections = 6;
-    
+        
     return imapSession;
 }
 
+#warning method below not called from anywhere?
 +(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
 {
     UserSettings* user = [AppSettings userWithIndex:accountIndex];

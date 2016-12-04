@@ -363,12 +363,9 @@
     return -1;
 }
 
-#warning **** FAILING HERE
-
 -(NSArray*) allNonImportantFoldersName
 {
     DDAssert(_allFoldersDisplayNames, @"_allFolderDisplayNames must be initialized.");
-#warning Seems to be failing between these two lines.  Appears related to run loops
     DDAssert(_importantFolders, @"_importantFolders must be initialized.");
     
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
@@ -434,7 +431,7 @@
     _importantFolders = [decoder decodeObjectForKey:@"importantFolders"];
     _allFoldersDisplayNames = [decoder decodeObjectForKey:@"allFolders"];
     
-#warning _allFoldersDisplayNames should not be nil.  We get errors if it is.  What should we do?
+//    DDAssert(_allFoldersDisplayNames,@"_allFoldersDisplayNames should not be nil");
     
     _deleted = [decoder decodeBoolForKey:@"deleted"];
     _all = [decoder decodeBoolForKey:@"all"];
@@ -468,7 +465,7 @@
     [encoder encodeObject:_name forKey:@"name"];
     [encoder encodeObject:_initials forKey:@"initials"];
     [encoder encodeObject:[UserSettings _stringForColor:_color] forKey:@"color"];
-    
+        
     [encoder encodeObject:_importantFolders forKey:@"importantFolders"];
     [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     

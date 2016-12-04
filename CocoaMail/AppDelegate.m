@@ -107,7 +107,7 @@
     DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
-    [Accounts sharedInstance];
+    [Accounts sharedInstance];  // Allocate the shared instance
     [[Accounts sharedInstance] getDrafts];
     
     //[self registerGoogleSignIn];
