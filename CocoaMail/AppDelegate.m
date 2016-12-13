@@ -22,6 +22,8 @@
 #import "Draft.h"
 #import <CocoaLumberjack/CocoaLumberjack.h>
 
+//#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
+
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
 #endif
@@ -37,45 +39,8 @@
     [Instabug setIntroMessageEnabled:NO];
 #endif
     
-    
-    /**********************************/
-    /*** Initialize CocoaLumberjack ***/
-    /**********************************/
-        
-    // Enable XcodeColors
-    setenv("XcodeColors", "YES", 0);
-
-    // Send debug statements to the System Log (Console.app)
-//    [DDLog addLogger:[DDASLLogger sharedInstance]];
-    
-    // Send debug statements to the Xcode console (uses XcodeColor)
-    DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
-    if (ttyLogger) {
-        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
-        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
-        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
-        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
-        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
-        [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
-    }
-    
-    // Send debug info to log files
-    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
-    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
-    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-    [DDLog addLogger:fileLogger];
-
-    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
-    DDLogInfo(@"Log FilePath: %@",[lfi filePath]);
-    
-    // Show the Xcode console colors
-    DDLogError(  @"Color Demo: DDLogError");    // Red
-    DDLogWarn(   @"Color Demo: DDLogWarn");     // Orange
-    DDLogInfo(   @"Color Demo: DDLogInfo");     // Green
-    DDLogDebug(  @"Color Demo: DDLogDebug");    // Cyan
-    DDLogVerbose(@"Color Demo: DDLogVerbose");  // Default (black)
-    
-    
+    // Initialize CocoaLumberjack logging system
+    [self _initCocoaLumberjack ];
     
     // Initialize Flurry analytics
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
@@ -113,6 +78,53 @@
     //[self registerGoogleSignIn];
     
     return shouldPerformAdditionalDelegateHandling;
+}
+
+/**********************************/
+/*** Initialize CocoaLumberjack ***/
+/**********************************/
+-(void) _initCocoaLumberjack
+{
+#ifdef USING_XCODECOLORS
+    // Enable XcodeColors
+    setenv("XcodeColors", "YES", 0);
+#endif
+    
+//    // Send debug statements to the System Log (Console.app)
+//    [DDLog addLogger:[DDASLLogger sharedInstance]];
+    
+    // Send debug statements to the Xcode console (uses XcodeColor)
+    DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
+    if (ttyLogger) {
+#ifdef USING_XCODECOLORS
+    [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+    [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+    [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
+    [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
+    [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
+#endif
+        [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
+    }
+    
+    // Send debug info to log files
+    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
+    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
+    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+    [DDLog addLogger:fileLogger];
+    
+    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
+    DDLogInfo(@"*********");
+    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
+    DDLogInfo(@"*********");
+
+#ifdef USING_XCODECOLORS
+    // Show the Xcode console colors
+    DDLogError(  @"Color Demo: DDLogError");    // Red
+    DDLogWarn(   @"Color Demo: DDLogWarn");     // Orange
+    DDLogInfo(   @"Color Demo: DDLogInfo");     // Green
+    DDLogDebug(  @"Color Demo: DDLogDebug");    // Cyan
+    DDLogVerbose(@"Color Demo: DDLogVerbose");  // Default (black)
+#endif
 }
 
 -(BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
