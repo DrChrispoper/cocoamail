@@ -237,7 +237,7 @@ static SyncManager * singleton = nil;
 {
     NSInteger accountCount = [self _getAccountCount];
     
-#warning Not sure this line is correct yet - is account # 0 or 1 based?
+    // Account index is 0 based
     DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",(long)accountCount);
     
     return self.syncStates[accountNum][FOLDER_STATES_KEY];
@@ -316,7 +316,7 @@ static SyncManager * singleton = nil;
 
     NSString *folderPath = (NSString*)valForKey;
     
-    DDLogDebug(@"FolderState[%@] returning \"%@\"",kFolderStateFolderPathKey,folderPath);
+    DDLogDebug(@"FolderState[\"%@\"] returns \"%@\"",kFolderStateFolderPathKey,folderPath);
     
     return folderPath;
 }
@@ -351,7 +351,8 @@ static SyncManager * singleton = nil;
                                    kFolderStateFullSyncKey:@false,
                                    kFolderStateLastEndedKey:@0,
                                    kFolderStateFolderFlagsKey:@(folder.flags),
-                                   kFolderStateEmailCountKey:@(0)};
+                                   kFolderStateEmailCountKey:@(0)
+                                   };
     
     NSMutableDictionary *accountStates = self.syncStates[accountNum];
     NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
@@ -415,6 +416,69 @@ static SyncManager * singleton = nil;
     DDLogInfo(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
 }
 
+
+// syncStates ISA mutable array, indexed by account number,
+//      returning accountStates
+// accountStates ISA mutable dictionary,
+//      in which the key "folderStates" returns accountFolderStates
+// accountFolderStates ISA mutable array, indexed by folder number,
+//      returning folderStates
+// folderStates is a mutable dictionary,
+//      in which the key "deleted" returns a BOOL folderDeleted
+//
+-(NSString *)description
+{
+    NSInteger acntCount = self.syncStates.count;
+    
+    NSMutableString *desc = [NSMutableString stringWithFormat:@"SyncStates has %ld accounts:\n",(long)acntCount];
+    
+    for (NSInteger acntNum = 0; acntNum < acntCount; acntNum++ ) {
+        
+        NSMutableDictionary *acntStates = self.syncStates[acntNum];
+        
+        DDAssert(acntStates,@"acntStates must exist");
+        
+        NSMutableArray *acntFolderStates = acntStates[FOLDER_STATES_KEY];
+        
+        DDAssert(acntFolderStates,@"acntStates must exist");
+        
+        NSInteger fldrCount = acntFolderStates.count;
+        
+        [desc appendFormat:@"\taccount[%ld] has %ld folders:\n",
+                                        (long)acntNum,(long)fldrCount];
+        
+        for (NSInteger fldrNum = 0; fldrNum < fldrCount; fldrNum++ ) {
+            
+            NSMutableDictionary *folderStates = acntFolderStates[fldrNum];
+
+//#define kFolderStateAccountNumberKey        @"accountNum"
+//#define kFolderStateFolderDisplayNameKey    @"folderDisplayName"    // used anywhere??
+//#define kFolderStateFolderPathKey           @"folderPath"
+//#define kFolderStateDeletedKey              @"deleted"
+//#define kFolderStateFullSyncKey             @"fullsynced"
+//#define kFolderStateLastEndedKey            @"lastended"            // Last Folder Synced
+//#define kFolderStateFolderFlagsKey          @"flags"                // where used?
+//#define kFolderStateEmailCountKey           @"emailCount"
+            
+            NSString *folderName = folderStates[kFolderStateFolderDisplayNameKey];
+            
+            NSInteger folderMsgCount = [folderStates[kFolderStateEmailCountKey] integerValue];
+        
+            NSNumber* y = folderStates[kFolderStateDeletedKey];
+            
+            BOOL folderDeleted = (y == nil) || [y boolValue];
+            
+            [desc appendFormat:@"\t\tfolder[%ld] \"%@\" has %ld messages",
+             (long)fldrNum,folderName,(long)folderMsgCount];
+            
+            if ( folderDeleted ) {
+                [desc appendString:@" (DELETED)"];
+            }
+            [desc appendString:@"\n"];
+        }
+    }
+    return desc;
+}
 
 
 @end

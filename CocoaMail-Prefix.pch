@@ -29,5 +29,5 @@
 #define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
 
 // Change this to change the log level for CocoaLumberjack
-static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
+static const DDLogLevel ddLogLevel = DDLogLevelInfo;
 
