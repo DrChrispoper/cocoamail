@@ -443,7 +443,7 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
-    DDLogInfo(@"DECODED UserSettings: %@",[self description]);
+    DDLogVerbose(@"DECODED UserSettings: %@",[self description]);
 
     return self;
 }
