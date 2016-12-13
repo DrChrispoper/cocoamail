@@ -411,6 +411,12 @@ static NSDateFormatter * s_df_hour = nil;
         uid_entry.sonMsgID = @"0";
     }
     
+    DDLogDebug(@"\nEmail subj=\"%@\"\nmsgID=\"%@\" has %ld references.\nson ID ref \"%@\"",
+               msg.header.subject,
+               msg.header.messageID,
+               (long)msg.header.references.count,
+               uid_entry.sonMsgID);
+    
     email.uids = [[NSMutableArray arrayWithArray:email.uids] arrayByAddingObject:uid_entry];
     
     NSMutableArray* atts = [[NSMutableArray alloc] initWithCapacity:msg.attachments.count + msg.htmlInlineAttachments.count];
@@ -616,15 +622,19 @@ static NSDateFormatter * s_df_hour = nil;
     _uids = uids;
 }
 
--(NSString*) sonID
+-(NSString*) sonID // returns first UID's son Msg ID, or @"" (empty string)
 {
-    if ([self getFirstUIDE]) {
-        return [[self getFirstUIDE] sonMsgID];
+    UidEntry *firstUID = [self getFirstUIDE]; // value or nil
+    
+    if ( firstUID ) {
+        return firstUID.sonMsgID;
     }
     
     return @"";
 }
 
+// If there is at least one UID in the UID array, then return UID[0]
+// If there is not, then return nil.
 -(UidEntry*) getFirstUIDE
 {
     if (self.uids.count > 0) {

@@ -43,10 +43,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 @property (nonatomic, strong) NSMutableSet* convIDs;
 
 // User Folders Mail Index Sets
-@property (nonatomic, strong) NSArray* userFoldersContent;
+@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* userFoldersContent;
 
 // System Folders Mail Index Sets
-@property (nonatomic, strong) NSArray* systemFoldersContent;
+@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* systemFoldersContent;
 
 @end
 
@@ -105,8 +105,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             [sharedInstance runLoadData];
         }
         
-        DDLogInfo(@"Accounts Singleton Initialized, count = %ld",(unsigned long)[accounts count]);
-        DDLogInfo(@"Accounts:%@",[sharedInstance description]);
+        DDLogVerbose(@"Accounts Singleton Initialized. Account count = %ld",(unsigned long)[accounts count]);
+        DDLogVerbose(@"Accounts:%@",[sharedInstance description]);
     });
     
     return sharedInstance;
@@ -118,18 +118,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     [ac setNewUser:user];
     
-    //Folders Indentation?
-    NSArray* tmpFolders = [ac.user allNonImportantFoldersName];
-    
-    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
-    
-    // MARK: Is '/' guaranteed to be the only mailbox path connector?
-
-    for (NSString* folderName in tmpFolders) {
-        [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
-    }
-    
-    ac.userFolders = foldersNIndent;
+    ac.userFolders = [ac userFolderNames];
     
     ac.person = [Person createWithName:ac.user.name email:ac.user.username icon:nil codeName:ac.user.initials];
     [ac.person linkToAccount:ac];
@@ -148,7 +137,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
      [userfolders addObjectsFromArray:a.userFolders];
      }*/
     
-    ac.userFolders = userfolders;
+    ac.userFolders = userfolders; // NB Empty array
+    
     ac.person = [Person createWithName:nil email:nil icon:nil codeName:@"ALL"];
     
     return ac;
@@ -520,10 +510,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     // Initialize the "User" IMAP Folders
     //
     
-    const NSInteger limite = self.userFolders.count;
+    const NSInteger userFolderCount = self.userFolders.count;
     
-    NSMutableArray* arrayU = [[NSMutableArray alloc] initWithCapacity:limite];
-    for (int i = 0; i < limite; i++) {
+    NSMutableArray* arrayU = [[NSMutableArray alloc] initWithCapacity:userFolderCount];
+    for (int i = 0; i < userFolderCount; i++) {
         [arrayU addObject:[[NSMutableIndexSet alloc] init]];
     }
     
@@ -547,6 +537,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
         }
         else {
+            // Set Current Folder Index to the index in the All Folder Names of the Current Folder
             NSString* name = self.userFolders[self.currentFolderType.idx][0];
             NSArray* names = [self.user allFoldersDisplayNames];
             for (int i = 0; i < names.count; i++) {
@@ -556,7 +547,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 }
             }
         }
-    } else {
+    } else { // Folder Type is Important/System Folder
         self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
     }
 }
@@ -701,6 +692,25 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     return names;
 }
+- (NSArray *)userFolderNames
+{
+    //Folders Indentation?
+    NSArray* allUserFolderNames = [self.user allNonImportantFoldersName];
+
+    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:allUserFolderNames.count];
+    
+#warning: Is '/' guaranteed to be the only mailbox path connector?
+    
+    // Need an "MCOIMAPFolder folder] to get delimiter
+    // NSString *folderPathDelim = [NSString stringWithFormat:@"%c",[folder delimiter]];
+    
+    for (NSString* folderName in allUserFolderNames) {
+        [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
+    }
+    
+    return foldersNIndent;
+}
+
 
 - (void)cancelSearch
 {
@@ -724,6 +734,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSString *sonID = [email sonID];
     
+    if ( [email.subject containsString:@"Review blocked"]) {
+        DDLogDebug(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
+    }
+    
     if ( [sonID isEqualToString:@""] ||
          [sonID isEqualToString:@"0"] ||
          ![_convIDs containsObject:sonID] ) {
@@ -740,7 +754,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             Conversation* conv = self.allsMails[idx];
             
             // If the indexed conversation matche's the email sonID
-            if ([[[conv firstMail] sonID] isEqualToString:sonID]) {
+            NSString *firstMailSonID = [[conv firstMail] sonID];
+            if ([firstMailSonID isEqualToString:sonID]) {
                 
                 // Add the mail message to the conversation
                 [conv addMail:email];
@@ -748,6 +763,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 [self _addCon:idx toFoldersContent:[conv foldersType]];
                 
                 return; // we match only once (could be break;)
+            }
+            else {
+                DDLogVerbose(@"Coversation's First Mail's Son ID \"%@\" equals given mail Son ID",firstMailSonID);
             }
         }
     }

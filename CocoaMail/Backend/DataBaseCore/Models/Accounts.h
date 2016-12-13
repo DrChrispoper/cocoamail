@@ -60,7 +60,7 @@
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
-@property (nonatomic, strong) NSArray* userFolders; // Array of (folder name, name contains "/")
+@property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
 @property (nonatomic) NSInteger currentFolderIdx;
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;
@@ -101,6 +101,8 @@
 -(void) addLocalDraft:(Draft*)draft;
 
 -(NSArray*) systemFolderNames;      // System Folder Names
+-(NSArray*) userFolderNames;
+
 -(void) deliverUpdate:(NSArray<Mail*>*)emails;
 -(void) deliverDelete:(NSArray<Mail*>*)emails fromFolder:(CCMFolderType)folderFrom;
 -(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom;
