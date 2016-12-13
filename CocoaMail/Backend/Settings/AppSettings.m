@@ -512,6 +512,7 @@ static AppSettings * singleton = nil;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
     
+    
     int badge = 0;
     
     if ([[AppSettings getSingleton] badgeCount] == 1) {
@@ -519,7 +520,8 @@ static AppSettings * singleton = nil;
             badge += [AppSettings inboxUnread:index];
         }
     }
-        
+    DDLogDebug(@"Setting Inbox Unread to %ld",(long)badge);
+    
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
 }
 
