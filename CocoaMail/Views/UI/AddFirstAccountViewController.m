@@ -751,13 +751,7 @@
     
     [user setAllFoldersDisplayNames:dispNamesFolders];
     
-    NSArray* tmpFolders = [user allNonImportantFoldersName];
-    NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:tmpFolders.count];
-    for (NSString* folderNames in tmpFolders) {
-        [foldersNIndent addObject:@[folderNames, @([folderNames containsString:@"/"])]];
-    }
-    
-    ac.userFolders = foldersNIndent;
+    ac.userFolders = [ac userFolderNames];
     
     [[Accounts sharedInstance] addAccount:ac];
         
