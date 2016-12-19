@@ -78,7 +78,7 @@ static AppSettings * singleton = nil;
             
             [_users addObject:user];
             
-            DDLogInfo(@"Created \"All Files\" UserSettings: %@",[user description]);
+            DDLogInfo(@"Created \"All Files\" UserSettings");
         }
         else {
             for (NSString* fileName in dirFiles) {
