@@ -34,7 +34,7 @@
 +(RACSignal*) doLogin:(UserSettings*)user;
 
 -(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath usingImapSession:(MCOIMAPSession*)imapSession;
--(void) updatePersistentStateOfFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNun;
+//-(void) updatePersistentStateOfFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNun;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;

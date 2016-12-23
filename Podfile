@@ -19,6 +19,10 @@ target 'CocoaMail' do
 	pod 'Flurry-iOS-SDK/FlurrySDK'
 #	pod 'Instabug'
   pod 'CocoaLumberjack' 
+  
+#  use_frameworks!
+  # Use 4.0 for swift 3.x
+#  pod 'PKHUD', '~> 3.0'
 end
 
 

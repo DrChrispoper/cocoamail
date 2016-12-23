@@ -438,11 +438,14 @@ static NSArray * sharedServices = nil;
     NSDictionary *state = [syncMgr retrieveState:folderNumber
                                       accountNum:self.user.accountNum];
     
-    BOOL retVal = ([state[kFolderStateFullSyncKey] boolValue] == FALSE);
+    BOOL folderIsSynced = [state[kFolderStateFullSyncKey] boolValue];
     
-    DDLogVerbose(@"Folder #%ld \"fullsynced\" state = %@,  folderIsNotSynced returning %@",(long)folderNumber,state[kFolderStateFullSyncKey],(retVal?@"YES":@"NO"));
+    BOOL retVal = (folderIsSynced == FALSE);
     
-    
+    DDLogVerbose(@"Folder #%ld \"fullsynced\" state = %@, folderIsNotSynced returning %@",
+                 (long)folderNumber,
+                 (folderIsSynced?@"YES":@"NO"),
+                 (retVal?@"YES":@"NO"));
     return retVal;
 }
 
@@ -739,14 +742,43 @@ static NSArray * sharedServices = nil;
     });
 }
 
+-(BOOL)_localFolderMatchesImapFolder:(MCOIMAPFolder *)imapFolder
+{
+    SyncManager* syncManager = [SyncManager getSingleton];
+    
+    NSUInteger localFolderCount = [syncManager folderCount:self.user.accountNum];
+
+    BOOL matchingFolderFound = FALSE;
+ 
+    // Find a Local Folder whose path equals the IMAP Folder Path
+    for (NSUInteger localFolderIndex = 0; localFolderIndex < localFolderCount; localFolderIndex++) {
+        
+        // retrieve the folder's path from the sync manager persistent store
+        NSString* folderPath =
+        [syncManager retrieveFolderPathFromFolderState:localFolderIndex
+                                            accountNum:self.user.accountNum];
+        
+        // if the path of the folder being checked, matches the path of the existing folder
+        if ([[imapFolder path] isEqualToString:folderPath]) {
+            DDLogInfo(@"\t *** IMAP Folder (%@) == Local Folder %lu ***",
+                      folderPath,(unsigned long)localFolderIndex);
+            
+            matchingFolderFound = TRUE;
+            break;
+        }
+    } // for each local folder
+    
+    return matchingFolderFound;
+}
+
 // Given an array of IMAP folder names, determine if any have been
 // added, renamed, or deleted, and update
--(void)_checkFolderNamesForUpdates:(NSArray <MCOIMAPFolder *>*)folders
+-(void)_checkFolderNamesForUpdates:(NSArray <MCOIMAPFolder *>*)imapFolders
 {
     // NB: This handles Added Folders, but does not handle Deleted Folders or Renamed Folders.
     
-    DDAssert(folders, @"Folders Array must not be empty");
-    DDAssert(folders.count>0, @"Folders Array must contain folders");
+    DDAssert(imapFolders, @"Folders Array must not be empty");
+    DDAssert(imapFolders.count>0, @"Folders Array must contain folders");
     
     
     // I believe this code block updates local IMAP Folder Names if any have
@@ -754,102 +786,70 @@ static NSArray * sharedServices = nil;
     
     // Appears not to handle DELETED folders.  What about folders with name CHANGES?
     
-    DDLogInfo(@">> BEGIN Check Folder Names for Updates, folder count = %lu",
-              (unsigned long)folders.count);
+    DDLogInfo(@"BEGIN: Check Folder Names for Updates, IMAP folder count = %lu",
+              (unsigned long)imapFolders.count);
     
-    SyncManager* syncManager = [SyncManager getSingleton];
+    int folderIndex = 0;
     
-    int indexPath = 0;
+    NSMutableArray* newFolderNames = [[NSMutableArray alloc] initWithCapacity:imapFolders.count];
     
-    NSUInteger existingFolderCount = [syncManager folderCount:self.user.accountNum];
-    
-    DDLogInfo(@"\tLocal Folder Count for Account # %lu is %lu",
-              (unsigned long)self.user.accountNum,
-              (unsigned long)existingFolderCount);
-    
-    NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
-    
-    for (MCOIMAPFolder* imapFolder in folders) {
-        BOOL folderPathInAccountsExistingFolders = NO;
+    for (MCOIMAPFolder* imapFolder in imapFolders) {
         
-        // For each existing folder
-        for (NSUInteger existingFolderIndex = 0; existingFolderIndex < existingFolderCount; existingFolderIndex++) {
-            
-            // retrieve the folder's path from the sync manager persistent store
-            NSString* folderPath =
-            [syncManager retrieveFolderPathFromFolderState:existingFolderIndex
-                                                accountNum:self.user.accountNum];
-
-            // if the path of the folder being checked, matches the path of the existing folder
-            if ([[imapFolder path] isEqualToString:folderPath]) {
-                DDLogInfo(@"\t *** IMAP Folder (%@) == Local Folder %lu ***",
-                          folderPath,(unsigned long)existingFolderIndex);
-                
-                folderPathInAccountsExistingFolders = TRUE;
-                break;
-            }
-        } // for each local folder
-    
+        BOOL imapFolderMatchesLocalFolder = [self _localFolderMatchesImapFolder:imapFolder];
+        
         // If the IMAP Folder being checked was not found in the Local Folders
         // then it is a NEW folder and needs to be added.
-        if ( folderPathInAccountsExistingFolders == FALSE ) {
+        if ( imapFolderMatchesLocalFolder == FALSE ) {
             
-            DDLogInfo(@"IMAP Folder Path \"%@\" IS NEW (not in account's Local Folders)",
-                      [imapFolder path]);
+            DDLogInfo(@"\tIMAP Folder \"%@\" not found in local folders.",[imapFolder path]);
             
-//            ImapSync *imapSync = [ImapSync sharedServices:self.user];
-//            MCOIMAPSession *imapSession = 
+            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:folderIndex];
             
-            NSString *dispName = [self addFolder:imapFolder
-                                          toUser:self.user
-                                         atIndex:indexPath
-                                usingImapSession:self.imapSession];
-            
-            if ( dispName && dispName.length > 0 ) {
-                [dispNamesFolders addObject:dispName];
-            }
-            else {
-                // addFolder failed
+            if ( dispName == nil || dispName.length == 0 ) {
                 DDLogError(@"\tImapSync addFolder:toUser:atIndex: failed!");
             }
-         }
+            else {
+                [newFolderNames addObject:dispName];
+            }
+        }
+
+        folderIndex++;
         
-        indexPath++;
     } // for each IMAP folder
     
-    if (dispNamesFolders.count > 0) {
+    // If there are any folders to add to the Local store ...
+    if (newFolderNames.count > 0) {
         
-        DDLogDebug(@"Adding New Folder Names \"%@\" to ALL Folder Names",dispNamesFolders);
+        DDLogDebug(@"Adding New Folder Names \"%@\" to ALL Folder Names",newFolderNames);
         
         // Add dispNamesFolders to saved All Folder Names
         NSMutableArray* allFolderNames = [NSMutableArray arrayWithArray:self.user.allFoldersDisplayNames];
-        [allFolderNames addObjectsFromArray:dispNamesFolders];
+        [allFolderNames addObjectsFromArray:newFolderNames];
         [self.user setAllFoldersDisplayNames:allFolderNames];
     }
 }
 
--(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath usingImapSession:(MCOIMAPSession*)imapSession
+// NB: indexPath is imapFolderIndex
+-(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath
 {
-
-    NSString* dispName = [self _displayNameForFolder:folder usingSession:imapSession];
+    NSString* dispName = [self _displayNameForFolder:folder];
     
-//    [dispNamesFolders addObject:dispName];
-    
+    // Append a new Folder Sync State Object for this Account
     SyncManager* syncManager = [SyncManager getSingleton];
-    [syncManager addNewStateForFolder:folder
-                                named:dispName
-                           forAccount:user.accountNum];
+    NSInteger newFolderSyncIndex = [syncManager addNewStateForFolder:folder
+                                                                named:dispName
+                                                           forAccount:user.accountNum];
     
-    [self updatePersistentStateOfFolder:folder
-                                atIndex:indexPath
-                       forAccountNumber:user.accountNum];
+    [self _updateSyncStateWithImapMessageCountForFolder:folder.path
+                                          atFolderIndex:newFolderSyncIndex
+                                       forAccountNumber:user.accountNum];
     
     return dispName;
 }
 
--(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession *)imapSession
+-(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder
 {
-    MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
+    MCOIMAPNamespace *imapNamespace = [self.imapSession defaultNamespace];
     DDAssert(imapNamespace, @"IMAP Namespace must exist");
     
     NSArray *namespaceComponents = [imapNamespace componentsFromPath:[folder path]];
@@ -863,26 +863,24 @@ static NSArray * sharedServices = nil;
     return dispName;
 }
 
--(void) updatePersistentStateOfFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNum
+-(void) _updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum
 {
-    SyncManager* syncManager = [SyncManager getSingleton];
-
-    MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folder.path];
+    MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folderPath];
+    
     [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
-        DDLogInfo(@"BEGAN IMAP Folder Get Info Operation on %@",folder.path);
+        
+        DDLogInfo(@"BEGAN IMAP Folder Get Info Operation on %@",folderPath);
         
         if (error) {
-            DDLogError(@"IMAP Folder Get Info Operation Error = %@",error);
+            DDLogError(@"\tIMAP Folder Get Info Operation Error = %@",error);
         } else {
-            NSMutableDictionary* syncState = [syncManager retrieveState:indexPath accountNum:accountNum];
             
-            DDLogInfo(@"IMAP Folder Get Info Operation got Sync State\"%@\"",syncState);
+            DDLogInfo(@"\tGot Folder Sync State from folder %ld for IMAP folder \"%@\"",(long)folderIndex,folderPath);
             
             int msgCount = [info messageCount];
-            syncState[kFolderStateEmailCountKey] = @(msgCount);
-            DDLogInfo(@"\tupdating Sync State [ Email Count ] to %d",msgCount);
             
-            [syncManager persistState:syncState forFolderNum:indexPath accountNum:accountNum];
+            [self _writeFolderStateMessageCount:msgCount andFolder:folderIndex];
+
         }
     }];
 }
@@ -890,374 +888,496 @@ static NSArray * sharedServices = nil;
 // MARK: - IMAP Sync Service - Iterate through folders, syncing each
 #warning Function is 1920 lines long!!!
 
-- (void)_updateImapFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isInBackground:(BOOL)isInBackground isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
+- (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
-    DDLogInfo(@"\nIMAP Sync Service: Do Login Operation.");
-    
-  [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
-                DDLogError(@"\tLogin attempt failed, so send an ERROR CCMConnectionError to subscriber");
-                [subscriber sendError:error];
-            } completed:^{
-                DDLogInfo(@"\tLogin attempt Completed.");
-                if (!self.connected) {
-                    DDLogInfo(@"\tNOT Connected.");
-                    if (isInBackground) {
-                        DDLogInfo(@"\tin BACKGROUND, so send COMPLETED to subscriber");
-
+    dispatch_async(self.s_queue, ^{
+        
+        SyncManager *syncMgr = [SyncManager getSingleton];
+        
+        DDLogInfo(@"BEGIN Process %lu Imap Messages.",(unsigned long)imapMessages.count);
+        
+        // Message ID of the last mail message returned by the IMAP server
+        NSString* lastMsgID = [imapMessages lastObject].header.messageID;
+        
+        for (MCOIMAPMessage* imapMsg in imapMessages) {
+            
+            if (self.isCanceled) {
+                DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
+                [subscriber sendCompleted];
+                return;
+            }
+            
+            NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
+            
+            Mail* email = [Mail mailWithMCOIMAPMessage:imapMsg inFolder:currentFolder andAccount:self.user.accountNum];
+            
+            if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
+                
+                if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
+                    // already have this email in other folder than this one -> add folder in uid_entry
+                    
+                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
+                    
+                    nextOp.completionBlock = ^{
+                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                            [email loadBody];
+                            [subscriber sendNext:email];
+                        }
+                    };
+                    
+                    [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                }
+                
+                if ([email.msgID isEqualToString:lastMsgID]) {
+                    if (!isFromStart && ![self _isRunningInBackground]) {
+                        [self _writeFolderStateLastEnded:from andFolder:currentFolder];
+                    }
+                    [subscriber sendCompleted];
+                }
+                
+                //We already have email with folder
+                continue;
+            }
+            
+            [[self.imapSession plainTextBodyRenderingOperationWithMessage:imapMsg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
+                
+                if (plainTextBodyString) {
+                    plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
+                    
+                    email.body = plainTextBodyString;
+                }
+                else {
+                    email.body = @"";
+                }
+                
+                NSDate* currentDateAndTime = [NSDate date];
+                NSDate* oneMonthBeforeCurrentDateAndTime = [currentDateAndTime dateByAddingTimeInterval:- ONE_MONTH_IN_SECONDS];
+                
+                if ([email.datetime compare:oneMonthBeforeCurrentDateAndTime] == NSOrderedAscending) {
+                    BOOL isNew = [self _saveEmail:email folder:currentFolder];
+                    
+                    if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                        if ( [self _isRunningInBackground] ) {
+                            if (isNew) {
+                                [subscriber sendNext:email];
+                            }
+                        }
+                        else {
+                            [subscriber sendNext:email];
+                        }
+                    }
+                    
+                    if ([email.msgID isEqualToString:lastMsgID]) {
+                        if (!isFromStart && ![self _isRunningInBackground]) {
+                            [self _writeFolderStateLastEnded:from andFolder:currentFolder];
+                        }
                         [subscriber sendCompleted];
                     }
-                    else {
-                        DDLogError(@"\tNOT in BACKGROUND, so send an ERROR CCMConnectionError to subscriber");
-                        
-                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                    }
                 }
-                else { // we are connected
-                    DDLogInfo(@"\tSUCCESSFULLY Connected.");
-
-                    MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
-                    dispatch_async(self.s_queue, ^{
+                else {
+                    [[self.imapSession htmlBodyRenderingOperationWithMessage:imapMsg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                        email.htmlBody = htmlString;
                         
-                        DDLogInfo(@"\nIMAP Sync Service: Fetch All Folders Operation");
+                        BOOL isNew = [self _saveEmail:email folder:currentFolder];
                         
-                        [fio start:^(NSError* error, NSArray* imapFolders) {
-                            if (error) {
-                                DDLogError(@"\treturned error = %@, send CCMConnectionError to subscriber",error.description);
-                                
-                                self.connected = NO;
-                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                                
-                                return;
-                            }
-                            else if (!imapFolders || imapFolders.count == 0) {
-                                DDLogInfo(@"\tNO imap Folders, so send Completed to subscriber");
-                                
-                                [subscriber sendCompleted];
-                                
-                                return;
-                            } else {
-                                DDLogInfo(@"\tsuccess: have %lu folders.",(unsigned long)imapFolders.count);
-                            }
-                            
-                            dispatch_async(self.s_queue, ^{
-                                
-                                
-#warning Look: Almost the same code as _checkFolders again!
-                                SyncManager* syncMgr = [SyncManager getSingleton];
-                                // mark folders that were deleted on the server as deleted on the client
-                                NSInteger localFolderIndex = 0;
-                                NSInteger localFolderCount = [syncMgr folderCount:self.user.accountNum];
-
-                                while (localFolderIndex < localFolderCount) {
-                                    
-                                    NSString* localFolderPath = [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
-                                                                    accountNum:self.user.accountNum];
-                                    
-                                    DDLogInfo(@"Account %li, Local Folder [%li]: \"%@\"",
-                                              (long)self.user.accountNum,
-                                              localFolderIndex,
-                                              localFolderPath);
-                                    
-                                    if ([syncMgr isFolderDeletedLocally:localFolderIndex accountNum:self.user.accountNum]) {
-                                        DDLogInfo(@"\t\tLocal Folder's Delete State = TRUE");
-                                    }
-                                    else if (![imapFolders containsObject:localFolderPath]) {
-                                        DDLogInfo(@"\tLocal Folder Path found in IMAP Folders");
-                                        DDLogInfo(@"\tMark Local Folder's Delete State as TRUE");
-                                        [syncMgr markFolderDeleted:localFolderIndex accountNum:self.user.accountNum];
-                                        localFolderIndex = 0;
-                                    }
-                                    else {
-                                        DDLogInfo(@"\tLocal Folder is not marked as DELETED.");
-                                    }
-                                    
-                                    localFolderIndex++;
+                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                            if ( [self _isRunningInBackground] ) {
+                                if (isNew) {
+                                    [subscriber sendNext:email];
                                 }
-                                
-                                //If the folder is Deleted & it's an important Folder
-                                //Check for another
-                                if ([syncMgr isFolderDeletedLocally:currentFolder accountNum:self.user.accountNum]) {
-                                    
-                                    DDLogInfo(@"Local Folder %li is deleted locally",
-                                              currentFolder);
-                                    
-                                    CCMFolderType folderHandle = [self.user typeOfFolder:currentFolder];
-                                    
-                                    if (folderHandle.type != FolderTypeUser) {
-                                        
-                                        DDLogInfo(@"\tis a System Folder");
-                                        
-                                        MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
-                                        
-                                        for (MCOIMAPFolder* folder in imapFolders) {
-                                            
-                                            DDLogInfo(@"\tIMAP Folder \"%@\"",
-                                                      folder.path);
-                                            
-                                            if (folder.flags & MCOIMAPFolderFlagNoSelect) {
-                                                DDLogInfo(@"\t\tHas NO Flags");
-                                                continue;
-                                            }
-                                            
-                                            NSString* newFolderPath = @"";
-                                            
-                                            if (folderHandle.type == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"])) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the INBOX folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
-                                            } //Starred
-                                            else if(folderHandle.type == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the FLAGGED folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
-                                            } //Sent
-                                            else if(folderHandle.type == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the SENT folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
-                                            } //Draft
-                                            else if(folderHandle.type == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the DRAFTS folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
-                                            } //Archive
-                                            else if(folderHandle.type == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the ARCHIVE folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
-                                            } //Trash
-                                            else if(folderHandle.type == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the TRASH folder.");
-
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
-                                            } //Spam
-                                            else if(folderHandle.type == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))) {
-                                                newFolderPath = folder.path;
-                                                DDLogInfo(@"\t\tIs the SPAM folder.");
-                                                //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
-                                            }
-                                            
-                                            if (![newFolderPath isEqualToString:@""]) {
-                                                int localFolderIndex = 0;
-                                                
-                                                DDLogInfo(@"NEW IMPORTANT Folder Path = \"%@\"", newFolderPath);
-                                                
-                                                while (localFolderIndex < [syncMgr folderCount:self.user.accountNum]) {
-                                                    
-                                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
-                                                                                        accountNum:self.user.accountNum];
-                                                    
-                                                    if ([newFolderPath isEqualToString:folderPath]) {
-                                                        
-                                                        DDLogInfo(@"\tfound matching local folder (index = %li)",(long)localFolderIndex);
-                                                        
-                                                        [self.user setImportantFolderNum:localFolderIndex forBaseFolder:folderHandle.type];
-                                                        
-#warning should there be a break here?
-                                                    }
-                                                    
-                                                    localFolderIndex++;
-                                                }
-                                            }//Set new important folder index
-                                        }//Is there other folder same importance/role
-                                    }//If important folder
-                                }//If folder deleted
-                                
-                                NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
-                                
-                                MCOIMAPFolderInfoOperation* folderInfoOp = [self.imapSession folderInfoOperation:folderPath];
-                                
-                                NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder accountNum:self.user.accountNum];
-                                
-                                [folderInfoOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
-                                    if (error) {
-                                        DDLogError(@"Error %@ fetching folder %@",error.description, folderPath);
-                                        
-                                        self.connected = NO;
-                                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                                        
-                                        return;
-                                    }
-                                    if (self.isCanceled) {
-                                        [subscriber sendCompleted];
-                                        return;
-                                    }
-                                    
-                                    dispatch_async(self.s_queue, ^{
-                                        
-                                        int batchsize = 20;
-                                        
-                                        //if (!isFromStart) {
-                                        batchsize = 50;
-                                        //}
-                                        
-                                        DDLogDebug(@"Folder:%@ has %d emails", folderPath, [info messageCount]);
-                                        
-                                        if (!isInBackground) {
-                                            [self _writeFinishedFolderState:syncMgr emailCount:[info messageCount] andFolder:currentFolder];
-                                            
-#warning still not sure what this 'if' statement is doing
-                                            if ([info messageCount] == 0 || (!isFromStart && (lastEnded == 1))) {
-                                                NSInteger lE = ([info messageCount] == 0)?1:lastEnded;
-                                                [self _writeFinishedFolderState:syncMgr lastEnded:lE andFolder:currentFolder];
-                                                
-                                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
-                                                return;
-                                            }
-                                        }
-                                        
-                                        NSInteger from = [info messageCount];
-                                        
-                                        if (!(isFromStart || isInBackground) && lastEnded != 0) {
-                                            from = lastEnded-1;
-                                        }
-                                        
-                                        uint64_t batch = MIN(batchsize, [info messageCount]);
-                                        
-                                        batch--;
-                                        
-                                        if (from > batch) {
-                                            from -= batch;
-                                        }
-                                        else {
-                                            from = 1;
-                                        }
-                                        
-                                        MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
-                                        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp = [self.imapSession fetchMessagesByNumberOperationWithFolder:folderPath
-                                                                                                                                            requestKind:self.user.requestKind
-                                                                                                                                                numbers:numbers];
-                                        
-                                        [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* messages, MCOIndexSet* vanishedMessages) {
-                                            if (error) {
-                                                DDLogError(@"Error %@ fetching messages in folder %@",error.description, folderPath);
-                                                
-                                                self.connected = NO;
-                                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                                                
-                                                return;
-                                            }
-                                            
-                                            dispatch_async(self.s_queue, ^{
-                                                
-                                                NSString* lastMsgID = [messages lastObject].header.messageID;
-                                                
-                                                DDLogInfo(@"Retrieve %lu Messages from IMAP Server",(unsigned long)messages.count);
-                                                
-                                                for (MCOIMAPMessage* msg in messages) {
-                                                    if (self.isCanceled) {
-                                                        [subscriber sendCompleted];
-                                                        return;
-                                                    }
-                                                    
-                                                    NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
-                                                    
-                                                    Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
-                                                    
-                                                    if ( [email.subject containsString:@"Review blocked"] ) {
-                                                        DDLogInfo(@"FOUND \"Review blocked ...\"");
-                                                    }
-                                                    
-                                                    if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
-                                                        
-                                                        if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
-                                                            // already have this email in other folder than this one -> add folder in uid_entry
-                                                            
-                                                            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
-                                                            
-                                                            nextOp.completionBlock = ^{
-                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                                                                    [email loadBody];
-                                                                    [subscriber sendNext:email];
-                                                                }
-                                                            };
-                                                            
-                                                            [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-                                                        }
-                                                        
-                                                        if ([email.msgID isEqualToString:lastMsgID]) {
-                                                            if (!isFromStart && !isInBackground) {
-                                                                [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
-                                                            }
-                                                            [subscriber sendCompleted];
-                                                        }
-                                                        
-                                                        //We already have email with folder
-                                                        continue;
-                                                    }
-                                                    
-                                                    [[self.imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
-                                                        
-                                                        if (plainTextBodyString) {
-                                                            plainTextBodyString = [plainTextBodyString stringByReplacingCharactersInRange:NSMakeRange(0, 1) withString:@""];
-                                                            
-                                                            email.body = plainTextBodyString;
-                                                        }
-                                                        else {
-                                                            email.body = @"";
-                                                        }
-                                                        
-                                                        NSDate* currentDateAndTime = [NSDate date];
-                                                        NSDate* oneMonthBeforeCurrentDateAndTime = [currentDateAndTime dateByAddingTimeInterval:- ONE_MONTH_IN_SECONDS];
-                                                        
-                                                        if ([email.datetime compare:oneMonthBeforeCurrentDateAndTime] == NSOrderedAscending) {
-                                                            BOOL isNew = [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
-                                                            
-                                                            if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                                                                if (isInBackground) {
-                                                                    if (isNew) {
-                                                                        [subscriber sendNext:email];
-                                                                    }
-                                                                }
-                                                                else {
-                                                                    [subscriber sendNext:email];
-                                                                }
-                                                            }
-                                                            
-                                                            if ([email.msgID isEqualToString:lastMsgID]) {
-                                                                if (!isFromStart && !isInBackground) {
-                                                                    [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
-                                                                }
-                                                                [subscriber sendCompleted];
-                                                            }
-                                                        }
-                                                        else {
-                                                            [[self.imapSession htmlBodyRenderingOperationWithMessage:msg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
-                                                                email.htmlBody = htmlString;
-                                                                
-                                                                BOOL isNew = [self _saveEmail:email inBackground:isInBackground folder:currentFolder];
-                                                                
-                                                                if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                                                                    if (isInBackground) {
-                                                                        if (isNew) {
-                                                                            [subscriber sendNext:email];
-                                                                        }
-                                                                    }
-                                                                    else {
-                                                                        [subscriber sendNext:email];
-                                                                    }
-                                                                }
-                                                                
-                                                                if ([email.msgID isEqualToString:lastMsgID]) {
-                                                                    if (!isFromStart && !isInBackground) {
-                                                                        [self _writeFinishedFolderState:syncMgr lastEnded:from andFolder:currentFolder];
-                                                                    }
-                                                                    [subscriber sendCompleted];
-                                                                }
-                                                            }];
-                                                        }
-                                                    }];
-                                                }
-                                            });
-                                        }];//Fetch Messages
-                                    });
-                                }];//Fetch folder Info
-                            });
-                        }];//Fetch All Folders
-                    });
+                            }
+                            else {
+                                [subscriber sendNext:email];
+                            }
+                        }
+                        
+                        if ([email.msgID isEqualToString:lastMsgID]) {
+                            if (!isFromStart && ![self _isRunningInBackground]) {
+                                [self _writeFolderStateLastEnded:from andFolder:currentFolder];
+                            }
+                            [subscriber sendCompleted];
+                        }
+                    }];
                 }
             }];
+        }
+    });
+
+}
+
+- (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
+{
+    
+    dispatch_async(self.s_queue, ^{
+        
+        DDLogInfo(@"BEGIN Fetch Folder \"%@\" Messages from IMAP Server.",folderPath);
+        
+        int batchsize = 50;
+        
+        DDLogInfo(@"\tFolder has %ld emails", (long)msgCount);
+        
+        if ( ![self _isRunningInBackground] ) {
+            
+            DDLogInfo(@"\twe are not running in background, so ...");
+            
+            DDLogInfo(@"\tSave email count (%lu) to Local State Storage",(long)msgCount);
+            
+            
+            [self _writeFolderStateMessageCount:msgCount andFolder:currentFolder];
+            
+            // If (the folder contains NO messages), OR
+            // (we are NOT loading folder messages from Index
+            //   Zero AND the last loaded message was Index One)
+            if (msgCount == 0 || (!isFromStart && (lastEnded == 1))) {
+                
+                DDLogInfo(@"\tNo Messages OR (Not from Start AND Last Ended == 1");
+                
+                NSInteger lastEndedIndex = 0;
+                if ( msgCount == 0 ) {
+                    lastEndedIndex = 1;
+                }
+                else {
+                    lastEndedIndex = lastEnded;
+                }
+                
+                DDLogInfo(@"\tSave Last Ended Index (%lu) to Local State Storage",lastEndedIndex);
+                
+                [self _writeFolderStateLastEnded:lastEndedIndex andFolder:currentFolder];
+                
+                DDLogInfo(@"\tand send CCMFolderSyncedError to subscriber.");
+                
+                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
+                return;
+            }
+        }
+        
+        NSInteger from = msgCount;
+        
+        if (!(isFromStart || [self _isRunningInBackground]) && lastEnded != 0) {
+            from = lastEnded-1;
+        }
+        
+        uint64_t batch = MIN(batchsize, msgCount);
+        
+        batch--;
+        
+        if (from > batch) {
+            from -= batch;
+        }
+        else {
+            from = 1;
+        }
+        
+        MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
+        
+        MCOIMAPFetchMessagesOperation* imapMessagesFetchOp =
+        [self.imapSession fetchMessagesByNumberOperationWithFolder:folderPath
+                                                       requestKind:self.user.requestKind
+                                                           numbers:numbers];
+        
+        DDLogInfo(@"BEGIN Fetch Messages for Folder \"%@\".",folderPath);
+        
+        [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* imapMessages, MCOIndexSet* vanishedMessages) {
+            
+            if (error) {
+                DDLogError(@"\tError %@ fetching messages.  Send CCMConnectionError to subscriber.",error.description);
+                
+                self.connected = NO;
+                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                
+                return;
+            }
+            
+            DDLogInfo(@"\tgot %lu messages.",(unsigned long)imapMessages.count);
+            
+            [self _processImapMessages:imapMessages subscriber:(id)subscriber currentFolder:currentFolder from:from isFromStart:isFromStart getAll:getAll];
+            
+        }];//Fetch Messages
+    });
+
+}
+
+- (void)_getImapMessages:(NSInteger)currentFolder subscriber:(id)subscriber isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
+{
+    SyncManager *syncMgr = [SyncManager getSingleton];
+    
+    DDLogInfo(@"BEGIN Fetch Folder %lu Info from IMAP Server.",(unsigned long)currentFolder);
+    
+    NSString* folderPath =
+    [syncMgr retrieveFolderPathFromFolderState:currentFolder
+                                    accountNum:self.user.accountNum];
+    
+    MCOIMAPFolderInfoOperation* folderInfoOp =
+    [self.imapSession folderInfoOperation:folderPath];
+    
+    NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder
+                                                         accountNum:self.user.accountNum];
+    
+    [folderInfoOp start:^(NSError* error, MCOIMAPFolderInfo* imapFolderInfo) {
+        if (error) {
+            DDLogError(@"\tError %@ fetching folder %@, sending CCMConnectionError to subscriber",error.description, folderPath);
+            
+            self.connected = NO;
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+            
+            return;
+        }
+        if (self.isCanceled) {
+            DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
+            [subscriber sendCompleted];
+            return;
+        }
+        
+        [self _fetchImapMessages:subscriber
+                   currentFolder:currentFolder
+                     isFromStart:isFromStart
+                          getAll:getAll
+                      folderPath:folderPath
+                    messageCount:imapFolderInfo.messageCount
+                       lastEnded:lastEnded];
+    }];
+}
+
+
+- (void)_replaceDeletedImportantFolders:(NSInteger)currentFolder imapFolders:(NSArray *)imapFolders
+{
+    SyncManager *syncMgr = [SyncManager getSingleton];
+
+  DDLogInfo(@"BEGIN Replace Deleted Important Folder");
+    
+        // If the Current Folder is one of the deleted folders, and it is an Important
+        // folder, then try to find a replacement folder.
+    
+        BOOL currentFolderIsDeletedLocally =
+        [syncMgr isFolderDeletedLocally:currentFolder accountNum:self.user.accountNum];
+    
+        if ( currentFolderIsDeletedLocally ) {
+            
+            DDLogInfo(@"\tFolder %li is deleted locally",
+                      currentFolder);
+            
+            CCMFolderType folderHandle = [self.user typeOfFolder:currentFolder];
+            
+            BOOL currentFolderIsAnImportantFolder = (folderHandle.type != FolderTypeUser);
+            
+            if ( currentFolderIsAnImportantFolder ) {
+                
+                DDLogInfo(@"\tis an Important Folder");
+                
+                MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.user.identifier];
+                
+                DDLogInfo(@"\tsearch each IMAP folder:");
+                
+                // For each IMAP Folder
+                for (MCOIMAPFolder* folder in imapFolders) {
+                    
+                    DDLogInfo(@"\tIMAP Folder \"%@\"",
+                              folder.path);
+                    
+                    if (folder.flags & MCOIMAPFolderFlagNoSelect) {
+                        DDLogInfo(@"\t\thas NO Flags");
+                        continue;
+                    }
+                    
+                    NSString* importantImapFolderPath = @"";
+                    
+                    if (folderHandle.type == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"])) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the INBOX folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
+                    } //Starred
+                    else if(folderHandle.type == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the FLAGGED folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
+                    } //Sent
+                    else if(folderHandle.type == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the SENT folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
+                    } //Draft
+                    else if(folderHandle.type == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the DRAFTS folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
+                    } //Archive
+                    else if(folderHandle.type == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the ARCHIVE folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
+                    } //Trash
+                    else if(folderHandle.type == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the TRASH folder.");
+                        
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
+                    } //Spam
+                    else if(folderHandle.type == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))) {
+                        importantImapFolderPath = folder.path;
+                        DDLogInfo(@"\t\tIs the SPAM folder.");
+                        //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
+                    } else {
+                        DDLogInfo(@"\t\tIs NOT an Important folder.");
+                    }
+                    
+                    BOOL thisImapFolderIsImportant = ![importantImapFolderPath isEqualToString:@""];
+                    
+                    if ( thisImapFolderIsImportant ) {
+                        
+                        DDLogInfo(@"\tImportant Folder Path = \"%@\"", importantImapFolderPath);
+                        
+                        // Review each local folder
+                        NSInteger localFolderCount = [syncMgr folderCount:self.user.accountNum];
+                        int localFolderIndex = 0;
+                        while ( localFolderIndex < localFolderCount ) {
+                            
+                            NSString* localFolderPath =
+                            [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
+                                                            accountNum:self.user.accountNum];
+                            
+                            // If the Important Imap Folder matches the local folder
+                            if ( [importantImapFolderPath isEqualToString:localFolderPath] ) {
+                                
+                                DDLogInfo(@"\tmatches local folder");
+                                
+                                [self.user setImportantFolderNum:localFolderIndex forBaseFolder:folderHandle.type];
+                            }
+                            
+                            localFolderIndex++;
+                        }
+                    }//Set new important folder index
+                }//Is there other folder same importance/role
+            }//If important folder
+        }
+}
+
+- (void)_processFoldersAndGetImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll imapFolders:(NSArray *)imapFolders
+{
+    dispatch_async(self.s_queue, ^{
+        
+        DDLogInfo(@"BEGIN Check Folder Deletion");
+        
+#warning Look: Almost the same code as _checkFolders again!
+        SyncManager* syncMgr = [SyncManager getSingleton];
+        // mark folders that were deleted on the server as deleted on the client
+        NSInteger localFolderIndex = 0;
+        NSInteger localFolderCount = [syncMgr folderCount:self.user.accountNum];
+        
+        // Check each local folder, and if it is not found on the IMAP server,
+        // then mark it deleted on locally.
+        while (localFolderIndex < localFolderCount) {
+            
+            NSString* localFolderPath =
+            [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
+                                            accountNum:self.user.accountNum];
+            
+            DDLogInfo(@"\tAccount %li, Local Folder [%li]: \"%@\"",
+                      (long)self.user.accountNum,
+                      localFolderIndex,
+                      localFolderPath);
+            
+            BOOL folderIsDeletedLocally =
+            [syncMgr isFolderDeletedLocally:localFolderIndex accountNum:self.user.accountNum];
+            
+            if ( folderIsDeletedLocally ) {
+                DDLogInfo(@"\t\tLocal Folder's Delete State = TRUE");
+            }
+            else {
+                BOOL folderDeletedOnImapServer = ![imapFolders containsObject:localFolderPath];
+                
+                if ( folderDeletedOnImapServer ) {
+                    DDLogInfo(@"\t\tLocal Folder Path NOT found in IMAP Folders");
+                    DDLogInfo(@"\t\tMark Local Folder's Delete State as TRUE");
+                    [syncMgr markFolderDeleted:localFolderIndex accountNum:self.user.accountNum];
+                    localFolderIndex = 0;
+                }
+                else {
+                    DDLogInfo(@"\tFolder has NOT been deleted (Locally or on IMAP server).");
+                }
+            }
+            
+            localFolderIndex++;
+        }
+        
+        [self _replaceDeletedImportantFolders:currentFolder imapFolders:imapFolders];
+        
+        [self _getImapMessages:currentFolder subscriber:subscriber isFromStart:isFromStart getAll:getAll];
+    });
+}
+
+- (void)_getImapFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
+{
+    DDLogInfo(@"BEGIN Fetch IMAP Folders");
+    
+    MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
+    dispatch_async(self.s_queue, ^{
+        
+        DDLogInfo(@"BEGIN Fetch All IMAP Folders Operation");
+        
+        [fio start:^(NSError* error, NSArray* imapFolders) {
+            if (error) {
+                DDLogError(@"\treturned error = %@. Send CCMConnectionError to subscriber",error.description);
+                
+                self.connected = NO;
+                
+                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                
+                return;
+            }
+            else if (!imapFolders || imapFolders.count == 0) {
+                
+                DDLogInfo(@"\tNO imap Folders, so send Completed to subscriber");
+                [subscriber sendCompleted];
+                
+                return;
+            } else {
+                DDLogInfo(@"\tsuccess: have %lu folders.",(unsigned long)imapFolders.count);
+            }
+            
+            [self _processFoldersAndGetImapMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll imapFolders:imapFolders];
+        }];//Fetch All Folders
+    });
+}
+
+- (void)_loginImapServerAndUpdateFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
+{
+    DDLogInfo(@"BEGIN Login IMAP Server \"%@\":",self.user.imapHostname);
+    
+    [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
+        DDLogError(@"\tLogin attempt failed. Send ERROR CCMConnectionError to subscriber");
+        [subscriber sendError:error];
+    } completed:^{
+        DDLogInfo(@"\tLogin attempt Completed.");
+        if (!self.connected) {
+            DDLogInfo(@"\tNOT Connected.");
+            
+            if ( [self _isRunningInBackground] ) {
+                DDLogInfo(@"\tin BACKGROUND, so send COMPLETED to subscriber");
+                
+                [subscriber sendCompleted];
+            }
+            else {
+                DDLogError(@"\tNOT in BACKGROUND. Send ERROR CCMConnectionError to subscriber");
+                
+                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+            }
+        }
+        else { // we are connected
+            DDLogInfo(@"\tSUCCESSFULLY Connected.");
+            
+            [self _getImapFoldersAndMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
+        }
+    }];
+}
+
+-(BOOL)_isRunningInBackground
+{
+    BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
+    
+    DDLogDebug(@"\tApp isInBackground = %@",
+               (isInBackground==TRUE?@"TRUE":@"FALSE") );
+
+    return isInBackground;
 }
 
 // "folder" is a Folder Index, or -1
@@ -1267,11 +1387,6 @@ static NSArray * sharedServices = nil;
                (long)folder,
                (isFromStart==TRUE?@"TRUE":@"FALSE"),
                (getAll==TRUE?@"TRUE":@"FALSE"));
-    
-    BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
-    
-    DDLogDebug(@"\tApp isInBackground = %@",
-               (isInBackground==TRUE?@"TRUE":@"FALSE") );
     
     if (folder == -1) {
         DDLogInfo(@"\tfolderIndex = -1, calling folderIndex = _nextFolderToSync");
@@ -1311,7 +1426,7 @@ static NSArray * sharedServices = nil;
             
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
         }
-        else if (isInBackground && currentFolder != [self.user inboxFolderNumber]) {
+        else if ([self _isRunningInBackground] && currentFolder != [self.user inboxFolderNumber]) {
             
             DDLogInfo(@"Running in Background && folder is not Inbox folder.");
             DDLogInfo(@"\tso we are completed.");
@@ -1319,7 +1434,7 @@ static NSArray * sharedServices = nil;
             [subscriber sendCompleted];
         }
         else {
-            [self _updateImapFoldersAndMessages:subscriber currentFolder:currentFolder isInBackground:isInBackground isFromStart:isFromStart getAll:getAll];
+            [self _loginImapServerAndUpdateFoldersAndMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
         }
     }];
 }
@@ -1377,10 +1492,10 @@ static NSArray * sharedServices = nil;
     return emailCached;
 }
 
--(BOOL) _saveEmail:(Mail*)email inBackground:(BOOL)isInBackground folder:(NSInteger)currentFolder
+-(BOOL) _saveEmail:(Mail*)email folder:(NSInteger)currentFolder
 {
     //Cache email if in Background
-    if (isInBackground) {
+    if ( [self _isRunningInBackground] ) {
         
         return [self _cacheEmail:currentFolder email:email];
     }
@@ -1399,20 +1514,24 @@ static NSArray * sharedServices = nil;
     return [NSMutableSet setWithArray:[[AppSettings getSingleton] cache]];
 }
 
--(void) _writeFinishedFolderState:(SyncManager*)sm emailCount:(NSInteger)count andFolder:(NSInteger)folder
+-(void) _writeFolderStateMessageCount:(NSInteger)messageCount andFolder:(NSInteger)folder
 {
+    SyncManager *sm = [SyncManager getSingleton];
+
     if (!self.user.isDeleted) {
         
         // used by fetchFrom to write the finished state for this round of syncing to disk
         NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
-        syncState[kFolderStateEmailCountKey] = @(count);
+        syncState[kFolderStateEmailCountKey] = @(messageCount);
         
         [sm persistState:syncState forFolderNum:folder accountNum:self.user.accountNum];
     }
 }
 
--(void) _writeFinishedFolderState:(SyncManager*)sm lastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folder
+-(void) _writeFolderStateLastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folder
 {
+    SyncManager *sm = [SyncManager getSingleton];
+
     // used by fetchFrom to write the finished state for this round of syncing to disk
     if (!self.user.isDeleted) {
         NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
