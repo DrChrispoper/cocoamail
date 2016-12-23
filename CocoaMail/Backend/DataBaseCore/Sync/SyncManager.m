@@ -240,7 +240,24 @@ static SyncManager * singleton = nil;
     // Account index is 0 based
     DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",(long)accountCount);
     
-    return self.syncStates[accountNum][FOLDER_STATES_KEY];
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    
+    DDAssert(accountStates,@"Account States must exist.");
+    
+    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    
+    DDAssert(accountFolderStates, @"Account Folder States must exist.");
+    
+    return accountFolderStates;
+}
+-(NSMutableDictionary*) _folderStatesForAccountNumber:(NSInteger)accountNum folderNumber:(NSInteger)folderNum
+{
+    NSArray *accountFolderStates = [self _folderStatesForAccountNumber:accountNum];
+    
+    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
+    
+    return folderStates;
+    
 }
 
 // Return the number of folders in the account from the local local Sync State
@@ -342,7 +359,7 @@ static SyncManager * singleton = nil;
 }
 
 
--(void) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum
+-(NSInteger) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum
 {
     NSDictionary* folderState = @{ kFolderStateAccountNumberKey : @(accountNum),
                                    kFolderStateFolderDisplayNameKey: folderName,
@@ -354,20 +371,24 @@ static SyncManager * singleton = nil;
                                    kFolderStateEmailCountKey:@(0)
                                    };
     
-    NSMutableDictionary *accountStates = self.syncStates[accountNum];
-    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
+    NSMutableArray *accountFolderStates = [self _folderStatesForAccountNumber:accountNum];
     
     NSMutableDictionary *folderStates = [NSMutableDictionary dictionaryWithDictionary:folderState];
+    
     [accountFolderStates addObject:folderStates];
     
+    DDLogInfo(@"ADDED Sync State num %ld for new IMAP folder \"%@\"",(long)accountFolderStates.count,folder.path);
+    
     [self _writeSyncStateToFileForAccount:accountNum];
+    
+    NSInteger newFolderStatesIndex = accountFolderStates.count - 1;
+    
+    return newFolderStatesIndex;   // index of last (new) record
 }
 
 -(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSMutableDictionary *accountStates = self.syncStates[accountNum];
-    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
-    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
+    NSMutableDictionary *folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
 	
 	NSNumber* y =  folderStates[kFolderStateDeletedKey];
 	
@@ -377,9 +398,7 @@ static SyncManager * singleton = nil;
 
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSMutableDictionary *accountStates = self.syncStates[accountNum];
-    NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
-    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
+    NSMutableDictionary *folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
     
     NSNumber *folderDeleted = @(YES);
     
