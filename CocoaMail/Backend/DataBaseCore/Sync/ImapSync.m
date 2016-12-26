@@ -803,7 +803,7 @@ static NSArray * sharedServices = nil;
             
             DDLogInfo(@"\tIMAP Folder \"%@\" not found in local folders.",[imapFolder path]);
             
-            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:folderIndex];
+            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:folderIndex usingImapSession:self.imapSession];
             
             if ( dispName == nil || dispName.length == 0 ) {
                 DDLogError(@"\tImapSync addFolder:toUser:atIndex: failed!");
@@ -830,9 +830,9 @@ static NSArray * sharedServices = nil;
 }
 
 // NB: indexPath is imapFolderIndex
--(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath
+-(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath  usingImapSession:(MCOIMAPSession*)imapSession
 {
-    NSString* dispName = [self _displayNameForFolder:folder];
+    NSString* dispName = [self _displayNameForFolder:folder usingSession:imapSession];
     
     // Append a new Folder Sync State Object for this Account
     SyncManager* syncManager = [SyncManager getSingleton];
@@ -847,9 +847,9 @@ static NSArray * sharedServices = nil;
     return dispName;
 }
 
--(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder
+-(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession
 {
-    MCOIMAPNamespace *imapNamespace = [self.imapSession defaultNamespace];
+    MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
     DDAssert(imapNamespace, @"IMAP Namespace must exist");
     
     NSArray *namespaceComponents = [imapNamespace componentsFromPath:[folder path]];

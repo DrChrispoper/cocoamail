@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
+		1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
@@ -828,7 +828,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */,
+				1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */,
 				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
@@ -1646,13 +1646,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 271D4D241B846E4600D19373 /* Build configuration list for PBXNativeTarget "CocoaMail" */;
 			buildPhases = (
-				97348202A481B1D799F877B8 /* 📦 Check Pods Manifest.lock */,
+				97348202A481B1D799F877B8 /* [CP] Check Pods Manifest.lock */,
 				271D4CFA1B846E4500D19373 /* Sources */,
 				271D4CFB1B846E4500D19373 /* Frameworks */,
 				271D4CFC1B846E4500D19373 /* Resources */,
-				1C2F9E1F295DFDC02481677C /* 📦 Copy Pods Resources */,
+				1C2F9E1F295DFDC02481677C /* [CP] Copy Pods Resources */,
 				OBJCLEANCUSTOMRUNSCRIPTT /* Objective-Clean Run Script */,
-				5C4D1CF95FC0C60ED575BC86 /* 📦 Embed Pods Frameworks */,
+				5C4D1CF95FC0C60ED575BC86 /* [CP] Embed Pods Frameworks */,
 				274C6B201C933CA3008ABDCE /* ShellScript */,
 				14559E451DB134470043726D /* Increment Build Number */,
 			);
@@ -1978,14 +1978,14 @@
 			shellPath = /bin/bash;
 			shellScript = "buildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\"";
 		};
-		1C2F9E1F295DFDC02481677C /* 📦 Copy Pods Resources */ = {
+		1C2F9E1F295DFDC02481677C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2006,14 +2006,14 @@
 			shellPath = /bin/sh;
 			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\n#SCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\n#if [ ! \"${SCRIPT_SRC}\" ]; then\n#echo \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\n#exit 1\n#fi\n#APP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\n#source \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
 		};
-		5C4D1CF95FC0C60ED575BC86 /* 📦 Embed Pods Frameworks */ = {
+		5C4D1CF95FC0C60ED575BC86 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Embed Pods Frameworks";
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2021,19 +2021,19 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CocoaMail/Pods-CocoaMail-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		97348202A481B1D799F877B8 /* 📦 Check Pods Manifest.lock */ = {
+		97348202A481B1D799F877B8 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		OBJCLEANCUSTOMRUNSCRIPTT /* Objective-Clean Run Script */ = {
