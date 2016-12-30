@@ -21,6 +21,8 @@
 #import <Instabug/Instabug.h>
 #endif
 
+#define LOG_LEVEL_DEF DDLogLevelWarning     // Overide Log Level for this file
+
 @implementation UidEntry
 
 +(void) tableCheck
@@ -424,21 +426,31 @@
     NSString* folder = [NSString stringWithFormat:@"%ld___", (long)accountNum];
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    DDLogInfo(@"ENTERED -(BOOL)[UidEntgry hasUidEntrywithMsgId:%@ inAccount:%ld]",
+              msgID,(long)accountNum);
 
     [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? AND folder LIKE ?", msgID, folder];
         
+        DDLogInfo(@"\tExecuted Database Query for match on msgID \"%@\" and folder \"%@\"",msgID,folder);
+        
         if ([results next]) {
+            DDLogInfo(@"\tFOUND MATCHING RECORD = YES");
             result = YES;
             [results close];
             dispatch_semaphore_signal(semaphore);
             return;
         }
         
+        DDLogInfo(@"\tFOUND MATCHING RECORD = NO");
+        
         dispatch_semaphore_signal(semaphore);
     }];
     
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    
+    DDLogInfo(@"\tRETURNING %@",(result?@"YES":@"NO"));
     
     return result;
 }
@@ -448,12 +460,24 @@
     __block BOOL result = NO;
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    DDLogInfo(@"ENTERED -(BOOL)[UidEntgry hasUidEngtrywithMsgId:%@ withFolder:%ld inAccount:%ld]",
+              msgID,(long)folderNum,(long)accountNum);
 
     [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT folder FROM uid_entry WHERE msg_id = ? AND folder = ?", msgID, @(folderNum + 1000 * accountNum)];
         
+        DDLogInfo(@"\tExecuted Database Query for match on msgID \"%@\" and folderNum %ld",
+                  msgID,(long)(folderNum + 1000 * accountNum));
+        
         while ([results next]) {
-            if (folderNum == -1 || folderNum == [results intForColumn:@"folder"] % 1000) {
+            DDLogInfo(@"\tFOUND MATCHING RECORD = YES");
+
+            NSInteger folderColumnValue = [results intForColumn:@"folder"];
+            DDLogInfo(@"\tDB QUERY RESULT'S \"folder\" column value = %ld",(long)folderColumnValue);
+            
+            if (folderNum == -1 || folderNum == folderColumnValue % 1000) {
+                DDLogInfo(@"\tfolderNum == -1 OR folderNum == %ld",folderColumnValue % 1000);
                 result = YES;
             }
         }
@@ -462,6 +486,8 @@
     }];
     
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    
+    DDLogInfo(@"\tRETURNING %@",(result?@"YES":@"NO"));
     
     return result;
 }
