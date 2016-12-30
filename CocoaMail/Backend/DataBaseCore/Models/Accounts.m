@@ -554,40 +554,69 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) connect
 {
+    DDLogInfo(@"ENTERED -[Account connect");
+    
     if (!self.user.isAll && self.user.isDeleted) {
+        DDLogWarn(@"User is not ALL and IS DELETED");
         return;
     }
     
     if (self.user.isAll) {
-        for (Account* a in [[Accounts sharedInstance] accounts]) {
-            if (!a.user.isAll && !a.isConnected) {
-                [[ImapSync doLogin:a.user] subscribeError:^(NSError *error) {
-                    DDLogError(@"connection error");
+        DDLogInfo(@"User is ALL");
+        
+        NSArray<Account*>* allAccounts = [[Accounts sharedInstance] accounts];
+        for (NSInteger acntIndex = 0; acntIndex < allAccounts.count;acntIndex++) {
+            Account *acnt = allAccounts[acntIndex];
+            
+            DDLogInfo(@"Evaluate Accounts[%ld]:",(long)acntIndex);
+            
+            if (!acnt.user.isAll && !acnt.isConnected) {
+                
+                DDLogInfo(@"Not All Account AND Is Not Connected.");
+                
+                [[ImapSync doLogin:acnt.user] subscribeError:^(NSError *error) {
+                    DDLogError(@"Account[%ld] connection failed, error = %@",acntIndex,error);
                 } completed:^{
-                    DDLogInfo(@"login");
+                    DDLogInfo(@"Account[%ld] connection success.",acntIndex);
                 }];
                 
                 break;
             }
+            else {
+                DDLogInfo(@"Is All Account OR Is Connected");
+            }
         }
     }
     else {
-        //if (!self.isConnected) {
+        DDLogInfo(@"User is not ALL");
+        
+        DDLogInfo(@"Do Account Login:");
+        
         [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
+            DDLogError(@"Login failed with error = %@",error);
+            
             if ([Accounts sharedInstance].canUI) {
+                DDLogInfo(@"Accounts-canUI == TRUE (Can show UI)");
+                
                 if (error.code == CCMConnectionError) {
+                    DDLogError(@"Login Connection Error, displaying Status UI");
+                    
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
                 }
                 else if (error.code == CCMCredentialsError){
+                    DDLogError(@"Login Credentials Error, displaying Status UI");
+                    
                     [CCMStatus showStatus:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Credentials")  dismissAfter:2.0 code:2];
                 }
                 else {
+                    DDLogError(@"Uknown Login Error, displaying Status UI");
+                    
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
-                    DDLogError(@"Unkown connection error, Error Code =%ld",(long)error.code );
                 }
             }
-        } completed:^{}];
-        //}
+        } completed:^{
+            DDLogInfo(@"Account Login Succeded");
+        }];
     }
 }
 
