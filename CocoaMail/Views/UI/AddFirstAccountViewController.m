@@ -33,7 +33,7 @@
 @interface AddFirstAccountViewController () <MailListDelegate>
 
 @property (nonatomic, strong) UserSettings* user;
-@property (nonatomic, strong) MCOAccountValidator* accountVal;
+@property (nonatomic, strong) MCOAccountValidator* accountValidator;
 
 
 @end
@@ -425,13 +425,13 @@
     // Resolution:
     //      My solution is to add an extension to MCOAccountValidator
     //      to the top of this file which makes init available.
-    self.accountVal = [[MCOAccountValidator alloc] init];
-    self.accountVal.username = username;
-    self.accountVal.password = password;
+    self.accountValidator = [[MCOAccountValidator alloc] init];
+    self.accountValidator.username = username;
+    self.accountValidator.password = password;
     
     if (oauth2Token) {
-        self.accountVal.email = username;
-        self.accountVal.OAuth2Token = oauth2Token;
+        self.accountValidator.email = username;
+        self.accountValidator.OAuth2Token = oauth2Token;
     }
     
     [self load];
@@ -439,24 +439,35 @@
 
 -(void) load
 {
-    if (!self.accountVal.OAuth2Token) {
+    // If we do not have an OAuth 2 Token ...
+    if (!self.accountValidator.OAuth2Token) {
+        
+        DDLogInfo(@"No OAuth 2 Token");
+        
         NSString* email = self.email.text;
         NSString* password = self.password.text;
         
         if (!email.length || !password.length) {
+            DDLogWarn(@"No Email Address or no Password.");
             return;
         }
         
         if (![self isEmailRegExp:email]) {
+            DDLogInfo(@"Invalid Email Address structure.");
+            
             [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.invalid-email", @"Alert message: Invalid Email")];
             return;
         }
     }
     
+    
+    
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
     if (networkStatus == NotReachable) {
+        DDLogWarn(@"Network Not Reachable.");
+        
         [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.no-internet", @"Alert message: Not connected to Internet")];
         return;
     }
@@ -469,39 +480,64 @@
     
     [MCOMailProvidersManager sharedManager];
     
-    [self.accountVal setImapEnabled:YES];
-    [self.accountVal setSmtpEnabled:YES];
+    [self.accountValidator setImapEnabled:YES];
+    [self.accountValidator setSmtpEnabled:YES];
     
-    NSLog(@"Starting account Val");
+    DDLogInfo(@"Starting Account Validation.");
 
-    [self.accountVal start:^() {
+    [self.accountValidator start:^() {
+        
         AddFirstAccountViewController* strongSelf = bself;
         
-        if (!strongSelf.accountVal.imapError && !strongSelf.accountVal.smtpError) {
+        if (!strongSelf.accountValidator.imapError && !strongSelf.accountValidator.smtpError) {
+            DDLogInfo(@"Email Address and Password Validated.");
             [strongSelf saveSettings];
         }
         else {
-            CCMLog(@"error loading imap account: %@", strongSelf.accountVal.imapError);
-            CCMLog(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
+            DDLogError(@"Error loading imap account: %@", strongSelf.accountValidator.imapError);
+            DDLogError(@"Error loading smtp account: %@", strongSelf.accountValidator.smtpError);
             
             [[PKHUD sharedHUD] hideWithAnimated:YES];
             
-            if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication || strongSelf.accountVal.smtpError.code == MCOErrorAuthentication) {
+            BOOL authenticationError =
+            ( strongSelf.accountValidator.imapError.code == MCOErrorAuthentication ||
+              strongSelf.accountValidator.smtpError.code == MCOErrorAuthentication );
+            
+            if ( authenticationError ) {
+                
+                DDLogError(@"Account IMAP or SMTP Authentication Error");
+                
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
                 
             }
-            else if(strongSelf.accountVal.imapError.code == MCOErrorConnection || strongSelf.accountVal.smtpError.code == MCOErrorConnection)  {
+            else if(strongSelf.accountValidator.imapError.code == MCOErrorConnection ||
+                    strongSelf.accountValidator.smtpError.code == MCOErrorConnection)  {
+                
+                
                 if (networkStatus != NotReachable) {
+                    
+                    DDLogError(@"Account IMAP or SMTP Connection Error - Network Not Reachable.");
+                    
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
                 else {
+                    
+                    DDLogError(@"Account IMAP or SMTP Connection Error - Issue Unknown.");
+
                     [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.no-internet",@"Connection error. There seems to be not internet connection.")];//NSLocalizedString(@"add-account-view.error.no-server-settings", @"Unknown Server Settings")];
                 }
             }
-            else if (strongSelf.accountVal.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired || strongSelf.accountVal.smtpError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
+            else if (strongSelf.accountValidator.imapError.code == MCOErrorGmailApplicationSpecificPasswordRequired ||
+                     strongSelf.accountValidator.smtpError.code == MCOErrorGmailApplicationSpecificPasswordRequired) {
+                
+                DDLogError(@"Account IMAP or SMTP Gmail Password Error");
+
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
             }
             else {
+                
+                DDLogError(@"Account IMAP or SMTP Error - Mail Provider Not Supported.");
+
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert message: This email provider is not supported")];
             }
         }
@@ -517,16 +553,16 @@
     
     MCOIMAPSession* imapSession = [[MCOIMAPSession alloc] init];
     
-    imapSession.hostname = self.accountVal.imapServer.hostname;
-    imapSession.port = self.accountVal.imapServer.port;
-    imapSession.username = self.accountVal.username ;
-    imapSession.password = self.accountVal.password;
+    imapSession.hostname = self.accountValidator.imapServer.hostname;
+    imapSession.port = self.accountValidator.imapServer.port;
+    imapSession.username = self.accountValidator.username ;
+    imapSession.password = self.accountValidator.password;
     
-    if (self.accountVal.OAuth2Token) {
-        imapSession.OAuth2Token = self.accountVal.OAuth2Token;
+    if (self.accountValidator.OAuth2Token) {
+        imapSession.OAuth2Token = self.accountValidator.OAuth2Token;
         imapSession.authType = MCOAuthTypeXOAuth2;
     }
-    imapSession.connectionType = self.accountVal.imapServer.connectionType;
+    imapSession.connectionType = self.accountValidator.imapServer.connectionType;
     
     MCOIMAPFetchNamespaceOperation* namespaceOp = [imapSession fetchNamespaceOperation];
     [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
@@ -542,6 +578,9 @@
         
         MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
         [op start:^(NSError*  error, NSArray* folders) {
+            
+            DDLogInfo(@"Getting IMAP Folders.");
+            
             if (error) {
                 DDLogError(@"MCOIMAPFetchFoldersOperation Error: %@", error.description);
                 [[PKHUD sharedHUD] hideWithAnimated:YES];
@@ -549,7 +588,7 @@
                 return ;
             }
             
-            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.accountVal.identifier];
+            MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:self.accountValidator.identifier];
             
             NSMutableArray* flagedFolders = [[NSMutableArray alloc] init];
             NSMutableArray* otherFolders = [[NSMutableArray alloc] init];
@@ -560,7 +599,7 @@
             
             for (MCOIMAPFolder* folder in folders) {
                 
-                DDLogVerbose(@"Folder \"%@\":",folder.path);
+                DDLogInfo(@"Folder \"%@\":",folder.path);
                 
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     DDLogDebug(@"Folder flags includes MCOIMAPFolderFlagNoSelect");
@@ -588,32 +627,49 @@
             NSString*  __block newAllMail = @"Archive";
             
             if (!allMailFolder) {
+                
                 //Create folder
                 MCOIMAPOperation*  op = [imapSession createFolderOperation:newAllMail];
                 [op start:^(NSError*  error) {
+                    
+                    DDLogInfo(@"Creating All Mail Folder on IMAP Server");
+                    
                     if (!error) {
+                        
+                        DDLogInfo(@"Getting IMAP Folders (again).");
                         
                         MCOIMAPFetchFoldersOperation*  op = [imapSession fetchAllFoldersOperation];
                         [imapSession setDefaultNamespace:nameSpace];
                         
                         [op start:^(NSError*  error, NSArray* folders) {
                             
+                            DDLogDebug(@"Processing %ld folders:",(long)[folders count]);
+
                             for (MCOIMAPFolder* folder in folders) {
                                 
+                                DDLogInfo(@"Folder \"%@\":",folder.path);
+                                
                                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
+                                    DDLogInfo(@"Folder has NO flags.");
                                     continue;
                                 }
                                 
                                 if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
+                                    DDLogInfo(@"Folder is INBOX");
                                     inboxfolder = folder;
                                 }
                                 else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folder.path]) {
+                                    DDLogInfo(@"Folder is ALL MAIL FOLDER");
+
                                     allMailFolder = folder;
                                 }
                                 else if (![@(folder.flags) isEqualToNumber:@0]) {
+                                    DDLogInfo(@"Folder is FLAGGED (%ld)",(long)folder.flags);
+
                                     [flagedFolders addObject:folder];
                                 }
                                 else {
+                                    DDLogVerbose(@"Folder is of some OTHER type");
                                     [otherFolders addObject:folder];
                                 }
                             }
@@ -631,16 +687,18 @@
                 }];
             }
             else {
+                DDLogInfo(@"Have All Mail folder.");
+                
                 [self _finishFoldersFlaged:flagedFolders others:otherFolders inbox:inboxfolder all:allMailFolder imapSession:imapSession];
             }
         }];
     }];
 }
 
--(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
+// MARK: - _finishFolderFlaged
+
+- (UserSettings *)_createUserSettings
 {
-    CCMLog(@"3 - Finish Folders");
-    
     //User Settings
     UserSettings* user = [[AppSettings getSingleton] createNewUser];
     [user setUsername:self.email.text];
@@ -654,6 +712,7 @@
         [AppSettings setDefaultAccountNum:user.accountNum];
     }
     
+    // Create User Code for UI
     NSString* mail = self.email.text;
     NSString* code = [[mail substringToIndex:3] uppercaseString];
     [user setInitials:code];
@@ -670,92 +729,105 @@
      [user setInitials:code];
      }*/
     
-    [AppSettings setSettingsWithAccountVal:self.accountVal user:user];
+    [AppSettings setSettingsWithAccountVal:self.accountValidator user:user];
     
-    //Account of User
+    return user;
+}
+
+- (Account *)_addFirstAccount:(UserSettings *)user
+{
+    // Create Account object for user
     Account* ac = [Account emptyAccount];
+    
     [ac setNewUser:user];
     
     ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
     
-    DDLogInfo(@"Adding first Account:\n%@",[ac description]);
+    DDLogVerbose(@"Adding first Account:\n%@",[ac description]);
+ 
+    return ac;
+}
+
+-(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
+{
+    DDLogDebug(@"3 - Finish Folders");
+    
+    UserSettings *user = [self _createUserSettings];
+    
+    Account *account = [self _addFirstAccount:user];
     
     //Folder Settings
-    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
-    NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path)) ascending:YES selector:@selector(caseInsensitiveCompare:)];
-    NSMutableArray* sortedFolders = [[NSMutableArray alloc] init];
+    NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path))
+                                                                   ascending:YES
+                                                                    selector:@selector(caseInsensitiveCompare:)];
     
-    [sortedFolders addObject:inboxfolder];
-    [sortedFolders addObjectsFromArray:[flagedFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
-    [sortedFolders addObjectsFromArray:[otherFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
-    [sortedFolders addObject:allMailFolder];
+    // Create a sorted array of all folders
+    NSMutableArray* sortedImapFolders = [[NSMutableArray alloc] init];
+    [sortedImapFolders addObject:inboxfolder];
+    [sortedImapFolders addObjectsFromArray:[flagedFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
+    [sortedImapFolders addObjectsFromArray:[otherFolders sortedArrayUsingDescriptors:@[pathDescriptor]]];
+    [sortedImapFolders addObject:allMailFolder];
     
-    int indexPath = 0;
     
     NSMutableArray* dispNamesFolders = [[NSMutableArray alloc] initWithCapacity:1];
     
     [[SyncManager getSingleton] addAccountState];
     
-    for (MCOIMAPFolder* folder in sortedFolders) {
+    ImapSync *imapSync = [ImapSync sharedServices:user];
+    
+    MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
+    
+    // Store Special Folder indecies into UserSettings and Collect all Folder Names
+    int imapFolderIndex = 0;
+    for (MCOIMAPFolder* folder in sortedImapFolders) {
+        
+        // If this folder is a "special" folder, then store its index into the UserSettings
         
         //Inbox
         if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeInbox];
         } //Starred
         else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeFavoris];
         } //Sent
         else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeSent];
         } //Draft
         else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeDrafts];
         } //Archive
         else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path]) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeAll];
         } //Trash
         else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash)) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeDeleted];
         } //Spam
         else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam)) {
-            [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
+            [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeSpam];
         }
         
-        ImapSync *imapSync = [ImapSync sharedServices:user];
-        
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
-
-//        NSString *dispName = [imapSync displayNameForFolder:folder usingSession:imapSession];
-        
+        // Store this folder's Name into the folder name array
+        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:imapFolderIndex usingImapSession:imapSession];
         [dispNamesFolders addObject:dispName];
-   
-// WAS:
-//        NSString* dispName = [[[imapSession defaultNamespace] componentsFromPath:[folder path]] componentsJoinedByString:[NSString stringWithFormat:@"%c",[folder delimiter]]];
-//        [dispNamesFolders addObject:dispName];
         
-//        [[SyncManager getSingleton] addNewStateForFolder:folder
-//                                                   named:dispName
-//                                              forAccount:user.accountNum];
-//        
-//        [imapSync updatePersistentStateOfFolder:folder
-//                                        atIndex:indexPath
-//                               forAccountNumber:user.accountNum];
-        
-        indexPath++;
+        imapFolderIndex++;
     }
     
+    // If no Favorites Folder was found ...
     if ([user numFolderWithFolder:CCMFolderTypeFavoris] == -1) {
+        // Create one
         [user setImportantFolderNum:[user numFolderWithFolder:CCMFolderTypeAll] forBaseFolder:FolderTypeFavoris];
     }
     
+    // Store Sorted Folder Names into UserSettings
     [user setAllFoldersDisplayNames:dispNamesFolders];
     
-    ac.userFolders = [ac userFolderNames];
+    account.userFolders = [account userFolderNames];
     
-    [[Accounts sharedInstance] addAccount:ac];
+    [[Accounts sharedInstance] addAccount:account];
         
-    CCMLog(@"4 - Go!");
+    DDLogDebug(@"4 - Go!");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
     [[PKHUD sharedHUD] show];
@@ -765,15 +837,16 @@
 
     [ImapSync allSharedServices:imapSession];
     
-    [ac connect];
+    // Connect to the server
+    [account connect];
     
     [Accounts sharedInstance].currentAccountIdx = self.user.accountIndex;
     
     [ViewController refreshCocoaButton];
     
-    ac.mailListSubscriber = self;
+    account.mailListSubscriber = self;
 
-    [ac refreshCurrentFolder];
+    [account refreshCurrentFolder];
 }
 
 -(void) serverSearchDone:(BOOL)done
