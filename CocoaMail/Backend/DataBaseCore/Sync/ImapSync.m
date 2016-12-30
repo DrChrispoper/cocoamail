@@ -148,11 +148,11 @@ static NSArray * sharedServices = nil;
 
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogDebug(@"ENTERED IMAP Sync Servier: Do Login for \"%@\"]",user.username);
+    DDLogInfo(@"ENTERED IMAP Sync Servier: Do Login for \"%@\"]",user.username);
     
     if (!user || user.isDeleted) {
         
-        DDLogDebug(@"\tHave no user or user is deleted");
+        DDLogInfo(@"\tHave no user or user is deleted");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMDeletedError userInfo:nil]];
@@ -164,7 +164,7 @@ static NSArray * sharedServices = nil;
     
     if (!sharedService) {
         
-        DDLogDebug(@"\tHave no Shared ImapSync Services for User \"%@\"",user.username);
+        DDLogInfo(@"\tHave no Shared ImapSync Services for User \"%@\"",user.username);
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
 #ifdef USING_INSTABUG
@@ -177,11 +177,11 @@ static NSArray * sharedServices = nil;
         }];
     }
     
-    DDLogDebug(@"CURIOUS: user %@ sharedSettings.user",(user==sharedService.user?@"EQUAL":@"DOES NOT EQUAL"));
+    DDLogInfo(@"CURIOUS: user %@ sharedSettings.user",(user==sharedService.user?@"EQUAL":@"DOES NOT EQUAL"));
 
     if (![ImapSync isNetworkAvailable]) {
         
-        DDLogDebug(@"\t+[ImapSync isNetworkAvailable] returned NO");
+        DDLogInfo(@"\t+[ImapSync isNetworkAvailable] returned NO");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
             sharedService.connected = NO;
@@ -194,31 +194,31 @@ static NSArray * sharedServices = nil;
     
     if ( sharedService.signal ) {
         
-        DDLogDebug(@"\tReturning (existing) Shared IMAP Sync Service Signal");
+        DDLogInfo(@"\tReturning (existing) Shared IMAP Sync Service Signal");
         
         return sharedService.signal;
     }
     
-    DDLogDebug(@"\tCREATE NEW Shared IMAP Sync Service Signal.");
+    DDLogInfo(@"\tCREATE NEW Shared IMAP Sync Service Signal.");
     
     sharedService.signal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler]
                       block:^(id<RACSubscriber> subscriber)
     {
         if (sharedService.connected) {
-            DDLogDebug(@"\tShared IMAP Sync Service is Connected");
+            DDLogInfo(@"\tShared IMAP Sync Service is Connected");
             [subscriber sendCompleted];
             return;
         }
 
-        DDLogDebug(@"\tShared IMAP Sync Service is NOT Connected");
+        DDLogInfo(@"\tShared IMAP Sync Service is NOT Connected");
 
         if ([sharedService.user isUsingOAuth]) {
-            DDLogDebug(@"\tAttempting to log in with OAuth.");
+            DDLogInfo(@"\tAttempting to log in with OAuth.");
 
             [self _loginWithOAuth:sharedService forUser:user withSubscriber:subscriber];
         }
         else { //Not using OAuth
-            DDLogDebug(@"\tAttempting to log in with Password.");
+            DDLogInfo(@"\tAttempting to log in with Password.");
 
             [self _loginWithPassword:sharedService forUser:user withSubscriber:subscriber];
         }
@@ -901,6 +901,7 @@ static NSArray * sharedServices = nil;
         
         for (MCOIMAPMessage* imapMsg in imapMessages) {
             
+            
             if (self.isCanceled) {
                 DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
                 [subscriber sendCompleted];
@@ -911,10 +912,21 @@ static NSArray * sharedServices = nil;
             
             Mail* email = [Mail mailWithMCOIMAPMessage:imapMsg inFolder:currentFolder andAccount:self.user.accountNum];
             
+//            if ( [email.subject hasPrefix:@"Review blocked"] ) {
+//                DDLogInfo(@"Found \"Review blocked\" message.");
+//            }
+            
+            DDLogInfo(@"\nEMAIL SUBJECT: \"%@\"\nEMAIL MSG ID:  \"%@\"\nACCOUNT NUM:   %ld\nFOLDER NUM:    %ld\n",
+                      email.subject,email.msgID,(long)self.user.accountNum,(long)currentFolder);
+            
             if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
+                
+                DDLogInfo(@"UID Entry HAS UID Entry Matching MSG ID and ACCOUNT NUM");
                 
                 if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
                     // already have this email in other folder than this one -> add folder in uid_entry
+                    
+                    DDLogInfo(@"UID Entry HAS UID Entry Matching MSG ID and ACCOUNT NUM and FOLDER NUM");
                     
                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
                     
@@ -938,6 +950,11 @@ static NSArray * sharedServices = nil;
                 //We already have email with folder
                 continue;
             }
+            else {
+                DDLogInfo(@"UID Entry DOES NOT HAVE UID Entry Matching MSG ID and ACCOUNT NUM");
+            }
+            
+            DDLogInfo(@"BEGIN Loading Email from IMAP Server into Database");
             
             [[self.imapSession plainTextBodyRenderingOperationWithMessage:imapMsg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
                 
@@ -1107,8 +1124,7 @@ static NSArray * sharedServices = nil;
     [syncMgr retrieveFolderPathFromFolderState:currentFolder
                                     accountNum:self.user.accountNum];
     
-    MCOIMAPFolderInfoOperation* folderInfoOp =
-    [self.imapSession folderInfoOperation:folderPath];
+    MCOIMAPFolderInfoOperation* folderInfoOp = [self.imapSession folderInfoOperation:folderPath];
     
     NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder
                                                          accountNum:self.user.accountNum];
