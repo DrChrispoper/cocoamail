@@ -37,7 +37,7 @@
 typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 // All Mail Conversations for this Account
-@property (nonatomic, strong) CCMMutableConversationArray* allsMails;
+@property (nonatomic, strong) CCMMutableConversationArray* allConversations;
 
 // All Conversation ID's, used only(?) in InsertRows() function.
 @property (nonatomic, strong) NSMutableSet* convIDs;
@@ -458,7 +458,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     Account* a = [[Account alloc] init];
     
     // MARK: We should collect statistics on how many messages most people have
-    a.allsMails = [NSMutableArray arrayWithCapacity:500];
+    a.allConversations = [NSMutableArray arrayWithCapacity:500];
     
     a.convIDs = [NSMutableSet setWithCapacity:500];
     
@@ -779,8 +779,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         // Find the conversation with the matching sonID,
         // and add this mail message to the conversation,
         // and
-        for (NSUInteger idx = 0; idx < self.allsMails.count; idx++) {
-            Conversation* conv = self.allsMails[idx];
+        for (NSUInteger idx = 0; idx < self.allConversations.count; idx++) {
+            Conversation* conv = self.allConversations[idx];
             
             // If the indexed conversation matche's the email sonID
             NSString *firstMailSonID = [[conv firstMail] sonID];
@@ -873,12 +873,12 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     DDAssert(!self.user.isAll, @"Should not be called for All Account");
     
-    CCMMutableConversationArray* tmp = [self.allsMails mutableCopy];
+    CCMMutableConversationArray* tmp = [self.allConversations mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
     
     if (index == NSNotFound) {
-        [self.allsMails addObject:conv];
-        index  = self.allsMails.count - 1;
+        [self.allConversations addObject:conv];
+        index  = self.allConversations.count - 1;
         
         if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] &&
             ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)]    &&
@@ -894,7 +894,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [self _addCon:index toFoldersContent:conv.foldersType];
     }
     else {
-        Conversation* con = [self.allsMails objectAtIndex:index];
+        Conversation* con = [self.allConversations objectAtIndex:index];
         
         for (Mail* m in conv.mails) {
             [con addMail:m];
@@ -908,35 +908,52 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(CCMMutableConversationArray*) conversations
 {
-    return self.allsMails;
+    return self.allConversations;
 }
 
 -(Conversation*) getConversationForIndex:(NSUInteger)index
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    return [self.allsMails objectAtIndex:index];
+    return [self.allConversations objectAtIndex:index];
 }
 
--(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type
+-(NSMutableArray*) getConversationsForFolder:(CCMFolderType)folderHandle
 {
     DDLogInfo(@">>ENTERED getConversationsForFolder");
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableIndexSet* set = [[self _mailIndeciesForFolder:type] mutableCopy];
+    NSMutableIndexSet* conversationIndexSet = [[self _mailIndeciesForFolder:folderHandle] mutableCopy];
     
-    NSMutableArray* res = [NSMutableArray arrayWithCapacity:[set count]];
-    CCMMutableConversationArray* _aMS = [self.allsMails mutableCopy];
+    NSMutableArray<ConversationIndex *>* conversationsForFolder = [NSMutableArray arrayWithCapacity:[conversationIndexSet count]];
     
-    [_aMS enumerateObjectsAtIndexes:set
-                            options:0
-                         usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop){
-                             [res addObject:[ConversationIndex initWithIndex:idx user:self.user]];
-                         }];
+    CCMMutableConversationArray* allConversations = [self.allConversations mutableCopy]; // why copy it? It doesn't look like we are going to change it??
     
+    [allConversations enumerateObjectsAtIndexes:conversationIndexSet
+                                        options:0
+                                     usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop){
+                                            [conversationsForFolder addObject:[ConversationIndex initWithIndex:idx user:self.user]];
+                                     }];
+
+    NSString *folderName = [self.user folderDisplayNameForType:folderHandle];
+    if ( [folderName isEqualToString:@"INBOX"] ) {
+        DDLogInfo(@"getConversationsForFolder \"INBOX\" returning:");
+        NSInteger cnum = 0;
+        for (ConversationIndex *conversationIndex in conversationsForFolder) {
+            Conversation *conversation = [[Accounts sharedInstance] conversationForCI:conversationIndex];
+            DDLogInfo(@"\tConversation %@:",@(cnum));
+            cnum++;
+            NSInteger mnum = 0;
+            for (Mail *msg in conversation.mails) {
+                DDLogInfo(@"\t\tMail %@ subj \"%@\" id \"%@\"",
+                          @(mnum),msg.subject,msg.msgID);
+                mnum++;
+            }
+        }
+    }
     
-    return res;
+    return conversationsForFolder;  // an array of ConversationIndex, where each contains an index ito Account.allMails
     
 }
 
@@ -1239,7 +1256,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    Conversation *conv = [self.allsMails objectAtIndex:index];
+    Conversation *conv = [self.allConversations objectAtIndex:index];
     return [self moveConversation:conv from:folderFrom to:folderTo updateUI:updateUI];
 }
 
@@ -1252,7 +1269,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     // Cannot move a converstaion from the All Mails folder
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    CCMMutableConversationArray* tmp = [self.allsMails mutableCopy];
+    CCMMutableConversationArray* tmp = [self.allConversations mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
     if (idx == NSNotFound) {
@@ -1359,7 +1376,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
 //    NSMutableArray* tmp = [self.allsMails mutableCopy];
-    NSUInteger idx = [self.allsMails indexOfObject:conversation];
+    NSUInteger idx = [self.allConversations indexOfObject:conversation];
     
     NSMutableIndexSet* favorisFolderMailIndecies = self.systemFoldersContent[FolderTypeFavoris];
     
@@ -1561,7 +1578,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         return;
     }
     
-    if (!self.user.isAll && self.allsMails.count != 0 && !_runningUpToDateTest) {
+    if (!self.user.isAll && self.allConversations.count != 0 && !_runningUpToDateTest) {
         _runningUpToDateTest = YES;
 
         NSMutableIndexSet* currentFolderMailIndecies =
@@ -1571,7 +1588,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[setAll count]];
         NSMutableArray* res = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
         
-        NSArray* _aMS = [self.allsMails mutableCopy];
+        NSArray* _aMS = [self.allConversations mutableCopy];
         
         [_aMS enumerateObjectsAtIndexes:currentFolderMailIndecies
                                 options:0
@@ -1615,14 +1632,14 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         return;
     }
     
-    if (!self.user.isAll && self.allsMails.count != 0) {
+    if (!self.user.isAll && self.allConversations.count != 0) {
         
         NSMutableIndexSet* currentFolderMailIndecies =
             [[self _mailIndeciesForFolder:self.currentFolderType] mutableCopy];
         
         NSMutableArray* res = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
         
-        NSArray* _aMS = [self.allsMails mutableCopy];
+        NSArray* _aMS = [self.allConversations mutableCopy];
         
         [_aMS enumerateObjectsAtIndexes:currentFolderMailIndecies
                                 options:0
@@ -1646,7 +1663,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     for (Mail* email in emails) {
         BOOL found = NO;
         
-        for (Conversation* conv in self.allsMails) {
+        for (Conversation* conv in self.allConversations) {
             for (Mail* m in conv.mails) {
                 if ([m.msgID isEqualToString:email.msgID]) {
                     
@@ -1682,8 +1699,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         BOOL found = NO;
         NSInteger index = 0;
         
-        for (; !found && index < self.allsMails.count; index++) {
-            for (Mail* m in ((Conversation* )self.allsMails[index]).mails) {
+        for (; !found && index < self.allConversations.count; index++) {
+            for (Mail* m in ((Conversation* )self.allConversations[index]).mails) {
                 if ([m.msgID isEqualToString:email.msgID]) {
                     found = YES;
                     break;
@@ -2004,30 +2021,30 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     NSMutableString *desc = [NSMutableString string];
     
-    [desc appendString:@"\n --- Begin Account ---\n"];
-    
-    // Account Index
-    [desc appendFormat:@"Account Index = %ld\n",(long)[self idx]];
+    [desc appendFormat:@"\n *** Account Description (Index - %ld) ****\n",(long)[self idx]];
     [desc appendString:@"\n"];
 
     // UserSettings
-    [desc appendFormat:@"UserSettings: %@",[[self user] description]];
+    [desc appendFormat:@"\n * Account.UserSettings:\n%@",[[self user] description]];
     [desc appendString:@"\n\n"];
 
+    [desc appendString:@"\n * System Folders:\n"];
     [desc appendString:[self folderSetDescription:@"System" accountFolders:self.systemFoldersContent folderNames:self.systemFolderNames]];
     
+    [desc appendString:@"\n * User Folders:\n"];
     [desc appendString:[self folderSetDescription:@"User" accountFolders:self.userFoldersContent folderNames:self.userFolders]];
     
+    [desc appendString:@"\n * Other Account properties\n"];
     [desc appendFormat:@"Current-Folder Index = %ld\n",(long)self.currentFolderIdx];
     [desc appendFormat:@"Current-Folder Type  = %@\n",[self currentFolderTypeValue]];
     [desc appendFormat:@"Is-Sending-Out count = %ld\n",(long)self.isSendingOut];
     [desc appendString:@"\n"];
 
-    [desc appendFormat:@"Person: %@",[[self person] description]];
+    [desc appendFormat:@"\n * Account.Person:\n%@\n",[[self person] description]];
       
 //    @property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
     
-    [desc appendString:@"\n --- End Account ---\n"];
+    [desc appendString:@"\n *** End Account Description ***\n"];
     
     return desc;
 }
@@ -2068,7 +2085,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             currFolderType = @"INBOX";
             break;
         case FolderTypeFavoris:
-            currFolderType = @"Favorite?";
+            currFolderType = @"Favorite (flagged)";
             break;
         case FolderTypeSent:
             currFolderType = @"Sent";
