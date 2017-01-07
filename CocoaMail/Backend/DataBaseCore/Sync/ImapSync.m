@@ -894,7 +894,7 @@ static NSArray * sharedServices = nil;
         
         SyncManager *syncMgr = [SyncManager getSingleton];
         
-        DDLogInfo(@"BEGIN Process %lu Imap Messages.",(unsigned long)imapMessages.count);
+        DDLogInfo(@"BEGIN Process %lu IMAP Messages.",(unsigned long)imapMessages.count);
         
         // Message ID of the last mail message returned by the IMAP server
         NSString* lastMsgID = [imapMessages lastObject].header.messageID;
@@ -912,21 +912,17 @@ static NSArray * sharedServices = nil;
             
             Mail* email = [Mail mailWithMCOIMAPMessage:imapMsg inFolder:currentFolder andAccount:self.user.accountNum];
             
-//            if ( [email.subject hasPrefix:@"Review blocked"] ) {
-//                DDLogInfo(@"Found \"Review blocked\" message.");
-//            }
-            
-            DDLogInfo(@"\nEMAIL SUBJECT: \"%@\"\nEMAIL MSG ID:  \"%@\"\nACCOUNT NUM:   %ld\nFOLDER NUM:    %ld\n",
+            DDLogInfo(@"\n\nEMAIL SUBJECT: \"%@\"\nEMAIL MSG ID:  \"%@\"\nACCOUNT NUM:   %ld\nFOLDER NUM:    %ld\n",
                       email.subject,email.msgID,(long)self.user.accountNum,(long)currentFolder);
             
             if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
                 
-                DDLogInfo(@"UID Entry HAS UID Entry Matching MSG ID and ACCOUNT NUM");
+                DDLogInfo(@"--- Message already exists in this Account's Databsase");
                 
                 if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
                     // already have this email in other folder than this one -> add folder in uid_entry
                     
-                    DDLogInfo(@"UID Entry HAS UID Entry Matching MSG ID and ACCOUNT NUM and FOLDER NUM");
+                    DDLogInfo(@"--- Message DOES NOT already exist in this Account's Database in Folder \"%@\", ADDING.",@(currentFolder));
                     
                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
                     
@@ -938,6 +934,10 @@ static NSArray * sharedServices = nil;
                     };
                     
                     [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                }
+                else {
+                    DDLogInfo(@"--- Message already exists in this Account's Database in Folder \"%@\"",@(currentFolder));
+
                 }
                 
                 if ([email.msgID isEqualToString:lastMsgID]) {
@@ -951,7 +951,7 @@ static NSArray * sharedServices = nil;
                 continue;
             }
             else {
-                DDLogInfo(@"UID Entry DOES NOT HAVE UID Entry Matching MSG ID and ACCOUNT NUM");
+                DDLogInfo(@"--- Message DOES NOT already exist in this Account's Databsase");
             }
             
             DDLogInfo(@"BEGIN Loading Email from IMAP Server into Database");
