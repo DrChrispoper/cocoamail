@@ -1131,5 +1131,13 @@ static NSDateFormatter * s_df_hour = nil;
     return draft;
 }
 
+-(NSString*)description
+{
+    NSMutableString *text = [NSMutableString string];
+    
+    [text appendFormat:@"\nSubj: \"%@\", Msg ID: \"%@\"",self.subject,self.msgID];
+    
+    return text;
+}
 @end
 

@@ -106,5 +106,7 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 
 -(Draft*) toDraft;
 
+-(NSString*)description;
+
 @end
 
