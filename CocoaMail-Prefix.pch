@@ -4,6 +4,9 @@
 
 #import <Availability.h>
 
+#define LOG_ASYNC_ENABLED NO        // make loggin synchronous
+
+
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
