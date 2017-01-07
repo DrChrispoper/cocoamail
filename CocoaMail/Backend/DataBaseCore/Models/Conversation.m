@@ -193,7 +193,7 @@ static NSDateFormatter * s_df_hour = nil;
 {
     NSMutableSet* tempFodles = [[NSMutableSet alloc] init];
     
-    NSArray* tmp = [self.mails copy];  // copy in case self.mails changes while in this func?
+    NSArray<Mail*>* tmp = [self.mails copy];  // copy in case self.mails changes while in this func?
     
     if (self.isDraft) {
         [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
