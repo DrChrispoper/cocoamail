@@ -12,6 +12,7 @@
 #import "Accounts.h"
 #import "InViewController.h"
 #import "AttachmentsViewController.h"
+#import "CCMConversationsByDay.h"
 
 @protocol MailListDelegate;
 @class ConversationIndex;
@@ -26,7 +27,7 @@
 -(void) removeConversationList:(NSArray*)convs;
 
 @property (nonatomic, weak) UITableView* table;
-@property (nonatomic, strong) NSMutableArray<NSDictionary *> *convByDay;
+@property (nonatomic, strong) CCMConversationsByDay *convByDay;
 @property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
 @property (nonatomic, weak) AttachmentsViewController* attachSubscriber;
 

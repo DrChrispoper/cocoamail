@@ -643,7 +643,7 @@
                         
                         [op start:^(NSError*  error, NSArray* folders) {
                             
-                            DDLogDebug(@"Processing %ld folders:",(long)[folders count]);
+                            DDLogDebug(@"Processing %ld IMAP folders:",(long)[folders count]);
 
                             for (MCOIMAPFolder* folder in folders) {
                                 
@@ -695,58 +695,7 @@
     }];
 }
 
-// MARK: - _finishFolderFlaged
-
-- (UserSettings *)_createUserSettings
-{
-    //User Settings
-    UserSettings* user = [[AppSettings getSingleton] createNewUser];
-    [user setUsername:self.email.text];
-    [user setName:@""];
-    [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
-    [user setColor: [AppSettings defaultColors][user.accountIndex]];
-    
-    [AppSettings setNotifications:YES accountNum:user.accountNum];
-    
-    if (user.accountIndex == 0) {
-        [AppSettings setDefaultAccountNum:user.accountNum];
-    }
-    
-    // Create User Code for UI
-    NSString* mail = self.email.text;
-    NSString* code = [[mail substringToIndex:3] uppercaseString];
-    [user setInitials:code];
-    
-    /*NSUInteger loc = [mail rangeOfString:@"@"].location;
-     NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
-     
-     if (loc != NSNotFound &&  locDot != NSNotFound && loc < locDot && (locDot-loc) > 2) {
-     NSString* code = [[mail substringWithRange:NSMakeRange(loc+1, 3)] uppercaseString];
-     [user setInitials:code];
-     }
-     else {
-     NSString* code = [[mail substringToIndex:3] uppercaseString];
-     [user setInitials:code];
-     }*/
-    
-    [AppSettings setSettingsWithAccountVal:self.accountValidator user:user];
-    
-    return user;
-}
-
-- (Account *)_addFirstAccount:(UserSettings *)user
-{
-    // Create Account object for user
-    Account* ac = [Account emptyAccount];
-    
-    [ac setNewUser:user];
-    
-    ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
-    
-    DDLogVerbose(@"Adding first Account:\n%@",[ac description]);
- 
-    return ac;
-}
+// MARK: - _finishFoldersFlaged
 
 -(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
 {
@@ -826,7 +775,7 @@
     account.userFolders = [account userFolderNames];
     
     [[Accounts sharedInstance] addAccount:account];
-        
+    
     DDLogDebug(@"4 - Go!");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
@@ -834,7 +783,7 @@
     
     self.user = user;
     self.googleBtn.hidden = YES;
-
+    
     [ImapSync allSharedServices:imapSession];
     
     // Connect to the server
@@ -845,9 +794,64 @@
     [ViewController refreshCocoaButton];
     
     account.mailListSubscriber = self;
-
+    
     [account refreshCurrentFolder];
 }
+
+- (UserSettings *)_createUserSettings
+{
+    //User Settings
+    UserSettings* user = [[AppSettings getSingleton] createNewUser];
+    [user setUsername:self.email.text];
+    [user setName:@""];
+    [user setSignature:NSLocalizedString(@"add-account-view.default-settings.signature", @"Default Account Signature")];
+    [user setColor: [AppSettings defaultColors][user.accountIndex]];
+    
+    [AppSettings setNotifications:YES accountNum:user.accountNum];
+    
+    if (user.accountIndex == 0) {
+        [AppSettings setDefaultAccountNum:user.accountNum];
+    }
+    
+    // Create User Code for UI
+    NSString* mail = self.email.text;
+    NSString* code = [[mail substringToIndex:3] uppercaseString];
+    [user setInitials:code];
+    
+    /*NSUInteger loc = [mail rangeOfString:@"@"].location;
+     NSUInteger locDot = [mail rangeOfString:@"." options:NSBackwardsSearch].location;
+     
+     if (loc != NSNotFound &&  locDot != NSNotFound && loc < locDot && (locDot-loc) > 2) {
+     NSString* code = [[mail substringWithRange:NSMakeRange(loc+1, 3)] uppercaseString];
+     [user setInitials:code];
+     }
+     else {
+     NSString* code = [[mail substringToIndex:3] uppercaseString];
+     [user setInitials:code];
+     }*/
+    
+    [AppSettings setSettingsWithAccountVal:self.accountValidator user:user];
+    
+    return user;
+}
+
+- (Account *)_addFirstAccount:(UserSettings *)user
+{
+    // Create Account object for user
+    Account* ac = [Account emptyAccount];
+    
+    [ac setNewUser:user];
+    
+    ac.person = [Person createWithName:user.name email:user.username icon:nil codeName:user.initials];
+    
+    DDLogVerbose(@"Adding first Account:\n%@",[ac description]);
+ 
+    return ac;
+}
+
+// MARK: -
+
+
 
 -(void) serverSearchDone:(BOOL)done
 {

@@ -11,6 +11,7 @@
 #import "Mail.h"
 #import "Attachments.h"
 #import "Accounts.h"
+#import "CCMIndexSet.h"
 #import "EmailProcessor.h"
 #import "AppSettings.h"
 #import "DateUtil.h"
@@ -37,7 +38,7 @@
 
 @interface MailListViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate, UserFolderViewControllerDelegate, MailListDelegate/*, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate*/>
 
-@property (nonatomic, strong) NSMutableArray<NSMutableIndexSet*>* indexSet; // may want to put this into its own class
+@property (nonatomic, strong) CCMIndexSetArray* indexSet;
 @property (nonatomic, strong) NSMutableSet<ConversationIndex*>* deletes;
 
 //@property (nonatomic) NSInteger pageIndex;
@@ -155,7 +156,7 @@
     
     // indexSet is an array of index sets, one for each account
     //      indexSet[account] -> mutable index set
-    self.indexSet = [[NSMutableArray alloc]initWithCapacity:[Accounts sharedInstance].accountsCount];
+    self.indexSet = [[CCMIndexSetArray alloc] initWithCapacity:[Accounts sharedInstance].accountsCount];
     
     // Set of conversation indecies
     self.deletes = [[NSMutableSet alloc]init];
@@ -163,7 +164,7 @@
     for (Account* a in [Accounts sharedInstance].accounts) {
         if (!a.user.isAll) {
             // Add an account mail index set for each non-All account
-            [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
+            [self.indexSet appendIndexSetToArray];
         }
     }
     
@@ -275,7 +276,7 @@
         //table.emptyDataSetDelegate = self;
     }
     
-    if (self.convByDay.count == 0) {
+    if ( [self.convByDay isEmpty] ) {
         [self setupData];
     }
 }
@@ -400,8 +401,8 @@
     //self.table.emptyDataSetSource = self;
     //self.table.emptyDataSetDelegate = self;
     
-    if (self.indexSet.count < [AppSettings numActiveAccounts]) {
-        [self.indexSet addObject:[[NSMutableIndexSet alloc]init]];
+    if ([self.indexSet indexSetCount] < [AppSettings numActiveAccounts]) {
+        [self.indexSet appendIndexSetToArray];
     }
     
     [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
@@ -468,9 +469,14 @@
 
 -(void) _addConversationsForAccount:(Account*)account folder:(CCMFolderType)folder
 {
+    DDLogInfo(@"Add Local Conversations For Account %@ Folder %@",@(account.idx),@(folder.idx));
+    
     account.mailListSubscriber = self;
     
     NSMutableArray *conversations = [account getConversationsForFolder:folder];
+    
+    DDLogInfo(@"--- Account Folder has %@ Conversations",@(conversations.count));
+    
     [self insertConversations:conversations];
 }
 
@@ -503,7 +509,7 @@
         
         for (ConversationIndex* convIndex in convs) {
             
-            if ([self.indexSet[convIndex.user.accountIndex] containsIndex:convIndex.index]) {
+            if ([self.indexSet containsConversationIndex:convIndex]) {
                 
                 DDLogInfo(@"ConversationIndex:%ld in Account:%ld",
                           (long)convIndex.index,
@@ -651,7 +657,7 @@
         }
     
         // If this view already contains this conversation ...
-        if ([self.indexSet[conIndex.user.accountIndex] containsIndex:conIndex.index]) {
+        if ([self.indexSet containsConversationIndex:conIndex]) {
             return;
         }
         
@@ -682,7 +688,7 @@
     
         NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
 
-        [self.indexSet[conIndex.user.accountIndex] addIndex:conIndex.index];
+        [self.indexSet addConversationIndex:conIndex];
         
         NSDate* convDay = conIndex.day;
         
@@ -730,7 +736,7 @@
                         [self.table beginUpdates];
                         
                         if (self.convByDay.count > dayIndex) {
-                        [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:j inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
+                            [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:j inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
                         }else {
                             NSLog(@"Something went wrong with convByDay");
                         }
@@ -747,7 +753,7 @@
                     [self.table beginUpdates];
                     
                     if (self.convByDay.count > dayIndex) {
-                    [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:list.count-1 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
+                        [self.table insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:list.count-1 inSection:dayIndex]] withRowAnimation:UITableViewRowAnimationFade];
                     }else {
                         NSLog(@"Something went wrong with convByDay");
                     }
@@ -786,7 +792,68 @@
 
 }
 
--(void) insertConversations:(NSArray*)pConvs
+- (void)_InsertConversation:(ConversationIndex *)conversationIndex intoConversationsByDate:(NSSortDescriptor *)sortByDate
+{
+    NSDate* conversationDate = conversationIndex.day;
+    
+    BOOL conversationAddedToConvByDate = NO;
+    
+    // To find where to insert this conversation, we look through the convByDate array
+    for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
+        
+        NSDate* indexedDayDate = self.convByDay[dayIndex][@"day"];
+        
+        NSComparisonResult result = [conversationDate compare:indexedDayDate];
+        
+        if (result == NSOrderedDescending) {
+            //Email Before //Insert section before date //+ email
+            
+            NSDictionary* earlier = @{
+                                      @"list": [NSMutableArray arrayWithObject:conversationIndex],
+                                      @"day":conversationDate
+                                      };
+            [self.convByDay insertObject:earlier atIndex:dayIndex];
+            
+            conversationAddedToConvByDate = YES;
+            break;
+        }
+        else if (result == NSOrderedSame) { // same day, so search through the coversations on that date
+            //Add email to section of date
+            NSMutableArray* arrayOfConversations = self.convByDay[dayIndex][@"list"];
+            
+            [arrayOfConversations sortUsingDescriptors:@[sortByDate]];
+            
+            for (int convArrayIndex = 0 ; convArrayIndex < arrayOfConversations.count ; convArrayIndex++) {
+                
+                ConversationIndex* conversationIndex = arrayOfConversations[convArrayIndex];
+                
+                NSComparisonResult result = [conversationIndex.date compare:conversationIndex.date];
+                
+                if (result == NSOrderedDescending) {
+                    [arrayOfConversations insertObject:conversationIndex atIndex:convArrayIndex];
+                    conversationAddedToConvByDate = YES;
+                    break;
+                }
+            }
+            
+            if (!conversationAddedToConvByDate) {
+                // Add at end
+                [arrayOfConversations addObject:conversationIndex];
+                conversationAddedToConvByDate = YES;
+            }
+            
+            break;
+        }
+    }
+    
+    if (!conversationAddedToConvByDate) {
+        //Date section not existing //Add new date //Add email to new date
+        NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:conversationIndex], @"day":conversationDate};
+        [self.convByDay addObject:later];
+    }
+}
+
+-(void) insertConversations:(NSArray<ConversationIndex*>*) pConvs  // array of folder's conversations
 {
     DDLogInfo(@">>ENTERING insertConversations: \n\tWill put %ld Conversations into Mail List Table",(long)pConvs.count);
     
@@ -795,17 +862,17 @@
         pConvs = [self _filterResultsForPerson:pConvs];
     }
     
-    NSMutableArray* convs = [NSMutableArray arrayWithArray:pConvs];
+    NSMutableArray<ConversationIndex*>* arrayOfConversationIndex = [NSMutableArray arrayWithArray:pConvs];
     
     // TODO: If pConvs/convs only has one entry, then sort by date seems unnedsecary
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
-    [convs sortUsingDescriptors:@[sortByDate]];
+    [arrayOfConversationIndex sortUsingDescriptors:@[sortByDate]];
     
     //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
     
-        for (ConversationIndex* conversationIndex in convs) {
+        for (ConversationIndex* conversationIndex in arrayOfConversationIndex) {
             
-            if ([self.indexSet[conversationIndex.user.accountIndex] containsIndex:conversationIndex.index]) {
+            if ([self.indexSet containsConversationIndex:conversationIndex]) {
                 continue;
             }
             
@@ -815,7 +882,7 @@
             
             if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
                 
-                [conv foldersType];
+                [conv foldersType];   // Why?
                 
                 BOOL isInFolder = [conv isInFolder:currentFolderIdx];
                 
@@ -831,59 +898,9 @@
                 }
             }
             
-            [self.indexSet[conversationIndex.user.accountIndex] addIndex:conversationIndex.index];
+            [self.indexSet addConversationIndex:conversationIndex];
             
-            NSDate* convDay = conversationIndex.day;
-            
-            BOOL added = NO;
-            
-            for (int dayIndex = 0 ; dayIndex < self.convByDay.count ; dayIndex++) {
-                
-                NSDate* tmpDay = self.convByDay[dayIndex][@"day"];
-                NSComparisonResult result = [convDay compare:tmpDay];
-                
-                if (result == NSOrderedDescending) {
-                    //Email Before //Insert section before date //+ email
-                    
-                    NSDictionary* earlier = @{@"list": [NSMutableArray arrayWithObject:conversationIndex], @"day":convDay};
-                    [self.convByDay insertObject:earlier atIndex:dayIndex];
-                    
-                    added = YES;
-                    break;
-                }
-                else if (result == NSOrderedSame) {
-                    //Add email to section of date
-                    NSMutableArray* list = self.convByDay[dayIndex][@"list"];
-                    
-                    [list sortUsingDescriptors:@[sortByDate]];
-                    
-                    for (int j = 0 ; j < list.count ; j++) {
-                        
-                        ConversationIndex* cI = list[j];
-                        
-                        NSComparisonResult result = [conversationIndex.date compare:cI.date];
-                        
-                        if (result == NSOrderedDescending) {
-                            [list insertObject:conversationIndex atIndex:j];
-                            added = YES;
-                            break;
-                        }
-                    }
-                    
-                    if (!added) {
-                        [list addObject:conversationIndex];
-                        added = YES;
-                    }
-                    
-                    break;
-                }
-            }
-            
-            if (!added) {
-                //Date section not existing //Add new date //Add email to new date
-                NSDictionary* later = @{@"list": [NSMutableArray arrayWithObject:conversationIndex], @"day":convDay};
-                [self.convByDay addObject:later];
-            }
+            [self _InsertConversation:conversationIndex intoConversationsByDate:sortByDate];
         }
         
         [self reload];
@@ -1008,7 +1025,7 @@
         ConversationIndex* cIndex = list[ip.row];
         
         
-        if ([self.indexSet[cIndex.user.accountIndex] containsIndex:cIndex.index]) {
+        if ([self.indexSet containsConversationIndex:cIndex]) {
             
             if (list.count == 1) {
                 DDLogInfo(@"Delete section:%li self.convByDay.count:%li", (long)ip.section, (unsigned long)self.convByDay.count);
@@ -1027,7 +1044,7 @@
                 }
             }
             
-            [self.indexSet[cIndex.user.accountIndex] removeIndex:cIndex.index];
+            [self.indexSet removeConversationIndex:cIndex];
         }
     }
     
@@ -1225,6 +1242,8 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
+    DDLogInfo(@"TABLEVIEW HAS %lu SECTIONS",(long)self.convByDay.count);
+
     return self.convByDay.count;//MIN(self.convByDay.count, (pageCount * self.pageIndex)+1-self.deletedSections);
 }
 
@@ -1233,12 +1252,12 @@
     NSDictionary* dayContent = self.convByDay[section];
     NSArray* content = dayContent[@"list"];
     
-    DDLogDebug(@"tableView section %ld has %lu rows",(long)section,(unsigned long)content.count);
+    DDLogInfo(@"TABLEVIEW SECTION NUMBER %ld HAS %lu ROWS",(long)section,(unsigned long)content.count);
     
     return content.count;
 }
 
-// MARK: - cellForRowAtIndexPath
+// MARK: - >>> cellForRowAtIndexPath <<<
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
@@ -1268,7 +1287,7 @@
         DDLogInfo(@"\tLast Row = (indexPath.row (%ld) == ( [convs count] (%ld) -1 ))",
                   (long)indexPath.row,(unsigned long)[convs count]);
         
-        if (self.indexCount != self.countBeforeLoadMore) {
+        if (self.indexCount != self.countBeforeLoadMore) { // at present these are ALWAYS the same
             DDLogInfo(@"\tindex count NOT equal to count before load more, so calling reFetch");
             [self reFetch:NO];
         }
@@ -1675,11 +1694,7 @@
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        NSInteger mailCountBefore = 0;
-        
-        for (NSMutableIndexSet* indexSet in self.indexSet) {
-            mailCountBefore += indexSet.count;
-        }
+//        NSInteger mailCountBefore = [self.indexSet totalIndexCount];
         
         //if (self.convByDay.count <= pageCount * self.pageIndex ) {
             if (kisActiveAccountAll) {
@@ -1698,11 +1713,7 @@
         
         [self checkConversationsUpdate];
         
-        NSInteger mailCountAfer = 0;
-        
-        for (NSMutableIndexSet* indexSet in self.indexSet) {
-            mailCountAfer += indexSet.count;
-        }
+        NSInteger mailCountAfer = [self.indexSet totalIndexCount];
         
         self.indexCount = mailCountAfer;
         self.countBeforeLoadMore =  mailCountAfer;//MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);
@@ -1808,33 +1819,57 @@
 {
     NSMutableString *txt = [NSMutableString string];
     
-    [txt appendString:@"BEGIN MailListViewController"];
+    [txt appendString:@"\n\n *** MailListViewController description ***"];
     
     // convByDay is a Mutable Array of Dictionaries
-    NSInteger convCount = [self.convByDay count];
-    [txt appendFormat:@"\n\tconvByDay has %ld entries",(long)convCount];
+//    NSInteger convCount = [self.convByDay count];
+//    [txt appendFormat:@"\n\tconvByDay has %ld entries",(long)convCount];
+//    
+//    for ( NSInteger conv = 0; conv < convCount; conv++ ) {
+//        NSDictionary *convDict = self.convByDay[conv];
+//        
+//        [txt appendFormat:@"\n\tconvByDay[%ld]: %@",(long)conv,convDict];
+//    }
     
-    for ( NSInteger conv = 0; conv < convCount; conv++ ) {
-        NSDictionary *convDict = self.convByDay[conv];
-        
-        [txt appendFormat:@"\tconvByDay[%ld]: %@",(long)conv,convDict];
-    }
+    [txt appendString:@"\n * Index Set Array: "];
+    [txt appendString:[self.indexSet description]];
     
-    NSInteger indexSetCount = [self.indexSet count];
-    [txt appendFormat:@"\n\nindexSets has %ld NSMutableIndexSet:",(long)indexSetCount];
-    for (NSInteger indexSetIndex = 0; indexSetIndex < indexSetCount; indexSetIndex++) {
-        [txt appendFormat:@"\n\tIndex Set for Account %ld:",(long)indexSetIndex];
-        
-        NSMutableIndexSet *accountMailIndecies = self.indexSet[indexSetIndex];
-        NSInteger indexSetCount = [accountMailIndecies count];
-        [txt appendFormat:@"\n\t\tindex count = %ld",(long)indexSetCount];
-        
-        [accountMailIndecies enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-            [txt appendFormat:@"\n\t\tindex = %ld",(unsigned long)idx];
-        }];
-    }
+    [txt appendString:@"\n * Conv By Day Dictionary Array:"];
+    [txt appendString:[self conversationsDescription]];
     
-    [txt appendString:@"\nEND MailListViewController"];
+    [txt appendString:@"\n *** MailListViewController description end *** "];
     return txt;
+}
+
+-(NSString*)conversationsDescription
+{
+    NSMutableString *text = [NSMutableString string];
+    
+    [text appendFormat:@"\nMail List View has Conversations for %@ Days",@(self.convByDay.count)];
+    
+    for (NSInteger dayIndex = 0; dayIndex < self.convByDay.count; dayIndex++) {
+        
+        NSDictionary* d = self.convByDay[dayIndex];
+        [text appendFormat:@"\n --- Day index %@ has a Dictionary of %@ association pairs ",@(dayIndex),@(d.count)];
+        
+        NSArray* convs = d[@"list"];
+        [text appendFormat:@"\n --- \"list\" -> Array of %@ Conversations.",@(convs.count)];
+        
+        for (NSInteger convIndex = 0; convIndex < convs.count; convIndex++ ) {
+            ConversationIndex *cI = convs[convIndex];
+            Conversation* con = [[Accounts sharedInstance] conversationForCI:cI];
+            
+            [text appendFormat:@"\n --- Conversation index %@ has %@ emails.",@(convIndex),@(con.mails.count)];
+            
+            for (NSInteger mailIndex = 0; mailIndex < con.mails.count; mailIndex++ ) {
+                Mail *msg = con.mails[mailIndex];
+                
+                [text appendString:[msg description]];
+            }
+        }
+    }
+    
+    return text;
+
 }
 @end
