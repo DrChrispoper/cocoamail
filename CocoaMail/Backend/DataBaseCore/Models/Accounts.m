@@ -764,7 +764,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     NSString *sonID = [email sonID];
     
     if ( [email.subject containsString:@"Review blocked"]) {
-        DDLogDebug(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
+        DDLogInfo(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
     }
     
     if ( [sonID isEqualToString:@""] ||
