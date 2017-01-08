@@ -15,7 +15,7 @@
 @interface CCMIndexSetArray : NSObject
 
 - (instancetype)initWithCapacity:(NSInteger)capacity;
--(void) appendIndexSetToArray;  // Append an account mail index set for each non-All account
+-(void) appendEmptyIndexSet;  // Append a new empty account mail index set for each non-All account
 -(NSInteger)indexSetCount;
 -(NSInteger)totalIndexCount;
 -(void)addConversationIndex:(ConversationIndex*)ci;

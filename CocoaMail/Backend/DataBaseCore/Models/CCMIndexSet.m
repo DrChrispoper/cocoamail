@@ -31,7 +31,7 @@
     return self;
 }
 
--(void) appendIndexSetToArray
+-(void) appendEmptyIndexSet
 {
     [self.indexSetArray addObject:[[NSMutableIndexSet alloc]init]];
 }
