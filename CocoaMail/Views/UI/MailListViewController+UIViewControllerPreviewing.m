@@ -33,8 +33,9 @@
         UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         PreviewViewController *previewController = [storyboard instantiateViewControllerWithIdentifier:@"PreviewView"];
         
-        NSArray* list = self.convByDay[path.section][@"list"];
-        Conversation* conv = [[Accounts sharedInstance] conversationForCI:[list objectAtIndex:path.row]];
+        CCMMutableConvIndexArray* list = [self.convByDay conversationsForDay:path.section];
+        ConversationIndex *ci = list[path.row];
+        Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
 
         previewController.conversation = conv;
         previewController.table = self.table;
