@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
+		141339D61E1D832E003F3B75 /* CCMIndexSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339D51E1D832E003F3B75 /* CCMIndexSet.m */; };
+		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
+		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
@@ -389,6 +391,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		141339D41E1D832E003F3B75 /* CCMIndexSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMIndexSet.h; sourceTree = "<group>"; };
+		141339D51E1D832E003F3B75 /* CCMIndexSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMIndexSet.m; sourceTree = "<group>"; };
+		141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCMConversationsByDay.h; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.h; sourceTree = "<group>"; };
+		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
@@ -828,7 +834,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */,
+				1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */,
 				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
@@ -1043,6 +1049,8 @@
 		271D4D7D1B84758D00D19373 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */,
+				141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */,
 				27818C651BABF28D00D26D1A /* Attachments.h */,
 				27818C661BABF28D00D26D1A /* Attachments.m */,
 				27818C671BABF28D00D26D1A /* Mail.h */,
@@ -1059,6 +1067,8 @@
 				27F3C9CD1C807FCE0066116B /* Conversation.m */,
 				277F4C211C859BF500720479 /* Draft.h */,
 				277F4C221C859BF500720479 /* Draft.m */,
+				141339D41E1D832E003F3B75 /* CCMIndexSet.h */,
+				141339D51E1D832E003F3B75 /* CCMIndexSet.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2060,6 +2070,7 @@
 				27818C641BABF24F00D26D1A /* UIGlobal.m in Sources */,
 				27FABC1A1B9D8AC10089634A /* PKHUDAssets.swift in Sources */,
 				27F9B6B41C689DC20008D681 /* ContactTableViewCell.m in Sources */,
+				141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */,
 				27818C5F1BABF22500D26D1A /* PullToRefresh.m in Sources */,
 				273219DA1C466B360019967C /* PKHUDAnimation.swift in Sources */,
 				27818C601BABF22500D26D1A /* UIImage+ImageEffects.m in Sources */,
@@ -2106,6 +2117,7 @@
 				277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */,
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
+				141339D61E1D832E003F3B75 /* CCMIndexSet.m in Sources */,
 				2798B56B1C4AAE6600C98321 /* ViewController.m in Sources */,
 				2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */,
 				27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */,
