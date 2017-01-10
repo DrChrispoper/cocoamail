@@ -236,18 +236,19 @@ static NSDateFormatter * s_df_hour = nil;
     return cI;
 }
 
--(NSDate*) date
+-(NSDate*) date  // return the datetime of the first mail in the conversation
 {
     Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
     return [conversation firstMail].datetime;
 }
 
--(NSDate*) day
+-(NSDate*) day  // return the day (date only) of the first mail of the conversation
 {
-    Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
-    NSString* stringDate = [[DateUtil getSingleton] humanDate:[conversation firstMail].datetime];
+    NSDate *datetimeOfConversation = [self date];
     
-    return [s_df_day dateFromString:stringDate];
+    NSString* stringDate = [[DateUtil getSingleton] humanDate:datetimeOfConversation];
+    
+    return [s_df_day dateFromString:stringDate];    // returns "d MMM yy" 
 }
 
 @end

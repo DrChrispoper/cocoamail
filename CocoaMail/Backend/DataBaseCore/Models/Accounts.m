@@ -575,9 +575,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 DDLogInfo(@"Not All Account AND Is Not Connected.");
                 
                 [[ImapSync doLogin:acnt.user] subscribeError:^(NSError *error) {
-                    DDLogError(@"Account[%ld] connection failed, error = %@",acntIndex,error);
+                    DDLogError(@"Account[%ld] connection failed, error = %@",(long)acntIndex,error);
                 } completed:^{
-                    DDLogInfo(@"Account[%ld] connection success.",acntIndex);
+                    DDLogInfo(@"Account[%ld] connection success.",(long)acntIndex);
                 }];
                 
                 break;

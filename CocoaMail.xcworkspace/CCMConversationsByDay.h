@@ -18,18 +18,32 @@ typedef NSMutableArray<ConversationIndex *> CCMMutableConvIndexArray;
 @interface CCMConversationsByDay : NSObject
 
 - (instancetype)initWithDayCapacity:(NSInteger)capacity;
+
 -(NSInteger) dayCount;
 -(BOOL) isEmpty;        // dayCount == 0
+-(NSInteger) conversationCountOnDay:(NSInteger)dayIndex;
 
 -(void)enumerateAllMailsUsingBlock:(void (^)(Mail *msg))block;
 
 // access elements of a day's conversations
--(CCMMutableConvIndexArray*) conversationsForDay:(NSInteger) day;
 -(NSDate*)dateForDay:(NSInteger)day;
+-(ConversationIndex*) conversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex;
+-(NSDate*)datetimeForConversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex;
 
--(void)insertConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex;
--(void)appendConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate;
--(void)removeConversationAtIndex:(NSInteger)dayIndex;
 
+-(void)sortConversationsByDateForDay:(NSInteger)dayIndex;
+
+-(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex;
+-(void)appendNewDayWithConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate;
+-(void)removeDayAtIndex:(NSInteger)dayIndex;
+
+-(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSInteger)dayIndex;
+-(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSInteger)convArrayIndex onDay:(NSInteger)dayIndex;
+-(void)removeConversation:(NSInteger)conIndex onDay:(NSInteger)dayIndex;
+-(void)exchangeConversationsAtIndex:(NSInteger)convIndexOne withConversationAtIndex:(NSInteger)convIndexTwo onDay:(NSInteger)dayIndex;
+
+- (void)InsertConversation:(ConversationIndex *)ciToInsert;
+
+-(NSString*)description;
 
 @end

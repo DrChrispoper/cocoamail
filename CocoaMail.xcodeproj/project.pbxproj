@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		141339D61E1D832E003F3B75 /* CCMIndexSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339D51E1D832E003F3B75 /* CCMIndexSet.m */; };
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
+		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
 		27026F1A1C1ED6FB00BC2C1A /* jquerylong.js in Resources */ = {isa = PBXBuildFile; fileRef = 27026F191C1ED6FB00BC2C1A /* jquerylong.js */; };
@@ -391,12 +391,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		141339D41E1D832E003F3B75 /* CCMIndexSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMIndexSet.h; sourceTree = "<group>"; };
-		141339D51E1D832E003F3B75 /* CCMIndexSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMIndexSet.m; sourceTree = "<group>"; };
 		141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCMConversationsByDay.h; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.h; sourceTree = "<group>"; };
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
+		14ADBBF71E23F1530087E9B7 /* CCMConversationsPerAccount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMConversationsPerAccount.h; sourceTree = "<group>"; };
+		14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMConversationsPerAccount.m; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
 		2700855A1CB90CE0004069B4 /* AlternateViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlternateViewController.m; sourceTree = "<group>"; };
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
@@ -1049,6 +1049,8 @@
 		271D4D7D1B84758D00D19373 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				14ADBBF71E23F1530087E9B7 /* CCMConversationsPerAccount.h */,
+				14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */,
 				141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */,
 				141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */,
 				27818C651BABF28D00D26D1A /* Attachments.h */,
@@ -1067,8 +1069,6 @@
 				27F3C9CD1C807FCE0066116B /* Conversation.m */,
 				277F4C211C859BF500720479 /* Draft.h */,
 				277F4C221C859BF500720479 /* Draft.m */,
-				141339D41E1D832E003F3B75 /* CCMIndexSet.h */,
-				141339D51E1D832E003F3B75 /* CCMIndexSet.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2117,7 +2117,6 @@
 				277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */,
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
-				141339D61E1D832E003F3B75 /* CCMIndexSet.m in Sources */,
 				2798B56B1C4AAE6600C98321 /* ViewController.m in Sources */,
 				2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */,
 				27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */,
@@ -2139,6 +2138,7 @@
 				27818C6C1BABF28D00D26D1A /* Mail.m in Sources */,
 				2778A1A41BE11C38006FB71D /* SignatureViewController.m in Sources */,
 				27A6364A1CA02CCE000B6D2D /* AddFirstAccountViewController.m in Sources */,
+				14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */,
 				273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */,
 				27818C4C1BABF22500D26D1A /* AttachmentsViewController.m in Sources */,
 				2777380B1B8B03830030F299 /* Accounts.m in Sources */,
@@ -2336,6 +2336,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2MGU5T4CQD;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2404,6 +2405,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2MGU5T4CQD;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

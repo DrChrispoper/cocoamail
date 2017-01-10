@@ -42,19 +42,26 @@
     return self.conversationsPerDay[day];
 }
 
--(CCMMutableConvIndexArray*) conversationsForDay:(NSInteger) day
+-(CCMMutableConvIndexArray*) _conversationsForDay:(NSInteger) day
 {
     NSDictionary *dayDict = [self _dayProperties:day];
     
-    NSArray *dayConvList = dayDict[@"list"];
+    CCMMutableConvIndexArray *dayConvList = dayDict[@"list"];
     
-    return [dayConvList mutableCopy];
+    return dayConvList;
 }
 -(NSDate*)dateForDay:(NSInteger)day
 {
     NSDictionary *dayDict = [self _dayProperties:day];
     
-    return dayDict[@"day"];}
+    return dayDict[@"day"];
+}
+-(NSDate*)datetimeForConversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex
+{
+    ConversationIndex *ci = [self conversation:convIndex onDay:dayIndex];
+    
+    return [ci date];
+}
 
 -(NSInteger) dayCount
 {
@@ -67,6 +74,24 @@
     return ( [self dayCount] == 0);
 }
 
+-(NSInteger) conversationCountOnDay:(NSInteger)dayIndex
+{
+    NSDictionary *dayDict = [self _dayProperties:dayIndex];
+    
+    NSArray *dayConvList = dayDict[@"list"];
+    
+    return dayConvList.count;
+}
+-(ConversationIndex*) conversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex
+{
+    CCMMutableConvIndexArray* convs = [self _conversationsForDay:dayIndex];
+    
+    DDAssert(convIndex >= 0 && convIndex < convs.count,
+             @"Conversation index (%@) OUT OF RANGE, valid=(0 to %@)",
+             @(convIndex),@(convs.count-1));
+    
+    return convs[convIndex];
+}
 -(void)enumerateAllMailsUsingBlock:(void (^)(Mail *msg))block
 {
     for (NSDictionary* d in self.conversationsPerDay) {
@@ -82,7 +107,17 @@
     }
 }
 
--(NSDictionary*) _conversationIndexEntryWithIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate
+-(void)sortConversationsByDateForDay:(NSInteger)dayIndex
+{
+    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
+    
+    NSDictionary *dayDict = [self _dayProperties:dayIndex];
+    
+    CCMMutableConvIndexArray* daysConversationList = dayDict[@"list"];
+    
+    [daysConversationList sortUsingDescriptors:@[sortByDate]];
+}
+-(NSDictionary*) _createNewConversationsList:(ConversationIndex*)conIndex forDate:(NSDate*)conDate
 {
     NSMutableArray *conversationList = [NSMutableArray arrayWithObject:conIndex];
     
@@ -92,19 +127,20 @@
     
     return conversationIndex;
 }
--(void)insertConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex
+
+-(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex
 {
-    NSDictionary* conIndexEntry = [self _conversationIndexEntryWithIndex:conIndex andDate:conDate];
+    NSDictionary* daysConversations = [self _createNewConversationsList:conIndex forDate:conDate];
     
-    [self.conversationsPerDay insertObject:conIndexEntry atIndex:dayIndex];
+    [self.conversationsPerDay insertObject:daysConversations atIndex:dayIndex];
 }
--(void)appendConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate
+-(void)appendNewDayWithConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate
 {
-    NSDictionary* conIndexEntry = [self _conversationIndexEntryWithIndex:conIndex andDate:conDate];
+    NSDictionary* daysConversations = [self _createNewConversationsList:conIndex forDate:conDate];
     
-    [self.conversationsPerDay addObject:conIndexEntry];
+    [self.conversationsPerDay addObject:daysConversations];
 }
--(void)removeConversationAtIndex:(NSInteger)dayIndex
+-(void)removeDayAtIndex:(NSInteger)dayIndex
 {
     NSInteger dayCount = [self dayCount];
     
@@ -115,6 +151,90 @@
     [self.conversationsPerDay removeObjectAtIndex:dayIndex];
 
 }
+-(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSInteger)dayIndex
+{
+    CCMMutableConvIndexArray* conversationsForDay = [self _conversationsForDay:dayIndex];
+    
+    [conversationsForDay addObject:conIndex];
+}
+-(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSInteger)convArrayIndex onDay:(NSInteger)dayIndex
+{
+    CCMMutableConvIndexArray* conversationsForDay = [self _conversationsForDay:dayIndex];
+    
+    [conversationsForDay insertObject:ciToInsert atIndex:convArrayIndex];
+    
+}
+-(void)removeConversation:(NSInteger)conIndex onDay:(NSInteger)dayIndex
+{
+    CCMMutableConvIndexArray* conversationsForDay = [self _conversationsForDay:dayIndex];
+    
+    [conversationsForDay removeObjectAtIndex:conIndex];
+}
+-(void)exchangeConversationsAtIndex:(NSInteger)convIndexOne withConversationAtIndex:(NSInteger)convIndexTwo onDay:(NSInteger)dayIndex
+{
+    CCMMutableConvIndexArray* conversationsForDay = [self _conversationsForDay:dayIndex];
+
+    [conversationsForDay exchangeObjectAtIndex:convIndexOne withObjectAtIndex:convIndexTwo];
+}
+
+- (void)InsertConversation:(ConversationIndex *)ciToInsert
+{
+    BOOL conversationAddedToConvByDate = NO;
+    
+    // To find where to insert this conversation, we look through the convByDate array
+    NSInteger dayCount = [self dayCount];
+    for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
+        
+        NSDate* indexedDayDate = [self dateForDay:dayIndex];
+        
+        NSComparisonResult result = [[ciToInsert day] compare:indexedDayDate];
+        
+        if (result == NSOrderedDescending) {
+            //Email Before //Insert section before date //+ email
+            
+            [self insertNewDayWithConservationIndex:ciToInsert andDate:[ciToInsert day] atDayIndex:dayIndex];
+            
+            conversationAddedToConvByDate = YES;
+            break;
+        }
+        else if (result == NSOrderedSame) { // same day, so search through the coversations on that date
+                                            //Add email to section of date
+            
+            [self sortConversationsByDateForDay:dayIndex];
+            
+            NSInteger conCount = [self conversationCountOnDay:dayIndex];
+            
+            for (int convArrayIndex = 0 ; convArrayIndex < conCount ; convArrayIndex++) {
+                
+                ConversationIndex* indexedConversationIndex = [self conversation:convArrayIndex onDay:dayIndex];
+                
+                NSComparisonResult result = [[ciToInsert date] compare:[indexedConversationIndex date]];
+                
+                if (result == NSOrderedDescending) {
+                    
+                    [self insertConversation:ciToInsert atConversationArrayIndex:convArrayIndex onDay:dayIndex];
+                    
+                    conversationAddedToConvByDate = YES;
+                    break;
+                }
+            }
+            
+            if (!conversationAddedToConvByDate) {
+                // Add at end
+                [self appendConversation:ciToInsert onDay:dayIndex];
+                conversationAddedToConvByDate = YES;
+            }
+            
+            break;
+        }
+    }
+    
+    if (!conversationAddedToConvByDate) {
+        //Date section not existing //Add new date //Add email to new date
+        [self appendNewDayWithConversationIndex:ciToInsert andDate:[ciToInsert day]];
+    }
+}
+
 
 -(NSString*)description
 {
@@ -130,7 +250,7 @@
 
         [text appendFormat:@"\tday [%@] = \"%@\":\n",@(day),humanDate];
         
-        CCMMutableConvIndexArray *dayConvs = [self conversationsForDay:day];
+        CCMMutableConvIndexArray *dayConvs = [self _conversationsForDay:day];
         
         for ( NSInteger convNum = 0; convNum < dayConvs.count; convNum++ ) {
             

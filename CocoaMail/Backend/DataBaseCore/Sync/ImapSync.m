@@ -1057,7 +1057,7 @@ static NSArray * sharedServices = nil;
                     lastEndedIndex = lastEnded;
                 }
                 
-                DDLogInfo(@"\tSave Last Ended Index (%lu) to Local State Storage",lastEndedIndex);
+                DDLogInfo(@"\tSave Last Ended Index (%lu) to Local State Storage",(long)lastEndedIndex);
                 
                 [self _writeFolderStateLastEnded:lastEndedIndex andFolder:currentFolder];
                 
@@ -1170,7 +1170,7 @@ static NSArray * sharedServices = nil;
         if ( currentFolderIsDeletedLocally ) {
             
             DDLogInfo(@"\tFolder %li is deleted locally",
-                      currentFolder);
+                      (long)currentFolder);
             
             CCMFolderType folderHandle = [self.user typeOfFolder:currentFolder];
             
@@ -1289,7 +1289,7 @@ static NSArray * sharedServices = nil;
             
             DDLogInfo(@"\tAccount %li, Local Folder [%li]: \"%@\"",
                       (long)self.user.accountNum,
-                      localFolderIndex,
+                      (long)localFolderIndex,
                       localFolderPath);
             
             BOOL folderIsDeletedLocally =
