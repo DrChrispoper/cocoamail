@@ -728,13 +728,12 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
     NSMutableArray* foldersNIndent = [[NSMutableArray alloc]initWithCapacity:allUserFolderNames.count];
     
-#warning: Is '/' guaranteed to be the only mailbox path connector?
+    NSString *folderPathDelim = self.user.folderPathDelimiter;
     
-    // Need an "MCOIMAPFolder folder] to get delimiter
-    // NSString *folderPathDelim = [NSString stringWithFormat:@"%c",[folder delimiter]];
+    DDAssert(folderPathDelim&&folderPathDelim.length>0,@"Folder Path Delimiter must exist");
     
     for (NSString* folderName in allUserFolderNames) {
-        [foldersNIndent addObject:@[folderName, @([folderName containsString:@"/"])]];
+        [foldersNIndent addObject:@[folderName, @([folderName containsString:folderPathDelim])]];
     }
     
     return foldersNIndent;

@@ -32,7 +32,29 @@
 @synthesize accountNum = _accountNum;
 @synthesize deleted = _deleted;
 @synthesize all = _all;
+@synthesize folderPathDelimiter = _folderPathDelimiter;
+@synthesize folderPathPrefix = _folderPathPrefix;
 
+
+-(NSString *) folderPathPrefix
+{
+    if ( !_folderPathPrefix ) {
+        _folderPathPrefix = @"";
+    }
+    return _folderPathPrefix;
+}
+
+-(NSString *) folderPathDelimiter
+{
+    // This will usually be set except for those who upgrade the app
+    // after the version with this change is first introduced.
+    // Rather than forcing them to update the app, I am returning a
+    // default value (which will work for Google accounts at least).
+    if ( !_folderPathDelimiter ) {
+        _folderPathDelimiter = @"/";
+    }
+    return _folderPathDelimiter;
+}
 -(NSString *) identifier
 {
     return _identifier;
@@ -121,6 +143,18 @@
 -(BOOL)isAll
 {
     return _all;
+}
+
+-(void)setfolderPathPrefix:(NSString *)folderPathPrefix
+{
+    _folderPathPrefix = [folderPathPrefix copy];
+    [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
+}
+
+-(void)setFolderPathDelimiter:(NSString *)folderPathDelimiter
+{
+    _folderPathDelimiter = [folderPathDelimiter copy];
+    [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setIdentifier:(NSString *)identifier
@@ -412,6 +446,8 @@
         return nil;
     }
     
+    _folderPathDelimiter = [decoder decodeObjectForKey:@"folderPathDelimiter"];
+    _folderPathPrefix = [decoder decodeObjectForKey:@"folderPathPrefix"];
     _identifier = [decoder decodeObjectForKey:@"identifier"];
     _username = [decoder decodeObjectForKey:@"username"];
     
@@ -450,6 +486,9 @@
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
+    [encoder encodeObject:_folderPathDelimiter forKey:@"folderPathDelimiter"];
+    [encoder encodeObject:_folderPathPrefix forKey:@"folderPathPrefix"];
+    
     [encoder encodeObject:_identifier forKey:@"identifier"];
     [encoder encodeObject:_username forKey:@"username"];
     
@@ -469,6 +508,11 @@
     [encoder encodeObject:_importantFolders forKey:@"importantFolders"];
     [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     
+    if ( _allFoldersDisplayNames == nil ) {
+        DDLogInfo(@"Archiving NIL _allFolderDisplayNames for account %@",@(_accountNum));
+    } else {
+        DDLogInfo(@"Archiving %@ _allFolderDisplayNames for account %@",@(_allFoldersDisplayNames.count),@(_accountNum));
+    }
     [encoder encodeBool:_deleted forKey:@"deleted"];
     [encoder encodeBool:_all forKey:@"all"];
 
@@ -502,7 +546,11 @@
     NSMutableString *desc = [NSMutableString string];
     
     [desc appendString:@"\n--- UserSettings: ---\n"];
-        
+    
+    [desc appendFormat:@"\tdelimiter = \"%@\"\n",self.folderPathDelimiter];
+    [desc appendFormat:@"\tprefix    = \"%@\"\n",self.folderPathPrefix];
+    [desc appendString:@"\n"];
+
     [desc appendFormat:@"\tidentifier = \"%@\"\n",self.identifier];
     [desc appendFormat:@"\tusername   = \"%@\"\n",self.username];
     [desc appendString:@"\n"];

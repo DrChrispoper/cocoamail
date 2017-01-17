@@ -707,6 +707,10 @@
     
     //Folder Settings
     
+    // Store the folder path delimiter character and folder path prefix (if any) into user settings.
+    user.folderPathDelimiter = [NSString stringWithFormat:@"%c" , imapSession.defaultNamespace.mainDelimiter];
+    user.folderPathPrefix    = imapSession.defaultNamespace.mainPrefix;
+    
     NSSortDescriptor* pathDescriptor = [[NSSortDescriptor alloc] initWithKey:NSStringFromSelector(@selector(path))
                                                                    ascending:YES
                                                                     selector:@selector(caseInsensitiveCompare:)];

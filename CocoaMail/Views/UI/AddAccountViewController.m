@@ -681,6 +681,10 @@
         [AppSettings setDefaultAccountNum:user.accountNum];
     }
     
+    // Store the folder path delimiter character and folder path prefix (if any) into user settings.
+    user.folderPathDelimiter = [NSString stringWithFormat:@"%c" , imapSession.defaultNamespace.mainDelimiter];
+    user.folderPathPrefix    = imapSession.defaultNamespace.mainPrefix;
+    
     NSString* mail = self.email.text;
     
     NSString* code = [[mail substringToIndex:3] uppercaseString];
