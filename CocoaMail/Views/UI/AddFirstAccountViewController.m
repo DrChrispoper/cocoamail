@@ -599,18 +599,21 @@
             
             for (MCOIMAPFolder* folder in folders) {
                 
-                DDLogInfo(@"Folder \"%@\":",folder.path);
+                DDLogInfo(@"Folder Path = \"%@\"",folder.path);
                 
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     DDLogDebug(@"Folder flags includes MCOIMAPFolderFlagNoSelect");
                     continue;
                 }
                 
-                if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
+                NSString* folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+                DDLogInfo(@"Folder Name = \"%@\"",folderName);
+
+                if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                     DDLogVerbose(@"Folder is INBOX");
                     inboxfolder = folder;
                 }
-                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folder.path]) {
+                else if ([accountProvider.allMailFolderPath isEqualToString:folderName] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folderName]) {
                     DDLogVerbose(@"Folder is ALL MAIL FOLDER");
                     allMailFolder = folder;
                 }
@@ -647,18 +650,21 @@
 
                             for (MCOIMAPFolder* folder in folders) {
                                 
-                                DDLogInfo(@"Folder \"%@\":",folder.path);
+                                DDLogInfo(@"Folder Path = \"%@\"",folder.path);
                                 
                                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                                     DDLogInfo(@"Folder has NO flags.");
                                     continue;
                                 }
                                 
-                                if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
+                                NSString* folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+                                DDLogInfo(@"Folder Name = \"%@\"",folderName);
+
+                                if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                                     DDLogInfo(@"Folder is INBOX");
                                     inboxfolder = folder;
                                 }
-                                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folder.path]) {
+                                else if ([accountProvider.allMailFolderPath isEqualToString:folderName] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folderName]) {
                                     DDLogInfo(@"Folder is ALL MAIL FOLDER");
 
                                     allMailFolder = folder;

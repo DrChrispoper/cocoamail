@@ -32,9 +32,10 @@
 +(ImapSync*) sharedServices:(UserSettings*)user;
 +(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated;
 +(RACSignal*) doLogin:(UserSettings*)user;
++(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession;
 
 -(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath usingImapSession:(MCOIMAPSession*)imapSession;
-//-(void) updatePersistentStateOfFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNun;
+-(void) updateSyncStateWithImapMessageCountForFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNun;
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;

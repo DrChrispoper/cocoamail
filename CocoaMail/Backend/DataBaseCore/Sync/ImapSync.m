@@ -398,6 +398,43 @@ static NSArray * sharedServices = nil;
     });
 }
 
+// MARK: - Strip IMAP Folder Prefix from Folder Path
+
++(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession
+{
+    MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
+    DDAssert(imapNamespace, @"IMAP Namespace must exist");
+    
+    NSString *folderName = nil;
+    
+    NSString *folderPathDelimiter = [NSString stringWithFormat:@"%c",imapNamespace.mainDelimiter];
+    NSString *folderPathPrefix    = imapNamespace.mainPrefix;
+
+    // If we have a folder path prefix
+    if ( folderPathPrefix && folderPathPrefix.length ) {
+        
+        // If the folder path contains the folder prefix ...
+        if ( [folder.path hasPrefix:folderPathPrefix] ) {
+            
+            // Then create the folder name with the prefix removed.
+            NSArray *namespaceComponents = [imapNamespace componentsFromPath:folder.path];
+            folderName = [namespaceComponents componentsJoinedByString:folderPathDelimiter];
+        }
+        else {
+            // Otherwise use the folder path as is
+            folderName = [folder.path copy];
+        }
+    } else {
+        DDLogInfo(@"IMAP Namespace has NO Prefix.");
+    }
+    
+    DDAssert(folderName,@"Folder Display Name must be found");
+    DDAssert(folderName.length>0, @"Folder Display Name must exist");
+    
+    return folderName;
+}
+
+
 -(void) cancel
 {
     self.isCanceled = YES;
@@ -832,38 +869,23 @@ static NSArray * sharedServices = nil;
 // NB: indexPath is imapFolderIndex
 -(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath  usingImapSession:(MCOIMAPSession*)imapSession
 {
-    NSString* dispName = [self _displayNameForFolder:folder usingSession:imapSession];
-    
+    NSString* dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+        
     // Append a new Folder Sync State Object for this Account
     SyncManager* syncManager = [SyncManager getSingleton];
     NSInteger newFolderSyncIndex = [syncManager addNewStateForFolder:folder
                                                                 named:dispName
                                                            forAccount:user.accountNum];
     
-    [self _updateSyncStateWithImapMessageCountForFolder:folder.path
+    [self updateSyncStateWithImapMessageCountForFolder:folder.path
                                           atFolderIndex:newFolderSyncIndex
                                        forAccountNumber:user.accountNum];
     
     return dispName;
 }
 
--(NSString *)_displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession
-{
-    MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
-    DDAssert(imapNamespace, @"IMAP Namespace must exist");
-    
-    NSArray *namespaceComponents = [imapNamespace componentsFromPath:[folder path]];
-    
-    NSString* pathDelimiter = [NSString stringWithFormat:@"%c",[folder delimiter]];
-    NSString* dispName = [namespaceComponents componentsJoinedByString:pathDelimiter];
-    
-    DDAssert(dispName,@"Folder Display Name must be found");
-    DDAssert(dispName.length>0, @"Folder Display Name must exist");
-    
-    return dispName;
-}
 
--(void) _updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum
+-(void) updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum
 {
     MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folderPath];
     

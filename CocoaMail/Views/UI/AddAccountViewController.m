@@ -589,24 +589,33 @@
             
             for (MCOIMAPFolder* folder in folders) {
                 
+                DDLogInfo(@"Folder Path: \"%@\"",folder.path);
+                
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
-                    continue;
+                    continue; // next IMAP Folder
                 }
                 
-                if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
-                    DDLogDebug(@"Inbox:%@", folder.path);
+#warning Folder Path 
+                NSString *delimiter = [NSString stringWithFormat:@"%c",folder.delimiter];
+                NSArray<NSString *> *pathComponents = [folder.path componentsSeparatedByString:delimiter];
+                NSString *folderName = pathComponents.lastObject;
+                
+                DDLogInfo(@"Folder Name: \"%@\"",folderName);
+                
+                if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
+                    DDLogDebug(@"Inbox:%@", folderName);
                     inboxfolder = folder;
                 }
-                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folder.path]) {
-                    DDLogDebug(@"All:%@", folder.path);
+                else if ([accountProvider.allMailFolderPath isEqualToString:folderName] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [@"Archive" isEqualToString:folderName]) {
+                    DDLogDebug(@"All:%@", folderName);
                     allMailFolder = folder;
                 }
                 else if (![@(folder.flags) isEqualToNumber:@0]) {
-                    DDLogDebug(@"Flagged:%@", folder.path);
+                    DDLogDebug(@"Flagged:%@", folderName);
                     [flagedFolders addObject:folder];
                 }
                 else {
-                    DDLogDebug(@"other:%@", folder.path);
+                    DDLogDebug(@"other:%@", folderName);
                     [otherFolders addObject:folder];
                 }
             }
@@ -614,6 +623,9 @@
             NSString*  __block newAllMail = @"Archive";
             
             if (!allMailFolder) {
+                
+                DDLogInfo(@"Create \"%@\" folder on IMAP server.",newAllMail);
+                
                 //Create folder
                 MCOIMAPOperation*  op = [imapSession createFolderOperation:newAllMail];
                 [op start:^(NSError*  error) {
@@ -631,10 +643,14 @@
                                     continue;
                                 }
                                 
-                                if (folder.flags & MCOIMAPFolderFlagInbox || [folder.path  isEqualToString: @"INBOX"]) {
+                                NSString *delimiter = [NSString stringWithFormat:@"%c",folder.delimiter];
+                                NSArray<NSString *> *pathComponents = [folder.path componentsSeparatedByString:delimiter];
+                                NSString *folderName = pathComponents.lastObject;
+                                
+                                if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                                     inboxfolder = folder;
                                 }
-                                else if ([accountProvider.allMailFolderPath isEqualToString:folder.path] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folder.path]) {
+                                else if ([accountProvider.allMailFolderPath isEqualToString:folderName] || folder.flags & MCOIMAPFolderFlagAll || folder.flags & MCOIMAPFolderFlagAllMail || [newAllMail isEqualToString:folderName]) {
                                     allMailFolder = folder;
                                 }
                                 else if (![@(folder.flags) isEqualToNumber:@0]) {
@@ -759,19 +775,19 @@
 
         ImapSync *imapSync = [ImapSync sharedServices:user];
         
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
+//        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
         
-//        NSString *dispName = [imapSync displayNameForFolder:folder  usingSession:imapSession];
+        NSString *dispName = [ImapSync displayNameForFolder:folder  usingSession:imapSession];
         
         [dispNamesFolders addObject:dispName];
 
-//        [[SyncManager getSingleton] addNewStateForFolder:folder
-//                                                   named:dispName
-//                                              forAccount:user.accountNum];
-//        
-//        [imapSync updatePersistentStateOfFolder:folder
-//                                        atIndex:indexPath
-//                               forAccountNumber:user.accountNum];
+        [[SyncManager getSingleton] addNewStateForFolder:folder
+                                                   named:dispName
+                                              forAccount:user.accountNum];
+        
+        [imapSync updateSyncStateWithImapMessageCountForFolder:folder
+                                                       atIndex:indexPath
+                                              forAccountNumber:user.accountNum];
         
         indexPath++;
     }
