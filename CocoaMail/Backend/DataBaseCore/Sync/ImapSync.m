@@ -1220,41 +1220,44 @@ static NSArray * sharedServices = nil;
                         continue;
                     }
                     
+                    NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:self.imapSession];
+                    DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
+
                     NSString* importantImapFolderPath = @"";
                     
-                    if (folderHandle.type == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"])) {
-                        importantImapFolderPath = folder.path;
+                    if (folderHandle.type == FolderTypeInbox &&  ((folder.flags == MCOIMAPFolderFlagInbox) || [folderName  isEqualToString: @"INBOX"])) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the INBOX folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
                     } //Starred
-                    else if(folderHandle.type == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeFavoris &&  ([accountProvider.starredFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagFlagged))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the FLAGGED folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
                     } //Sent
-                    else if(folderHandle.type == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeSent &&  ([accountProvider.sentMailFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSentMail))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the SENT folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
                     } //Draft
-                    else if(folderHandle.type == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeDrafts &&  ([accountProvider.draftsFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagDrafts))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the DRAFTS folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
                     } //Archive
-                    else if(folderHandle.type == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeAll &&  ([accountProvider.allMailFolderPath isEqualToString:folderName] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the ARCHIVE folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
                     } //Trash
-                    else if(folderHandle.type == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeDeleted &&  ([accountProvider.trashFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagTrash))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the TRASH folder.");
                         
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
                     } //Spam
-                    else if(folderHandle.type == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam))) {
-                        importantImapFolderPath = folder.path;
+                    else if(folderHandle.type == FolderTypeSpam &&  ([accountProvider.spamFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSpam))) {
+                        importantImapFolderPath = folderName;
                         DDLogInfo(@"\t\tIs the SPAM folder.");
                         //[self.user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
                     } else {
