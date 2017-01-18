@@ -35,9 +35,10 @@
 {
     NSInteger dayCount = [self dayCount];
     
-    DDAssert(day >= 0 && day < dayCount,
-             @"day (%@) out of bounds (0-%@",
-             @(day),(@(dayCount-1)));
+    if ( day < 0 || day >= dayCount ) {
+        DDLogInfo(@"_dayProperties: day (%@) out of bounds (0-%@)",@(day),(@(dayCount-1)));
+        return nil;
+    }
     
     return self.conversationsPerDay[day];
 }
@@ -71,7 +72,7 @@
 }
 -(BOOL) isEmpty
 {
-    return ( [self dayCount] == 0);
+    return ( [self dayCount] == 0 );
 }
 
 -(NSInteger) conversationCountOnDay:(NSInteger)dayIndex
@@ -87,7 +88,7 @@
     CCMMutableConvIndexArray* convs = [self _conversationsForDay:dayIndex];
     
     DDAssert(convIndex >= 0 && convIndex < convs.count,
-             @"Conversation index (%@) OUT OF RANGE, valid=(0 to %@)",
+             @"conversation:onDay: Conversation index (%@) OUT OF RANGE, valid=(0 to %@)",
              @(convIndex),@(convs.count-1));
     
     return convs[convIndex];
@@ -145,7 +146,7 @@
     NSInteger dayCount = [self dayCount];
     
     DDAssert(dayIndex >= 0 && dayIndex < dayCount,
-             @"day index (%@) out of range (0 - %@)",
+             @"removeDayAtIndex: day index (%@) out of range (0 - %@)",
              @(dayIndex),@(dayCount-1));
     
     [self.conversationsPerDay removeObjectAtIndex:dayIndex];
@@ -248,25 +249,26 @@
         NSDate *convDate = [self dateForDay:day];
         NSString* humanDate = [[DateUtil getSingleton] humanDate:convDate];
 
-        [text appendFormat:@"\tday [%@] = \"%@\":\n",@(day),humanDate];
-        
         CCMMutableConvIndexArray *dayConvs = [self _conversationsForDay:day];
+        NSInteger dayCount = dayConvs.count;
+        
+        [text appendFormat:@"DAY [%@], \"%@\" has %@ conversations.\n",@(day),humanDate,@(dayCount)];
         
         for ( NSInteger convNum = 0; convNum < dayConvs.count; convNum++ ) {
             
-            [text appendFormat:@"\t\tconversation %@:\n",@(convNum)];
-            
             ConversationIndex *ci = dayConvs[convNum];
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
+            NSInteger msgCount = conv.mails.count;
             
-            [text appendFormat:@"\t\t\tIsDraft: %@\n",(conv.isDraft?@"YES":@"NO")];
+            [text appendFormat:@"\tCONVERSATION %@ has %@ mail messages (draft = %@):\n",
+             @(convNum),@(msgCount),(conv.isDraft?@"YES":@"NO")];
             
-            for (NSInteger mailNum = 0; mailNum < conv.mails.count; mailNum++ ) {
+            for (NSInteger mailNum = 0; mailNum < msgCount; mailNum++ ) {
                 Mail *msg = conv.mails[mailNum];
                 NSString *subj  = msg.subject;
                 NSString *msgid = [msg.msgID substringToIndex:8];
                 
-                [text appendFormat:@"\t\t\tMail %@: Subj: \"%@\" ID prefix = \"%@\"\n",@(mailNum),subj,msgid];
+                [text appendFormat:@"\t\tMAIL %@: Subj: \"%@\" ID prefix = \"%@\"\n",@(mailNum),subj,msgid];
             }
         }
     }
