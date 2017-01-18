@@ -589,19 +589,13 @@
             
             for (MCOIMAPFolder* folder in folders) {
                 
-                DDLogInfo(@"Folder Path: \"%@\"",folder.path);
-                
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     continue; // next IMAP Folder
                 }
                 
-#warning Folder Path 
-                NSString *delimiter = [NSString stringWithFormat:@"%c",folder.delimiter];
-                NSArray<NSString *> *pathComponents = [folder.path componentsSeparatedByString:delimiter];
-                NSString *folderName = pathComponents.lastObject;
-                
-                DDLogInfo(@"Folder Name: \"%@\"",folderName);
-                
+                NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+                DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
+                                
                 if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                     DDLogDebug(@"Inbox:%@", folderName);
                     inboxfolder = folder;
@@ -643,10 +637,9 @@
                                     continue;
                                 }
                                 
-                                NSString *delimiter = [NSString stringWithFormat:@"%c",folder.delimiter];
-                                NSArray<NSString *> *pathComponents = [folder.path componentsSeparatedByString:delimiter];
-                                NSString *folderName = pathComponents.lastObject;
-                                
+                                NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+                                DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
+
                                 if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                                     inboxfolder = folder;
                                 }
@@ -748,46 +741,49 @@
     
     for (MCOIMAPFolder* folder in sortedFolders) {
         
+        NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+        DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
+        
         //Inbox
         if ( (folder.flags == MCOIMAPFolderFlagInbox) ||
-             ([folder.path  isEqualToString: @"INBOX"]) ) {
+             ([folderName isEqualToString: @"INBOX"]) ) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeInbox];
         } //Starred
-        else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
+        else if([accountProvider.starredFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeFavoris];
         } //Sent
-        else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
+        else if([accountProvider.sentMailFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSent];
         } //Draft
-        else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
+        else if([accountProvider.draftsFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDrafts];
         } //Archive
-        else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path]) {
+        else if([accountProvider.allMailFolderPath isEqualToString:folderName] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folderName]) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeAll];
         } //Trash
-        else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash)) {
+        else if([accountProvider.trashFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagTrash)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeDeleted];
         } //Spam
-        else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam)) {
+        else if([accountProvider.spamFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSpam)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
         
 
         ImapSync *imapSync = [ImapSync sharedServices:user];
+        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
         
-//        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
-        
-        NSString *dispName = [ImapSync displayNameForFolder:folder  usingSession:imapSession];
+//        NSString *dispName = [ImapSync displayNameForFolder:folder  usingSession:imapSession];
         
         [dispNamesFolders addObject:dispName];
 
-        [[SyncManager getSingleton] addNewStateForFolder:folder
-                                                   named:dispName
-                                              forAccount:user.accountNum];
-        
-        [imapSync updateSyncStateWithImapMessageCountForFolder:folder
-                                                       atIndex:indexPath
-                                              forAccountNumber:user.accountNum];
+//        [[SyncManager getSingleton] addNewStateForFolder:folder
+//                                                   named:dispName
+//                                              forAccount:user.accountNum];
+//        
+//        ImapSync *imapSync = [ImapSync sharedServices:user];
+//        [imapSync updateSyncStateWithImapMessageCountForFolder:folder
+//                                                       atIndex:indexPath
+//                                              forAccountNumber:user.accountNum];
         
         indexPath++;
     }

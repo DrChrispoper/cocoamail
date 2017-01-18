@@ -599,15 +599,13 @@
             
             for (MCOIMAPFolder* folder in folders) {
                 
-                DDLogInfo(@"Folder Path = \"%@\"",folder.path);
-                
                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                     DDLogDebug(@"Folder flags includes MCOIMAPFolderFlagNoSelect");
                     continue;
                 }
                 
                 NSString* folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
-                DDLogInfo(@"Folder Name = \"%@\"",folderName);
+                DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
 
                 if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                     DDLogVerbose(@"Folder is INBOX");
@@ -650,15 +648,13 @@
 
                             for (MCOIMAPFolder* folder in folders) {
                                 
-                                DDLogInfo(@"Folder Path = \"%@\"",folder.path);
-                                
                                 if (folder.flags & MCOIMAPFolderFlagNoSelect) {
                                     DDLogInfo(@"Folder has NO flags.");
                                     continue;
                                 }
                                 
                                 NSString* folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
-                                DDLogInfo(@"Folder Name = \"%@\"",folderName);
+                                DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
 
                                 if (folder.flags & MCOIMAPFolderFlagInbox || [folderName  isEqualToString: @"INBOX"]) {
                                     DDLogInfo(@"Folder is INBOX");
@@ -743,26 +739,32 @@
         
         // If this folder is a "special" folder, then store its index into the UserSettings
         
+        NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+        DDLogInfo(@"Folder Path = \"%@\", Folder Name = \"%@\"",folder.path,folderName);
+
+        // TODO: This looks like a speed optimisation opportunity
+        
         //Inbox
-        if ((folder.flags == MCOIMAPFolderFlagInbox) || [folder.path  isEqualToString: @"INBOX"]) {
+        if ((folder.flags == MCOIMAPFolderFlagInbox) || [folderName  isEqualToString: @"INBOX"]) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeInbox];
         } //Starred
-        else if([accountProvider.starredFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagFlagged)) {
+        else if( ( accountProvider.starredFolderPath && [accountProvider.starredFolderPath isEqualToString:folderName] )
+                 || (folder.flags == MCOIMAPFolderFlagFlagged)) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeFavoris];
         } //Sent
-        else if([accountProvider.sentMailFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
+        else if([accountProvider.sentMailFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSentMail)) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeSent];
         } //Draft
-        else if([accountProvider.draftsFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
+        else if([accountProvider.draftsFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagDrafts)) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeDrafts];
         } //Archive
-        else if([accountProvider.allMailFolderPath isEqualToString:folder.path] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folder.path]) {
+        else if([accountProvider.allMailFolderPath isEqualToString:folderName] || ((folder.flags == MCOIMAPFolderFlagAll) || (folder.flags == MCOIMAPFolderFlagAllMail)) || [allMailFolder.path isEqualToString:folderName]) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeAll];
         } //Trash
-        else if([accountProvider.trashFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagTrash)) {
+        else if([accountProvider.trashFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagTrash)) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeDeleted];
         } //Spam
-        else if([accountProvider.spamFolderPath isEqualToString:folder.path] || (folder.flags == MCOIMAPFolderFlagSpam)) {
+        else if([accountProvider.spamFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSpam)) {
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeSpam];
         }
         
