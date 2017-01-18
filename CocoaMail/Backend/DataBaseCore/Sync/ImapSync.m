@@ -1282,6 +1282,9 @@ static NSArray * sharedServices = nil;
                                 DDLogInfo(@"\tmatches local folder");
                                 
                                 [self.user setImportantFolderNum:localFolderIndex forBaseFolder:folderHandle.type];
+                                
+                                
+                                // FIXME: "break;" here, even return?
                             }
                             
                             localFolderIndex++;
