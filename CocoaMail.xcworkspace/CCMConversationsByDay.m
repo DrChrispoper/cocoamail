@@ -188,45 +188,48 @@
         
         NSDate* indexedDayDate = [self dateForDay:dayIndex];
         
-        NSComparisonResult result = [[ciToInsert day] compare:indexedDayDate];
-        
-        if (result == NSOrderedDescending) {
-            //Email Before //Insert section before date //+ email
+        if ( indexedDayDate ) {
             
-            [self insertNewDayWithConservationIndex:ciToInsert andDate:[ciToInsert day] atDayIndex:dayIndex];
+            NSComparisonResult result = [[ciToInsert day] compare:indexedDayDate];
             
-            conversationAddedToConvByDate = YES;
-            break;
-        }
-        else if (result == NSOrderedSame) { // same day, so search through the coversations on that date
-                                            //Add email to section of date
-            
-            [self sortConversationsByDateForDay:dayIndex];
-            
-            NSInteger conCount = [self conversationCountOnDay:dayIndex];
-            
-            for (int convArrayIndex = 0 ; convArrayIndex < conCount ; convArrayIndex++) {
+            if (result == NSOrderedDescending) {
+                //Email Before //Insert section before date //+ email
                 
-                ConversationIndex* indexedConversationIndex = [self conversation:convArrayIndex onDay:dayIndex];
+                [self insertNewDayWithConservationIndex:ciToInsert andDate:[ciToInsert day] atDayIndex:dayIndex];
                 
-                NSComparisonResult result = [[ciToInsert date] compare:[indexedConversationIndex date]];
-                
-                if (result == NSOrderedDescending) {
-                    
-                    [self insertConversation:ciToInsert atConversationArrayIndex:convArrayIndex onDay:dayIndex];
-                    
-                    conversationAddedToConvByDate = YES;
-                    break;
-                }
-            }
-            
-            if (!conversationAddedToConvByDate) {
-                // Add at end
-                [self appendConversation:ciToInsert onDay:dayIndex];
                 conversationAddedToConvByDate = YES;
+                break;
             }
-            
-            break;
+            else if (result == NSOrderedSame) { // same day, so search through the coversations on that date
+                                                //Add email to section of date
+                
+                [self sortConversationsByDateForDay:dayIndex];
+                
+                NSInteger conCount = [self conversationCountOnDay:dayIndex];
+                
+                for (int convArrayIndex = 0 ; convArrayIndex < conCount ; convArrayIndex++) {
+                    
+                    ConversationIndex* indexedConversationIndex = [self conversation:convArrayIndex onDay:dayIndex];
+                    
+                    NSComparisonResult result = [[ciToInsert date] compare:[indexedConversationIndex date]];
+                    
+                    if (result == NSOrderedDescending) {
+                        
+                        [self insertConversation:ciToInsert atConversationArrayIndex:convArrayIndex onDay:dayIndex];
+                        
+                        conversationAddedToConvByDate = YES;
+                        break;
+                    }
+                }
+                
+                if (!conversationAddedToConvByDate) {
+                    // Add at end
+                    [self appendConversation:ciToInsert onDay:dayIndex];
+                    conversationAddedToConvByDate = YES;
+                }
+                
+                break;
+            }
         }
     }
     
