@@ -1284,7 +1284,9 @@
 {
     DDLogInfo(@"TABLEVIEW HAS %lu SECTIONS",(long)[self.convByDay dayCount]);
 
-    return [self.convByDay dayCount];//MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
+    NSInteger sectionCount = [self.convByDay dayCount];
+    
+    return sectionCount;    //MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
@@ -1303,8 +1305,7 @@
     NSInteger dayIndex = indexPath.section;
     NSInteger conIndex = indexPath.row;
     
-    DDLogInfo(@"BEGIN MailListViewControl cellForRowAtIndexPath for row=%ld section=%ld",
-              (long)conIndex,(long)dayIndex);
+    DDLogInfo(@"TABLEVIEW SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
     
 //    CCMMutableConvIndexArray* convs = [self.convByDay conversationsForDay:indexPath.section];
 //    ConversationIndex* conversationIndex = convs[indexPath.row];
@@ -1318,7 +1319,7 @@
     
     
     NSInteger dayCount = [self.convByDay dayCount];
-    NSInteger conCount = [self.convByDay conversationCountOnDay:indexPath.row];
+    NSInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
     
     BOOL lastSection = (dayIndex == dayCount - 1);//(indexPath.section == pageCount * self.pageIndex || indexPath.section == dayCount - 1);
     BOOL lastRow     = (conIndex == conCount - 1);
