@@ -216,7 +216,6 @@ static SyncManager * singleton = nil;
     return [self emailForSignal:racSignal];
 }
 
-#warning need to understand what this is doing ...
 -(RACSignal*) emailForSignal:(RACSignal*)signal
 {
     return  [signal map:^(Mail* email) {
