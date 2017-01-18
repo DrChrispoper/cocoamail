@@ -402,10 +402,13 @@ static NSArray * sharedServices = nil;
 
 +(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession
 {
+    DDAssert(folder,@"MCOIMAPFolder required.");
+    DDAssert(folder.path, @"MCOIMAPFolder.path required.");
+
     MCOIMAPNamespace *imapNamespace = [imapSession defaultNamespace];
     DDAssert(imapNamespace, @"IMAP Namespace must exist");
     
-    NSString *folderName = nil;
+    NSString *folderName = [folder.path copy];  // return the full path if prefix is not removed
     
     NSString *folderPathDelimiter = [NSString stringWithFormat:@"%c",imapNamespace.mainDelimiter];
     NSString *folderPathPrefix    = imapNamespace.mainPrefix;
@@ -419,11 +422,10 @@ static NSArray * sharedServices = nil;
             // Then create the folder name with the prefix removed.
             NSArray *namespaceComponents = [imapNamespace componentsFromPath:folder.path];
             folderName = [namespaceComponents componentsJoinedByString:folderPathDelimiter];
+        } else {
+            DDLogInfo(@"IMAP Folder Path \"%@\" is not prefixed by \"%@\"",folder.path,folderPathPrefix);
         }
-        else {
-            // Otherwise use the folder path as is
-            folderName = [folder.path copy];
-        }
+
     } else {
         DDLogInfo(@"IMAP Namespace has NO Prefix.");
     }
@@ -797,6 +799,7 @@ static NSArray * sharedServices = nil;
         
         // if the path of the folder being checked, matches the path of the existing folder
         if ([[imapFolder path] isEqualToString:folderPath]) {
+            
             DDLogInfo(@"\t *** IMAP Folder (%@) == Local Folder %lu ***",
                       folderPath,(unsigned long)localFolderIndex);
             
