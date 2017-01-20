@@ -673,6 +673,7 @@
     }];
 }
 
+
 -(void) _finishFoldersFlaged:(NSMutableArray*)flagedFolders others:(NSMutableArray*)otherFolders inbox:(MCOIMAPFolder*)inboxfolder all:(MCOIMAPFolder*)allMailFolder imapSession:(MCOIMAPSession*)imapSession
 {
     DDLogInfo(@"3 - Finish Folders");
@@ -767,12 +768,17 @@
         else if([accountProvider.spamFolderPath isEqualToString:folderName] || (folder.flags == MCOIMAPFolderFlagSpam)) {
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
-        
+    
 
         ImapSync *imapSync = [ImapSync sharedServices:user];
+        
+        DDAssert(imapSync, @"imapSync must not be nil");
+        
         NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
         
 //        NSString *dispName = [ImapSync displayNameForFolder:folder  usingSession:imapSession];
+        
+        DDAssert(dispName,@"dispName must not be nil!");
         
         [dispNamesFolders addObject:dispName];
 

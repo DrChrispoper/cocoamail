@@ -133,6 +133,8 @@
 {
     NSDictionary* daysConversations = [self _createNewConversationsList:conIndex forDate:conDate];
     
+    DDAssert(daysConversations, @"daysConversations must not be nil.");
+    
     [self.conversationsPerDay insertObject:daysConversations atIndex:dayIndex];
 }
 -(void)appendNewDayWithConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate
@@ -161,6 +163,8 @@
 -(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSInteger)convArrayIndex onDay:(NSInteger)dayIndex
 {
     CCMMutableConvIndexArray* conversationsForDay = [self _conversationsForDay:dayIndex];
+    
+    DDAssert(conversationsForDay, @"conversationsForDay must not be nil.");
     
     [conversationsForDay insertObject:ciToInsert atIndex:convArrayIndex];
     

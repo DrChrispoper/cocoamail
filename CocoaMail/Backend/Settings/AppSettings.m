@@ -322,6 +322,8 @@ static AppSettings * singleton = nil;
     UserSettings* user = [[UserSettings alloc] init];
     user.accountNum = accountNum;
     
+    DDAssert(user, @"UserSettings must not be nil.");
+    
     [_users insertObject:user atIndex:_users.count-1];
     
     [user setImportantFolderNum:-1 forBaseFolder:FolderTypeInbox];

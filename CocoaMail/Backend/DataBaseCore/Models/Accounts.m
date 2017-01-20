@@ -314,6 +314,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) addAccount:(Account*)account
 {
+    DDAssert(account, @"Account must not be nil.");
+    
     [[Persons sharedInstance] registerPersonWithNegativeID:account.person];
     
     [account.person linkToAccount:account];
