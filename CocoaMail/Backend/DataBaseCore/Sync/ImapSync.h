@@ -35,7 +35,8 @@
 +(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession;
 
 -(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath usingImapSession:(MCOIMAPSession*)imapSession;
--(void) updateSyncStateWithImapMessageCountForFolder:(MCOIMAPFolder *)folder atIndex:(int)indexPath forAccountNumber:(NSUInteger)accountNun;
+-(void) updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum;
+
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
