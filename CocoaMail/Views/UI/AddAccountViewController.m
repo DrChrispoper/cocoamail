@@ -740,6 +740,12 @@
     
     [[SyncManager getSingleton] addAccountState];
     
+    // Update "All Shared Services" with new User
+    [ImapSync allSharedServices:imapSession];
+    
+    ImapSync *imapSync = [ImapSync sharedServices:user];
+    DDAssert(imapSync, @"imapSync must exist.");
+    
     for (MCOIMAPFolder* folder in sortedFolders) {
         
         NSString *folderName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
@@ -769,28 +775,15 @@
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
     
-
-        ImapSync *imapSync = [ImapSync sharedServices:user];
+#warning XYZZY
+        NSString *dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
         
-        DDAssert(imapSync, @"imapSync must not be nil");
-        
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:indexPath usingImapSession:imapSession];
-        
-//        NSString *dispName = [ImapSync displayNameForFolder:folder  usingSession:imapSession];
-        
-        DDAssert(dispName,@"dispName must not be nil!");
+        DDAssert(dispName, @"Display Name must exist.");
         
         [dispNamesFolders addObject:dispName];
-
-//        [[SyncManager getSingleton] addNewStateForFolder:folder
-//                                                   named:dispName
-//                                              forAccount:user.accountNum];
-//        
-//        ImapSync *imapSync = [ImapSync sharedServices:user];
-//        [imapSync updateSyncStateWithImapMessageCountForFolder:folder
-//                                                       atIndex:indexPath
-//                                              forAccountNumber:user.accountNum];
         
+        [imapSync addFolder:folder withName:dispName toAccount:user.accountNum];
+
         indexPath++;
     }
     

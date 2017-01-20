@@ -79,32 +79,44 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     @synchronized(self) {
         
+        // If we already have one or more shared services, then return them
         if (sharedServices && sharedServices.count > 0) {
+            DDLogInfo(@"[ImapSync allSharedServices] returning existing sharedServices array.");
             return sharedServices;
         }
         
-        NSMutableArray* sS = [[NSMutableArray alloc]init];
+        DDLogInfo(@"[ImapSync allSharedServices] creating new sharedServices array, one for each User.");
+        
+        // Create new sharedServices, one for each user.
+        
+        NSMutableArray* newSharedServices = [[NSMutableArray alloc]init];
         
         NSArray<UserSettings*>* allUsers = [AppSettings getSingleton].users;
         
+        // Create a new ImapSync Shared Service for each (non deleted) user
         for (UserSettings* user in allUsers ) {
             
             if (user.isDeleted) {
                 continue;   // next UserSettings
             }
             
+            DDLogInfo(@"Create new Shared Service to Username \"%@\" (acnt # %@)",user.username,@(user.accountNum));
+            
+            // Create and set up new Imap Sync Shared Service
             ImapSync* sharedService = [[super allocWithZone:nil] init];
             sharedService.user = user;
             sharedService.connected = NO;
             
             sharedService.s_queue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
             
+            // If an updated Imap Session was passed in, and its username matches this user, then update the new service
             if (updated && [updated.username isEqualToString:user.username]) {
                 sharedService.imapSession = updated;
                 sharedService.imapSession.dispatchQueue = sharedService.s_queue;
                 sharedService.connected = YES;
             }
             else {
+                // We do not have an updated IMAP Session with a user that matches this one
                 
                 dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
                 
@@ -119,10 +131,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 sharedService.connected = NO;
             }
             
-            [sS addObject:sharedService];
+            [newSharedServices addObject:sharedService];
         }
         
-        sharedServices = [[NSArray alloc]initWithArray:sS];
+        sharedServices = [[NSArray alloc]initWithArray:newSharedServices];
         
         return sharedServices;
         
@@ -409,7 +421,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 // MARK: - Strip IMAP Folder Prefix from Folder Path
 
-+(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession
++(NSString *)displayNameForFolder:(MCOIMAPFolder*)folder usingSession:(MCOIMAPSession*)imapSession
 {
     DDAssert(folder,@"MCOIMAPFolder required.");
     DDAssert(folder.path, @"MCOIMAPFolder.path required.");
@@ -820,6 +832,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     return matchingFolderFound;
 }
 
+
 // Given an array of IMAP folder names, determine if any have been
 // added, renamed, or deleted, and update
 -(void)_checkFolderNamesForUpdates:(NSArray <MCOIMAPFolder *>*)imapFolders
@@ -850,16 +863,16 @@ static NSArray<ImapSync*>* sharedServices = nil;
         // then it is a NEW folder and needs to be added.
         if ( imapFolderMatchesLocalFolder == FALSE ) {
             
-            DDLogInfo(@"\tIMAP Folder \"%@\" not found in local folders.",[imapFolder path]);
+            DDLogInfo(@"\tIMAP Folder \"%@\" NOT found in local folders.",[imapFolder path]);
             
-            NSString *dispName = [self addFolder:imapFolder toUser:self.user atIndex:folderIndex usingImapSession:self.imapSession];
+#warning XYZZY
+            NSString *dispName = [ImapSync displayNameForFolder:imapFolder usingSession:self.imapSession];
             
-            if ( dispName == nil || dispName.length == 0 ) {
-                DDLogError(@"\tImapSync addFolder:toUser:atIndex: failed!");
-            }
-            else {
-                [newFolderNames addObject:dispName];
-            }
+            DDAssert(dispName, @"Display Name must exist.");
+            
+            [newFolderNames addObject:dispName];
+            
+            [self addFolder:imapFolder withName:dispName toAccount:self.user.accountNum];
         }
 
         folderIndex++;
@@ -878,22 +891,21 @@ static NSArray<ImapSync*>* sharedServices = nil;
     }
 }
 
-// NB: indexPath is imapFolderIndex
--(NSString *)addFolder:(MCOIMAPFolder *)folder toUser:(UserSettings*)user atIndex:(int)indexPath  usingImapSession:(MCOIMAPSession*)imapSession
+-(void)addFolder:(MCOIMAPFolder *)folder withName:(NSString*)folderName toAccount:(NSUInteger)accountNum
 {
-    NSString* dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
-        
+//    NSString* dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+    
     // Append a new Folder Sync State Object for this Account
     SyncManager* syncManager = [SyncManager getSingleton];
     NSInteger newFolderSyncIndex = [syncManager addNewStateForFolder:folder
-                                                                named:dispName
-                                                           forAccount:user.accountNum];
+                                                                named:folderName
+                                                           forAccount:accountNum];
     
     [self updateSyncStateWithImapMessageCountForFolder:folder.path
                                           atFolderIndex:newFolderSyncIndex
-                                       forAccountNumber:user.accountNum];
+                                       forAccountNumber:accountNum];
     
-    return dispName;
+    return;
 }
 
 

@@ -730,6 +730,7 @@
     [[SyncManager getSingleton] addAccountState];
     
     ImapSync *imapSync = [ImapSync sharedServices:user];
+    DDAssert(imapSync, @"imapSync must exist.");
     
     MCOMailProvider* accountProvider = [[MCOMailProvidersManager sharedManager] providerForIdentifier:user.identifier];
     
@@ -768,9 +769,14 @@
             [user setImportantFolderNum:imapFolderIndex forBaseFolder:FolderTypeSpam];
         }
         
-        // Store this folder's Name into the folder name array
-        NSString *dispName = [imapSync addFolder:folder toUser:user atIndex:imapFolderIndex usingImapSession:imapSession];
+#warning XYZZY
+        NSString *dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+        
+        DDAssert(dispName, @"Display Name must exist.");
+        
         [dispNamesFolders addObject:dispName];
+        
+        [imapSync addFolder:folder withName:dispName toAccount:user.accountNum];
         
         imapFolderIndex++;
     }
