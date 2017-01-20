@@ -41,7 +41,7 @@
 
 @end
 
-static NSArray * sharedServices = nil;
+static NSArray<ImapSync*>* sharedServices = nil;
 
 
 @implementation ImapSync
@@ -56,11 +56,17 @@ static NSArray * sharedServices = nil;
     DDAssert(!user.isDeleted, @"AccountNum:%ld is deleted",(long)user.accountNum);
     
     // Find the shared IMAP Sync Service with the matching Account Number
-    for (ImapSync* sharedService in [ImapSync allSharedServices:nil]) {
+    NSArray<ImapSync*>* allSharedServices = [ImapSync allSharedServices:nil];
+    for (ImapSync* sharedService in allSharedServices) {
         if (sharedService.user.accountNum == user.accountNum) {
             return sharedService;
+        } else {
+            DDLogInfo(@"sharedService.user.accountNum %@ NOT EQUAL TO user.accountNum %@",
+                      @(sharedService.user.accountNum),@(user.accountNum));
         }
     }
+    
+    DDLogError(@"Unable to find Account Number %@",@(user.accountNum));
     
     return nil;
 }
@@ -72,52 +78,55 @@ static NSArray * sharedServices = nil;
     }
     
     @synchronized(self) {
-        if (sharedServices == nil || sharedServices.count == 0) {
+        
+        if (sharedServices && sharedServices.count > 0) {
+            return sharedServices;
+        }
+        
+        NSMutableArray* sS = [[NSMutableArray alloc]init];
+        
+        NSArray<UserSettings*>* allUsers = [AppSettings getSingleton].users;
+        
+        for (UserSettings* user in allUsers ) {
             
-            NSMutableArray* sS = [[NSMutableArray alloc]init];
-            
-            for (UserSettings* user in [AppSettings getSingleton].users) {
-                
-                if (user.isDeleted) {
-                    continue;
-                }
-                
-                ImapSync* sharedService = [[super allocWithZone:nil] init];
-                sharedService.user = user;
-                sharedService.connected = NO;
-                
-                sharedService.s_queue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-                
-                if (updated && [updated.username isEqualToString:user.username]) {
-                    sharedService.imapSession = updated;
-                    sharedService.imapSession.dispatchQueue = sharedService.s_queue;
-                    sharedService.connected = YES;
-                }
-                else {
-                    
-                    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-                    
-                    dispatch_async(sharedService.s_queue, ^{
-                        sharedService.imapSession = [AppSettings imapSession:user];
-                        sharedService.imapSession.dispatchQueue = sharedService.s_queue;
-                        dispatch_semaphore_signal(semaphore);
-                    });
-                    
-                    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-                    
-                    sharedService.connected = NO;
-                }
-                
-                [sS addObject:sharedService];
+            if (user.isDeleted) {
+                continue;   // next UserSettings
             }
-            sharedServices = [[NSArray alloc]initWithArray:sS];
             
-            return sharedServices;
+            ImapSync* sharedService = [[super allocWithZone:nil] init];
+            sharedService.user = user;
+            sharedService.connected = NO;
+            
+            sharedService.s_queue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+            
+            if (updated && [updated.username isEqualToString:user.username]) {
+                sharedService.imapSession = updated;
+                sharedService.imapSession.dispatchQueue = sharedService.s_queue;
+                sharedService.connected = YES;
+            }
+            else {
+                
+                dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+                
+                dispatch_async(sharedService.s_queue, ^{
+                    sharedService.imapSession = [AppSettings imapSession:user];
+                    sharedService.imapSession.dispatchQueue = sharedService.s_queue;
+                    dispatch_semaphore_signal(semaphore);
+                });
+                
+                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+                
+                sharedService.connected = NO;
+            }
+            
+            [sS addObject:sharedService];
         }
-        else {
-            return sharedServices;
-        }
-    }
+        
+        sharedServices = [[NSArray alloc]initWithArray:sS];
+        
+        return sharedServices;
+        
+    } // end @synchronized(self)
 }
 
 +(void) deletedAndWait:(UserSettings*)deleteUser
