@@ -1413,9 +1413,14 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     NSInteger count = 0;
     
+    SyncManager *sm = [SyncManager getSingleton];
+    
     if (!self.user.isAll) {
         if ([self.user numFolderWithFolder:CCMFolderTypeFavoris] != [self.user numFolderWithFolder:CCMFolderTypeAll]) {
-            count = [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:CCMFolderTypeFavoris] accountNum:self.user.accountNum][kFolderStateEmailCountKey] integerValue];
+            
+            NSDictionary *syncStates = [sm retrieveState:[self.user numFolderWithFolder:CCMFolderTypeFavoris] accountNum:self.user.accountNum];
+            
+            count = [syncStates[kFolderStateEmailCountKey] integerValue];
         }
         else {
             count = [self getConversationsForFolder:CCMFolderTypeFavoris].count;
@@ -1425,7 +1430,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         for (Account* a in [Accounts sharedInstance].accounts) {
             if (!a.user.isAll) {
                 if ([self.user numFolderWithFolder:CCMFolderTypeFavoris] != [self.user numFolderWithFolder:CCMFolderTypeAll]) {
-                    count += [[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:CCMFolderTypeFavoris] accountNum:a.user.accountNum][kFolderStateEmailCountKey] integerValue];
+                    
+                    NSDictionary *syncStates = [sm retrieveState:[self.user numFolderWithFolder:CCMFolderTypeFavoris] accountNum:a.user.accountNum];
+                    
+                    count += [syncStates[kFolderStateEmailCountKey] integerValue];
                 }
                 else {
                     count += [a getConversationsForFolder:CCMFolderTypeFavoris].count;
@@ -1446,8 +1454,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     if (!self.user.isAll) {
         
         NSInteger folderNum = [self.user numFolderWithFolder:CCMFolderTypeDrafts];
-        NSMutableDictionary *folderStates = [syncManager retrieveState:folderNum
-                                                            accountNum:self.user.accountNum];
+        
+        NSDictionary *folderStates = [syncManager retrieveState:folderNum accountNum:self.user.accountNum];
         
         count = [folderStates[kFolderStateEmailCountKey] integerValue];
     }
@@ -1457,8 +1465,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             if (!a.user.isAll) {
                 
                 NSInteger folderNum = [a.user numFolderWithFolder:CCMFolderTypeDrafts];
-                NSMutableDictionary *folderStates = [syncManager retrieveState:folderNum
-                                                                    accountNum:self.user.accountNum];
+                
+                NSDictionary *folderStates = [syncManager retrieveState:folderNum accountNum:a.user.accountNum];
                 
                 count += [folderStates[kFolderStateEmailCountKey] integerValue];
             }

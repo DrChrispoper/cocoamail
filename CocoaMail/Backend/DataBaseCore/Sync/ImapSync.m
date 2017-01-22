@@ -1580,31 +1580,23 @@ static NSArray<ImapSync*>* sharedServices = nil;
     return [NSMutableSet setWithArray:[[AppSettings getSingleton] cache]];
 }
 
--(void) _writeFolderStateMessageCount:(NSInteger)messageCount andFolder:(NSInteger)folder
+-(void) _writeFolderStateMessageCount:(NSInteger)messageCount andFolder:(NSInteger)folderNum
 {
-    SyncManager *sm = [SyncManager getSingleton];
 
     if (!self.user.isDeleted) {
         
-        // used by fetchFrom to write the finished state for this round of syncing to disk
-        NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
-        syncState[kFolderStateEmailCountKey] = @(messageCount);
-        
-        [sm persistState:syncState forFolderNum:folder accountNum:self.user.accountNum];
+        SyncManager *sm = [SyncManager getSingleton];
+        [sm updateMessageCount:messageCount forFolderNumber:folderNum andAccountNum:self.user.accountNum];
     }
 }
 
--(void) _writeFolderStateLastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folder
+-(void) _writeFolderStateLastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folderNum
 {
-    SyncManager *sm = [SyncManager getSingleton];
-
-    // used by fetchFrom to write the finished state for this round of syncing to disk
     if (!self.user.isDeleted) {
-        NSMutableDictionary* syncState = [sm retrieveState:folder accountNum:self.user.accountNum];
-        syncState[kFolderStateLastEndedKey] = @(lastEIndex);
-        syncState[kFolderStateFullSyncKey]  = @(lastEIndex == 1);
         
-        [sm persistState:syncState forFolderNum:folder accountNum:self.user.accountNum];
+        SyncManager *sm = [SyncManager getSingleton];
+        [sm updateLastEndedIndex:lastEIndex forFolderNumber:folderNum andAccountNum:self.user.accountNum];
+        
         //[[[Accounts sharedInstance] getAccount:self.currentAccountIndex] showProgress];
     }
 }

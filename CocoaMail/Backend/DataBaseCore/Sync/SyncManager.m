@@ -50,52 +50,65 @@ static SyncManager * singleton = nil;
 	return self;
 }
 
+// MARK: - Load each SyncSettings from "sync_state_<index>.plist", one per UserSetting.
+
 -(void)_loadSyncSettingsForAllUserAccounts
 {
+    NSArray<UserSettings*>* allUserSettings = [AppSettings getSingleton].users;
+    
     // Get the persistent state
-    self.syncStates = [NSMutableArray arrayWithCapacity:2];
+    self.syncStates = [NSMutableArray arrayWithCapacity:allUserSettings.count];
     
     // For each UserSettings referenced by the AppSettings singleton
-    for (UserSettings* user in [AppSettings getSingleton].users) {
+    for (UserSettings* user in allUserSettings) {
         
         if (user.isAll) {
+
             // This UserSettings is for the special All Accounts Mail view
             // Insert and empty "record" at the start of the Sync States mutable array
             [self.syncStates insertObject:[NSMutableDictionary dictionaryWithCapacity:1] atIndex:0];
+            
+            // TODO: this assumes only one isAll UserSettings
+            
+            continue; // next UserSettings
         }
-        else if (user.isDeleted) {
+        
+        if (user.isDeleted) {
             // This UserSetting's Account has been deleted
             // Add and empty "record" for the Sync States mutable array
             [self.syncStates addObject:[NSMutableDictionary dictionaryWithCapacity:1]];
+            
+            // TODO: this assumes only one isDeleted UserSettings
+            
+            continue; // next UserSettings
+        }
+        
+        // TODO: Does this loop assume that the isAll and isDeleted UserSettings occur before all the other UserSettings?
+        
+        // This UserSettings is for a regular IMAP Account
+        NSString* syncStateFullPathFilename = [self _syncStateFullPathFilenameForUser:user];
+        
+        // If this user's Sync Settings preferences file exists ...
+        if ([[NSFileManager defaultManager] fileExistsAtPath:syncStateFullPathFilename]){
+            DDLogInfo(@"File %@ does Exist",[self _syncStateFilenameForUser:user]);
+            
+            // Get the data contained in the file
+            NSData* fileData = [[NSData alloc] initWithContentsOfFile:syncStateFullPathFilename];
+            
+            // Read the property dictionary from the file data
+            NSMutableDictionary* syncSettingPropertiesFromFile = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
+            
+            // Add the properties read from the file into the syncStates array.
+            [self.syncStates addObject:syncSettingPropertiesFromFile];
         }
         else {
-            // This UserSettings is for a regular IMAP Account
+            DDLogInfo(@"File \"%@\" does NOT Exist",[self _syncStateFilenameForUser:user]);
             
-            NSString* syncStateFullPathFilename
-            = [self _syncStateFullPathFilenameForUser:user];
+            // Create a NEW property dictionary
+            NSMutableDictionary* newSyncSettingsProperties = [self _newSyncStateProperties];
             
-            // If this user's Sync Settings preferences file exists ...
-            if ([[NSFileManager defaultManager] fileExistsAtPath:syncStateFullPathFilename]){
-                DDLogDebug(@"File %@ does Exist",[self _syncStateFilenameForUser:user]);
-                
-                // Get the data contained in the file
-                NSData* fileData = [[NSData alloc] initWithContentsOfFile:syncStateFullPathFilename];
-                
-                // Read the property dictionary from the file data
-                NSMutableDictionary* syncSettingPropertiesFromFile = [NSPropertyListSerialization propertyListWithData:fileData options:NSPropertyListMutableContainersAndLeaves format:nil error:nil];
-                
-                // Add the properties read from the file into the syncStates array.
-                [self.syncStates addObject:syncSettingPropertiesFromFile];
-            }
-            else {
-                DDLogDebug(@"File \"%@\" does NOT Exist",[self _syncStateFilenameForUser:user]);
-                
-                // Create a NEW property dictionary
-                NSMutableDictionary* newSyncSettingsProperties = [self _newSyncStateProperties];
-                
-                // Add the property dictionary to the syncStates array
-                [self.syncStates addObject:newSyncSettingsProperties];
-            }
+            // Add the property dictionary to the syncStates array
+            [self.syncStates addObject:newSyncSettingsProperties];
         }
     }
 }
@@ -103,7 +116,7 @@ static SyncManager * singleton = nil;
 - (NSMutableDictionary *)_newSyncStateProperties
 {
     return [[NSMutableDictionary alloc] initWithObjectsAndKeys:
-                @"2", @"__version",
+                @"2",                   @"__version",
                 [NSMutableArray array], FOLDER_STATES_KEY,
                 nil ];
 }
@@ -122,7 +135,7 @@ static SyncManager * singleton = nil;
     return [StringUtil filePathInDocumentsDirectoryForFileName:syncStateFilename];
 }
 
-#pragma mark - Folder Sync Requests
+#pragma mark - Folder IMAP Sync Requests
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
@@ -194,7 +207,7 @@ static SyncManager * singleton = nil;
     return [RACSignal merge:newEmailsSignalsArray];
 }
 
-#pragma mark - Search for Text and Person via the IMAP Sync Service
+#pragma mark - Search for Messaage Text / Person Name via the IMAP Sync Service
 
 -(RACSignal*) searchText:(NSString*)text user:(UserSettings*)user
 {
@@ -223,7 +236,8 @@ static SyncManager * singleton = nil;
     }];
 }
 
-// MARK: - Update and Retrieve Sync State
+// MARK: - Get number of UserSettings / Accounts / Sync Settings (internal function)
+
 -(NSInteger)_getAccountCount
 {
     // The "All messages" UserSettings does not have an associated
@@ -232,14 +246,16 @@ static SyncManager * singleton = nil;
 }
 
 
+// MARK: - Return Sync States for an Account
+
 -(NSMutableArray *)_folderStatesForAccountNumber:(NSInteger)accountNum
 {
     NSInteger accountCount = [self _getAccountCount];
     
-    // Account index is 0 based
-    DDAssert(accountNum<=accountCount,@"Account Number must be <= %ld",(long)accountCount);
+    // Account index is 0 based (or 999)
+    DDAssert(accountNum<=accountCount || accountNum==999 ,@"Account Number must be <= %ld OR equal to 999",(long)accountCount);
     
-    NSMutableDictionary *accountStates = self.syncStates[accountNum];
+    NSDictionary *accountStates = self.syncStates[accountNum];
     
     DDAssert(accountStates,@"Account States must exist.");
     
@@ -249,6 +265,9 @@ static SyncManager * singleton = nil;
     
     return accountFolderStates;
 }
+
+// MARK: - Return Sync States for an Account and Folder
+
 -(NSMutableDictionary*) _folderStatesForAccountNumber:(NSInteger)accountNum folderNumber:(NSInteger)folderNum
 {
     NSArray *accountFolderStates = [self _folderStatesForAccountNumber:accountNum];
@@ -259,6 +278,8 @@ static SyncManager * singleton = nil;
     
 }
 
+// MARK: - Return number of folders in an account
+
 // Return the number of folders in the account from the local local Sync State
 -(NSInteger) folderCount:(NSInteger)accountNum
 {
@@ -268,40 +289,65 @@ static SyncManager * singleton = nil;
     return [folderStates count];
 }
 
+// MARK: - Return a copy of the folderStates for an Account Folder
+
 // Given an account and a folder in that account,
 // return a mutable COPY of its Folder State dictionary from the local Sync States
--(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSMutableArray* folderStates = [self _folderStatesForAccountNumber:accountNum];
-	
-	if (folderNum >= [folderStates count]) {
-		return nil;
-	}
-	
-	return [folderStates[folderNum] mutableCopy];
+    NSMutableDictionary* folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
+
+	return folderStates;
 }
 
-#pragma mark - Folder State Keyed Value "Accessors"
+// MARK: - SETTERS
+
+-(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum
+{
+    NSMutableDictionary* syncState = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
+    
+    @synchronized (syncState) {
+        syncState[kFolderStateEmailCountKey] = @(messageCount);
+    }
+    
+    [self _persistState:syncState forFolderNum:folderNum accountNum:accountNum];
+}
+-(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum
+{
+    NSMutableDictionary* syncState = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
+    
+    @synchronized (syncState) {
+        syncState[kFolderStateLastEndedKey] = @(lastEIndex);
+        syncState[kFolderStateFullSyncKey]  = @(lastEIndex == 1);
+    }
+    
+    [self _persistState:syncState forFolderNum:folderNum accountNum:accountNum];
+}
+
+
+// MARK: - Get state for Key for Account Folder
 
 -(id)_folderStateValueForKey:(NSString *)key account:(NSInteger)accountNum folder:(NSInteger)folderNum
 {
     DDAssert(key, @"Key argument must exist");
     
-    NSMutableDictionary* folderState = [self retrieveState:folderNum accountNum:accountNum];
+    NSDictionary* folderState = [self retrieveState:folderNum accountNum:accountNum];
     if ( folderState == nil ) {
         DDLogError(@"Cannot Retrieve State for folder=%ld account=%ld",(long)folderNum,(long)accountNum);
         return nil;
     }
     
-    id folderStateValue = folderState[kFolderStateFolderPathKey];
+    id folderStateValue = folderState[key];
     if ( folderStateValue == nil ) {
         DDLogError(@"Key \"%@\" not found in Folder State for folder %ld in account %ld",
-                   kFolderStateFolderPathKey,(long)folderNum,(long)accountNum);
+                   key,(long)folderNum,(long)accountNum);
         return nil;
     }
     
     return folderStateValue;
 }
+
+// MARK: - Get "Last Ended" state for Account Folder
 
 -(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
@@ -315,11 +361,14 @@ static SyncManager * singleton = nil;
     
     NSInteger lastEnded = (NSInteger)valForKey;
     
-    DDLogDebug(@"FolderState[%@] returning \"%ld\"",kFolderStateLastEndedKey,(long)lastEnded);
+    DDLogInfo(@"FolderState[%@] returning \"%ld\"",kFolderStateLastEndedKey,(long)lastEnded);
                            
     return lastEnded;
    
 }
+
+// MARK: - Get "Folder Path" state for Account Folder
+
 -(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     id valForKey = [self _folderStateValueForKey:kFolderStateFolderPathKey
@@ -332,12 +381,12 @@ static SyncManager * singleton = nil;
 
     NSString *folderPath = (NSString*)valForKey;
     
-    DDLogDebug(@"FolderState[\"%@\"] returns \"%@\"",kFolderStateFolderPathKey,folderPath);
+    DDLogInfo(@"FolderState[\"%@\"] returns \"%@\"",kFolderStateFolderPathKey,folderPath);
     
     return folderPath;
 }
 
-#pragma mark - Add account state
+// MARK: - Add an Account Sync State and write all Sync States to file store.
 
 // Add a New account Sync State entry
 -(void) addAccountState
@@ -347,16 +396,22 @@ static SyncManager * singleton = nil;
     NSMutableDictionary* props = [self _newSyncStateProperties];
     
     if (numAccounts == 1) {
-        self.syncStates [0] = props;
+        
+        @synchronized (self.syncStates) {
+            self.syncStates[0] = props;
+        }
 
         [self _writeSyncStateToFileForAccount:0L];
     }
     
-	[self.syncStates addObject:props];
+    @synchronized (self.syncStates) {
+        [self.syncStates addObject:props];
+    }
     
     [self _writeSyncStateToFileForAccount:numAccounts];
 }
 
+// MARK: - Add an Account Folder Sync State and write all Sync States to file store.
 
 -(NSInteger) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum
 {
@@ -374,8 +429,9 @@ static SyncManager * singleton = nil;
     
     NSMutableDictionary *folderStates = [NSMutableDictionary dictionaryWithDictionary:folderState];
     
-    [accountFolderStates addObject:folderStates];
-    
+    @synchronized (self.syncStates) {
+        [accountFolderStates addObject:folderStates];
+    }
     DDLogInfo(@"ADDED Sync State num %ld for new IMAP folder \"%@\"",(long)accountFolderStates.count,folder.path);
     
     [self _writeSyncStateToFileForAccount:accountNum];
@@ -385,15 +441,18 @@ static SyncManager * singleton = nil;
     return newFolderStatesIndex;   // index of last (new) record
 }
 
+// MARK: - Is Folder locally deleted?
+
 -(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     NSMutableDictionary *folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
 	
 	NSNumber* y =  folderStates[kFolderStateDeletedKey];
 	
-	return (y == nil) || [y boolValue];
+    return (y == nil) || [y boolValue];  // deleted if deleted property doesn't exist, or is FALSE
 }
 
+// MARK: - Mark local folder as deleted
 
 -(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
@@ -401,12 +460,16 @@ static SyncManager * singleton = nil;
     
     NSNumber *folderDeleted = @(YES);
     
-    [folderStates setValue:folderDeleted forKey:kFolderStateDeletedKey];
+    @synchronized (self.syncStates) {
+        [folderStates setValue:folderDeleted forKey:kFolderStateDeletedKey];
+    }
 
     [self _writeSyncStateToFileForAccount:accountNum];
 }
 
--(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+// MARK: - Update the Account Folder sync state and write to file store
+
+-(void) _persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     NSMutableDictionary *accountStates = self.syncStates[accountNum];
     NSMutableArray *accountFolderStates = accountStates[FOLDER_STATES_KEY];
@@ -418,20 +481,32 @@ static SyncManager * singleton = nil;
 
 // MARK: - local function to write out Sync State
 
+#warning ERROR RECIEVED: "NSArray was mutated while being enumerated". (enumerated during this file write).
+
 -(void)_writeSyncStateToFileForAccount:(NSInteger)accountNum
 {
     NSString *fileName = [NSString stringWithFormat:SYNC_STATE_FILE_NAME_TEMPLATE, (long)accountNum];
     
     NSString *filePath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
     
-    if ( ![self.syncStates[accountNum] writeToFile:filePath atomically:YES] ) {
-        
-        DDLogError(@"Error: Could not save account %ld Sync State to \"%@\"",
-                   (long)accountNum,filePath);
-        return;
-    }
+    NSMutableDictionary *accountStates = self.syncStates[accountNum];
     
-    DDLogInfo(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
+    DDAssert(accountStates, @"accountStates cannot be nil.");
+    
+    @synchronized (self.syncStates) {
+        
+        // TODO: might want to time writing these files
+        
+        if ( ![accountStates writeToFile:filePath atomically:YES] ) {
+            
+            DDLogError(@"Error: Could not save account %ld Sync State to \"%@\"",
+                       (long)accountNum,filePath);
+        }
+        else {
+            DDLogInfo(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
+        }
+    }
+
 }
 
 

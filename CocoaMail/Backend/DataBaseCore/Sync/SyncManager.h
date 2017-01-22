@@ -44,6 +44,8 @@
 // folderStates is a mutable dictionary,
 //      in which the key "deleted" returns a BOOL folderDeleted
 //
+
+// TODO: - Someday make syncStates private to this class, and make all changes via accessors
 @property (nonatomic, strong) NSMutableArray<NSMutableDictionary*>* syncStates;
 //@property (assign) BOOL syncInProgress;
 //@property (assign) BOOL isFromStart;
@@ -59,17 +61,23 @@
 -(RACSignal*) searchPerson:(Person*)person user:(UserSettings*)user;
 -(RACSignal*) searchText:(NSString*)text user:(UserSettings*)user;
 
-//Update recorded state
--(NSInteger) folderCount:(NSInteger)accountNum;
 -(void) addAccountState;
 -(NSInteger) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum;
--(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
--(void) markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
--(void) persistState:(NSMutableDictionary*)data forFolderNum:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
--(NSMutableDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 
+-(NSInteger) folderCount:(NSInteger)accountNum;
+
+// MARK: - getters
+-(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;  // for external getters
+
+// MARK: - setters
+-(void)markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum;
+-(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum;
+
+
 
 
 @end
