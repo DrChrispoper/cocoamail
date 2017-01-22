@@ -495,10 +495,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     SyncManager *syncMgr = [SyncManager getSingleton];
         
-    NSDictionary *state = [syncMgr retrieveState:folderNumber
-                                      accountNum:self.user.accountNum];
+    NSDictionary *folderState = [syncMgr retrieveState:folderNumber accountNum:self.user.accountNum];
     
-    BOOL folderIsSynced = [state[kFolderStateFullSyncKey] boolValue];
+    BOOL folderIsSynced = [folderState[kFolderStateFullSyncKey] boolValue];
     
     BOOL retVal = (folderIsSynced == FALSE);
     
@@ -865,7 +864,6 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             DDLogInfo(@"\tIMAP Folder \"%@\" NOT found in local folders.",[imapFolder path]);
             
-#warning XYZZY
             NSString *dispName = [ImapSync displayNameForFolder:imapFolder usingSession:self.imapSession];
             
             DDAssert(dispName, @"Display Name must exist.");
