@@ -775,7 +775,6 @@
             [user setImportantFolderNum:indexPath forBaseFolder:FolderTypeSpam];
         }
     
-#warning XYZZY
         NSString *dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
         
         DDAssert(dispName, @"Display Name must exist.");
