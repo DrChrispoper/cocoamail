@@ -399,7 +399,10 @@
 
 -(NSArray*) allNonImportantFoldersName
 {
-    DDAssert(_allFoldersDisplayNames, @"_allFolderDisplayNames must be initialized.");
+    if ( !_allFoldersDisplayNames ){
+        _allFoldersDisplayNames = [NSMutableArray arrayWithObject:@"nothing here"];
+    }
+
     DDAssert(_importantFolders, @"_importantFolders must be initialized.");
     
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
