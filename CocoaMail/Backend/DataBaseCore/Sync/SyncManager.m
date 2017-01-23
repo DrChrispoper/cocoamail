@@ -272,6 +272,10 @@ static SyncManager * singleton = nil;
 {
     NSArray *accountFolderStates = [self _folderStatesForAccountNumber:accountNum];
     
+    if ( folderNum < 0 || folderNum >= accountFolderStates.count ) {
+        return nil;
+    }
+    
     NSMutableDictionary *folderStates = accountFolderStates[folderNum];
     
     return folderStates;
