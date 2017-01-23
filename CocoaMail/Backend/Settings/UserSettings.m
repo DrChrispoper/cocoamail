@@ -147,72 +147,85 @@
 
 -(void)setfolderPathPrefix:(NSString *)folderPathPrefix
 {
+    DDLogInfo(@"setfolderPathPrefix");
     _folderPathPrefix = [folderPathPrefix copy];
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setFolderPathDelimiter:(NSString *)folderPathDelimiter
 {
+    DDLogInfo(@"setFolderPathDelimiter");
     _folderPathDelimiter = [folderPathDelimiter copy];
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setIdentifier:(NSString *)identifier
 {
+    DDLogInfo(@"setIdentifier");
     _identifier = identifier;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setUsername:(NSString *)username
 {
+    DDLogInfo(@"setUsername");
     _username = username;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapHostname:(NSString *)imapHostname
 {
+    DDLogInfo(@"setImapHostname");
     _imapHostname = imapHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapPort:(NSUInteger)imapPort
 {
+    DDLogInfo(@"setImapPort");
     _imapPort = imapPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapConnectionType:(NSUInteger)imapConnectionType
 {
+    DDLogInfo(@"setImapConnectionType");
     _imapConnectionType = imapConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpHostname:(NSString *)smtpHostname
 {
+    DDLogInfo(@"setSmtpHostname");
     _smtpHostname = smtpHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpPort:(NSUInteger)smtpPort
 {
+    DDLogInfo(@"setSmtpPort");
     _smtpPort = smtpPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpConnectionType:(NSUInteger)smtpConnectionType
 {
+    DDLogInfo(@"setSmtpConnectionType");
     _smtpConnectionType = smtpConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSignature:(NSString *)signature
 {
+    DDLogInfo(@"setSignature");
     _signature = signature;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setName:(NSString *)name
 {
+    DDLogInfo(@"setName");
+
     if (!self.isAll) {
         self.linkedAccount.person.name = name;
     }
@@ -223,6 +236,8 @@
 
 -(void)setInitials:(NSString *)initials
 {
+    DDLogInfo(@"setInitials");
+
     if (!self.isAll) {
         self.linkedAccount.person.codeName = initials;
     }
@@ -233,18 +248,24 @@
 
 -(void)setColor:(UIColor *)color
 {
+    DDLogInfo(@"setColor");
+
     _color = color;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImportantFolders:(NSMutableArray *)importantFolders
 {
+    DDLogInfo(@"setImportantFolders");
+
     _importantFolders = importantFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
+    DDLogInfo(@"setAllFoldersDisplayNames");
+
     _allFoldersDisplayNames = allFolders;   // does this copy or assign?
     
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
@@ -252,6 +273,8 @@
 
 -(void)setAccountNum:(NSUInteger)accountNum
 {
+    DDLogInfo(@"setAccountNum");
+
     _accountNum = accountNum;
     
     NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -263,12 +286,16 @@
 
 -(void)setDeleted:(BOOL)deleted
 {
+    DDLogInfo(@"setDeleted");
+
     _deleted = deleted;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setAll:(BOOL)all
 {
+    DDLogInfo(@"setAll");
+
     _all = all;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
@@ -321,6 +348,8 @@
 
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder
 {
+    DDLogInfo(@"UserSettings setImportantFolderNum");
+    
     if (_importantFolders.count == 0) {
         _importantFolders = [[NSMutableArray alloc] initWithObjects:@"", @"", @"", @"", @"", @"", nil];
     }
