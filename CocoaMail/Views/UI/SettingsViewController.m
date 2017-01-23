@@ -36,7 +36,16 @@
 
     item.leftBarButtonItem = [self backButtonInNavBar];
     
+#warning REMOVE BEFORE RELEASE (OR MOVE)
+    NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]; // TEMP
+    NSString * build = [[NSBundle mainBundle] objectForInfoDictionaryKey: (NSString *)kCFBundleVersionKey]; // TEMP
+    
     NSString* title = NSLocalizedString(@"settings-view.title", @"Settings");
+    
+    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ (v%@ b%@)",title,version,build]; // TEMP
+    title = [NSString stringWithString:titleWithVersionAndBuild]; // TEMP
+    
+    
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
