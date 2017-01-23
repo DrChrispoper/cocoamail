@@ -485,7 +485,7 @@ static SyncManager * singleton = nil;
 
 // MARK: - local function to write out Sync State
 
-#warning ERROR RECIEVED: "NSArray was mutated while being enumerated". (enumerated during this file write).
+// #warning ERROR RECIEVED: "NSArray was mutated while being enumerated". (enumerated during this file write).
 
 -(void)_writeSyncStateToFileForAccount:(NSInteger)accountNum
 {
