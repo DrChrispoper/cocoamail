@@ -534,15 +534,15 @@ static ViewController * s_self;
         //[[SearchRunner getSingleton] cancel];
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
         
-        MailListViewController* mlvc = nil;
+        MailListViewController* mlvc1 = nil;
         Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
         
         if (person != nil) {
-            mlvc = [[MailListViewController alloc] initWithPerson:person];
+            mlvc1 = [[MailListViewController alloc] initWithPerson:person];
         }
         else {
             NSNumber* codedType = [notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE];
-            mlvc = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
+            mlvc1 = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
         }
         
         // don't open the same view twice
@@ -550,9 +550,9 @@ static ViewController * s_self;
         InViewController* last = [self.viewControllers lastObject];
         
         if ([last isKindOfClass:[MailListViewController class]]) {
-            MailListViewController* mlvc = (MailListViewController*)last;
+            MailListViewController* mlvc2 = (MailListViewController*)last;
             
-            if ([mlvc istheSame:mlvc]) {
+            if ([mlvc1 istheSame:mlvc2]) {
                 doNothing = YES;
             }
         }
@@ -561,7 +561,7 @@ static ViewController * s_self;
             [[UIApplication sharedApplication] endIgnoringInteractionEvents];
         }
         else {
-            [self _animatePushVC:mlvc];
+            [self _animatePushVC:mlvc1];
         }
     }];
 }
