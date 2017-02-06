@@ -529,8 +529,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         return allFolderNum;
     }
 
-//    if (![[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)] accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
-//        return [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+//    if (![[[SyncManager getSingleton] retrieveState:[self.user numFolderWithFolder:inboxFolderType()] accountNum:self.user.accountNum][@"fullsynced"] boolValue]) {
+//        return [self.user numFolderWithFolder:inboxFolderType()];
 //    }
     
     NSInteger inboxFolderNumber = [self folderIndexForBaseFolderType:FolderTypeInbox];
@@ -929,8 +929,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     }];
 }
 
-// MARK: - IMAP Sync Service - Iterate through folders, syncing each
-#warning Function is 1920 lines long!!!
+// MARK: - Process IMAP Messages
 
 - (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
@@ -1066,6 +1065,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 }
 
+// MARK: - Fetch IMAP Messages
+
 - (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
 {
     
@@ -1157,6 +1158,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
     });
 
 }
+
+// MARK: - Fetch and Process IMAP Messagess for Current Folder
 
 - (void)_getImapMessages:(NSInteger)currentFolder subscriber:(id)subscriber isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
@@ -1317,6 +1320,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         }
 }
 
+// MARK: - Fetch IMAP Folders and Messages
+
 - (void)_processFoldersAndGetImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll imapFolders:(NSArray *)imapFolders
 {
     dispatch_async(self.s_queue, ^{
@@ -1371,6 +1376,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
     });
 }
 
+// MARK: - Fetch and Process IMAP Folders
+
 - (void)_getImapFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
     DDLogInfo(@"BEGIN Fetch IMAP Folders");
@@ -1404,6 +1411,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         }];//Fetch All Folders
     });
 }
+
+// MARK: - Log In to IMAP Server and Update Folders and Messages
 
 - (void)_loginImapServerAndUpdateFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
@@ -1445,6 +1454,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
     return isInBackground;
 }
+
+// MARK: - Process IMAP Folders and Messages
 
 // "folder" is a Folder Index, or -1
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
@@ -1509,7 +1520,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     BOOL emailCached = NO;
     
-    BOOL isInInbox = (currentFolder == [self.user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]);
+    BOOL isInInbox = (currentFolder == [self.user numFolderWithFolder:inboxFolderType()]);
     BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
     if (isInInbox & isUnread) {
         NSMutableSet* eIds = [self emailIDs];
@@ -1884,7 +1895,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
         
-        NSInteger inboxFolder = [user numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+        NSInteger inboxFolder = [user numFolderWithFolder:inboxFolderType()];
         NSString* serverFolderPath = [user folderServerName:inboxFolder];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];

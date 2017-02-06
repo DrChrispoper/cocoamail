@@ -264,7 +264,7 @@
         
         CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
 
-        [convIndex.user.linkedAccount moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
+        [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
         
         NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
         

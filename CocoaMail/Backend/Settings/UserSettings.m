@@ -405,7 +405,7 @@
 
 -(NSInteger)inboxFolderNumber
 {
-    return [self numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)];
+    return [self numFolderWithFolder:inboxFolderType()];
 }
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder
 {

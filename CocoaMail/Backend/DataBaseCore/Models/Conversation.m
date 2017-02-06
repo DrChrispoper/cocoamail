@@ -72,7 +72,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(BOOL) isInInbox
 {
-    return [self uidsWithFolder:[[self user] numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]].count > 0;
+    return [self uidsWithFolder:[[self user] numFolderWithFolder:inboxFolderType()]].count > 0;
 }
 
 -(UserSettings*) user
