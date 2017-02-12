@@ -11,14 +11,16 @@ target 'CocoaMail' do
 	pod 'FMDB'
 	pod 'Reachability', '~> 3.1.1'
 	pod 'libextobjc', '~> 0.4'
+  pod 'GoogleSignIn'
+  pod 'GoogleAnalytics'
 	pod 'GoogleAPIClient/Drive', '~> 1.0'
 	pod 'GTMOAuth2', '~> 1.1.0'
-	pod 'box-ios-browse-sdk'
-	pod 'Google/SignIn'
+	pod 'box-ios-browse-sdk', '1.0.4'
 	pod 'DZNEmptyDataSet'
 	pod 'Flurry-iOS-SDK/FlurrySDK'
-#	pod 'Instabug'
+	pod 'Instabug'
   pod 'CocoaLumberjack' 
+  pod 'Instabug-CocoaLumberjack'
   
 #  use_frameworks!
   # Use 4.0 for swift 3.x

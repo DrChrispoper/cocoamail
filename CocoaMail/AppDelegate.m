@@ -25,8 +25,23 @@
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
 
 #ifdef USING_INSTABUG
+#import "asl.h"
 #import <Instabug/Instabug.h>
-#endif
+#import <Instabug-CocoaLumberjack/DDInstabugLogger.h>
+
+// Required to get logging into Instabug in iOS 10+
+inline void NSLog(NSString *format, ...) {
+    va_list arg_list;
+    va_start(arg_list, format);
+    aslmsg msg = asl_new(ASL_TYPE_MSG);
+    asl_set(msg, ASL_KEY_READ_UID, "-1");
+    NSString *formattedString = [[NSString alloc] initWithFormat:format arguments:arg_list];
+    asl_log(NULL, msg, (ASL_LEVEL_ERR), "%s", [formattedString UTF8String]);
+    asl_free(msg);
+    va_end(arg_list);
+}
+
+#endif  // USING_INSTABUG
 
 @implementation AppDelegate
 
@@ -97,11 +112,11 @@
     DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
     if (ttyLogger) {
 #ifdef USING_XCODECOLORS
-    [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
-    [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
-    [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
-    [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
-    [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
+        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
+        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
+        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
 #endif
         [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
     }
@@ -116,6 +131,12 @@
     DDLogInfo(@"*********");
     DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
     DDLogInfo(@"*********");
+    
+#ifdef USING_INSTABUG
+    // This will log CocoaLumberjack into Instabug
+    DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
+    [DDLog addLogger:ibgLogger];
+#endif
 
 #ifdef USING_XCODECOLORS
     // Show the Xcode console colors

@@ -2,65 +2,58 @@ PODS:
   - box-ios-browse-sdk (1.0.4):
     - box-ios-sdk
     - MBProgressHUD (~> 0.9.1)
-  - box-ios-sdk (1.0.11):
-    - box-ios-sdk/logger (= 1.0.11)
-    - box-ios-sdk/no-arc (= 1.0.11)
-  - box-ios-sdk/logger (1.0.11)
-  - box-ios-sdk/no-arc (1.0.11):
+  - box-ios-sdk (1.0.14):
+    - box-ios-sdk/logger (= 1.0.14)
+    - box-ios-sdk/no-arc (= 1.0.14)
+  - box-ios-sdk/logger (1.0.14)
+  - box-ios-sdk/no-arc (1.0.14):
     - box-ios-sdk/logger
-  - CocoaLumberjack (2.3.0):
-    - CocoaLumberjack/Default (= 2.3.0)
-    - CocoaLumberjack/Extensions (= 2.3.0)
-  - CocoaLumberjack/Core (2.3.0)
-  - CocoaLumberjack/Default (2.3.0):
+  - CocoaLumberjack (3.0.0):
+    - CocoaLumberjack/Default (= 3.0.0)
+    - CocoaLumberjack/Extensions (= 3.0.0)
+  - CocoaLumberjack/Core (3.0.0)
+  - CocoaLumberjack/Default (3.0.0):
     - CocoaLumberjack/Core
-  - CocoaLumberjack/Extensions (2.3.0):
+  - CocoaLumberjack/Extensions (3.0.0):
     - CocoaLumberjack/Default
   - DZNEmptyDataSet (1.8.1)
-  - FirebaseAnalytics (3.3.1):
-    - FirebaseInstanceID (~> 1.0)
-    - GoogleInterchangeUtilities (~> 1.2)
-    - GoogleSymbolUtilities (~> 1.1)
-    - GoogleUtilities (~> 1.2)
-  - FirebaseInstanceID (1.0.8)
-  - Flurry-iOS-SDK/FlurrySDK (7.6.6)
+  - Flurry-iOS-SDK/FlurrySDK (7.9.2)
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
-  - Google/Core (3.0.3):
-    - FirebaseAnalytics (~> 3.2)
-  - Google/SignIn (3.0.3):
-    - Google/Core
-    - GoogleSignIn (~> 4.0)
+  - GoogleAnalytics (3.17.0)
   - GoogleAPIClient/Core (1.0.5):
     - GTMSessionFetcher (~> 1.1)
   - GoogleAPIClient/Drive (1.0.5):
     - GoogleAPIClient/Core
     - GTMSessionFetcher (~> 1.1)
-  - GoogleAppUtilities (1.1.1):
-    - GoogleSymbolUtilities (~> 1.0)
-  - GoogleAuthUtilities (2.0.1):
-    - GoogleNetworkingUtilities (~> 1.0)
-    - GoogleSymbolUtilities (~> 1.0)
-  - GoogleInterchangeUtilities (1.2.1):
-    - GoogleSymbolUtilities (~> 1.0)
-  - GoogleNetworkingUtilities (1.2.1):
-    - GoogleSymbolUtilities (~> 1.0)
-  - GoogleSignIn (4.0.0):
+  - GoogleAppUtilities (1.1.2):
+    - GoogleSymbolUtilities (~> 1.1)
+  - GoogleSignIn (4.0.1):
     - GoogleAppUtilities (~> 1.1)
-    - GoogleAuthUtilities (~> 2.0)
-    - GoogleNetworkingUtilities (~> 1.2)
-    - GoogleUtilities (~> 1.3)
-  - GoogleSymbolUtilities (1.1.1)
-  - GoogleUtilities (1.3.1):
-    - GoogleSymbolUtilities (~> 1.0)
-  - GTMOAuth2 (1.1.2):
+    - GoogleToolboxForMac/NSDictionary+URLArguments (~> 2.1)
+    - GTMOAuth2 (~> 1.0)
+    - GTMSessionFetcher/Core (~> 1.1)
+  - GoogleSymbolUtilities (1.1.2)
+  - GoogleToolboxForMac/DebugUtils (2.1.1):
+    - GoogleToolboxForMac/Defines (= 2.1.1)
+  - GoogleToolboxForMac/Defines (2.1.1)
+  - GoogleToolboxForMac/NSDictionary+URLArguments (2.1.1):
+    - GoogleToolboxForMac/DebugUtils (= 2.1.1)
+    - GoogleToolboxForMac/Defines (= 2.1.1)
+    - GoogleToolboxForMac/NSString+URLArguments (= 2.1.1)
+  - GoogleToolboxForMac/NSString+URLArguments (2.1.1)
+  - GTMOAuth2 (1.1.4):
     - GTMSessionFetcher (~> 1.1)
-  - GTMSessionFetcher (1.1.6):
-    - GTMSessionFetcher/Full (= 1.1.6)
-  - GTMSessionFetcher/Core (1.1.6)
-  - GTMSessionFetcher/Full (1.1.6):
-    - GTMSessionFetcher/Core (= 1.1.6)
+  - GTMSessionFetcher (1.1.8):
+    - GTMSessionFetcher/Full (= 1.1.8)
+  - GTMSessionFetcher/Core (1.1.8)
+  - GTMSessionFetcher/Full (1.1.8):
+    - GTMSessionFetcher/Core (= 1.1.8)
+  - Instabug (7.0.2)
+  - Instabug-CocoaLumberjack (1.0.1):
+    - CocoaLumberjack
+    - Instabug (>= 6.2)
   - libextobjc (0.4.1):
     - libextobjc/EXTADT (= 0.4.1)
     - libextobjc/EXTConcreteProtocol (= 0.4.1)
@@ -108,14 +101,17 @@ PODS:
     - ReactiveCocoa/Core
 
 DEPENDENCIES:
-  - box-ios-browse-sdk
+  - box-ios-browse-sdk (= 1.0.4)
   - CocoaLumberjack
   - DZNEmptyDataSet
   - Flurry-iOS-SDK/FlurrySDK
   - FMDB
-  - Google/SignIn
+  - GoogleAnalytics
   - GoogleAPIClient/Drive (~> 1.0)
+  - GoogleSignIn
   - GTMOAuth2 (~> 1.1.0)
+  - Instabug
+  - Instabug-CocoaLumberjack
   - libextobjc (~> 0.4)
   - pop (from `https://github.com/facebook/pop.git`)
   - Reachability (~> 3.1.1)
@@ -127,35 +123,32 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   pop:
-    :commit: 92b2c5b7bcad64f7507da34f921492c71ff1d330
+    :commit: 68796e3b2dfcabf1c395e4dccaf1f91b06018b30
     :git: https://github.com/facebook/pop.git
 
 SPEC CHECKSUMS:
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
-  box-ios-sdk: a34a7c130e83e3d2380d2f6c1f16e589ba7788ba
-  CocoaLumberjack: 97fab7ee5f507fe54445cca7ea80f926729cfd15
+  box-ios-sdk: 8034a7b0fcac562105725afa744011c81da99398
+  CocoaLumberjack: c823149bccc5519a9447aeb433be7b1212a7d6a5
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
-  FirebaseAnalytics: d968d4d5f6aeb795cd64144337bcd233e530efc6
-  FirebaseInstanceID: ba1e640935235e5fac39dfa816fe7660e72e1a8a
-  Flurry-iOS-SDK: 97bbeec09cca666c2f1772f6e161c4f8ccff611e
+  Flurry-iOS-SDK: 300dc1d78443dea3d433a38e76292f20f14f0a96
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
-  Google: 813c467362eabc11385f5a5cc9ad0cb651a58f4e
+  GoogleAnalytics: f42cc53a87a51fe94334821868d9c8481ff47a7b
   GoogleAPIClient: 4a6b0b807de8b1115a2835180b25dd93dc60f1ea
-  GoogleAppUtilities: f1730f91f67767b453c289577040dd3f425ffdc7
-  GoogleAuthUtilities: d7a19615cd7627688afcf181737f1011ee8b5a23
-  GoogleInterchangeUtilities: def8415a862effc67d549d5b5b0b9c7a2f97d4de
-  GoogleNetworkingUtilities: 3e83269048cfb498dc7ec83ab36813360965c74f
-  GoogleSignIn: 09036ed61f8e75f1424100d63f7719480b2428c3
-  GoogleSymbolUtilities: 33117db1b5f290c6fbf259585e4885b4c84b98d7
-  GoogleUtilities: 56c5ac05b7aa5dc417a1bb85221a9516e04d7032
-  GTMOAuth2: 1707e2f7fe3a6d7240223c23c473ba5a2d104474
-  GTMSessionFetcher: 6aacd0ab48ddf0c3633ab2642d792abfcad1b08a
+  GoogleAppUtilities: a8a552aa74f6597f805e45b5a3962766c3134973
+  GoogleSignIn: a8694c0a8e6d1b0ec77c58014de5bfd4ba2fa766
+  GoogleSymbolUtilities: 631ee17048aa5e9ab133470d768ea997a5ef9b96
+  GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
+  GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
+  GTMSessionFetcher: 6f8d8b28b7e345549ac471071608170b31cb4977
+  Instabug: d7eefe2e2056df89216a74c471d9edcc407586df
+  Instabug-CocoaLumberjack: 7541dfba86451598f3c146c44a199e3876d81ec2
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
   pop: f667631a5108a2e60d9e8797c9b32ddaf2080bce
   Reachability: dd9aa4fb6667b9f787690a74f53cb7634ce99893
   ReactiveCocoa: e2db045570aa97c695e7aa97c2bcab222ae51f4a
 
-PODFILE CHECKSUM: 934aa1c9b9220edabd06e3bf9b23cc99e0e03cd6
+PODFILE CHECKSUM: ec8a5f90813faa7f7eebdeed21e22a92748b188d
 
-COCOAPODS: 1.1.1
+COCOAPODS: 1.2.0
