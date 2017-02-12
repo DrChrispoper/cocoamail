@@ -139,6 +139,9 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
+    DDLogInfo(@"SyncManager: Sync ACTIVE Folder with IMAP Server. fromStart=%@ forUser=%@",
+              (isFromStart?@"YES":@"NO"),user.username);
+    
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
@@ -153,6 +156,9 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
 {
+    DDLogInfo(@"SyncManager: Sync IMPORTANT Folder with IMAP Server. folder=%@ forUser=%@",
+              [user.linkedAccount baseFolderType:baseFolder],user.username);
+    
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
@@ -167,6 +173,9 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
 {
+    DDLogInfo(@"SyncManager: Sync ALL Folders with IMAP Server. forUser=%@",
+              user.username);
+    
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
@@ -179,6 +188,8 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncInboxFoldersBackground
 {
+    DDLogInfo(@"SyncManager: Sync ALL Folders for ALL Users IN BACKGROUND with IMAP Server.");
+
     NSMutableArray* newEmailsSignalsArray = [[NSMutableArray alloc]init];
 
     for (UserSettings* user in [AppSettings getSingleton].users) {
@@ -365,7 +376,7 @@ static SyncManager * singleton = nil;
     
     NSInteger lastEnded = (NSInteger)valForKey;
     
-    DDLogInfo(@"FolderState[%@] returning \"%ld\"",kFolderStateLastEndedKey,(long)lastEnded);
+    DDLogVerbose(@"FolderState[%@] returning \"%ld\"",kFolderStateLastEndedKey,(long)lastEnded);
                            
     return lastEnded;
    
@@ -385,7 +396,7 @@ static SyncManager * singleton = nil;
 
     NSString *folderPath = (NSString*)valForKey;
     
-    DDLogInfo(@"FolderState[\"%@\"] returns \"%@\"",kFolderStateFolderPathKey,folderPath);
+    DDLogVerbose(@"FolderState[\"%@\"] returns \"%@\"",kFolderStateFolderPathKey,folderPath);
     
     return folderPath;
 }
@@ -452,8 +463,13 @@ static SyncManager * singleton = nil;
     NSMutableDictionary *folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
 	
 	NSNumber* y =  folderStates[kFolderStateDeletedKey];
+    
+    if ( y == nil ) {
+        DDLogWarn(@"isFolderDeletedLocally: fNum=%@ aNum=%@, PROPERTY NOT FOUND.",@(folderNum),@(accountNum));
+        return TRUE;
+    }
 	
-    return (y == nil) || [y boolValue];  // deleted if deleted property doesn't exist, or is FALSE
+    return [y boolValue];  // deleted if deleted property doesn't exist, or is FALSE
 }
 
 // MARK: - Mark local folder as deleted

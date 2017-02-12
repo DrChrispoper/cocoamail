@@ -463,6 +463,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
     self.isCanceled = YES;
 }
 
+// TODO: saveCachedData code is commented out
+
 -(void) saveCachedData
 {
     //NSMutableArray* ops = [[NSMutableArray alloc] initWithCapacity:self.cachedData.count];
@@ -525,7 +527,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSInteger allFolderNum = [self folderIndexForBaseFolderType:FolderTypeAll];
     if ( [self folderIsNotSynced:allFolderNum] ){
-        DDLogInfo(@"\tAll Folder Not Synced, do next");
+        DDLogInfo(@"\tAll Folder Not Synced, do it next");
         return allFolderNum;
     }
 
@@ -535,7 +537,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSInteger inboxFolderNumber = [self folderIndexForBaseFolderType:FolderTypeInbox];
     if ( [self folderIsNotSynced:inboxFolderNumber] ){
-        DDLogInfo(@"\tInbox Folder Not Synced, do next");
+        DDLogInfo(@"\tInbox Folder Not Synced, do it next");
         return inboxFolderNumber;
     }
     
@@ -1351,7 +1353,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             [syncMgr isFolderDeletedLocally:localFolderIndex accountNum:self.user.accountNum];
             
             if ( folderIsDeletedLocally ) {
-                DDLogInfo(@"\t\tLocal Folder's Delete State = TRUE");
+                DDLogInfo(@"\t\tLocal Folder Delete State = TRUE");
             }
             else {
                 BOOL folderDeletedOnImapServer = ![imapFolders containsObject:localFolderPath];
@@ -1380,12 +1382,15 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_getImapFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
-    DDLogInfo(@"BEGIN Fetch IMAP Folders");
+    DDLogInfo(@"ImapSync _getImapFoldersAndMessages: currentFolder=%@ fromStart=%@ getAll=%@",
+              @(currentFolder),
+              (isFromStart?@"TRUE":@"FALSE"),
+              (getAll?@"TRUE":@"FALSE"));
     
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
     dispatch_async(self.s_queue, ^{
         
-        DDLogInfo(@"BEGIN Fetch All IMAP Folders Operation");
+        DDLogInfo(@"ImapSync _getImapFoldersAndMessages: BEGIN Fetch All IMAP Folders Operation");
         
         [fio start:^(NSError* error, NSArray* imapFolders) {
             if (error) {
@@ -1404,7 +1409,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 
                 return;
             } else {
-                DDLogInfo(@"\tsuccess: have %lu folders.",(unsigned long)imapFolders.count);
+                DDLogInfo(@"ImapSync _getImapFoldersAndMessages: success: have %lu folders.",(unsigned long)imapFolders.count);
             }
             
             [self _processFoldersAndGetImapMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll imapFolders:imapFolders];
@@ -1416,7 +1421,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_loginImapServerAndUpdateFoldersAndMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
-    DDLogInfo(@"BEGIN Login IMAP Server \"%@\":",self.user.imapHostname);
+    DDLogInfo(@"ImapSync _loginImapServerAndUpdateFoldersAndMessages: Login IMAP Server=\"%@\"",self.user.imapHostname);
     
     [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
         DDLogError(@"\tLogin attempt failed. Send ERROR CCMConnectionError to subscriber");
@@ -1438,7 +1443,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             }
         }
         else { // we are connected
-            DDLogInfo(@"\tSUCCESSFULLY Connected.");
+            DDLogInfo(@"ImapSync _loginImapServerAndUpdateFoldersAndMessages: SUCCESSFULLY Connected.");
             
             [self _getImapFoldersAndMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
         }
@@ -1460,7 +1465,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 // "folder" is a Folder Index, or -1
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
 {
-    DDLogInfo(@"BEGIN runFolder:%ld fromStart:%@ fromAccount:(getAll=%@):",
+    DDLogInfo(@"ImapSync runFolder: folder=%ld fromStart=%@ getAll=%@",
                (long)folder,
                (isFromStart==TRUE?@"TRUE":@"FALSE"),
                (getAll==TRUE?@"TRUE":@"FALSE"));
@@ -1486,11 +1491,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
         // get list of all folders from the IMAP Server
         
         if (self.isCanceled) {
-            DDLogInfo(@"IMAP Sync Service CANCELLED, runFolder COMPLETED");
+            DDLogInfo(@"ImapSync runFolder: IMAP Sync Service CANCELLED, runFolder COMPLETED");
             [subscriber sendCompleted];
         }
         else if (![ImapSync isNetworkAvailable]) {
-            DDLogError(@"IMAP Sync Service ERROR: Network is not available");
+            DDLogError(@"ImapSync runFolder: IMAP Sync Service ERROR: Network is not available");
             
             self.connected = NO;
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
@@ -1499,13 +1504,13 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             // This will happen when the folder passed into the function was -1,
             // and _nextFolderToSync returns -1.
-            DDLogError(@"IMAP Sync Service Error: All Synced");
+            DDLogError(@"ImapSync runFolder: IMAP Sync Service Error: All Synced");
             
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
         }
         else if ([self _isRunningInBackground] && currentFolder != [self.user inboxFolderNumber]) {
             
-            DDLogInfo(@"Running in Background && folder is not Inbox folder.");
+            DDLogInfo(@"ImapSync runFolder: Running in Background && folder is not Inbox folder.");
             DDLogInfo(@"\tso we are completed.");
 
             [subscriber sendCompleted];
