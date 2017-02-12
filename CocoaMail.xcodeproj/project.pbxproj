@@ -10,6 +10,7 @@
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
+		147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */; };
 		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
@@ -45,7 +46,6 @@
 		271D4D9C1B84758E00D19373 /* SyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 271D4D8F1B84758E00D19373 /* SyncManager.m */; };
 		271D4DA21B8475B700D19373 /* DateUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 271D4D9F1B8475B700D19373 /* DateUtil.m */; };
 		271D4DA31B8475B700D19373 /* StringUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 271D4DA11B8475B700D19373 /* StringUtil.m */; };
-		271D4DAC1B8479C300D19373 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4DAB1B8479C300D19373 /* DropboxSDK.framework */; };
 		271D4DAE1B8479E800D19373 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4DAD1B8479E800D19373 /* AddressBook.framework */; };
 		271D4DB01B8479F100D19373 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4DAF1B8479F100D19373 /* Foundation.framework */; };
 		271D4DB21B847A0D00D19373 /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4DB11B847A0D00D19373 /* libsqlite3.0.dylib */; };
@@ -395,6 +395,7 @@
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
+		147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
 		14ADBBF71E23F1530087E9B7 /* CCMConversationsPerAccount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMConversationsPerAccount.h; sourceTree = "<group>"; };
 		14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMConversationsPerAccount.m; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
@@ -460,7 +461,6 @@
 		271D4D9F1B8475B700D19373 /* DateUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = DateUtil.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		271D4DA01B8475B700D19373 /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtil.h; sourceTree = "<group>"; };
 		271D4DA11B8475B700D19373 /* StringUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StringUtil.m; sourceTree = "<group>"; };
-		271D4DAB1B8479C300D19373 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
 		271D4DAD1B8479E800D19373 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = System/Library/Frameworks/AddressBook.framework; sourceTree = SDKROOT; };
 		271D4DAF1B8479F100D19373 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		271D4DB11B847A0D00D19373 /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
@@ -852,9 +852,9 @@
 				271D4DB41B847A1B00D19373 /* libresolv.dylib in Frameworks */,
 				271D4DB21B847A0D00D19373 /* libsqlite3.0.dylib in Frameworks */,
 				271D4DB01B8479F100D19373 /* Foundation.framework in Frameworks */,
+				147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */,
 				271D4DAE1B8479E800D19373 /* AddressBook.framework in Frameworks */,
 				271D4D401B8471AC00D19373 /* libbox-ios-browse-sdk.a in Frameworks */,
-				271D4DAC1B8479C300D19373 /* DropboxSDK.framework in Frameworks */,
 				271D4D411B8471AC00D19373 /* libbox-ios-sdk.a in Frameworks */,
 				271D4E111B85DC6200D19373 /* StoreKit.framework in Frameworks */,
 				271D4D421B8471AC00D19373 /* libFMDB.a in Frameworks */,
@@ -1618,9 +1618,9 @@
 				271D4DB51B847A2A00D19373 /* libstdc++.dylib */,
 				271D4DB31B847A1B00D19373 /* libresolv.dylib */,
 				271D4DB11B847A0D00D19373 /* libsqlite3.0.dylib */,
+				147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */,
 				271D4DAF1B8479F100D19373 /* Foundation.framework */,
 				271D4DAD1B8479E800D19373 /* AddressBook.framework */,
-				271D4DAB1B8479C300D19373 /* DropboxSDK.framework */,
 				271D4D351B8471AC00D19373 /* libbox-ios-browse-sdk.a */,
 				271D4D361B8471AC00D19373 /* libbox-ios-sdk.a */,
 				271D4D371B8471AC00D19373 /* libFMDB.a */,
@@ -1656,6 +1656,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 271D4D241B846E4600D19373 /* Build configuration list for PBXNativeTarget "CocoaMail" */;
 			buildPhases = (
+				14559E451DB134470043726D /* Increment Build Number */,
 				97348202A481B1D799F877B8 /* [CP] Check Pods Manifest.lock */,
 				271D4CFA1B846E4500D19373 /* Sources */,
 				271D4CFB1B846E4500D19373 /* Frameworks */,
@@ -1663,8 +1664,7 @@
 				1C2F9E1F295DFDC02481677C /* [CP] Copy Pods Resources */,
 				OBJCLEANCUSTOMRUNSCRIPTT /* Objective-Clean Run Script */,
 				5C4D1CF95FC0C60ED575BC86 /* [CP] Embed Pods Frameworks */,
-				274C6B201C933CA3008ABDCE /* ShellScript */,
-				14559E451DB134470043726D /* Increment Build Number */,
+				147B9CC01E4E1BA4004BBB29 /* Send dSYM to Instabug */,
 			);
 			buildRules = (
 			);
@@ -1988,6 +1988,20 @@
 			shellPath = /bin/bash;
 			shellScript = "buildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\"";
 		};
+		147B9CC01E4E1BA4004BBB29 /* Send dSYM to Instabug */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Send dSYM to Instabug";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\nAPP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---\n";
+		};
 		1C2F9E1F295DFDC02481677C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2002,19 +2016,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CocoaMail/Pods-CocoaMail-resources.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		274C6B201C933CA3008ABDCE /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\n#SCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\n#if [ ! \"${SCRIPT_SRC}\" ]; then\n#echo \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\n#exit 1\n#fi\n#APP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\n#source \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---";
 		};
 		5C4D1CF95FC0C60ED575BC86 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2335,9 +2336,9 @@
 				CODE_SIGN_ENTITLEMENTS = CocoaMail/CocoaMail.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 2MGU5T4CQD;
-				ENABLE_BITCODE = NO;
+				ENABLE_BITCODE = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
