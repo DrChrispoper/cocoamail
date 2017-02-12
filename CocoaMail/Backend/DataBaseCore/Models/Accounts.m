@@ -245,7 +245,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         
         [[[SearchRunner getSingleton] deleteEmailsInAccountNum:account.user.accountNum]
          subscribeNext:^(Mail* email) {
-             int breakpoint = 1;
+             DDLogVerbose(@"[SearchRunner deleteEmailsInAccountNum:%@] - subscribeNext:(for mail %@",
+                          @(account.user.accountNum),email.subject);
          }
          completed:^{
              
@@ -643,7 +644,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
-        DDLogWarn(@"Same folder");
+        DDLogWarn(@"setCurrentFolder: Current Folder is unchanged, do nothing.");
         return;
     }
     
@@ -693,7 +694,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     // let the drafts
 }
 
-#warning This property is generated every time we call it !?!
+#warning This property is generated every time we call it
 
 -(NSArray*) systemFolderNames
 {
@@ -921,7 +922,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)folderHandle
 {
-    DDLogInfo(@">>ENTERED getConversationsForFolder");
+    DDLogInfo(@"Accounts getConversationsForFolder: CCMFolderType .index=%@ .type=%@",
+              @(folderHandle.idx),@(folderHandle.type));
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
@@ -937,22 +939,25 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                                             [conversationsForFolder addObject:[ConversationIndex initWithIndex:idx user:self.user]];
                                      }];
 
+    // For debugging INBOX
+#if (LOG_VERBOSE)
     NSString *folderName = [self.user folderDisplayNameForType:folderHandle];
     if ( [folderName isEqualToString:@"INBOX"] ) {
-        DDLogInfo(@"getConversationsForFolder \"INBOX\" returning:");
+        DDLogVerbose(@"Accounts getConversationsForFolder: \"INBOX\" returns: ");
         NSInteger cnum = 0;
         for (ConversationIndex *conversationIndex in conversationsForFolder) {
             Conversation *conversation = [[Accounts sharedInstance] conversationForCI:conversationIndex];
-            DDLogInfo(@"\tConversation %@:",@(cnum));
+            DDLogVerbose(@"\tConversation %@:",@(cnum));
             cnum++;
             NSInteger mnum = 0;
             for (Mail *msg in conversation.mails) {
-                DDLogInfo(@"\t\tMail %@ subj \"%@\" id \"%@\"",
+                DDLogVerbose(@"\t\tMail %@ subj \"%@\" id \"%@\"",
                           @(mnum),msg.subject,msg.msgID);
                 mnum++;
             }
         }
     }
+#endif
     
     return conversationsForFolder;  // an array of ConversationIndex, where each contains an index ito Account.allMails
     
@@ -2087,9 +2092,14 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(NSString *)currentFolderTypeValue
 {
+    return [self baseFolderType:self.currentFolderType.type];
+}
+
+-(NSString*)baseFolderType:(BaseFolderType)folderType
+{
     NSString *currFolderType = @"";
     
-    switch (self.currentFolderType.type) {
+    switch (folderType) {
         case FolderTypeInbox:
             currFolderType = @"INBOX";
             break;
@@ -2112,9 +2122,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             currFolderType = @"SPAM";
             break;
         default:
-            currFolderType = [NSString stringWithFormat:@"Unknown CCMFolderType.type (%ld)",(long)self.currentFolderType.type];
+            currFolderType = [NSString stringWithFormat:@"Unknown BaseFolderType (%ld)",(long)folderType];
             break;
     }
-        return currFolderType;
+    return currFolderType;
 }
 @end
