@@ -70,11 +70,6 @@
     
     return numberOfDays;
 }
--(BOOL) isEmpty
-{
-    return ( [self dayCount] == 0 );
-}
-
 -(NSInteger) conversationCountOnDay:(NSInteger)dayIndex
 {
     NSDictionary *dayDict = [self _dayProperties:dayIndex];
@@ -82,6 +77,20 @@
     NSArray *dayConvList = dayDict[@"list"];
     
     return dayConvList.count;
+    
+}
+-(BOOL) isEmpty
+{
+    return ( [self dayCount] == 0 );
+}
+-(NSInteger) totalConversationCount        // total of all conversations on all days
+{
+    NSInteger totalConversations = 0;
+    
+    for (NSInteger day = 0; day < self.conversationsPerDay.count; day++ ) {
+        totalConversations += [self conversationCountOnDay:day];
+    }
+    return totalConversations;
 }
 -(ConversationIndex*) conversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex
 {

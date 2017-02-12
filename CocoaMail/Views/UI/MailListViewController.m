@@ -141,9 +141,31 @@
 
 -(void) _applyTrueTitleViewTo:(UINavigationItem*)item
 {
-    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:self.folderName];
+    NSInteger mailCount = [self.convByDay totalConversationCount];
+//    NSInteger mailUnread = 0;
+    
+    NSString *titleWithCounts = [NSString stringWithFormat:@"%@ (%@)",self.folderName,@(mailCount)];
+    
+    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:titleWithCounts];
+    
+//    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:self.folderName];
     item.titleView = l;
 }
+
+-(void) _updateViewTitle
+{
+    UINavigationItem* item = self.navBar.items.lastObject;
+    [self _applyTrueTitleViewTo:item];
+    [self.navBar setNeedsDisplay];
+}
+
+//-(NSInteger)_unreadMailCount
+//{
+//    NSInteger mailUnread = 0;
+//    
+//    return mailUnread;
+//}
+
 
 -(void) viewDidLoad
 {
@@ -286,6 +308,7 @@
 - (void)refreshTable {
     DDLogInfo(@">> ENTERED MailListViewController refreshTable");
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
+    [self _updateViewTitle];
     //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
     //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
 }
@@ -302,6 +325,9 @@
         [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:self.isDebugMode?@"Debug Mode On":@"Debug Mode Off"];
         [[PKHUD sharedHUD] show];
         [[PKHUD sharedHUD] hideAfterDelay:2.0];*/
+        
+        [Instabug invokeWithInvocationMode:IBGInvocationModeNewFeedback];
+
         
         [self reload];
     }
@@ -681,9 +707,9 @@
             BOOL isInFolder = [convToInsert isInFolder:curFolderIndex];
             
             if (!isInFolder) {
-    #ifdef USING_INSTABUG
-                IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ci.index]);
-    #endif
+#ifdef USING_INSTABUG
+                IBGLog(@"%@", [NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ciToInsert.index]);
+#endif
                 DDLogError(@"Conversation with index %ld",(long)ciToInsert.index);
                 
                 Account* a = [[Accounts sharedInstance] account:convToInsert.user.accountIndex];
@@ -905,42 +931,45 @@
     
     //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
     
-        for (ConversationIndex* conversationIndex in folderConvs) {
-            
-            if ([self.conversationsPerAccount containsConversationIndex:conversationIndex.index
-                                                              inAccount:conversationIndex.user.accountIndex]) {
-                continue;
-            }
-            
-            Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
-            
-            NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
-            
-            if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
-                
-                [conv foldersType];   // Why?
-                
-                BOOL isInFolder = [conv isInFolder:currentFolderIdx];
-                
-                if (!isInFolder) {
-#ifdef USING_INSTABUG
-                    IBGLog([NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
-#endif
-                    DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
-                    
-                    Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-                    [a deleteIndex:conversationIndex.index fromFolder:self.folder];
-                    continue;
-                }
-            }
-            
-            [self.conversationsPerAccount addConversationIndex:conversationIndex.index forAccount:conversationIndex.user.accountIndex];
-            
-            [self.convByDay InsertConversation:conversationIndex];
+    for (ConversationIndex* conversationIndex in folderConvs) {
+        
+        if ([self.conversationsPerAccount containsConversationIndex:conversationIndex.index
+                                                          inAccount:conversationIndex.user.accountIndex]) {
+            continue;
         }
         
-        [self reload];
-        self.initialLoading = NO;
+        Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
+        
+        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+        
+        if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+            
+            [conv foldersType];   // Why?
+            
+            BOOL isInFolder = [conv isInFolder:currentFolderIdx];
+            
+            if (!isInFolder) {
+#ifdef USING_INSTABUG
+                IBGLog(@"%@", [NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
+#endif
+                DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
+                
+                Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
+                [a deleteIndex:conversationIndex.index fromFolder:self.folder];
+                continue;
+            }
+        }
+        
+        [self.conversationsPerAccount addConversationIndex:conversationIndex.index forAccount:conversationIndex.user.accountIndex];
+        
+        [self.convByDay InsertConversation:conversationIndex];
+    }
+    
+    [self reload];
+    self.initialLoading = NO;
+    
+    
+    [self _updateViewTitle];
     //}];
 }
 
@@ -1148,9 +1177,9 @@
             }
             
 #ifdef USING_INSTABUG
-            IBGLog([NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
+            IBGLog(@"%@", [NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
 #endif
-             NSLog(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
+             DDLogInfo(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
             NSString* fromFolderString;
             NSString* toFolderString;
@@ -1212,24 +1241,25 @@
         
         CocoaButton* cb = [CocoaButton sharedButton];
         UINavigationItem* item = self.navBar.items.lastObject;
-        const NSInteger nbSelected = self.selectedCells.count;
+        const NSInteger numberSelectedCells = self.selectedCells.count;
         
-        if (nbSelected==0) {
+        if (numberSelectedCells==0) {
             [cb forceCloseHorizontal];
             [self _applyTrueTitleViewTo:item];
         }
         else {
             NSString* formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
             
-            if (nbSelected==1) {
-                formatString = NSLocalizedString(@"%d Selected", @"Title when emails selected");
+            if (numberSelectedCells==1) {
+//                formatString =       NSLocalizedString(@"%d Selected", @"Title when emails selected");
                 [cb forceOpenHorizontal];
             }
             
             UILabel* l = [[UILabel alloc] init];
-            l.text = [NSString stringWithFormat:formatString, nbSelected];
+            l.text = [NSString stringWithFormat:formatString, numberSelectedCells];
             l.textColor = [[Accounts sharedInstance] currentAccount].user.color;
             [l sizeToFit];
+            
             item.titleView = l;
         }
         
@@ -1259,10 +1289,10 @@
 
 -(void) reload
 {
-    DDLogDebug(@">> ENTERED TableViewDataSource reload");
+    DDLogInfo(@"-[TableViewDataSource reload]");
     //self.deletedSections = 0;
     
-    DDLogInfo(@">> CALLNG self.table reloadData");
+    DDLogInfo(@"\treload CALLNG -[TableViewDataSource reloadData]");
     
     DDAssert(self.table,@"self.table must be set.");
     
@@ -1293,7 +1323,7 @@
 {
     NSInteger conversationCountOnDay = [self.convByDay conversationCountOnDay:section];
     
-    DDLogInfo(@"TABLEVIEW SECTION NUMBER %ld HAS %lu ROWS",(long)section,(unsigned long)conversationCountOnDay);
+    DDLogInfo(@"TABLEVIEW SECTION %ld HAS %lu ROWS",(long)section,(unsigned long)conversationCountOnDay);
     
     return conversationCountOnDay;
 }
@@ -1305,7 +1335,7 @@
     NSInteger dayIndex = indexPath.section;
     NSInteger conIndex = indexPath.row;
     
-    DDLogInfo(@"TABLEVIEW SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
+//    DDLogInfo(@"TABLEVIEW Get UITableViewCell for NSIndexPath SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
     
 //    CCMMutableConvIndexArray* convs = [self.convByDay conversationsForDay:indexPath.section];
 //    ConversationIndex* conversationIndex = convs[indexPath.row];
@@ -1601,9 +1631,10 @@
             Account* ac = [[Accounts sharedInstance] account:conversationIndex.user.accountIndex];
             
 #ifdef USING_INSTABUG
-            IBGLog([NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
+            IBGLog(@"%@", [NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
 #endif
-            NSLog(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
+            DDLogInfo(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
+            
             NSString* fromFolderString;
             NSString* toFolderString;
             

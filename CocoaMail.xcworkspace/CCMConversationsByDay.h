@@ -20,8 +20,10 @@ typedef NSMutableArray<ConversationIndex *> CCMMutableConvIndexArray;
 - (instancetype)initWithDayCapacity:(NSInteger)capacity;
 
 -(NSInteger) dayCount;
--(BOOL) isEmpty;        // dayCount == 0
 -(NSInteger) conversationCountOnDay:(NSInteger)dayIndex;
+
+-(BOOL) isEmpty;        // dayCount == 0
+-(NSInteger) totalConversationCount;        // total of all conversations on all days
 
 -(void)enumerateAllMailsUsingBlock:(void (^)(Mail *msg))block;
 
