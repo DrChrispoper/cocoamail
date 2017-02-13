@@ -144,7 +144,12 @@
     NSInteger mailCount = [self.convByDay totalConversationCount];
 //    NSInteger mailUnread = 0;
     
-    NSString *titleWithCounts = [NSString stringWithFormat:@"%@ (%@)",self.folderName,@(mailCount)];
+//    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user];
+
+    NSInteger currentAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
+    NSInteger unreadCount = [AppSettings inboxUnread:currentAccountIndex];
+    
+    NSString *titleWithCounts = [NSString stringWithFormat:@"%@ (%@, %@)",self.folderName,@(mailCount),@(unreadCount)];
     
     UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:titleWithCounts];
     
