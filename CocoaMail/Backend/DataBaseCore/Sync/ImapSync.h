@@ -37,8 +37,6 @@
 
 -(void)addFolder:(MCOIMAPFolder *)folder withName:(NSString*)folderName toAccount:(NSUInteger)accountNum;
 
--(void) updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum;
-
 
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
@@ -51,7 +49,7 @@
 -(void) cancel;
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock;;
 
--(NSMutableSet*) emailIDs;
+//-(NSMutableSet*) emailIDs;
 //-(void) newOAuthSet;
 
 +(BOOL) canFullSync;
