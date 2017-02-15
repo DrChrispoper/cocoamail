@@ -641,10 +641,15 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     }
 }
 
+
+
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
+    DDLogInfo(@"%@ %@",NSStringFromSelector(_cmd),[self folderType:folder]);
+    
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
-        DDLogWarn(@"setCurrentFolder: Current Folder is unchanged, do nothing.");
+        NSString *folderTypeName = [self baseFolderType:folder.type];
+        DDLogWarn(@"setCurrentFolder: Current Folder is unchanged, do nothing. Type=\"%@\" Index=%@",folderTypeName,@(folder.idx));
         return;
     }
     
@@ -2090,6 +2095,11 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return desc;
 }
 
+-(NSString *)folderType:(CCMFolderType)folder
+{
+    return [NSString stringWithFormat:@"type=\"%@\" index=%@",[self baseFolderType:folder.type],@(folder.idx)];
+}
+
 -(NSString *)currentFolderTypeValue
 {
     return [self baseFolderType:self.currentFolderType.type];
@@ -2120,6 +2130,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             break;
         case FolderTypeSpam:
             currFolderType = @"SPAM";
+            break;
+        case FolderTypeUser:
+            currFolderType = @"User";
             break;
         default:
             currFolderType = [NSString stringWithFormat:@"Unknown BaseFolderType (%ld)",(long)folderType];
