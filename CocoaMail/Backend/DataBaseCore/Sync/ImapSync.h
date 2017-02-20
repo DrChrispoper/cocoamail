@@ -7,6 +7,7 @@
 
 #import <MailCore/MailCore.h>
 #import "Persons.h"
+#import "Mail.h"
 
 // CocoaMail Error Domain and Errors
 #define CCMErrorDomain          @"com.cocoasoft.cocoamail"
@@ -41,7 +42,7 @@
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
--(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray* dels, NSArray* ups, NSArray* days))completedBlock;
+-(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<Mail*>* dels, NSArray<Mail*>* ups, NSArray<NSString*>* days))completedBlock;
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deletedAndWait:(UserSettings*)deleteUser;
