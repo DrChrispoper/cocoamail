@@ -110,7 +110,7 @@
 //    [DDLog addLogger:[DDASLLogger sharedInstance]];
 
     
-#ifdef USING_INSTABUG
+#ifdef USING_INSTABUG_FOO
     // This will log CocoaLumberjack into Instabug
     DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
     if ( ibgLogger ) {
@@ -120,9 +120,7 @@
         [DDLog addLogger:ibgLogger];
     }
 #else // not using Instabug
-    
-    xyzzy
-    
+        
     // Send debug statements to the Xcode console (uses XcodeColor)
     DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
     if (ttyLogger) {
@@ -139,6 +137,7 @@
     }
 
 #endif // not using Instabug
+#define USING_INSTABUG
 
     
     // Send debug info to log files
