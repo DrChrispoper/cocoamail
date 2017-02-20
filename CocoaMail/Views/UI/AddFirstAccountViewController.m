@@ -908,12 +908,12 @@
 
 -(void) insertConversationIndex:(ConversationIndex*)ci
 {
-    
+    DDLogWarn(@"Called empty function!");
 }
 
 - (void)updateDays:(NSArray *)days
 {
-    
+    DDLogWarn(@"Called empty function!");
 }
 
 @end

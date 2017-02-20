@@ -425,30 +425,29 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     
-    DDLogDebug(@"ENTERED -(BOOL)[UidEntgry hasUidEntrywithMsgId:%@ inAccount:%ld]",
-              msgID,(long)accountNum);
+    DDLogVerbose(@"ENTERED, msg id = %@, account = %@",msgID,@(accountNum));
 
     [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? AND folder LIKE ?", msgID, folder];
         
-        DDLogDebug(@"\tExecuted Database Query for match on msgID \"%@\" and folder \"%@\"",msgID,folder);
+        DDLogVerbose(@"Executed Database Query for match on msgID \"%@\" and folder \"%@\"",msgID,folder);
         
         if ([results next]) {
-            DDLogDebug(@"\tFOUND MATCHING RECORD = YES");
+            DDLogVerbose(@"FOUND MATCHING RECORD = YES");
             result = YES;
             [results close];
             dispatch_semaphore_signal(semaphore);
             return;
         }
         
-        DDLogDebug(@"\tFOUND MATCHING RECORD = NO");
+        DDLogVerbose(@"\tFOUND MATCHING RECORD = NO");
         
         dispatch_semaphore_signal(semaphore);
     }];
     
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     
-    DDLogDebug(@"\tRETURNING %@",(result?@"YES":@"NO"));
+    DDLogVerbose(@"RETURNING %@",(result?@"YES":@"NO"));
     
     return result;
 }
@@ -459,23 +458,22 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     
-    DDLogDebug(@"ENTERED -(BOOL)[UidEntgry hasUidEngtrywithMsgId:%@ withFolder:%ld inAccount:%ld]",
-              msgID,(long)folderNum,(long)accountNum);
-
+    DDLogInfo(@"ENTERED, msg id = %@, fold num = %@, acnt num = %@",msgID,@(folderNum),@(accountNum));
+    
     [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT folder FROM uid_entry WHERE msg_id = ? AND folder = ?", msgID, @(folderNum + 1000 * accountNum)];
         
-        DDLogDebug(@"\tExecuted Database Query for match on msgID \"%@\" and folderNum %ld",
+        DDLogDebug(@"Executed Database Query for match on msgID \"%@\" and folderNum %ld",
                   msgID,(long)(folderNum + 1000 * accountNum));
         
         while ([results next]) {
-            DDLogDebug(@"\tFOUND MATCHING RECORD = YES");
+            DDLogDebug(@"FOUND MATCHING RECORD = YES");
 
             NSInteger folderColumnValue = [results intForColumn:@"folder"];
-            DDLogDebug(@"\tDB QUERY RESULT'S \"folder\" column value = %ld",(long)folderColumnValue);
+            DDLogDebug(@"DB QUERY RESULT'S \"folder\" column value = %ld",(long)folderColumnValue);
             
             if (folderNum == -1 || folderNum == folderColumnValue % 1000) {
-                DDLogDebug(@"\tfolderNum == -1 OR folderNum == %@",@(folderColumnValue % 1000));
+                DDLogDebug(@"folderNum == -1 OR folderNum == %@",@(folderColumnValue % 1000));
                 result = YES;
             }
         }
@@ -485,7 +483,7 @@
     
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     
-    DDLogDebug(@"\tRETURNING %@",(result?@"YES":@"NO"));
+    DDLogDebug(@"RETURNING %@",(result?@"YES":@"NO"));
     
     return result;
 }

@@ -37,6 +37,6 @@
 #ifdef DEBUG    // DEBUG BUILD
 static const DDLogLevel ddLogLevel = DDLogLevelDebug;   // Don't show Verbose
 #else           // RELEASE BUILD
-static const DDLogLevel ddLogLevel = DDLogLevelWarning; // Don't show Info, Debug, Verbose
+static const DDLogLevel ddLogLevel = DDLogLevelInfo; // Don't show Debug, Verbose
 #endif
 

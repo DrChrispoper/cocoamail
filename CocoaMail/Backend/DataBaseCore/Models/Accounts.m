@@ -58,6 +58,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     static Accounts * sharedInstance;
     
     dispatch_once(&once, ^{
+        
+        DDLogInfo(@"dispatch_once");
+        
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = [[AppSettings getSingleton] quickSwipe];
         sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];
@@ -146,12 +149,12 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) runLoadData
 {
-    DDLogInfo(@"BEGIN runLoadData");
+    DDLogInfo(@"ENTERED");
     
     // If this is NOT the All Mails user account ..
     if (!self.currentAccount.user.isAll) {
 
-        DDLogInfo(@"\tNOT All Mail Messages");
+        DDLogDebug(@"\tNOT All Mail Messages");
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             //NSInteger refBatch = 5;
@@ -161,7 +164,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
-                 DDLogDebug(@"\tSearchRunner Active Folder Search RCVD subscribeNext, so sorting email (1)");
+                 DDLogDebug(@"SearchRunner returned \"subscribeNext\", so sorting email (1)");
                  [self _sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
@@ -169,7 +172,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                  //}
              } // end SearchRunner subscribeNext block
              completed:^{
-                 DDLogDebug(@"\tSearchRunner RCVD \"completed\", so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
+                 DDLogDebug(@"SearchRunner returned \"completed\", so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
                  [self.currentAccount.mailListSubscriber localSearchDone:YES];
                  [self.currentAccount.mailListSubscriber reFetch:YES];
              }]; // end SearchRunner completed block
@@ -180,13 +183,13 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     [self.localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Mail* email) {
-             DDLogDebug(@"\tSearchRunner All Mails Search RCVD subscribeNext, so sorting email (2)");
+             DDLogDebug(@"\tAdd mail \"%@\" to local store.",email.subject);
              if (email && email.user && !email.user.isDeleted) {
                  [self _sortEmail:email];
              }
          }
          completed:^{
-            DDLogDebug(@"\tSearchRunner All Mails Search RCVD \"completed\"");
+            DDLogVerbose(@"\t[SearchRunner allEmailsSearch] -> completed,");
              
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  if (self.currentAccount.user.isAll) {
@@ -557,7 +560,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) connect
 {
-    DDLogInfo(@"ENTERED -[Account connect");
+    DDLogInfo(@"ENTERED");
     
     if (!self.user.isAll && self.user.isDeleted) {
         DDLogWarn(@"User is not ALL and IS DELETED");
@@ -565,7 +568,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     }
     
     if (self.user.isAll) {
-        DDLogInfo(@"User is ALL");
+        DDLogInfo(@"User.isAll = TRUE");
         
         NSArray<Account*>* allAccounts = [[Accounts sharedInstance] accounts];
         for (NSInteger acntIndex = 0; acntIndex < allAccounts.count;acntIndex++) {
@@ -591,15 +594,13 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         }
     }
     else {
-        DDLogInfo(@"User is not ALL");
-        
-        DDLogInfo(@"Do Account Login:");
+        DDLogInfo(@"User.isAll == FALSE; CALLING doLogin:%@",self.user.username);
         
         [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
-            DDLogError(@"Login failed with error = %@",error);
+            
+            DDLogError(@"doLogin:%@ failed with error = %@",self.user.username,error);
             
             if ([Accounts sharedInstance].canUI) {
-                DDLogInfo(@"Accounts-canUI == TRUE (Can show UI)");
                 
                 if (error.code == CCMConnectionError) {
                     DDLogError(@"Login Connection Error, displaying Status UI");
@@ -618,7 +619,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 }
             }
         } completed:^{
-            DDLogInfo(@"Account Login Succeded");
+            DDLogInfo(@"doLogin:%@ Succeded",self.user.username);
         }];
     }
 }
@@ -645,7 +646,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
-    DDLogInfo(@"%@ %@",NSStringFromSelector(_cmd),[self folderType:folder]);
+    DDLogInfo(@"ENTERED, folder=%@",[self folderType:folder]);
     
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
         NSString *folderTypeName = [self baseFolderType:folder.type];
@@ -770,9 +771,10 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSString *sonID = [email sonID];
     
-    if ( [email.subject containsString:@"Review blocked"]) {
-        DDLogInfo(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
-    }
+    // Andy was debugging non duplicate messages showing as threaded
+//    if ( [email.subject containsString:@"Review blocked"]) {
+//        DDLogInfo(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
+//    }
     
     if ( [sonID isEqualToString:@""] ||
          [sonID isEqualToString:@"0"] ||
@@ -927,7 +929,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(NSMutableArray*) getConversationsForFolder:(CCMFolderType)folderHandle
 {
-    DDLogInfo(@"Accounts getConversationsForFolder: CCMFolderType .index=%@ .type=%@",
+    DDLogInfo(@"CCMFolderType .index=%@ .type=%@",
               @(folderHandle.idx),@(folderHandle.type));
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
@@ -948,7 +950,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 #if (LOG_VERBOSE)
     NSString *folderName = [self.user folderDisplayNameForType:folderHandle];
     if ( [folderName isEqualToString:@"INBOX"] ) {
-        DDLogVerbose(@"Accounts getConversationsForFolder: \"INBOX\" returns: ");
+        DDLogVerbose(@"\"INBOX\" returns: ");
         NSInteger cnum = 0;
         for (ConversationIndex *conversationIndex in conversationsForFolder) {
             Conversation *conversation = [[Accounts sharedInstance] conversationForCI:conversationIndex];
@@ -1188,7 +1190,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) sendOutboxs
 {
-    DDLogInfo(@"ENTERED sendOutboxs");
+    DDLogInfo(@"-[%@ %@]",NSStringFromClass([self class]),NSStringFromSelector(_cmd));
     
     if (self.isSendingOut == 0) {
         
@@ -1491,7 +1493,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 // Refresh contents of IMAP System Folders 
 -(void) importantFoldersRefresh:(NSInteger)pFolder
 {
-    DDLogInfo(@">> ENTERING importantFolderRefresh:folder=%ld",(long)pFolder);
+    DDLogInfo(@"ENTERED, folder=%ld",(long)pFolder);
     
     if (self.user.isDeleted) {
         return;
@@ -1539,7 +1541,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) doLoadServer
 {
-    DDLogInfo(@">> ENTERING doLoadServer");
+    DDLogInfo(@"ENTERED");
     
     if ( self.user.isDeleted ) {
         DDLogDebug(@"\tdoLoadServer: User-is-deleted, returning.");
@@ -1910,21 +1912,21 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) refreshCurrentFolder
 {
-    DDLogInfo(@">> ENTERED Accounts refreshCurrentFolder");
+    DDLogInfo(@"ENTERED");
     
     if (self.user.isAll) {
-        DDLogInfo(@"\tWe are ALL folders");
+        DDLogDebug(@"\tWe are ALL folders");
         for (Account* a in [[Accounts sharedInstance] accounts]) {
             if (!a.user.isAll) {
                 [a refreshCurrentFolder];
             }
         }
-        DDLogInfo(@"\tAll Folders refreshed, returing");
+        DDLogDebug(@"\tAll Folders refreshed, returing");
         return;
     }
     
     if (self.user.isDeleted) {
-        DDLogInfo(@"\tFolder is Deleted, returning");
+        DDLogDebug(@"\tFolder is Deleted, returning");
         return;
     }
     
@@ -1933,7 +1935,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             [self.mailListSubscriber serverSearchDone:YES];
         }];
-        DDLogInfo(@"\tIMAP Services not connected, connecting and returning");
+        DDLogDebug(@"\tIMAP Services not connected, connecting and returning");
         return;
     }
     
@@ -1943,7 +1945,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     [self runTestData];
     
-    DDLogInfo(@"\tRefresh");
+    DDLogDebug(@"\tRefresh");
     
     RACSignal *signal = [[SyncManager getSingleton] syncActiveFolderFromStart:YES
                                                                          user:self.user];
@@ -1953,7 +1955,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
      
      subscribeNext:^(Mail* email) {
          
-         DDLogInfo(@"\tsubscribeNext(Mail*)");
+         DDLogDebug(@"\tsubscribeNext(Mail*)");
 
          new++;
          [self insertRows:email];
@@ -2005,7 +2007,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) syncCurrentFolder
 {
-    DDLogInfo(@">> ENTERING Accounts syncCurrentFolder");
+    DDLogInfo(@"ENTERED");
     
     if (self.user.isDeleted) {
         DDLogWarn(@"\tReturning because self.user.isDeleted is FALSE");

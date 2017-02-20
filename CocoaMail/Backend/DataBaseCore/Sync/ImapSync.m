@@ -62,7 +62,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         if (sharedService.user.accountNum == user.accountNum) {
             return sharedService;
         } else {
-            DDLogInfo(@"sharedService.user.accountNum %@ NOT EQUAL TO user.accountNum %@",
+            DDLogDebug(@"sharedService.user.accountNum %@ NOT EQUAL TO user.accountNum %@",
                       @(sharedService.user.accountNum),@(user.accountNum));
         }
     }
@@ -74,19 +74,21 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated
 {
-    if (updated) {
-        sharedServices = nil;
-    }
+    DDLogVerbose(@"ENTERED");
     
     @synchronized(self) {
         
+        if (updated) {
+            sharedServices = nil;
+        }
+    
         // If we already have one or more shared services, then return them
         if (sharedServices && sharedServices.count > 0) {
-            DDLogInfo(@"[ImapSync allSharedServices] returning existing sharedServices array.");
+            DDLogVerbose(@"Returning existing sharedServices[0..%@]",@(sharedServices.count));
             return sharedServices;
         }
         
-        DDLogInfo(@"[ImapSync allSharedServices] creating new sharedServices array, one for each User.");
+        DDLogVerbose(@"creating new sharedServices array, one for each User.");
         
         // Create new sharedServices, one for each user.
         
@@ -101,7 +103,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 continue;   // next UserSettings
             }
             
-            DDLogInfo(@"Create new Shared Service to Username \"%@\" (acnt # %@)",user.username,@(user.accountNum));
+            DDLogVerbose(@"Create new IMAP Shared Service to for Account \"%@\" (# %@)",user.username,@(user.accountNum));
             
             // Create and set up new Imap Sync Shared Service
             ImapSync* sharedService = [[super allocWithZone:nil] init];
@@ -149,9 +151,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    DDLogInfo(@"%@",[ImapSync _networkStatusText:networkStatus]);
+    BOOL canFullSync = [[AppSettings getSingleton] canSyncOverData] || (networkStatus == ReachableViaWiFi);
     
-    return [[AppSettings getSingleton] canSyncOverData] || (networkStatus == ReachableViaWiFi);
+    DDLogInfo(@"returning %@",(canFullSync?@"TRUE":@"FALSE"));
+    
+    return canFullSync;
 }
 
 // MARK: - IMAP Sync Service: delete a user
@@ -220,10 +224,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
 // Get the Unread Count for User's Inbox
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock
 {
-    DDLogInfo(@"ENTERED Get Inbox Unread Count");
+    DDLogInfo(@"ENTERED");
     
     if (![ImapSync _isNetworkAvailable] | user.isAll) {
-        DDLogInfo(@"\tNetwork is not available OR this is All account");
+        DDLogDebug(@"Network is not available OR this is All account");
         completedBlock();
         return;
     }
@@ -236,10 +240,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
         
         [so start:^(NSError* error, MCOIndexSet* searchResult) {
-            DDLogInfo(@"STARTED Search for All Unread Mails Operation");
+            DDLogDebug(@"STARTED Search for All Unread Mails Operation");
             
             if (!error) {
-                DDLogInfo(@"Got Inbox Unread search results, count = %u",searchResult.count);
+                DDLogDebug(@"Got Inbox Unread search results, count = %u",searchResult.count);
                 
                 [AppSettings setInboxUnread:searchResult.count accountIndex:user.accountIndex];
             }
@@ -290,8 +294,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
     
-    DDLogDebug(@"\tApp isInBackground = %@",
-               (isInBackground==TRUE?@"TRUE":@"FALSE") );
+    DDLogVerbose(@"\tApp isInBackground = %@",(isInBackground==TRUE?@"TRUE":@"FALSE") );
     
     return isInBackground;
 }
@@ -301,9 +304,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    DDLogInfo(@"%@",[ImapSync _networkStatusText:networkStatus]);
+    DDLogInfo(@"NetworkStatus == %@",[self _networkStatusText:networkStatus]);
     
-    return (networkStatus != NotReachable);
+    BOOL isAvailable = (networkStatus != NotReachable);
+    
+    return isAvailable;
 }
 
 +(NSString *)_networkStatusText:(NetworkStatus)status
@@ -342,11 +347,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogInfo(@"ENTERED IMAP Sync Servier: Do Login for \"%@\"]",user.username);
+    DDLogInfo(@"ENTERED, user=%@",user.username);
     
     if (!user || user.isDeleted) {
         
-        DDLogInfo(@"\tHave no user or user is deleted");
+        DDLogError(@"Have no user or user is deleted");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMDeletedError userInfo:nil]];
@@ -357,7 +362,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     if (!sharedService) {
         
-        DDLogInfo(@"\tHave no Shared ImapSync Services for User \"%@\"",user.username);
+        DDLogError(@"Have no Shared ImapSync Services for User \"%@\"",user.username);
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
 #ifdef USING_INSTABUG
@@ -370,11 +375,14 @@ static NSArray<ImapSync*>* sharedServices = nil;
         }];
     }
     
-    DDLogInfo(@"CURIOUS: user %@ sharedSettings.user",(user==sharedService.user?@"EQUAL":@"DOES NOT EQUAL"));
+    // CURIOUS: Are these always equal?
+    if ( user != sharedService.user ) {
+        DDLogInfo(@"Andy is CURIOUS: \"user\" != \"sharedService.user\"");
+    }
 
     if (![ImapSync _isNetworkAvailable]) {
         
-        DDLogInfo(@"\t+[ImapSync _isNetworkAvailable] returned NO");
+        DDLogError(@"+[ImapSync _isNetworkAvailable] returned NO");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
             sharedService.connected = NO;
@@ -387,31 +395,31 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     if ( sharedService.signal ) {
         
-        DDLogInfo(@"\tReturning (existing) Shared IMAP Sync Service Signal");
+        DDLogDebug(@"Returning (existing) Shared IMAP Sync Service Signal");
         
         return sharedService.signal;
     }
     
-    DDLogInfo(@"\tCREATE NEW Shared IMAP Sync Service Signal.");
+    DDLogDebug(@"CREATE NEW Shared IMAP Sync Service Signal.");
     
     sharedService.signal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler]
                       block:^(id<RACSubscriber> subscriber)
     {
         if (sharedService.connected) {
-            DDLogInfo(@"\tShared IMAP Sync Service is Connected");
+            DDLogDebug(@"Shared IMAP Sync Service is Connected");
             [subscriber sendCompleted];
             return;
         }
 
-        DDLogInfo(@"\tShared IMAP Sync Service is NOT Connected");
+        DDLogDebug(@"Shared IMAP Sync Service is NOT Connected");
 
         if ([sharedService.user isUsingOAuth]) {
-            DDLogInfo(@"\tAttempting to log in with OAuth.");
+            DDLogDebug(@"Attempting to log in with OAuth.");
 
             [self _loginWithOAuth:sharedService forUser:user withSubscriber:subscriber];
         }
         else { //Not using OAuth
-            DDLogInfo(@"\tAttempting to log in with Password.");
+            DDLogDebug(@"Attempting to log in with Password.");
 
             [self _loginWithPassword:sharedService forUser:user withSubscriber:subscriber];
         }
@@ -452,7 +460,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(void) _loginWithOAuth:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
 {
-    DDLogDebug(@"\tLogging with OAuth (with token:%@)", [sharedService.user oAuth]);
+    DDLogDebug(@"\tLog in with OAuth");
     
     sharedService.imapSession.OAuth2Token = [sharedService.user oAuth];
     sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
@@ -607,7 +615,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     // NB: Called only from Login methods
     
-    DDLogInfo(@"BEGIN _getImapFolderNamesAndUpdateLocal");
+    DDLogInfo(@"ENTERED");
     
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
     
@@ -617,7 +625,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             DDLogInfo(@"STARTED IMAP Session Fetch All Folders Operation");
             
             if ( error ) {
-                DDLogError(@"\tFetch All Folders Operation error = %@",error);
+                DDLogError(@"Fetch All Folders Operation error = %@",error);
                 return;
             }
             
@@ -643,7 +651,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     // Appears not to handle DELETED folders.  What about folders with name CHANGES?
     
-    DDLogInfo(@"BEGIN: Check Folder Names for Updates, IMAP folder count = %lu",
+    DDLogInfo(@"Check Folder Names for Updates, IMAP folder count = %lu",
               (unsigned long)imapFolders.count);
     
     int folderIndex = 0;
@@ -658,7 +666,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         // then it is a NEW folder and needs to be added.
         if ( imapFolderMatchesLocalFolder == FALSE ) {
             
-            DDLogInfo(@"\tIMAP Folder \"%@\" NOT found in local folders.",[imapFolder path]);
+            DDLogDebug(@"IMAP Folder \"%@\" NOT found in local folders.",[imapFolder path]);
             
             NSString *dispName = [ImapSync displayNameForFolder:imapFolder usingSession:self.imapSession];
             
@@ -704,7 +712,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         // if the path of the folder being checked, matches the path of the existing folder
         if ([[imapFolder path] isEqualToString:folderPath]) {
             
-            DDLogInfo(@"\t *** IMAP Folder (%@) == Local Folder %lu ***",
+            DDLogVerbose(@"IMAP Folder (%@) == Local Folder %lu",
                       folderPath,(unsigned long)localFolderIndex);
             
             matchingFolderFound = TRUE;
@@ -717,11 +725,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(NSInteger) _nextFolderToSync
 {
-    DDLogInfo(@"BEGIN _nextFolderToSync");
+    DDLogInfo(@"ENTERED");
     
 //    SyncManager *syncMgr = [SyncManager getSingleton];
 //        
-//    NSInteger folderIndexForBaseFolderType = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
+//    NSInteger folderIndexForBaseFolderType = [self.user numFolderWithFolder:allFolderType()];
 //    
 //    NSDictionary *state = [syncMgr retrieveState:folderIndexForBaseFolderType
 //                                      accountNum:self.user.accountNum];
@@ -732,7 +740,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSInteger allFolderNum = [self _folderIndexForBaseFolderType:FolderTypeAll];
     if ( [self _folderIsNotSynced:allFolderNum] ){
-        DDLogInfo(@"\tAll Folder Not Synced, do it next");
+        DDLogInfo(@"All Folder Not Synced, do it next");
         return allFolderNum;
     }
 
@@ -742,7 +750,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSInteger inboxFolderNumber = [self _folderIndexForBaseFolderType:FolderTypeInbox];
     if ( [self _folderIsNotSynced:inboxFolderNumber] ){
-        DDLogInfo(@"\tInbox Folder Not Synced, do it next");
+        DDLogInfo(@"Inbox Folder Not Synced, do it next");
         return inboxFolderNumber;
     }
     
@@ -754,7 +762,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
     NSInteger favorisFolderNumber = [self _folderIndexForBaseFolderType:FolderTypeFavoris];
     if ( [self _folderIsNotSynced:favorisFolderNumber] ){
-        DDLogInfo(@"\tFavoris Folder Not Synced, do next");
+        DDLogInfo(@"Favoris Folder Not Synced, do next");
         return favorisFolderNumber;
     }
     
@@ -764,7 +772,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSInteger sentFolderNumber = [self _folderIndexForBaseFolderType:FolderTypeSent];
     if ( [self _folderIsNotSynced:sentFolderNumber] ){
-        DDLogInfo(@"\tSent Folder Not Synced, do next");
+        DDLogInfo(@"Sent Folder Not Synced, do next");
         return sentFolderNumber;
     }
     
@@ -773,12 +781,12 @@ static NSArray<ImapSync*>* sharedServices = nil;
     for (int indexFolder = 0; indexFolder < folders.count; indexFolder++) {
         
         if ( [self _folderIsNotSynced:indexFolder] ) {
-            DDLogInfo(@"\tUser Folder %ld Not Synced, do next",(long)indexFolder);
+            DDLogInfo(@"User Folder %ld Not Synced, do next",(long)indexFolder);
             return indexFolder;
         }
     }
     
-    DDLogInfo(@"\tCould not find next folder to sync, returning -1");
+    DDLogInfo(@"Could not find next folder to sync, returning -1");
     return -1;
 }
 
@@ -848,7 +856,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(RACSignal*) runSearchPerson:(Person*)person
 {
-    DDLogInfo(@"ENTERING ImapSync runSearchPerson: name=\"%@\"",person.name);
+    DDLogInfo(@"ENTERED, person name = %@",person.name);
 
     @weakify(self);
     
@@ -861,7 +869,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
-        NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
+        NSInteger currentFolder = [self.user numFolderWithFolder:allFolderType()];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:person.email];
         MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:[self.user folderServerName:currentFolder]
                                                                                 expression:expr];
@@ -1033,6 +1041,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(void) _updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum
 {
+    DDLogInfo(@"ENTERED");
+
     MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folderPath];
     
     [folderOp start:^(NSError* error, MCOIMAPFolderInfo* info) {
@@ -1040,10 +1050,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
         DDLogInfo(@"BEGAN IMAP Folder Get Info Operation on %@",folderPath);
         
         if (error) {
-            DDLogError(@"\tIMAP Folder Get Info Operation Error = %@",error);
+            DDLogError(@"IMAP Folder Get Info Operation Error = %@",error);
         } else {
             
-            DDLogInfo(@"\tGot Folder Sync State from folder %ld for IMAP folder \"%@\"",(long)folderIndex,folderPath);
+            DDLogDebug(@"Got Folder Sync State from folder %ld for IMAP folder \"%@\"",(long)folderIndex,folderPath);
             
             int msgCount = [info messageCount];
             
@@ -1059,16 +1069,17 @@ static NSArray<ImapSync*>* sharedServices = nil;
 // "folder" is a Folder Index, or -1
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
 {
-    DDLogInfo(@"ImapSync runFolder: folder=%ld fromStart=%@ getAll=%@",
-               (long)folder,
-               (isFromStart==TRUE?@"TRUE":@"FALSE"),
-               (getAll==TRUE?@"TRUE":@"FALSE"));
+    DDLogInfo(@"ENTERED, folder=%@ fromStart=%@ getAll=%@",
+              @(folder),
+              (isFromStart==TRUE?@"TRUE":@"FALSE"),
+              (getAll==TRUE?@"TRUE":@"FALSE"));
+
     
     if (folder == -1) {
-        DDLogInfo(@"\tfolderIndex = -1, calling folderIndex = _nextFolderToSync");
+        DDLogDebug(@"folderIndex = -1, calling folderIndex = _nextFolderToSync");
         folder = [self _nextFolderToSync];
     }
-    DDLogDebug(@"\tfolderIndex = %ld",(long)folder);
+    DDLogDebug(@"folderIndex = %ld",(long)folder);
     
     NSInteger currentFolder = folder;
     
@@ -1382,7 +1393,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             return;
         }
         if (self.isCanceled) {
-            DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
+            DDLogDebug(@"\tCancelled == TRUE, so sending Completed to subscriber");
             [subscriber sendCompleted];
             return;
         }
@@ -1399,21 +1410,17 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
 {
-    
+    DDLogInfo(@"ENTERED, folder path = %@",folderPath);
+
     dispatch_async(self.s_queue, ^{
-        
-        DDLogInfo(@"BEGIN Fetch Folder \"%@\" Messages from IMAP Server.",folderPath);
         
         int batchsize = 50;
         
-        DDLogInfo(@"\tFolder has %ld emails", (long)msgCount);
+        DDLogDebug(@"Folder has %ld emails", (long)msgCount);
         
         if ( ![self _isRunningInBackground] ) {
             
-            DDLogInfo(@"\twe are not running in background, so ...");
-            
-            DDLogInfo(@"\tSave email count (%lu) to Local State Storage",(long)msgCount);
-            
+            DDLogDebug(@"we are not running in background, so ... Save email count (%lu) to Local State Storage",(long)msgCount);
             
             [self _writeFolderStateMessageCount:msgCount andFolder:currentFolder];
             
@@ -1422,7 +1429,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             //   Zero AND the last loaded message was Index One)
             if (msgCount == 0 || (!isFromStart && (lastEnded == 1))) {
                 
-                DDLogInfo(@"\tNo Messages OR (Not from Start AND Last Ended == 1");
+                DDLogDebug(@"No Messages OR (Not from Start AND Last Ended == 1");
                 
                 NSInteger lastEndedIndex = 0;
                 if ( msgCount == 0 ) {
@@ -1432,11 +1439,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     lastEndedIndex = lastEnded;
                 }
                 
-                DDLogInfo(@"\tSave Last Ended Index (%lu) to Local State Storage",(long)lastEndedIndex);
+                DDLogDebug(@"Save Last Ended Index (%lu) to Local State Storage",(long)lastEndedIndex);
                 
                 [self _writeFolderStateLastEnded:lastEndedIndex andFolder:currentFolder];
                 
-                DDLogInfo(@"\tand send CCMFolderSyncedError to subscriber.");
+                DDLogDebug(@"and send CCMFolderSyncedError to subscriber.");
                 
                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
                 return;
@@ -1472,7 +1479,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* imapMessages, MCOIndexSet* vanishedMessages) {
             
             if (error) {
-                DDLogError(@"\tError %@ fetching messages.  Send CCMConnectionError to subscriber.",error.description);
+                DDLogError(@"Error %@ fetching messages.  Send CCMConnectionError to subscriber.",error.description);
                 
                 self.connected = NO;
                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
@@ -1480,7 +1487,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 return;
             }
             
-            DDLogInfo(@"\tgot %lu messages.",(unsigned long)imapMessages.count);
+            DDLogDebug(@"got %lu messages.",(unsigned long)imapMessages.count);
             
             [self _processImapMessages:imapMessages subscriber:(id)subscriber currentFolder:currentFolder from:from isFromStart:isFromStart getAll:getAll];
             
@@ -1491,11 +1498,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
+    DDLogInfo(@"ENTERED, num IMAP msgs = %@",@(imapMessages.count));
+    
     dispatch_async(self.s_queue, ^{
         
         SyncManager *syncMgr = [SyncManager getSingleton];
-        
-        DDLogInfo(@"BEGIN Process %lu IMAP Messages.",(unsigned long)imapMessages.count);
         
         // Message ID of the last mail message returned by the IMAP server
         NSString* lastMsgID = [imapMessages lastObject].header.messageID;
@@ -1504,7 +1511,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             
             if (self.isCanceled) {
-                DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
+                DDLogDebug(@"isCancelled == TRUE, so sending Completed to subscriber");
                 [subscriber sendCompleted];
                 return;
             }
@@ -1513,17 +1520,17 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             Mail* email = [Mail mailWithMCOIMAPMessage:imapMsg inFolder:currentFolder andAccount:self.user.accountNum];
             
-            DDLogInfo(@"\n\nEMAIL SUBJECT: \"%@\"\nEMAIL MSG ID:  \"%@\"\nACCOUNT NUM:   %ld\nFOLDER NUM:    %ld\n",
+            DDLogDebug(@"\n\nEMAIL SUBJECT: \"%@\"\nEMAIL MSG ID:  \"%@\"\nACCOUNT NUM:   %ld\nFOLDER NUM:    %ld\n",
                       email.subject,email.msgID,(long)self.user.accountNum,(long)currentFolder);
             
             if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
                 
-                DDLogInfo(@"--- Message already exists in this Account's Databsase");
+                DDLogDebug(@"--- Message already exists in this Account's Databsase");
                 
                 if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
                     // already have this email in other folder than this one -> add folder in uid_entry
                     
-                    DDLogInfo(@"--- Message DOES NOT already exist in this Account's Database in Folder \"%@\", ADDING.",@(currentFolder));
+                    DDLogDebug(@"--- Message DOES NOT already exist in this Account's Database in Folder \"%@\", ADDING.",@(currentFolder));
                     
                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
                     
@@ -1537,7 +1544,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
                 }
                 else {
-                    DDLogInfo(@"--- Message already exists in this Account's Database in Folder \"%@\"",@(currentFolder));
+                    DDLogDebug(@"--- Message already exists in this Account's Database in Folder \"%@\"",@(currentFolder));
                     
                 }
                 
@@ -1552,7 +1559,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 continue;
             }
             else {
-                DDLogInfo(@"--- Message DOES NOT already exist in this Account's Databsase");
+                DDLogDebug(@"--- Message DOES NOT already exist in this Account's Databsase");
             }
             
             DDLogInfo(@"BEGIN Loading Email from IMAP Server into Database");
@@ -1642,6 +1649,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (BOOL)_cacheEmail:(NSInteger)currentFolder email:(Mail *)email
 {
+    DDLogInfo(@"ENTERED");
+    
     BOOL emailCached = NO;
     
     BOOL isInInbox = (currentFolder == [self.user numFolderWithFolder:inboxFolderType()]);
@@ -1651,7 +1660,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
         if (![eIds containsObject:email.msgID]) {
             Mail* newE = [email copy];
-            CCMLog(@"Had Cached %ld Emails in account:%ld", (unsigned long)eIds.count, (long)[email.uids[0] accountNum]);
+            DDLogDebug(@"Had Cached %ld Emails in account:%ld", (unsigned long)eIds.count, (long)[email.uids[0] accountNum]);
             
             //[self.cachedData addObject:newE];
             [eIds addObject:newE.msgID];

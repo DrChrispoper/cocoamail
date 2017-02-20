@@ -147,84 +147,84 @@
 
 -(void)setfolderPathPrefix:(NSString *)folderPathPrefix
 {
-    DDLogInfo(@"setfolderPathPrefix");
+    DDLogInfo(@"ENTERED");
     _folderPathPrefix = [folderPathPrefix copy];
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setFolderPathDelimiter:(NSString *)folderPathDelimiter
 {
-    DDLogInfo(@"setFolderPathDelimiter");
+    DDLogInfo(@"ENTERED");
     _folderPathDelimiter = [folderPathDelimiter copy];
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setIdentifier:(NSString *)identifier
 {
-    DDLogInfo(@"setIdentifier");
+    DDLogInfo(@"ENTERED");
     _identifier = identifier;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setUsername:(NSString *)username
 {
-    DDLogInfo(@"setUsername");
+    DDLogInfo(@"ENTERED");
     _username = username;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapHostname:(NSString *)imapHostname
 {
-    DDLogInfo(@"setImapHostname");
+    DDLogInfo(@"ENTERED");
     _imapHostname = imapHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapPort:(NSUInteger)imapPort
 {
-    DDLogInfo(@"setImapPort");
+    DDLogInfo(@"ENTERED");
     _imapPort = imapPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapConnectionType:(NSUInteger)imapConnectionType
 {
-    DDLogInfo(@"setImapConnectionType");
+    DDLogInfo(@"ENTERED");
     _imapConnectionType = imapConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpHostname:(NSString *)smtpHostname
 {
-    DDLogInfo(@"setSmtpHostname");
+    DDLogInfo(@"ENTERED");
     _smtpHostname = smtpHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpPort:(NSUInteger)smtpPort
 {
-    DDLogInfo(@"setSmtpPort");
+    DDLogInfo(@"ENTERED");
     _smtpPort = smtpPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpConnectionType:(NSUInteger)smtpConnectionType
 {
-    DDLogInfo(@"setSmtpConnectionType");
+    DDLogInfo(@"ENTERED");
     _smtpConnectionType = smtpConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSignature:(NSString *)signature
 {
-    DDLogInfo(@"setSignature");
+    DDLogInfo(@"ENTERED");
     _signature = signature;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setName:(NSString *)name
 {
-    DDLogInfo(@"setName");
+    DDLogInfo(@"ENTERED");
 
     if (!self.isAll) {
         self.linkedAccount.person.name = name;
@@ -236,7 +236,7 @@
 
 -(void)setInitials:(NSString *)initials
 {
-    DDLogInfo(@"setInitials");
+    DDLogInfo(@"ENTERED");
 
     if (!self.isAll) {
         self.linkedAccount.person.codeName = initials;
@@ -248,7 +248,7 @@
 
 -(void)setColor:(UIColor *)color
 {
-    DDLogInfo(@"setColor");
+    DDLogInfo(@"ENTERED");
 
     _color = color;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
@@ -256,7 +256,7 @@
 
 -(void)setImportantFolders:(NSMutableArray *)importantFolders
 {
-    DDLogInfo(@"setImportantFolders");
+    DDLogInfo(@"ENTERED");
 
     _importantFolders = importantFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
@@ -264,7 +264,7 @@
 
 -(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
-    DDLogInfo(@"setAllFoldersDisplayNames");
+    DDLogInfo(@"ENTERED");
 
     _allFoldersDisplayNames = allFolders;   // does this copy or assign?
     
@@ -273,7 +273,7 @@
 
 -(void)setAccountNum:(NSUInteger)accountNum
 {
-    DDLogInfo(@"setAccountNum");
+    DDLogInfo(@"ENTERED");
 
     _accountNum = accountNum;
     
@@ -286,7 +286,7 @@
 
 -(void)setDeleted:(BOOL)deleted
 {
-    DDLogInfo(@"setDeleted");
+    DDLogInfo(@"ENTERED");
 
     _deleted = deleted;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
@@ -294,7 +294,7 @@
 
 -(void)setAll:(BOOL)all
 {
-    DDLogInfo(@"setAll");
+    DDLogInfo(@"ENTERED");
 
     _all = all;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
@@ -348,7 +348,7 @@
 
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder
 {
-    DDLogInfo(@"UserSettings setImportantFolderNum");
+    DDLogInfo(@"ENTERED");
     
     if (_importantFolders.count == 0) {
         _importantFolders = [[NSMutableArray alloc] initWithObjects:@"", @"", @"", @"", @"", @"", nil];
@@ -541,9 +541,9 @@
     [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     
     if ( _allFoldersDisplayNames == nil ) {
-        DDLogInfo(@"Archiving NIL _allFolderDisplayNames for account %@",@(_accountNum));
+        DDLogDebug(@"Archiving NIL _allFolderDisplayNames for account %@",@(_accountNum));
     } else {
-        DDLogInfo(@"Archiving %@ _allFolderDisplayNames for account %@",@(_allFoldersDisplayNames.count),@(_accountNum));
+        DDLogDebug(@"Archiving %@ _allFolderDisplayNames for account %@",@(_allFoldersDisplayNames.count),@(_accountNum));
     }
     [encoder encodeBool:_deleted forKey:@"deleted"];
     [encoder encodeBool:_all forKey:@"all"];

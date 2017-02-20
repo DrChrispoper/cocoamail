@@ -21,6 +21,7 @@
 #import "UserSettings.h"
 #import "Draft.h"
 #import <CocoaLumberjack/CocoaLumberjack.h>
+#import "CCMDDLogFormatter.h"
 
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
 
@@ -30,16 +31,16 @@
 #import <Instabug-CocoaLumberjack/DDInstabugLogger.h>
 
 // Required to get logging into Instabug in iOS 10+
-inline void NSLog(NSString *format, ...) {
-    va_list arg_list;
-    va_start(arg_list, format);
-    aslmsg msg = asl_new(ASL_TYPE_MSG);
-    asl_set(msg, ASL_KEY_READ_UID, "-1");
-    NSString *formattedString = [[NSString alloc] initWithFormat:format arguments:arg_list];
-    asl_log(NULL, msg, (ASL_LEVEL_ERR), "%s", [formattedString UTF8String]);
-    asl_free(msg);
-    va_end(arg_list);
-}
+//inline void NSLog(NSString *format, ...) {
+//    va_list arg_list;
+//    va_start(arg_list, format);
+//    aslmsg msg = asl_new(ASL_TYPE_MSG);
+//    asl_set(msg, ASL_KEY_READ_UID, "-1");
+//    NSString *formattedString = [[NSString alloc] initWithFormat:format arguments:arg_list];
+//    asl_log(NULL, msg, (ASL_LEVEL_ERR), "%s", [formattedString UTF8String]);
+//    asl_free(msg);
+//    va_end(arg_list);
+//}
 
 #endif  // USING_INSTABUG
 
@@ -107,6 +108,20 @@ inline void NSLog(NSString *format, ...) {
     
 //    // Send debug statements to the System Log (Console.app)
 //    [DDLog addLogger:[DDASLLogger sharedInstance]];
+
+    
+#ifdef USING_INSTABUG
+    // This will log CocoaLumberjack into Instabug
+    DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
+    if ( ibgLogger ) {
+        
+        ibgLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
+        
+        [DDLog addLogger:ibgLogger];
+    }
+#else // not using Instabug
+    
+    xyzzy
     
     // Send debug statements to the Xcode console (uses XcodeColor)
     DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
@@ -118,34 +133,30 @@ inline void NSLog(NSString *format, ...) {
         [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
         [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
 #endif
+        ttyLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
+        
         [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
     }
+
+#endif // not using Instabug
+
     
     // Send debug info to log files
-    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
-    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
-    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-    [DDLog addLogger:fileLogger];
-    
-    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
-    DDLogInfo(@"*********");
-    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
-    DDLogInfo(@"*********");
-    
-#ifdef USING_INSTABUG
-    // This will log CocoaLumberjack into Instabug
-    DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
-    [DDLog addLogger:ibgLogger];
-#endif
-
-#ifdef USING_XCODECOLORS
-    // Show the Xcode console colors
-    DDLogError(  @"Color Demo: DDLogError");    // Red
-    DDLogWarn(   @"Color Demo: DDLogWarn");     // Orange
-    DDLogInfo(   @"Color Demo: DDLogInfo");     // Green
-    DDLogDebug(  @"Color Demo: DDLogDebug");    // Cyan
-    DDLogVerbose(@"Color Demo: DDLogVerbose");  // Default (black)
-#endif
+//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
+//    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
+//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+//    [DDLog addLogger:fileLogger];
+//    
+//    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
+//    DDLogInfo(@"*********");
+//    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
+//    DDLogInfo(@"*********");
+   
+//    DDLogError(  @"Demo: DDLogError");    // Red
+//    DDLogWarn(   @"Demo: DDLogWarn");     // Orange
+//    DDLogInfo(   @"Demo: DDLogInfo");     // Green
+//    DDLogDebug(  @"Demo: DDLogDebug");    // Cyan
+//    DDLogVerbose(@"Demo: DDLogVerbose");  // Default (black)
 }
 
 -(BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
@@ -169,7 +180,7 @@ inline void NSLog(NSString *format, ...) {
     }
     
     if (notification && application.applicationState == 1) {
-        NSLog(@"Notification Body: %@", notification.alertBody);
+        DDLogInfo(@"Notification Body: %@", notification.alertBody);
         self.launchedNotification = notification;
     }
 }
@@ -225,8 +236,8 @@ inline void NSLog(NSString *format, ...) {
             
             [conversation foldersType];
             
-            NSLog(@"Opening email:%@", [conversation firstMail].subject);
-            NSLog(@"Index: %ld",(long)cIndex.index);
+            DDLogInfo(@"Opening email:%@", [conversation firstMail].subject);
+            DDLogInfo(@"Index: %ld",(long)cIndex.index);
             
             Accounts* A = [Accounts sharedInstance];
 
@@ -273,7 +284,7 @@ inline void NSLog(NSString *format, ...) {
     
     if ([identifier isEqualToString:@"DELETE_IDENTIFIER"]) {
         // handle it
-        NSLog(@"Delete Cached Email");
+        DDLogInfo(@"Delete Cached Email");
         
         NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
         NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
@@ -283,7 +294,7 @@ inline void NSLog(NSString *format, ...) {
         
         Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
         
-        CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
+        DDLogInfo(@"Email in account:%ld", (long)[conversation user].accountNum);
 
         [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
         
@@ -489,7 +500,7 @@ didSignInForUser:(GIDGoogleUser*)user
 
 -(BOOL) handleShortcut:(UIApplicationShortcutItem*)shortcutItem
 {
-    NSLog(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
+    DDLogInfo(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
     
     if ([shortcutItem.type isEqualToString:@"com.fav"]) {
         CCMFolderType type = CCMFolderTypeFavoris;

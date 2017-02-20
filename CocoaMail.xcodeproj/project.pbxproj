@@ -12,6 +12,7 @@
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */; };
 		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
+		14E657CD1E54CC5F009070E9 /* CCMDDLogFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 14E657CC1E54CC5F009070E9 /* CCMDDLogFormatter.m */; };
 		2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2700855A1CB90CE0004069B4 /* AlternateViewController.m */; };
 		27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 27026F0C1C1EBA8900BC2C1A /* MyLabel.m */; };
 		27026F1A1C1ED6FB00BC2C1A /* jquerylong.js in Resources */ = {isa = PBXBuildFile; fileRef = 27026F191C1ED6FB00BC2C1A /* jquerylong.js */; };
@@ -398,6 +399,8 @@
 		147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
 		14ADBBF71E23F1530087E9B7 /* CCMConversationsPerAccount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMConversationsPerAccount.h; sourceTree = "<group>"; };
 		14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMConversationsPerAccount.m; sourceTree = "<group>"; };
+		14E657CB1E54CC5F009070E9 /* CCMDDLogFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMDDLogFormatter.h; sourceTree = "<group>"; };
+		14E657CC1E54CC5F009070E9 /* CCMDDLogFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMDDLogFormatter.m; sourceTree = "<group>"; };
 		270085591CB90CE0004069B4 /* AlternateViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlternateViewController.h; sourceTree = "<group>"; };
 		2700855A1CB90CE0004069B4 /* AlternateViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlternateViewController.m; sourceTree = "<group>"; };
 		2701F2D11BB6EDB400F8E97D /* CCMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCMConstants.h; sourceTree = "<group>"; };
@@ -976,6 +979,8 @@
 				271D4DA01B8475B700D19373 /* StringUtil.h */,
 				271D4DA11B8475B700D19373 /* StringUtil.m */,
 				2701F2D11BB6EDB400F8E97D /* CCMConstants.h */,
+				14E657CB1E54CC5F009070E9 /* CCMDDLogFormatter.h */,
+				14E657CC1E54CC5F009070E9 /* CCMDDLogFormatter.m */,
 			);
 			name = Utilities;
 			path = Backend/Utilities;
@@ -2083,6 +2088,7 @@
 				2771085E1C61500600A459E1 /* HTMLEncoding.m in Sources */,
 				277D64D01C8F0A9800C0135F /* SGProgressView.m in Sources */,
 				271D4D071B846E4500D19373 /* AppDelegate.m in Sources */,
+				14E657CD1E54CC5F009070E9 /* CCMDDLogFormatter.m in Sources */,
 				2771085D1C61500600A459E1 /* HTMLElement.m in Sources */,
 				27818C581BABF22500D26D1A /* InViewController.m in Sources */,
 				27FABC251B9D8E030089634A /* Window.swift in Sources */,

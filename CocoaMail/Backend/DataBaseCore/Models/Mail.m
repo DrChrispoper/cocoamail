@@ -411,7 +411,7 @@ static NSDateFormatter * s_df_hour = nil;
         uid_entry.sonMsgID = @"0";
     }
     
-    DDLogDebug(@"\nEmail subj=\"%@\"\nmsgID=\"%@\" has %ld references.\nson ID ref \"%@\"",
+    DDLogVerbose(@"\n\nEmail subj=\"%@\"\nmsgID=\"%@\" has %ld references.\nson ID ref \"%@\"",
                msg.header.subject,
                msg.header.messageID,
                (long)msg.header.references.count,
@@ -785,7 +785,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) tableCheck:(FMDatabase*)db
 {
-    DDLogDebug(@"+[Mail tableCheck:(FMDatabase *)]");
+    DDLogInfo(@"ENTERED]");
     
     if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS email "
           "(pk INTEGER PRIMARY KEY,"
@@ -861,6 +861,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) updateMail:(Mail*)email;
 {
+    DDLogInfo(@"ENTERED, Mail for = \"%@\"",email.sender.displayName);
+    
     if (!email.subject) {
         NSException* myE = [NSException exceptionWithName:@"EmailHasNoSUBJECT" reason:@"Updating email with nil Subject" userInfo:nil];
 #ifdef USING_INSTABUG
@@ -979,13 +981,13 @@ static NSDateFormatter * s_df_hour = nil;
     
     email.subject = subject;
     
-    DDLogDebug(@"\temail subject =\"%@\"",subject);
+    DDLogDebug(@"Email subject =\"%@\"",subject);
     
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
     if (!email.user || email.user.isDeleted) {
-        DDLogInfo(@"\tShould delete email, Subject=\"%@\"", email.subject);
+        DDLogDebug(@"\tMail'suser is Deleted, return nil.");
         return nil;
     }
     

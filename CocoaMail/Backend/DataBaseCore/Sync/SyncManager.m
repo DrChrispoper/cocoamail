@@ -90,7 +90,7 @@ static SyncManager * singleton = nil;
         
         // If this user's Sync Settings preferences file exists ...
         if ([[NSFileManager defaultManager] fileExistsAtPath:syncStateFullPathFilename]){
-            DDLogInfo(@"File %@ does Exist",[self _syncStateFilenameForUser:user]);
+            DDLogDebug(@"Loading Sync data file \"%@\" for account num %@",[self _syncStateFilenameForUser:user],@(user.accountNum));
             
             // Get the data contained in the file
             NSData* fileData = [[NSData alloc] initWithContentsOfFile:syncStateFullPathFilename];
@@ -102,7 +102,7 @@ static SyncManager * singleton = nil;
             [self.syncStates addObject:syncSettingPropertiesFromFile];
         }
         else {
-            DDLogInfo(@"File \"%@\" does NOT Exist",[self _syncStateFilenameForUser:user]);
+            DDLogDebug(@"File \"%@\" does NOT Exist",[self _syncStateFilenameForUser:user]);
             
             // Create a NEW property dictionary
             NSMutableDictionary* newSyncSettingsProperties = [self _newSyncStateProperties];
@@ -139,7 +139,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    DDLogInfo(@"SyncManager: Sync ACTIVE Folder with IMAP Server. fromStart=%@ forUser=%@",
+    DDLogInfo(@"ENTERED, Sync ACTIVE Folder with IMAP Server. fromStart=%@ forUser=%@",
               (isFromStart?@"YES":@"NO"),user.username);
     
     // Get the IMAP Sync Service for this user's account
@@ -156,7 +156,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
 {
-    DDLogInfo(@"SyncManager: Sync IMPORTANT Folder with IMAP Server. folder=%@ forUser=%@",
+    DDLogInfo(@"ENTERED, Sync IMPORTANT Folder with IMAP Server. folder=%@ forUser=%@",
               [user.linkedAccount baseFolderType:baseFolder],user.username);
     
     // Get the IMAP Sync Service for this user's account
@@ -173,7 +173,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
 {
-    DDLogInfo(@"SyncManager: Sync ALL Folders with IMAP Server. forUser=%@",
+    DDLogInfo(@"ENTERED, Sync ALL Folders with IMAP Server. forUser=%@",
               user.username);
     
     // Get the IMAP Sync Service for this user's account
@@ -188,7 +188,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncInboxFoldersBackground
 {
-    DDLogInfo(@"SyncManager: Sync ALL Folders for ALL Users IN BACKGROUND with IMAP Server.");
+    DDLogInfo(@"ENTERED, Sync ALL Folders for ALL Users IN BACKGROUND with IMAP Server.");
 
     NSMutableArray* newEmailsSignalsArray = [[NSMutableArray alloc]init];
 
@@ -447,7 +447,7 @@ static SyncManager * singleton = nil;
     @synchronized (self.syncStates) {
         [accountFolderStates addObject:folderStates];
     }
-    DDLogInfo(@"ADDED Sync State num %ld for new IMAP folder \"%@\"",(long)accountFolderStates.count,folder.path);
+    DDLogDebug(@"ADDED Sync State num %ld for new IMAP folder \"%@\"",(long)accountFolderStates.count,folder.path);
     
     [self _writeSyncStateToFileForAccount:accountNum];
     
@@ -523,7 +523,7 @@ static SyncManager * singleton = nil;
                        (long)accountNum,filePath);
         }
         else {
-            DDLogInfo(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
+            DDLogDebug(@"Saved account %ld Sync State to \"%@\"",(long)accountNum,fileName);
         }
     }
 

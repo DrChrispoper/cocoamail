@@ -311,7 +311,8 @@
 }
 
 - (void)refreshTable {
-    DDLogInfo(@">> ENTERED MailListViewController refreshTable");
+    DDLogInfo(@"ENTERED");
+
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
     [self _updateViewTitle];
     //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
@@ -330,9 +331,6 @@
         [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:self.isDebugMode?@"Debug Mode On":@"Debug Mode Off"];
         [[PKHUD sharedHUD] show];
         [[PKHUD sharedHUD] hideAfterDelay:2.0];*/
-        
-        [Instabug invokeWithInvocationMode:IBGInvocationModeNewFeedback];
-
         
         [self reload];
     }
@@ -474,7 +472,7 @@
 
 -(void) setupData
 {
-    DDLogDebug(@"BEGIN -[MailListViewController setupData]");
+    DDLogInfo(@"ENTERED");
     
     // If we are showing the All Mail account ...
     if (kisActiveAccountAll) {
@@ -497,19 +495,21 @@
 
 -(void) _addConversationsForAccount:(Account*)account folder:(CCMFolderType)folder
 {
-    DDLogInfo(@"Add Local Conversations For Account %@ Folder %@",@(account.idx),@(folder.idx));
+    DDLogInfo(@"ENTERED, folder index = %@",@(folder.idx));
     
     account.mailListSubscriber = self;
     
     NSMutableArray *conversationsForFolder = [account getConversationsForFolder:folder];
     
-    DDLogInfo(@"--- Account Folder has %@ Conversations",@(conversationsForFolder.count));
+    DDLogInfo(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
     
     [self insertConversations:conversationsForFolder];
 }
 
 -(void) removeConversationList:(NSArray<ConversationIndex*>*)convs
 {
+    DDLogInfo(@"ENTERED");
+    
     if (convs) {
         [self _removeConversation:convs];
     }
@@ -520,7 +520,7 @@
 
 -(void)_reloadTableViewOnMainThread
 {
-    DDLogDebug(@"*** Reloading MailListView on main thread ***");
+    DDLogInfo(@"ENTERED");
 
     [self performSelectorOnMainThread:@selector(reload)
                            withObject:nil
@@ -529,7 +529,7 @@
 
 -(void) _removeConversation:(NSArray<ConversationIndex*>*)convs
 {
-    DDLogDebug(@"Remove %lu conversations",(unsigned long)convs.count);
+    DDLogInfo(@"ENTERED, Remove %lu conversations",(unsigned long)convs.count);
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
@@ -539,7 +539,7 @@
             
             if ([self.conversationsPerAccount containsConversationIndex:convIndex.index inAccount:convIndex.user.accountIndex]) {
                 
-                DDLogInfo(@"ConversationIndex:%ld in Account:%ld",
+                DDLogDebug(@"ConversationIndex:%ld in Account:%ld",
                           (long)convIndex.index,
                           (unsigned long)convIndex.user.accountNum);
                 
@@ -576,6 +576,8 @@
 
 -(void) checkConversationsUpdate
 {
+    DDLogInfo(@"ENTERED");
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
         NSMutableArray* reAddConvs = [[NSMutableArray alloc] init];
@@ -625,6 +627,8 @@
 
 -(void) updateDays:(NSArray*)days
 {
+    DDLogInfo(@"ENTERED");
+    
     if (!days || days.count == 0){
         return;
     }
@@ -679,8 +683,10 @@
 
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
 {
+    DDLogInfo(@"ENTERED, Conversation Index date = %@",ciToInsert.date.description);
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-       
+                
         if (self.viewIsClosing) {
             return;
         }
@@ -783,9 +789,9 @@
                         added = YES;
                         break;
                     }
-                    else {
-                        DDLogInfo(@"\tDO NOTHING (Conv Comparison Result not Descending.");
-                    }
+//                    else {
+//                        DDLogDebug(@"DO NOTHING (Conv Comparison Result not Descending).");
+//                    }
                 }
                 
                 if (!added) {
@@ -807,9 +813,9 @@
                 
                 break;
             }
-            else {
-                DDLogInfo(@"\tDO NOTHING - Day Date Compare Results == Ascending");
-            }
+//            else {
+//                DDLogDebug(@"DO NOTHING - Day Date Compare Results == Ascending");
+//            }
         }
         
         if (!added) {
@@ -835,7 +841,7 @@
 
 -(void)_insertTableSection:(NSUInteger)section
 {
-    DDLogDebug(@"Table Insert: Section %@",@(section));
+    DDLogInfo(@"Insert Section = %@",@(section));
     
     NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
     
@@ -847,7 +853,7 @@
 }
 -(void)_insertTableRow:(NSUInteger)row inSection:(NSUInteger)section
 {
-    DDLogDebug(@"Table Insert: Row %@ in Section %@",@(row),@(section));
+    DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
 
     [self.table beginUpdates];
     
@@ -921,10 +927,10 @@
 //      Then add it to both the4 Conversations Per Account and Conversations By Day structures
 -(void) insertConversations:(NSArray<ConversationIndex*>*) folderConversations  // array of folder's conversations
 {
-    DDLogInfo(@">>ENTERING insertConversations: \n\tWill put %ld Conversations into Mail List Table",(long)folderConversations.count);
+    DDLogInfo(@"ENTERED, Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
     
     if (self.showOnlyThisPerson) {
-        DDLogDebug(@"\tshowOnlyThisPerson == TRUE");
+        DDLogDebug(@"showOnlyThisPerson == TRUE");
         folderConversations = [self _filterResultsForPerson:folderConversations];
     }
     
@@ -1083,6 +1089,8 @@
 
 -(void) _commonRemoveConvs:(NSMutableArray*)ips
 {
+    DDLogInfo(@"ENTERED");
+
     NSMutableIndexSet* is = [[NSMutableIndexSet alloc] init];
     
     [ips sortUsingSelector:@selector(compare:)];
@@ -1103,7 +1111,7 @@
             NSInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
             
             if ( conCount == 1 ) {
-                DDLogInfo(@"Delete section:%li self.convByDay.count:%li", (long)dayIndex, (unsigned long)dayCount);
+                DDLogDebug(@"Delete section:%li self.convByDay.count:%li", (long)dayIndex, (unsigned long)dayCount);
 
                 if ( dayIndex < dayCount ) {
                     [self.convByDay removeDayAtIndex:dayIndex];
@@ -1111,7 +1119,7 @@
                 }
             }
             else {
-                DDLogInfo(@"Delete cell section:%li row:%li", (long)dayIndex, (long)conIndex );
+                DDLogDebug(@"Delete cell section:%li row:%li", (long)dayIndex, (long)conIndex );
 
                 if ( conIndex < conCount ) {
                     [self.convByDay removeConversation:conIndex onDay:dayIndex];
@@ -1184,7 +1192,7 @@
 #ifdef USING_INSTABUG
             IBGLog(@"%@", [NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
 #endif
-             DDLogInfo(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
+             DDLogDebug(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
             NSString* fromFolderString;
             NSString* toFolderString;
@@ -1294,10 +1302,11 @@
 
 -(void) reload
 {
-    DDLogInfo(@"-[TableViewDataSource reload]");
+    DDLogInfo(@"ENTERED");
+
     //self.deletedSections = 0;
     
-    DDLogInfo(@"\treload CALLNG -[TableViewDataSource reloadData]");
+    DDLogDebug(@"CALLS to -[TableViewDataSource reloadData]");
     
     DDAssert(self.table,@"self.table must be set.");
     
@@ -1305,8 +1314,6 @@
     
     dispatch_async(dispatch_get_main_queue(),^{
         if (self.deletes.count > 0) {
-            DDLogDebug(@"\tself.deletes.count = %ld, removing from conversation list",
-                       (unsigned long)self.deletes.count);
             [self removeConversationList:[self.deletes allObjects]];
         }
     });
@@ -1317,9 +1324,9 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    DDLogInfo(@"TABLEVIEW HAS %lu SECTIONS",(long)[self.convByDay dayCount]);
-
     NSInteger sectionCount = [self.convByDay dayCount];
+    
+    DDLogVerbose(@"Section count = %@",@(sectionCount));
     
     return sectionCount;    //MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
 }
@@ -1328,7 +1335,7 @@
 {
     NSInteger conversationCountOnDay = [self.convByDay conversationCountOnDay:section];
     
-    DDLogInfo(@"TABLEVIEW SECTION %ld HAS %lu ROWS",(long)section,(unsigned long)conversationCountOnDay);
+    DDLogVerbose(@"Section %ld has %lu rows.",(long)section,(unsigned long)conversationCountOnDay);
     
     return conversationCountOnDay;
 }
@@ -1361,22 +1368,22 @@
     
     if ( lastSection && lastRow && !self.showOnlyThisPerson ) {
         
-        DDLogInfo(@"Last Section && Last Row && NOT showing person search results");
-        DDLogInfo(@"\tLast Section = ( dayIndex (%ld) == dayCount (%ld - 1) )",
+        DDLogDebug(@"Last Section && Last Row && NOT showing person search results");
+        DDLogVerbose(@"\tLast Section = ( dayIndex (%ld) == dayCount (%ld - 1) )",
                   (long)dayIndex,(unsigned long)dayCount);
-        DDLogInfo(@"\tLast Row     = ( conIndex (%ld) == conCount (%ld - 1) )",
+        DDLogVerbose(@"\tLast Row     = ( conIndex (%ld) == conCount (%ld - 1) )",
                   (long)conIndex,(unsigned long)conCount);
         
         if (self.indexCount != self.countBeforeLoadMore) { // at present these are ALWAYS the same
-            DDLogInfo(@"\tindex count NOT equal to count before load more, so calling reFetch");
+            DDLogDebug(@"\tindex count NOT equal to count before load more, so calling reFetch");
             [self reFetch:NO];
         }
         else if (self.localSearchDone) {
-            DDLogInfo(@"\tLocal Search Done, calling account.localFetchMore");
+            DDLogDebug(@"\tLocal Search Done, calling account.localFetchMore");
             [[Accounts sharedInstance].currentAccount localFetchMore:YES];
         }
         else {
-            DDLogInfo(@"\tNOT (indexCount != countBeforeLoadMore)\n\tNOT (localSearchDone)");
+            DDLogDebug(@"\tNOT (indexCount != countBeforeLoadMore)\n\tNOT (localSearchDone)");
         }
     }
     
@@ -1405,7 +1412,8 @@
         BOOL isInFolder = [conv isInFolder:currentFolderIdx];
         
         if (!isInFolder) {
-            DDLogInfo(@"%@",[NSString stringWithFormat:@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ", (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill]);
+            DDLogDebug(@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ",
+                      (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill);
             
             // Add this Conversation Index to those to be deleted
             [self.deletes addObject:conversationIndex];
@@ -1638,7 +1646,7 @@
 #ifdef USING_INSTABUG
             IBGLog(@"%@", [NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
 #endif
-            DDLogInfo(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
+            DDLogDebug(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
             
             NSString* fromFolderString;
             NSString* toFolderString;
@@ -1798,8 +1806,7 @@
 
 - (void)reFetch:(BOOL)forceRefresh
 {
-    DDLogDebug(@"ENTERED reFetch:(BOOL)forceRefresh=%@",
-               (forceRefresh?@"TRUE":@"FALSE"));
+    DDLogInfo(@"ENTERED, force refresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
