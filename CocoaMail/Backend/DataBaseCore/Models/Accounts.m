@@ -164,7 +164,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
-                 DDLogDebug(@"SearchRunner returned \"subscribeNext\", so sorting email (1)");
+                 DDLogDebug(@"SearchRunner found email (%@), so adding the mail to its conversation / folder.",email.subject
+                            );
                  [self _sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
@@ -493,7 +494,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     _drafts = [[NSMutableArray alloc]init];
     
     _localFetchQueue = [NSOperationQueue new];
-    [_localFetchQueue setMaxConcurrentOperationCount:1];
+    [_localFetchQueue setMaxConcurrentOperationCount:1]; // make queue non-concurrent
     _isLoadingMore = NO;
     _hasLoadedAllLocal = NO;
     

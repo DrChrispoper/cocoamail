@@ -304,7 +304,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    DDLogInfo(@"NetworkStatus == %@",[self _networkStatusText:networkStatus]);
+    DDLogInfo(@"%@",[self _networkStatusText:networkStatus]);
     
     BOOL isAvailable = (networkStatus != NotReachable);
     
@@ -1229,13 +1229,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
         [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
                                         accountNum:self.user.accountNum];
         
-        DDLogDebug(@"\tLocal Folder %@: \"%@\"",@(localFolderIndex),localFolderPath);
-        
         BOOL folderIsDeletedLocally =
         [syncMgr isFolderDeletedLocally:localFolderIndex accountNum:self.user.accountNum];
         
         if ( folderIsDeletedLocally ) {
-            DDLogDebug(@"\t\tIs (already) marked deleted locally.");
+            DDLogDebug(@"Local Folder %@: \"%@\" is (already) marked deleted locally.",@(localFolderIndex),localFolderPath);
         }
         else { // folder is not deleted locally
             
@@ -1243,13 +1241,14 @@ static NSArray<ImapSync*>* sharedServices = nil;
             BOOL folderDeletedOnImapServer = ![self _folderPath:localFolderPath isFoundInIMAPFolders:imapFolders];
             
             if ( folderDeletedOnImapServer ) {
-                DDLogDebug(@"\t\tIs not found on the IMAP Server (i.e. its been deleted), so mark local folder as deleted.");
+                DDLogDebug(@"Local Folder %@: \"%@\" is not found on the IMAP Server (i.e. its been deleted), so mark local folder as deleted.",@(localFolderIndex),localFolderPath);
+                
                 [syncMgr markFolderDeleted:localFolderIndex accountNum:self.user.accountNum];
                 localFolderIndex = 0;
             }
-            else {
-                DDLogDebug(@"\t\tIMAP Folder matching local folder exists, no work required.");
-            }
+//            else {
+//                DDLogDebug(@"\t\tIMAP Folder matching local folder exists, no work required.");
+//            }
         }
         
         localFolderIndex++;

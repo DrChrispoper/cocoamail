@@ -54,7 +54,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 		self.shuttingDown = NO;
 		
 		NSOperationQueue* ops = [[NSOperationQueue alloc] init];
-		[ops setMaxConcurrentOperationCount:1]; // note that this makes it a simple, single queue
+		[ops setMaxConcurrentOperationCount:1]; // note that this makes it a simple, single queue (i.e. non-concurrent)
 		self.operationQueue = ops;
 		
         NSLocale* enUSPOSIXLocale;
