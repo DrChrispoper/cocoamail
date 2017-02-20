@@ -54,6 +54,11 @@ static inline CCMFolderType inboxFolderType()
     return FolderTypeWith(FolderTypeInbox, 0);
 }
 
+static inline CCMFolderType allFolderType()
+{
+    return FolderTypeWith(FolderTypeAll, 0);
+}
+
 static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
 {
     return t.type * 4096 + t.idx;

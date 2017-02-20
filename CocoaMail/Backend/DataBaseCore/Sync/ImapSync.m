@@ -818,7 +818,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(RACSignal*) runSearchText:(NSString*)text
 {
-    DDLogInfo(@"ENTERING ImapSync runSearchText:\"%@\"",text);
+    DDLogInfo(@"ENTERED, search text = \"%@\"",text);
     
     @weakify(self);
     
@@ -831,7 +831,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
         }
         
-        NSInteger currentFolder = [self.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
+        NSInteger currentFolder = [self.user numFolderWithFolder:allFolderType()];
         NSString* folderPath = [self.user folderServerName:currentFolder];
         
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchContent:text];

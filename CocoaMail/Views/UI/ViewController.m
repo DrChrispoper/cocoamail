@@ -1213,7 +1213,7 @@ static ViewController * s_self;
             [[A currentAccount] setCurrentFolder:folder];
         }
         else {
-            [[A currentAccount] setCurrentFolder:FolderTypeWith(FolderTypeAll, 0)];
+            [[A currentAccount] setCurrentFolder:allFolderType()];
         }
     
         [[A currentAccount] connect];

@@ -708,7 +708,7 @@
         
         // folder currently being displayed in the view
         NSInteger curFolderIndex = [convToInsert.user numFolderWithFolder:self.folder];
-        NSInteger allFolderIndex = [convToInsert.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)];
+        NSInteger allFolderIndex = [convToInsert.user numFolderWithFolder:allFolderType()];
         
         // if the current folder is NOT the All messages folder ...
         if (curFolderIndex != allFolderIndex) {
@@ -721,7 +721,7 @@
 #ifdef USING_INSTABUG
                 IBGLog(@"%@", [NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ciToInsert.index]);
 #endif
-                DDLogError(@"Conversation with index %ld",(long)ciToInsert.index);
+                DDLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
                 
                 Account* a = [[Accounts sharedInstance] account:convToInsert.user.accountIndex];
                 [a deleteIndex:ciToInsert.index fromFolder:self.folder];
@@ -736,7 +736,7 @@
         NSInteger dayCount = [self.convByDay dayCount];
         for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             
-            DDLogInfo(@"DAY INDEX %@",@(dayIndex));
+            DDLogVerbose(@"DAY INDEX %@",@(dayIndex));
             
             // NB: Day (Date Only) Comparison
             NSDate* indexedDayDate   = [self.convByDay dateForDay:dayIndex];
@@ -953,7 +953,7 @@
         
         NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
         
-        if (currentFolderIdx != [conv.user numFolderWithFolder:FolderTypeWith(FolderTypeAll, 0)]) {
+        if (currentFolderIdx != [conv.user numFolderWithFolder:allFolderType()]) {
             
             [conv foldersType];   // Why?
             
