@@ -590,18 +590,21 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToMail:(Mail*)object];
 }
 
--(void) loadData
-{
-    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
-    
-    [queue inDatabase:^(FMDatabase* db) {
-        FMResultSet* results = [db executeQuery:kQueryPk, @(self.pk)];
-        
-        if ([results next]) {
-            [Mail _res:results toMail:self];
-        }
-    }];
-}
+//-(void) loadData - NOT USED
+//{
+//    FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
+//    
+//    [queue inDatabase:^(FMDatabase* db) {
+//        FMResultSet* results = [db executeQuery:kQueryPk, @(self.pk)];
+//        
+//        if ([results next]) {
+////            [Mail _databaseResults:results toMail:self];
+//            
+//            self = [Mail newMailFromDatabaseResult:results];
+//
+//        }
+//    }];
+//}
 
 -(BOOL) existsLocally
 {
@@ -680,6 +683,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) loadBody
 {
+    DDLogInfo(@"ENTERED");
+    
     FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
     
     [queue inDatabase:^(FMDatabase* db) {
@@ -687,7 +692,7 @@ static NSDateFormatter * s_df_hour = nil;
         FMResultSet* results = [db executeQuery:kQueryAllMsgID, self.msgID];
         
         if ([results next]) {
-            Mail* email = [Mail resToMail:results];
+            Mail* email = [Mail newMailFromDatabaseResult:results];
             self.pk = email.pk;
             self.body = email.body;
             self.htmlBody = email.htmlBody;
@@ -698,7 +703,7 @@ static NSDateFormatter * s_df_hour = nil;
         
         
         if ([db hadError] && [db lastErrorCode] == 1) {
-            DDLogInfo(@"Checking table");
+            DDLogVerbose(@"Checking table");
             [Mail tableCheck:db];
         }
     }];
@@ -817,15 +822,17 @@ static NSDateFormatter * s_df_hour = nil;
         DDLogError(@"errorMessage = %@", db.lastErrorMessage);
     }
     
+    DDLogVerbose(@"calling [db executeUpdate:\"DELETE FROM search_email WHERE msg_id NOT IN (SELECT msg_id FROM email)\"]");
+    
     [db executeUpdate:@"DELETE FROM search_email WHERE msg_id NOT IN (SELECT msg_id FROM email)"];
 }
 
 +(NSInteger) insertMail:(Mail*)email
 {
+    DDLogInfo(@"ENTERED, Mail for = \"%@\"",email.sender.displayName);
+    
     __block sqlite_int64 success = -1 ;
-    
-    DDLogDebug(@"Insert mail \"%@\" into FM db",email.subject);
-    
+        
     [[EmailDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         
         FMResultSet* results = [db executeQuery:@"SELECT * FROM email WHERE email.msg_id = ?", email.msgID];
@@ -889,6 +896,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(BOOL) removeMail:(NSString*)msgIdDel
 {
+    DDLogInfo(@"ENTERED, Message ID to delete = %@",msgIdDel);
+
     __block BOOL success = FALSE;
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     
@@ -902,6 +911,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(Mail*) getMailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum
 {
+    DDLogInfo(@"ENTERED");
+
     __block Mail* mail = [[Mail alloc] init];
     
     //TODO:Queue?
@@ -911,7 +922,7 @@ static NSDateFormatter * s_df_hour = nil;
         FMResultSet* results = [db executeQuery:kQueryAllMsgID, msgIdDel];
         
         if ([results next]) {
-            mail = [Mail resToMail:results];
+            mail = [Mail newMailFromDatabaseResult:results];
         }
         
         [results close];
@@ -921,7 +932,7 @@ static NSDateFormatter * s_df_hour = nil;
         }
         
         if ([db hadError] && [db lastErrorCode] == 1) {
-            DDLogInfo(@"Checking table");
+            DDLogVerbose(@"Checking table");
             [Mail tableCheck:db];
         }
     }];
@@ -931,6 +942,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(NSMutableArray*) getMails
 {
+    DDLogInfo(@"ENTERED");
+
     NSMutableArray* emails = [[NSMutableArray alloc] init];
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
     
@@ -939,7 +952,7 @@ static NSDateFormatter * s_df_hour = nil;
         FMResultSet* results = [db executeQuery:kQueryAll];
         
         while ([results next]) {
-            Mail* m = [Mail resToMail:results];
+            Mail* m = [Mail newMailFromDatabaseResult:results];
             if (m) {
                 [emails addObject:m];
             }
@@ -950,15 +963,17 @@ static NSDateFormatter * s_df_hour = nil;
     return emails;
 }
 
-+(void) _res:(FMResultSet*)result toMail:(Mail*)mail
-{
-    mail = [Mail resToMail:result];
-}
+//+(void) _databaseResults:(FMResultSet*)result toMail:(Mail*)mail
+//{
+//    DDLogInfo(@"ENTERED");
+//
+//#WARNING - uncomfortable with this code - it replaces self????
+//    
+//    mail = [Mail newMailFromDatabaseResult:result];
+//}
 
-+(Mail*) resToMail:(FMResultSet*)result
++(Mail*) newMailFromDatabaseResult:(FMResultSet*)result
 {
-//    DDLogDebug(@"+[Mail (Mail *)resToMail:(FMResultSet*)result");
-    
     Mail* email = [[Mail alloc] init];
     
     email.pk = [result intForColumnIndex:0];
