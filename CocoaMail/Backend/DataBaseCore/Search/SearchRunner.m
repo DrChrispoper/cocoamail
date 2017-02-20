@@ -64,13 +64,15 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) search:(NSString*)searchText inAccountNum:(NSInteger)accountNum
 {
+    DDLogInfo(@"ENTERED, search text = \"%@\", account num = %@",searchText,@(accountNum));
+    
     NSArray* dbNumbers = [SearchRunner dbNumsInAccountNum:accountNum];
     
     searchText = [searchText stringByAppendingString:@"*"];
     
     self.cancelled = NO;
     
-    return [self searchForSignal:[self performFTSearch:searchText withDbNum:dbNumbers inAccountNum:accountNum]];
+    return [self searchForSignal:[self _performFullTextSearch:searchText withDbNum:dbNumbers inAccountNum:accountNum]];
 }
 
 -(RACSignal*) searchForSignal:(RACSignal*)signal
@@ -82,7 +84,7 @@ static SearchRunner * searchSingleton = nil;
 
 #pragma mark Full-text search
 
--(RACSignal*) performFTSearch:(NSString*)query withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
+-(RACSignal*) _performFullTextSearch:(NSString*)query withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
@@ -99,7 +101,7 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:kQuerySearch, query];
                 
                 while ([results next]) {
-                    Mail* email = [Mail resToMail:results];
+                    Mail* email = [Mail newMailFromDatabaseResult:results];
                     
                     if (!email) {
                         continue;
@@ -288,7 +290,7 @@ static SearchRunner * searchSingleton = nil;
                     break;
                 }
                 else {
-                    DDLogInfo(@"Deleting Batch of Uids");
+                    DDLogDebug(@"Deleting Batch of Uids");
                     
                     NSInteger group = 0;
                     
@@ -302,7 +304,7 @@ static SearchRunner * searchSingleton = nil;
                             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:p.dbNum]]];
                             [queue inDatabase:^(FMDatabase* db) {
                                 if ([db executeUpdate:kQueryDelete, p.msgID]) {
-                                    DDLogInfo(@"Email deleted.");
+                                    DDLogDebug(@"Email deleted.");
                                 }
                             }];
                         }
@@ -316,14 +318,14 @@ static SearchRunner * searchSingleton = nil;
             
             [subscriber sendCompleted];
                     
-        return [RACDisposable disposableWithBlock:^{
+            return [RACDisposable disposableWithBlock:^{
         }];
     }];
 }
 
 -(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
 {
-    DDLogInfo(@"-[SearchRunner performFolderSearch]");
+    DDLogInfo(@"ENTERED, folder num = %@, account num = %@, from Mail with Subj. \"%@\"",@(folderNum),@(accountNum),email.subject);
     
     NSMutableArray* uidsInGroups;
     
@@ -384,12 +386,12 @@ static SearchRunner * searchSingleton = nil;
 //                NSDate *fetchStartG = [NSDate date];
 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    DDLogError(@"\tError querying table. Checking table");
+                    DDLogError(@"Error querying table. Checking table");
                     [Mail tableCheck:db];
                 }
                 
                 while ([results next]) {
-                    Mail* email = [Mail resToMail:results];
+                    Mail* email = [Mail newMailFromDatabaseResult:results];
                     
                     if (!email) {
                         continue;
@@ -515,7 +517,7 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:queryString];
                 
                 while ([results next]) {
-                    Mail* email = [Mail resToMail:results];
+                    Mail* email = [Mail newMailFromDatabaseResult:results];
                     
                     if (!email) {
                         continue;
