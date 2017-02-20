@@ -1593,58 +1593,80 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) runTestData
 {
-    DDLogInfo(@">> ENTERING runTestData");
+    DDLogInfo(@"ENTERED");
     
     if (self.user.isDeleted) {
         return;
     }
     
-    if (!self.user.isAll && self.allConversations.count != 0 && !_runningUpToDateTest) {
-        _runningUpToDateTest = YES;
-
-        NSMutableIndexSet* currentFolderMailIndecies =
-            [[self _mailIndeciesForFolder:self.currentFolderType] mutableCopy];
-        
-        NSMutableIndexSet* setAll = [self.systemFoldersContent[FolderTypeAll] mutableCopy];
-        NSMutableArray* resAll = [NSMutableArray arrayWithCapacity:[setAll count]];
-        NSMutableArray* res = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
-        
-        NSArray* _aMS = [self.allConversations mutableCopy];
-        
-        [_aMS enumerateObjectsAtIndexes:currentFolderMailIndecies
-                                options:0
-                             usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
-                                 [res addObject:obj];
-                             }];
-        
-        [[ImapSync sharedServices:self.user] runUpToDateTest:res folderIndex:self.currentFolderIdx completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
-            //[self.mailListSubscriber removeConversationList:nil];
-            
-            [self.mailListSubscriber updateDays:days];
-            
-            if (self.currentFolderType.type != FolderTypeAll) {
-                [_aMS enumerateObjectsAtIndexes:setAll
+    if ( self.user.isAll ) {
+        return;
+    }
+    
+    if ( self.allConversations.count == 0 ) {
+        return;
+    }
+    
+    if ( _runningUpToDateTest ) {
+        return;
+    }
+    
+    _runningUpToDateTest = YES;
+    
+    NSArray<Conversation*>* allConversations = self.allConversations;
+    
+    NSIndexSet* currentFolderMailIndecies = [self _mailIndeciesForFolder:self.currentFolderType];
+    
+    NSMutableArray* resultingFolderMail = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
+    
+    // Create an array (resultingFolderMail) of all the conversations indexed by the current folder mail indecies
+    [allConversations enumerateObjectsAtIndexes:currentFolderMailIndecies
                                         options:0
                                      usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
-                                         [resAll addObject:obj];
+                                         [resultingFolderMail addObject:obj];
                                      }];
-                
-                if (![ImapSync canFullSync]){
-                    _runningUpToDateTest = NO;
-                    return;
-                }
-                
-                [[ImapSync sharedServices:self.user] runUpToDateTest:resAll folderIndex:[self.user numFolderWithFolder:CCMFolderTypeAll] completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
-                    _runningUpToDateTest = NO;
-                    
-                    [self.mailListSubscriber updateDays:days];
+    
+    [[ImapSync sharedServices:self.user] runUpToDateTest:resultingFolderMail folderIndex:self.currentFolderIdx
+       completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+           
+           //[self.mailListSubscriber removeConversationList:nil];
+           
+           [self.mailListSubscriber updateDays:days];
+           
+           
+#warning - is this correct?  The next two lines seem to conflict.
+           
+           if (self.currentFolderType.type != FolderTypeAll) {
+               
+               NSIndexSet* allFolderMailIndecies = self.systemFoldersContent[FolderTypeAll];
+               
+               NSMutableArray* resultingAllFolderMail = [NSMutableArray arrayWithCapacity:[allFolderMailIndecies count]];
+               
+               [allConversations enumerateObjectsAtIndexes:allFolderMailIndecies
+                                                   options:0
+                                                usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
+                                                    [resultingAllFolderMail addObject:obj];
+                                                }];
+               
+               if (![ImapSync canFullSync]){
+                   _runningUpToDateTest = NO;
+                   return;
+               }
+               
+               [[ImapSync sharedServices:self.user] runUpToDateTest:resultingAllFolderMail folderIndex:[self.user numFolderWithFolder:CCMFolderTypeAll] completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+                   
+                   _runningUpToDateTest = NO;
+                   
+                   [self.mailListSubscriber updateDays:days];
+                   
+                   //[self.mailListSubscriber removeConversationList:nil];
+               }];
+           }
+           
+           _runningUpToDateTest = NO;
+           
+       }];
 
-                    //[self.mailListSubscriber removeConversationList:nil];
-                }];
-            }
-            
-        }];
-    }
 }
 
 -(void) runMoreTestData
