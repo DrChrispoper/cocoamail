@@ -30,23 +30,10 @@
 @end
 
 @interface Account () {
-    BOOL _currentFolderFullSyncCompleted;
-    BOOL _runningUpToDateTest;
+
 }
 
-typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
-// All Mail Conversations for this Account
-@property (nonatomic, strong) CCMMutableConversationArray* allConversations;
-
-// All Conversation ID's, used only(?) in InsertRows() function.
-@property (nonatomic, strong) NSMutableSet* convIDs;
-
-// User Folders Mail Index Sets
-@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* userFoldersContent;
-
-// System Folders Mail Index Sets
-@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* systemFoldersContent;
 
 @end
 
@@ -443,8 +430,11 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 @end // end Accounts class
 
+// MARK: - ********** Account **********
 
 @interface Account () {
+    BOOL _currentFolderFullSyncCompleted;
+    BOOL _runningUpToDateTest;
     NSOperationQueue* _localFetchQueue;
     BOOL _isLoadingMore;
     BOOL _hasLoadedAllLocal;
@@ -455,6 +445,20 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     UIBackgroundTaskIdentifier _backgroundUpdateTask;
     UserSettings* _user;
 }
+
+typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
+
+// All Mail Conversations for this Account
+@property (nonatomic, strong) CCMMutableConversationArray* allConversations;
+
+// All Conversation ID's, used only(?) in InsertRows() function.
+@property (nonatomic, strong) NSMutableSet* convIDs;
+
+// User Folders Mail Index Sets
+@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* userFoldersContent;
+
+// System Folders Mail Index Sets
+@property (nonatomic, strong) NSArray<NSMutableIndexSet*>* systemFoldersContent;
 
 @end
 
@@ -675,7 +679,8 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
                 return;
             }
         }
-    } else {
+    } else { // is a Special folder
+        
         if (self.user.isAll) {
             self.currentFolderIdx = folder.type;
             for (Account* a in [Accounts sharedInstance].accounts) {
@@ -1191,11 +1196,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) sendOutboxs
 {
-    DDLogInfo(@"-[%@ %@]",NSStringFromClass([self class]),NSStringFromSelector(_cmd));
-    
     if (self.isSendingOut == 0) {
         
-        DDLogInfo(@"isSendingOut EQUALS 0");
+        DDLogInfo(@"self.isSendingOut == 0, send out mail.");
         
         NSString *outboxFolder = [self _outboxFolderPath];  // creates if not found
         
@@ -1236,7 +1239,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
         }
     }
     else {
-        DDLogInfo(@"isSendingOut DOES NOT EQUAL 0");
+        DDLogInfo(@"self.isSendingOut != 0, do nothing.");
     }
 }
 
