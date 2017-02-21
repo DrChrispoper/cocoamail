@@ -48,7 +48,7 @@ PODS:
   - GTMSessionFetcher/Full (1.1.8):
     - GTMSessionFetcher/Core (= 1.1.8)
   - Instabug (7.0.2)
-  - Instabug-CocoaLumberjack (1.0.1):
+  - Instabug-CocoaLumberjack (1.0.2):
     - CocoaLumberjack
     - Instabug (>= 6.2)
   - libextobjc (0.4.1):
