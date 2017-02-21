@@ -126,7 +126,7 @@
 
 /*- (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^)(void))completion
 {
-    CCMLog(@"InViewController");
+    DDLogInfo(@"InViewController");
     [[ViewController mainVC] presentViewController:viewControllerToPresent animated:flag completion:completion];
 
 //    [[ViewController mainVC] presentViewController:viewControllerToPresent animated:flag completion:completion];

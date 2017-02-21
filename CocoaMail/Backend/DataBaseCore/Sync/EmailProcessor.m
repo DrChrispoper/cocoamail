@@ -224,7 +224,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         UidEntry* u = [mail uidEWithFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
         if (u) {
             if (![mail.sender.displayName isEqualToString:@""] || ![mail.sender.displayName isEqualToString:mail.sender.mailbox]) {
-                NSLog(@"New display name:%@",mail.sender.displayName);
+                DDLogInfo(@"New display name:%@",mail.sender.displayName);
                 mail.user.name = mail.sender.displayName;
             }
         }

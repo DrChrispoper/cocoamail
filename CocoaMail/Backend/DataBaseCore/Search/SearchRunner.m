@@ -423,9 +423,11 @@ static SearchRunner * searchSingleton = nil;
                     [UidEntry removeAllMsgID:p.msgID];
                 }
                 
+#if (LOG_INFO)
 //                NSDate *fetchEndG = [NSDate date];
 //                NSTimeInterval timeElapsedG = [fetchEndG timeIntervalSinceDate:fetchStartG];
-//                NSLog(@"Group Fetch Duration: %f seconds.", timeElapsedG);
+//                DDLogInfo(@"Group Fetch Duration: %f seconds.", timeElapsedG);
+#endif
                 
                 [results close];
             }];

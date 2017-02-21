@@ -275,7 +275,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
      
      if (self.cachedData) {
      for (Mail* mail in self.cachedData) {
-     CCMLog(@"Saving Cached Email: %@", mail.subject);
+     DDLogInfo(@"Saving Cached Email: %@", mail.subject);
      
      NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:mail];
      //[ops addObject:nextOp];

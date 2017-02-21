@@ -184,7 +184,7 @@
 {
     // If you don't implement this, the navigation controller will be dismissed for you.
     // Only implement if you need to customize behavior.
-    NSLog(@"Did tap close button");
+    DDLogInfo(@"Did tap close button");
     [self.navControllerForBrowseSDK dismissViewControllerAnimated:YES completion:nil];
 }
 

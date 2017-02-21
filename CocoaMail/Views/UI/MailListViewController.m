@@ -749,10 +749,10 @@
                 
                 [self.convByDay insertNewDayWithConservationIndex:ciToInsert andDate:ciToInsert.day atDayIndex:dayIndex];
                 
-                //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
-                //NSLog(@"self.convByDay: %d", [self.convByDay dayCount]);
+                //DDLogDebug(@"numberOfSections: %d", [self.table numberOfSections]);
+                //DDLogDebug(@"self.convByDay: %d", [self.convByDay dayCount]);
                 //NSInteger pager = MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
-                //NSLog(@"pager: %d", pager);
+                //DDLogDebug(@"pager: %d", pager);
                 
                 [self _insertTableSection:dayIndex];
                 
@@ -822,10 +822,10 @@
             //Date section not existing //Add new date //Add email to new date
             [self.convByDay appendNewDayWithConversationIndex:ciToInsert andDate:ciToInsert.day];
             
-            //NSLog(@"numberOfSections: %d", [self.table numberOfSections]);
-            //NSLog(@"self.convByDay: %d", [self.convByDay dayCount]);
+            //DDLogDebug(@"numberOfSections: %d", [self.table numberOfSections]);
+            //DDLogDebug(@"self.convByDay: %d", [self.convByDay dayCount]);
             //NSInteger pager = MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
-            //NSLog(@"pager: %d", pager);
+            //DDLogDebug(@"pager: %d", pager);
             
             //if( [self.convByDay dayCount] < pager) {
             
@@ -1733,7 +1733,7 @@
             toFolder.type = (self.folder.type == FolderTypeSpam) ? FolderTypeInbox : FolderTypeSpam;
             break;
         default:
-            NSLog(@"WTF !!!");
+            DDLogError(@"WTF !!!");
             doNothing = YES;
             break;
     }
@@ -1781,7 +1781,7 @@
 {
     self.localSearchDone = done;
     
-    NSLog(@"%@ searching local", done?@"Not":@"");
+    DDLogInfo(@"%@ searching local", done?@"Not":@"");
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [self.table.tableFooterView setHidden:self.localSearchDone];
@@ -1837,7 +1837,7 @@
         
         [self _createAttachs];
         
-        //NSLog(@"self.indexCount:%ld", (long)self.indexCount);
+        //DDLogDebug(@"self.indexCount:%ld", (long)self.indexCount);
         
         if (!forceRefresh && self.countBeforeLoadMore == mailCountAfer) {
             /*[self.table performSelectorOnMainThread:@selector(reloadEmptyDataSet)

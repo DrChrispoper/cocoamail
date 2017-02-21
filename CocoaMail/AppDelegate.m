@@ -396,14 +396,14 @@ didSignInForUser:(GIDGoogleUser*)user
             if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
                 [AppSettings setOAuth:accessToken accountIndex:accountIndex];
                 [[ImapSync doLogin:accountIndex] subscribeError:^(NSError *error) {
-                    CCMLog(@"connection error");
+                    DDLogError(@"connection error");
                 } completed:^{}];
             }
         }
     }
     }
     else {
-        CCMLog(@"Erorr signing in %@",error.localizedDescription);
+        DDLogError(@"Erorr signing in %@",error.localizedDescription);
     }
 }*/
 

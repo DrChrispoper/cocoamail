@@ -314,7 +314,7 @@ static ViewController * s_self;
     /*
      CGPoint v = [pgr velocityInView:pgr.view];
      CGPoint p = [pgr translationInView:pgr.view];
-     NSLog(@"%d| %@ --> %@", pgr.state,  NSStringFromCGPoint(p), NSStringFromCGPoint(v));
+     DDLogInfo(@"%d| %@ --> %@", pgr.state,  NSStringFromCGPoint(p), NSStringFromCGPoint(v));
      */
 }
 

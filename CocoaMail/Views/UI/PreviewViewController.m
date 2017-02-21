@@ -215,14 +215,14 @@
                      encoding:MCOEncodingBase64];
                     
                     op.progress = ^(unsigned int current, unsigned int maximum){
-                        CCMLog(@"%u, %u", current,maximum);
+                        DDLogInfo(@"%u, %u", current,maximum);
                     };
                     
                     dispatch_async([ImapSync sharedServices:self.conversation.user].s_queue, ^{
 
                     [op start:^(NSError*  error, NSData*  partData) {
                         if(error){
-                            CCMLog(@"%@",error);
+                            DDLogError(@"%@",error);
                             return;
                         }
                         att.data = partData;

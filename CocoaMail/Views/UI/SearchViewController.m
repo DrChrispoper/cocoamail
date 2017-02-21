@@ -540,7 +540,7 @@
         [UIView animateWithDuration:0 animations:^{
             [self.table reloadData];
         } completion:^(BOOL finished) {
-            NSLog(@"Finished");
+            DDLogInfo(@"Finished");
             [self.searchBar becomeFirstResponder];
         }];
     });*/

@@ -16,7 +16,8 @@
 #endif
 
 
-#define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+// CCMLog replaced by DDLog (CocoaLumberjack)
+//#define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #define OptionsHasValue(options, value) (((options) & (value)) == (value))
 

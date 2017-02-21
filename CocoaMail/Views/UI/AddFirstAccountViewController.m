@@ -395,7 +395,7 @@
     NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
     
     if (error) {
-        CCMLog(@"%@", error.description);
+        DDLogError(@"%@", error.description);
     }
     
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
@@ -892,7 +892,7 @@
     [[OnePasswordExtension sharedExtension] findLoginForURLString:@"https://putcocoa.in" forViewController:self sender:sender completion:^(NSDictionary *loginDictionary, NSError *error) {
         if (loginDictionary.count == 0) {
             if (error.code != AppExtensionErrorCodeCancelledByUser) {
-                NSLog(@"Error invoking 1Password App Extension for find login: %@", error);
+                DDLogError(@"Error invoking 1Password App Extension for find login: %@", error);
             }
             return;
         }

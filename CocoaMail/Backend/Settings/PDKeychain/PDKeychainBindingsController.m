@@ -58,7 +58,7 @@ static PDKeychainBindingsController * sharedInstance = nil;
         OSStatus result = SecItemDelete((__bridge CFDictionaryRef)spec);
         
         if (result != 0) {
-            CCMLog(@"Could not store(Delete) string. Error was:%i", (int)result);
+            DDLogError(@"Could not store(Delete) string. Error was:%i", (int)result);
         }
         
         return !result;
@@ -73,7 +73,7 @@ static PDKeychainBindingsController * sharedInstance = nil;
             OSStatus result = SecItemDelete((__bridge CFDictionaryRef)spec);
             
             if (result!=0) {
-                CCMLog(@"Could not store(Delete) string. Error was:%i", (int)result);
+                DDLogError(@"Could not store(Delete) string. Error was:%i", (int)result);
             }
             
             return !result;
@@ -87,7 +87,7 @@ static PDKeychainBindingsController * sharedInstance = nil;
             OSStatus result = SecItemUpdate((__bridge CFDictionaryRef)spec, (__bridge CFDictionaryRef)update);
             
             if (result!=0) {
-                CCMLog(@"Could not store(Update) string. Error was:%i", (int)result);
+                DDLogError(@"Could not store(Update) string. Error was:%i", (int)result);
             }
             
             return !result;
@@ -99,7 +99,7 @@ static PDKeychainBindingsController * sharedInstance = nil;
             OSStatus result = SecItemAdd((__bridge CFDictionaryRef)data, NULL);
             
             if (result!=0) {
-                CCMLog(@"Could not store(Add) string. Error was:%i", ( int)result);
+                DDLogError(@"Could not store(Add) string. Error was:%i", ( int)result);
             }
             
             return !result;

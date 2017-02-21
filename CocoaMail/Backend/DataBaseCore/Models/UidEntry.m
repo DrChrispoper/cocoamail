@@ -626,7 +626,7 @@
     }
     
     /*if (uidE.pk == 0) {
-        CCMLog(@"Email doesn't look synced in folder, so deleting it might not work");
+        DDLogWarn(@"Email doesn't look synced in folder, so deleting it might not work");
     }*/
     
     UserSettings* user = [AppSettings userWithNum:uidE.accountNum];

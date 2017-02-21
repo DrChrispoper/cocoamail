@@ -216,7 +216,7 @@
     // compute new or use cached one
     
     if (currentOffset <= self.baseOffset) {
-        //NSLog(@"SKIP TO HIGH");
+        //DDLogInfo(@"SKIP TO HIGH");
         self.realBlurView.image = nil;
         return;
     }
@@ -243,15 +243,15 @@
     BOOL justeMove = NO;
     
     if (delta>0 && delta < limiteBottom) {
-        //NSLog(@"REUSE BOTTOM : %f", delta);
+        //DDLogInfo(@"REUSE BOTTOM : %f", delta);
         justeMove = YES;
     }
     else if (delta<0 && delta > -limiteTop) {
-        //NSLog(@"REUSE ON TOP : %f  ||  %f", delta, deltaLast);
+        //DDLogInfo(@"REUSE ON TOP : %f  ||  %f", delta, deltaLast);
         justeMove = YES;
     }
     else {
-        //NSLog(@"NEW FOR %f : %f", currentOffset, delta);
+        //DDLogInfo(@"NEW FOR %f : %f", currentOffset, delta);
         
         self.lastOffsetBlurred = currentOffset;
         [self _reallyComputeBlur];

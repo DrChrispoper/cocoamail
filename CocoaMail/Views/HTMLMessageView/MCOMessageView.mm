@@ -294,7 +294,7 @@ margin : 0;\
 -(void) setMail:(Mail *)mail
 {
     if (!mail.htmlBody || [mail.htmlBody isEqualToString:@""]) {
-        NSLog(@"Fetching html");
+        DDLogDebug(@"Fetching html");
 
         if ([mail uids].count == 0) {
 #ifdef USING_INSTABUG
@@ -414,7 +414,7 @@ margin : 0;\
         url = [NSURL URLWithString:urlString];
         
         if ([self _isCID:url]) {
-            CCMLog(@"url is cidurl:%@", url);
+            DDLogInfo(@"url is cidurl:%@", url);
             [self partForContentID:[url resourceSpecifier] completed:^(NSData * data) {
                 if (!data) {
                     return;
@@ -431,7 +431,7 @@ margin : 0;\
                     [_webView stringByEvaluatingJavaScriptFromString:replaceScript];
                 }];
                 
-                //CCMLog(@"Javascript res:%@", res);
+                //DDLogInfo(@"Javascript res:%@", res);
             }];
         }
     }
@@ -453,7 +453,7 @@ margin : 0;\
 {
     NSURL *url = [request URL];
 
-    NSLog(@"url:%@",url);
+    DDLogInfo(@"url:%@",url);
     
     if ([[url scheme] isEqualToString:@"image"]) {
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
@@ -523,8 +523,8 @@ margin : 0;\
                 notCool = YES;
             }
             
-            NSLog(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
-            NSLog(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
+            DDLogDebug(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
+            DDLogDebug(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
 //            CGFloat widthRef = _webView.scrollView.contentSize.width;
             
             if (_webView.scrollView.contentSize.height > 1) {
@@ -541,15 +541,15 @@ margin : 0;\
             }
             
             
-            NSLog(@"Screen bounds Width:%f", [self bounds].size.width);
-            NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+            DDLogDebug(@"Screen bounds Width:%f", [self bounds].size.width);
+            DDLogDebug(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
 
             if (_webView.scrollView.contentSize.width > [self bounds].size.width) {
                 _webView.scrollView.zoomScale = ((float)[self bounds].size.width / (float)contentWidth);
                 _webView.scrollView.minimumZoomScale = _webView.scrollView.zoomScale;
                 //_webView.scrollView.maximumZoomScale = _webView.scrollView.zoomScale;
                 contentHeight = contentHeight * _webView.scrollView.zoomScale;
-                NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+                DDLogDebug(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
             }
             
             CGRect fr = _webView.frame;
@@ -584,8 +584,8 @@ margin : 0;\
                 notCool = YES;
             }
             
-            NSLog(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
-            NSLog(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
+            DDLogDebug(@"_webView.scrollView.contentSize.height:%f", _webView.scrollView.contentSize.height);
+            DDLogDebug(@"_webView.scrollView.contentSize.width:%f", _webView.scrollView.contentSize.width);
             
             if (_webView.scrollView.contentSize.height > 0) {
                 if (_webView.scrollView.maximumZoomScale == _webView.scrollView.minimumZoomScale) {
@@ -598,7 +598,7 @@ margin : 0;\
                 }
             }
             
-            NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+            DDLogDebug(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
             
             if (_webView.scrollView.zoomScale < 1.0) {
                 //_webView.scrollView.zoomScale = (345.f / contentWidth);
@@ -609,10 +609,10 @@ margin : 0;\
                 _webView.scrollView.zoomScale = ((float)[self bounds].size.width / (float)contentWidth);
                 _webView.scrollView.minimumZoomScale = _webView.scrollView.zoomScale;
                 contentHeight = contentHeight * _webView.scrollView.zoomScale;
-                NSLog(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
+                DDLogDebug(@"_webView.scrollView.zoomScale:%f", _webView.scrollView.zoomScale);
             }
             
-            NSLog(@"Content height:%f", contentHeight);
+            DDLogDebug(@"Content height:%f", contentHeight);
 
             CGRect fr = _webView.frame;
             fr.size = CGSizeMake(_webView.frame.size.width, contentHeight);
