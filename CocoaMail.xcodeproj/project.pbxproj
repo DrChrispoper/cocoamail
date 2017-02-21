@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
-		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
+		1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
 		147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */; };
 		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
@@ -837,7 +837,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */,
+				1423E0871D6E301C000A6120 /* ReferenceProxy in Frameworks */,
 				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
@@ -1661,8 +1661,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 271D4D241B846E4600D19373 /* Build configuration list for PBXNativeTarget "CocoaMail" */;
 			buildPhases = (
-				14559E451DB134470043726D /* Increment Build Number */,
 				97348202A481B1D799F877B8 /* [CP] Check Pods Manifest.lock */,
+				14559E451DB134470043726D /* Increment Build Number */,
 				271D4CFA1B846E4500D19373 /* Sources */,
 				271D4CFB1B846E4500D19373 /* Frameworks */,
 				271D4CFC1B846E4500D19373 /* Resources */,

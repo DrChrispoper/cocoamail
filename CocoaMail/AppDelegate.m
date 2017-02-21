@@ -26,22 +26,8 @@
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
 
 #ifdef USING_INSTABUG
-#import "asl.h"
 #import <Instabug/Instabug.h>
 #import <Instabug-CocoaLumberjack/DDInstabugLogger.h>
-
-// Required to get logging into Instabug in iOS 10+
-//inline void NSLog(NSString *format, ...) {
-//    va_list arg_list;
-//    va_start(arg_list, format);
-//    aslmsg msg = asl_new(ASL_TYPE_MSG);
-//    asl_set(msg, ASL_KEY_READ_UID, "-1");
-//    NSString *formattedString = [[NSString alloc] initWithFormat:format arguments:arg_list];
-//    asl_log(NULL, msg, (ASL_LEVEL_ERR), "%s", [formattedString UTF8String]);
-//    asl_free(msg);
-//    va_end(arg_list);
-//}
-
 #endif  // USING_INSTABUG
 
 @implementation AppDelegate
@@ -110,7 +96,7 @@
 //    [DDLog addLogger:[DDASLLogger sharedInstance]];
 
     
-#ifdef USING_INSTABUG_FOO
+#ifdef USING_INSTABUG
     // This will log CocoaLumberjack into Instabug
     DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
     if ( ibgLogger ) {
@@ -137,7 +123,6 @@
     }
 
 #endif // not using Instabug
-#define USING_INSTABUG
 
     
     // Send debug info to log files
