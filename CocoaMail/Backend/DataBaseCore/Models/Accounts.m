@@ -639,7 +639,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     [ImapSync runInboxUnread:self.user];
+    
     [self refreshCurrentFolder];
+    
     [self sendOutboxs];
     
     if (kisActiveAccountAll){
@@ -651,7 +653,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 -(void) setCurrentFolder:(CCMFolderType)folder
 {
-    DDLogInfo(@"ENTERED, folder=%@",[self folderType:folder]);
+    DDLogInfo(@"%@",[self stringWithFolderType:folder]);
     
     if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
         NSString *folderTypeName = [self baseFolderType:folder.type];
@@ -2123,9 +2125,9 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return desc;
 }
 
--(NSString *)folderType:(CCMFolderType)folder
+-(NSString *)stringWithFolderType:(CCMFolderType)folder
 {
-    return [NSString stringWithFormat:@"type=\"%@\" index=%@",[self baseFolderType:folder.type],@(folder.idx)];
+    return [NSString stringWithFormat:@"CCMFolderType .type=\"%@\" .index=%@",[self baseFolderType:folder.type],@(folder.idx)];
 }
 
 -(NSString *)currentFolderTypeValue
