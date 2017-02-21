@@ -8,7 +8,7 @@ target 'CocoaMail' do
 
 	pod 'pop', :git => 'https://github.com/facebook/pop.git'
 	pod 'ReactiveCocoa', '~> 2.3'
-	pod 'FMDB'
+	pod 'FMDB', '~> 2.6.0'
 	pod 'Reachability', '~> 3.1.1'
 	pod 'libextobjc', '~> 0.4'
   pod 'GoogleSignIn'
