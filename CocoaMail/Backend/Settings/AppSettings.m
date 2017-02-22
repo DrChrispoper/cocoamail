@@ -252,7 +252,7 @@ static AppSettings * singleton = nil;
 //NumAccout:1 - 2 - 4 If 3 is deleted
 /*+(NSInteger) numAccountForIndex:(NSInteger)accountIndex
 {
-    NSAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
+    DDAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
 
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (user.accountIndex == accountIndex) {

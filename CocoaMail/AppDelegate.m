@@ -451,7 +451,7 @@ didSignInForUser:(GIDGoogleUser*)user
     
     NSError* configureError;
     [[GGLContext sharedInstance] configureWithError:&configureError];
-    NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
+    DDAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
 }*/
