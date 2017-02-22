@@ -16,7 +16,6 @@
 #import <Instabug/Instabug.h>
 #endif
 
-static AppSettings * singleton = nil;
 
 @implementation AppSettings
 
@@ -29,13 +28,23 @@ static AppSettings * singleton = nil;
 @synthesize globalDBVersion = _globalDBVersion;
 @synthesize users = _users;
 
+
+
+
+
 +(AppSettings*) getSingleton
 {
-    @synchronized(self) {
+    static dispatch_once_t once;
+    static AppSettings* singleton = nil;
+    
+    dispatch_once(&once, ^{
+        
+        DDLogInfo(@"Creating Singleton");
+
         if (singleton == nil) {
             singleton = [[self alloc] init];
         }
-    }
+    });
     
     return singleton;
 }
