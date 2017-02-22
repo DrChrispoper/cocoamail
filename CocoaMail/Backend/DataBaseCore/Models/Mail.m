@@ -996,13 +996,13 @@ static NSDateFormatter * s_df_hour = nil;
     
     email.subject = subject;
     
-    DDLogDebug(@"Email subject =\"%@\"",subject);
+    DDLogDebug(@"Retrieved Mail from DB, subj: \"%@\"",subject);
     
     email.body = [result stringForColumnIndex:10];
     email.attachments = [CCMAttachment getAttachmentsWithMsgID:email.msgID];
     
     if (!email.user || email.user.isDeleted) {
-        DDLogDebug(@"\tMail'suser is Deleted, return nil.");
+        DDLogDebug(@"\tMail's user is Deleted, return nil.");
         return nil;
     }
     
