@@ -488,10 +488,10 @@
     return result;
 }
 
-+(void) res:(FMResultSet*)result ToUidEntry:(UidEntry*)uidEntry
-{
-    uidEntry = [UidEntry resToUidEntry:result];
-}
+//+(void) res:(FMResultSet*)result ToUidEntry:(UidEntry*)uidEntry
+//{
+//    uidEntry = [UidEntry resToUidEntry:result];
+//}
 
 +(UidEntry*) resToUidEntry:(FMResultSet*)result
 {
