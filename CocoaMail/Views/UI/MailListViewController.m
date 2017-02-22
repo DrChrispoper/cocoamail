@@ -1145,7 +1145,8 @@
     }
     
     //self.deletedSections = self.deletedSections + is.count;
-    
+
+#warning - are we on main queue
     [self.table beginUpdates];
     
     [self.table deleteRowsAtIndexPaths:tmpIps withRowAnimation:UITableViewRowAnimationFade];
