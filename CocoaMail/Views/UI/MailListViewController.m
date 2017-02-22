@@ -629,7 +629,7 @@
 
 -(void) updateDays:(NSArray*)days
 {
-    DDLogInfo(@"ENTERED");
+    DDLogInfo(@"NSArray days; count = %@; elements = %@.",@(days.count),days.description);
     
     if (!days || days.count == 0){
         return;
@@ -637,6 +637,9 @@
     
     NSMutableIndexSet* sections = [[NSMutableIndexSet alloc] init];
     
+    // Create an index set "sections" containing the indexes off all the
+    // dates in our Conversations By Day structure (Days.Conversations.Mails)
+    // that match one or more of the day dates passed in.
     for (NSString* day in days) {
         NSDateFormatter* s_df_day = [[NSDateFormatter alloc] init];
         s_df_day.dateFormat = @"d MMM yy";
@@ -651,10 +654,18 @@
         }
     }
     
+    DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(sections.count));
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        DDLogInfo(@"START: Update table via block on mainQueue");
+        
         [self.table beginUpdates];
         [self.table reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
         [self.table endUpdates];
+        
+        DDLogInfo(@"END: Update table via block on mainQueue");
+
     }];
 
 }
