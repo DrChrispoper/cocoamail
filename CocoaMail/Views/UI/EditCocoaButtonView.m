@@ -73,9 +73,12 @@
     self.codename = tf;
 }
 
--(void) becomeFirstResponder
+
+-(BOOL) becomeFirstResponder
 {
     [self.codename becomeFirstResponder];
+    
+    return YES;
 }
 
 -(BOOL) textFieldShouldReturn:(UITextField*)textField

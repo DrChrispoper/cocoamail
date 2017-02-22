@@ -177,6 +177,8 @@
 {
     [self _prepareTable];
     [self.table reloadData];
+    
+    [super viewWillAppear:animated];
 }
 
 #pragma mark - Table Datasource

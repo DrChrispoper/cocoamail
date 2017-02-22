@@ -145,7 +145,7 @@
     return _all;
 }
 
--(void)setfolderPathPrefix:(NSString *)folderPathPrefix
+-(void)setFolderPathPrefix:(NSString *)folderPathPrefix
 {
     DDLogInfo(@"ENTERED");
     _folderPathPrefix = [folderPathPrefix copy];
