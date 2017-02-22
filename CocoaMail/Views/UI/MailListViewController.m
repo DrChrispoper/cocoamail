@@ -1185,22 +1185,21 @@
             CCMFolderType fromtype = self.folder;
             
             // QuickSwipeArchive / QuickSwipeDelete
-            CCMFolderType totype;
-            totype.type = (swipetype == QuickSwipeArchive) ? FolderTypeAll : FolderTypeDeleted;
+            CCMFolderType totype = (swipetype == QuickSwipeArchive) ? CCMFolderTypeAll : CCMFolderTypeDeleted;
             
             Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
             // back action
             if (self.folder.type == totype.type) {
                 //We archive emails from the archive folder if they are already in the Inbox
                 if(![conv isInInbox]) {
-                    totype.type = FolderTypeInbox;
+                    totype = CCMFolderTypeInbox;
                 }
                 else {
-                    fromtype.type = FolderTypeInbox;
+                    fromtype = CCMFolderTypeInbox;
                 }
             }
             else if ([self isPresentingDrafts]) {
-                totype.type = FolderTypeDeleted;
+                totype = CCMFolderTypeDeleted;
             }
             
 #ifdef USING_INSTABUG
@@ -1208,6 +1207,7 @@
 #endif
              DDLogDebug(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
+#ifdef USING_FLURRY
             NSString* fromFolderString;
             NSString* toFolderString;
             
@@ -1226,7 +1226,6 @@
             }
             
             
-#ifdef USING_FLURRY
             NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                            fromFolderString, @"from_Folder",
                                            toFolderString, @"to_Folder",
