@@ -82,6 +82,7 @@ static AppSettings * singleton = nil;
         }
         else {
             for (NSString* fileName in dirFiles) {
+                
                 NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
                 
                 UserSettings* user = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
@@ -94,7 +95,7 @@ static AppSettings * singleton = nil;
                     user = [NSKeyedUnarchiver unarchiveObjectWithData:data]; // nil
                 }
                 
-                NSAssert(user, @"User can't be nil, Filename:%@", fileName);
+                DDAssert(user, @"User can't be nil, Filename:%@", fileName);
                 
                 [_users addObject:user];
                 
