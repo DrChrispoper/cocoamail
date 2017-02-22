@@ -1651,6 +1651,7 @@
 #endif
             DDLogDebug(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
             
+#ifdef USING_FLURRY
             NSString* fromFolderString;
             NSString* toFolderString;
             
@@ -1668,7 +1669,6 @@
                 toFolderString = [ac systemFolderNames][toFolder.idx];
             }
             
-#ifdef USING_FLURRY
             NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                            fromFolderString, @"from_Folder",
                                            toFolderString, @"to_Folder",

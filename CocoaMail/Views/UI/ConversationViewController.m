@@ -547,7 +547,7 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    
+#ifdef USING_FLURRY
     NSString* fromFolderString;
     NSString* toFolderString;
     
@@ -565,7 +565,6 @@
         toFolderString = [self.conversation.user.linkedAccount systemFolderNames][toFolder.idx];
     }
     
-#ifdef USING_FLURRY
     NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                    fromFolderString , @"from_Folder",
                                    toFolderString, @"to_Folder",
