@@ -18,10 +18,15 @@
 #import "ImapSync.h"
 #import "ARSafariActivity.h"
 #import "FindQuote.h"
-#import "Flurry.h"
 #import "ViewController.h"
 #import "UserSettings.h"
 #import "Draft.h"
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
+
+
 
 @import SafariServices;
 
@@ -560,6 +565,7 @@
         toFolderString = [self.conversation.user.linkedAccount systemFolderNames][toFolder.idx];
     }
     
+#ifdef USING_FLURRY
     NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                    fromFolderString , @"from_Folder",
                                    toFolderString, @"to_Folder",
@@ -567,6 +573,7 @@
                                    ,nil];
     
     [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
     
     [self.conversation.user.linkedAccount moveConversation:self.conversation from:self.folder to:toFolder updateUI:YES];
     

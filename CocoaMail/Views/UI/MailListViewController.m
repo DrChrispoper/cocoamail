@@ -27,11 +27,13 @@
 #import "ConversationViewController.h"
 #import "MailListViewController+UIViewControllerPreviewing.h"
 //#import "UIScrollView+EmptyDataSet.h"
-#import "Flurry.h"
 #import "UserSettings.h"
 #import "Conversation.h"
 #import "Draft.h"
 
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
@@ -1212,13 +1214,14 @@
             }
             
             
+#ifdef USING_FLURRY
             NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                            fromFolderString, @"from_Folder",
                                            toFolderString, @"to_Folder",
                                            @"Quick_Swipe", @"action_Location"
                                            ,nil];
-            
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
             
             if ([conversationIndex.user.linkedAccount moveConversationAtIndex:conversationIndex.index from:fromtype to:totype updateUI:FALSE]) {
                 if (encodeFolderTypeWith(fromtype) == encodeFolderTypeWith(self.folder)) {
@@ -1665,6 +1668,7 @@
                 toFolderString = [ac systemFolderNames][toFolder.idx];
             }
             
+#ifdef USING_FLURRY
             NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                            fromFolderString, @"from_Folder",
                                            toFolderString, @"to_Folder",
@@ -1672,6 +1676,7 @@
                                            ,nil];
             
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
             
             if([ac moveConversationAtIndex:conversationIndex.index from:self.folder to:toFolder updateUI:FALSE]) {
                 [dels addObject:conversationIndex];

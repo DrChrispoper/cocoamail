@@ -17,13 +17,16 @@
 #import "GlobalDBFunctions.h"
 #import "Reachability.h"
 #import <DropboxSDK/DropboxSDK.h>
-#import "Flurry.h"
 #import "UserSettings.h"
 #import "Draft.h"
 #import <CocoaLumberjack/CocoaLumberjack.h>
 #import "CCMDDLogFormatter.h"
 
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
@@ -44,8 +47,10 @@
     // Initialize CocoaLumberjack logging system
     [self _initCocoaLumberjack ];
     
+#ifdef USING_FLURRY
     // Initialize Flurry analytics
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
+#endif
     
     // First, create an action
     UIMutableUserNotificationAction *acceptAction = [self createAction];
@@ -282,6 +287,7 @@
 
         [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
         
+#ifdef USING_FLURRY
         NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
         
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -289,8 +295,8 @@
                                        toFolderString, @"to_Folder",
                                        @"lock_screen", @"action_Location"
                                        ,nil];
-        
         [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
     }
     
     // Call this when you're finished

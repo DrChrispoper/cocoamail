@@ -12,9 +12,12 @@
 #import "Accounts.h"
 #import "EmailProcessor.h"
 #import "ImapSync.h"
-#import "Flurry.h"
 #import "Conversation.h"
 #import "UserSettings.h"
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
 
 @interface PreviewViewController () <MCOMessageViewDelegate>
 
@@ -169,13 +172,14 @@
         CCMFolderType fromfolder = [[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
         CCMFolderType tofolder = CCMFolderTypeAll;
         
+#ifdef USING_FLURRY
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
                                        [self.conversation.user folderDisplayNameForType:fromfolder], @"from_Folder",
                                        [self.conversation.user folderDisplayNameForType:tofolder], @"to_Folder",
                                        @"3D_Touch", @"action_Location"
                                        ,nil];
-        
         [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
         
         [ac moveConversation:self.conversation from:fromfolder to:tofolder updateUI:YES];
     }];

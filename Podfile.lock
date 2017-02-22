@@ -17,7 +17,6 @@ PODS:
   - CocoaLumberjack/Extensions (3.0.0):
     - CocoaLumberjack/Default
   - DZNEmptyDataSet (1.8.1)
-  - Flurry-iOS-SDK/FlurrySDK (7.9.2)
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
@@ -47,7 +46,7 @@ PODS:
   - GTMSessionFetcher/Core (1.1.8)
   - GTMSessionFetcher/Full (1.1.8):
     - GTMSessionFetcher/Core (= 1.1.8)
-  - Instabug (7.0.2)
+  - Instabug (7.0.3)
   - Instabug-CocoaLumberjack (1.0.2):
     - CocoaLumberjack
     - Instabug (>= 6.2)
@@ -101,7 +100,6 @@ DEPENDENCIES:
   - box-ios-browse-sdk (= 1.0.4)
   - CocoaLumberjack
   - DZNEmptyDataSet
-  - Flurry-iOS-SDK/FlurrySDK
   - FMDB (~> 2.6.0)
   - GoogleAnalytics
   - GoogleAPIClient/Drive (~> 1.0)
@@ -110,25 +108,15 @@ DEPENDENCIES:
   - Instabug
   - Instabug-CocoaLumberjack
   - libextobjc (~> 0.4)
-  - pop (from `https://github.com/facebook/pop.git`)
+  - pop (~> 1.0)
   - Reachability (~> 3.1.1)
   - ReactiveCocoa (~> 2.3)
-
-EXTERNAL SOURCES:
-  pop:
-    :git: https://github.com/facebook/pop.git
-
-CHECKOUT OPTIONS:
-  pop:
-    :commit: 68796e3b2dfcabf1c395e4dccaf1f91b06018b30
-    :git: https://github.com/facebook/pop.git
 
 SPEC CHECKSUMS:
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
   box-ios-sdk: 8034a7b0fcac562105725afa744011c81da99398
   CocoaLumberjack: c823149bccc5519a9447aeb433be7b1212a7d6a5
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
-  Flurry-iOS-SDK: 300dc1d78443dea3d433a38e76292f20f14f0a96
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
   GoogleAnalytics: f42cc53a87a51fe94334821868d9c8481ff47a7b
   GoogleAPIClient: 4a6b0b807de8b1115a2835180b25dd93dc60f1ea
@@ -136,7 +124,7 @@ SPEC CHECKSUMS:
   GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
   GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
   GTMSessionFetcher: 6f8d8b28b7e345549ac471071608170b31cb4977
-  Instabug: d7eefe2e2056df89216a74c471d9edcc407586df
+  Instabug: dae04de1dfaad6479f78025df497005bb25c1e5b
   Instabug-CocoaLumberjack: 569556b9d3891147021fa8dbaa7fbfbf8c9d3e98
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
@@ -144,6 +132,6 @@ SPEC CHECKSUMS:
   Reachability: dd9aa4fb6667b9f787690a74f53cb7634ce99893
   ReactiveCocoa: e2db045570aa97c695e7aa97c2bcab222ae51f4a
 
-PODFILE CHECKSUM: 5209ca7cc658ac14760f22b737e83fda38f18628
+PODFILE CHECKSUM: 3a249df515afe519b9825f83762bae7acc92a5fc
 
 COCOAPODS: 1.2.0

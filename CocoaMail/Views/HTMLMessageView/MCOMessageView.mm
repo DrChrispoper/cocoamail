@@ -11,12 +11,15 @@
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "FindQuote.h"
-#import "Flurry.h"
 #import "UserSettings.h"
 #import "CCMStatus.h"
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
+#endif
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
 #endif
 
 static NSString * mainJavascript = @"\

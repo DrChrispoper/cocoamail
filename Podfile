@@ -6,7 +6,7 @@ platform :ios, ‘9.0’
 
 target 'CocoaMail' do
 
-	pod 'pop', :git => 'https://github.com/facebook/pop.git'
+	pod 'pop', '~> 1.0'
 	pod 'ReactiveCocoa', '~> 2.3'
 	pod 'FMDB', '~> 2.6.0'
 	pod 'Reachability', '~> 3.1.1'
@@ -17,7 +17,7 @@ target 'CocoaMail' do
 	pod 'GTMOAuth2', '~> 1.1.0'
 	pod 'box-ios-browse-sdk', '1.0.4'
 	pod 'DZNEmptyDataSet'
-	pod 'Flurry-iOS-SDK/FlurrySDK'
+# pod 'Flurry-iOS-SDK/FlurrySDK'
 	pod 'Instabug'
   pod 'CocoaLumberjack' 
   pod 'Instabug-CocoaLumberjack'
