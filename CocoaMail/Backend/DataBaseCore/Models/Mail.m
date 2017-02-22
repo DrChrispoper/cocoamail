@@ -717,12 +717,12 @@ static NSDateFormatter * s_df_hour = nil;
 -(UserSettings*) user
 {
     if (!_user) {
-        _user = [AppSettings userWithNum:[self getFirstUIDE].accountNum];
+        NSInteger accountNum = [self getFirstUIDE].accountNum;
+        
+        _user = [AppSettings userWithNum:accountNum];
+        
+        DDAssert(_user, @"UserSettings must exist.")
     }
-    
-//    if (!_user) {
-//        DDLogError(@"WHAT!NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-//    }
     
     return _user;
 }
