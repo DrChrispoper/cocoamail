@@ -716,16 +716,16 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(UserSettings*) user
 {
-    if (!_user) {
-        NSInteger accountNum = [self getFirstUIDE].accountNum;
+    if (!_user) { // if user is not already set
         
-        _user = [AppSettings userWithNum:accountNum];
-        
-        DDAssert(_user, @"UserSettings must exist.")
+        UidEntry *uidEntry = [self getFirstUIDE]; // returns nil when no UIDs
+        if ( uidEntry ) {
+            _user = [AppSettings userWithNum:uidEntry.accountNum]; // returns nil when accountNum not found
+        }
     }
-    
     return _user;
 }
+
 
 -(BOOL) isInMultipleAccounts
 {
