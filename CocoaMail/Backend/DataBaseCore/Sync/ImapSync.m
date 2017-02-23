@@ -347,7 +347,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogInfo(@"ENTERED, user=%@",user.username);
+    DDLogInfo(@", IMAP hostname = \"%@\"",user.imapHostname);
     
     if (!user || user.isDeleted) {
         
@@ -1903,7 +1903,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     NSString* path = [self.user folderServerName:folderIdx];
     
-    DDLogDebug(@"Testing folder %@ with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.user.accountNum);
+    DDLogDebug(@"Testing folder \"%@\" with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.user.accountNum);
     
     if (uidsIS.count == 0) {
         completedBlock(nil, nil, nil);
@@ -1937,7 +1937,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                      return;
                  }
                  
-                 DDLogDebug(@"Connected and Testing folder %@ (in accountIndex:%ld) for updated and deleted mails", path, (long)self.user.accountNum);
+                 DDLogDebug(@"Connected and Testing folder \"%@\" (in accountIndex:%ld) for updated and deleted mails", path, (long)self.user.accountNum);
                  
                  EmailProcessor* ep = [EmailProcessor getSingleton];
                  

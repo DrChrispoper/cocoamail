@@ -363,9 +363,12 @@
 {
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (user.accountNum == accountNum) {
+            DDLogVerbose(@"Found UserSettings (username=%@) for accountNum %@",user.username,@(accountNum));
             return user;
         }
     }
+    
+    DDLogVerbose(@"No UserSettings found for accountNum %@",@(accountNum));
     
     return nil;
 }

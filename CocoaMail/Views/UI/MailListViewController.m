@@ -696,7 +696,7 @@
 
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
 {
-    DDLogInfo(@"ENTERED, Conversation Index date = %@",ciToInsert.date.description);
+    DDLogInfo(@", Conversation Index date = %@",ciToInsert.date.description);
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                 

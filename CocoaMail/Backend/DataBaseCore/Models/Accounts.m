@@ -151,8 +151,8 @@
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
-                 DDLogDebug(@"SearchRunner found email (%@), so adding the mail to its conversation / folder.",email.subject
-                            );
+                 DDLogDebug(@"SearchRunner next email \"%@\"",email.subject);
+                 
                  [self _sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;

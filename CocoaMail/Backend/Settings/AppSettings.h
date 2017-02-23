@@ -36,7 +36,7 @@
 +(NSInteger) numActiveAccounts; // number of non-deleted accounts
 +(NSMutableArray*) activeUsers;
 
--(UserSettings*) createNewUser;
+-(UserSettings*) createNewUser; 
 
 //Account Main Settings
 +(UserSettings*) userWithIndex:(NSInteger)accountIndex;
