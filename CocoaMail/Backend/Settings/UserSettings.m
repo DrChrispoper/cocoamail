@@ -579,6 +579,9 @@
     
     [desc appendString:@"\n--- UserSettings: ---\n"];
     
+    [desc appendFormat:@"\taccount number = %@\n",@(self.accountNum)];
+    [desc appendString:@"\n"];
+
     [desc appendFormat:@"\tdelimiter = \"%@\"\n",self.folderPathDelimiter];
     [desc appendFormat:@"\tprefix    = \"%@\"\n",self.folderPathPrefix];
     [desc appendString:@"\n"];
