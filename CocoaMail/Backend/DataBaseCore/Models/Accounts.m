@@ -2170,6 +2170,14 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return [NSString stringWithFormat:@"CCMFolderType .type=\"%@\" .index=%@",[self baseFolderType:folder.type],@(folder.idx)];
 }
 
+-(NSString *)folderDescription:(CCMFolderType)folderType
+{
+    if ( folderType.type == FolderTypeUser ) {
+        return [NSString stringWithFormat:@"User Folder %@",@(folderType.idx)];
+    }
+    return [self baseFolderType:folderType.type];
+}
+
 -(NSString *)currentFolderTypeValue
 {
     return [self baseFolderType:self.currentFolderType.type];

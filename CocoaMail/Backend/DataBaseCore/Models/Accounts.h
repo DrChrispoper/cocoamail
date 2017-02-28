@@ -113,6 +113,7 @@
 -(void) localFetchMore:(BOOL)loadMore;
 
 -(NSString *) description;
+-(NSString *) folderDescription:(CCMFolderType)folderType;
 -(NSString *) currentFolderTypeValue;
 -(NSString *) baseFolderType:(BaseFolderType)folderType;
 
