@@ -48,7 +48,7 @@
 
 //Account Server Settings
 +(MCOIMAPSession*) imapSession:(UserSettings*)user;
-+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
+//+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
 
 //Account Other Settings
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;

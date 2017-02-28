@@ -405,12 +405,12 @@
     return imapSession;
 }
 
-#warning method below not called from anywhere?
-+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
-{
-    UserSettings* user = [AppSettings userWithIndex:accountIndex];
-    return [AppSettings imapSession:user];
-}
+//#warning method below not called from anywhere?
+//+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
+//{
+//    UserSettings* user = [AppSettings userWithIndex:accountIndex];
+//    return [AppSettings imapSession:user];
+//}
 
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum
 {
