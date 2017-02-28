@@ -110,6 +110,8 @@
         
         [DDLog addLogger:ibgLogger];
     }
+    
+    DDLogInfo(@"USING INSTABUG DD LOGGER.");
 #else // not using Instabug
         
     // Send debug statements to the Xcode console (uses XcodeColor)
@@ -126,6 +128,9 @@
         
         [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
     }
+    
+    DDLogInfo(@"USING STANDARD DD LOGGER.");
+
 
 #endif // not using Instabug
 
