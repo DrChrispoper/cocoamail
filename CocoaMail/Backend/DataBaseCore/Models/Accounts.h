@@ -56,7 +56,7 @@
 
 @interface Account : NSObject
 
--(NSInteger) idx;
+-(NSInteger) idx;               // Account index
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
