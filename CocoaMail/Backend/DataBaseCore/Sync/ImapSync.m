@@ -460,7 +460,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(void) _loginWithOAuth:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
 {
-    DDLogDebug(@"\tLog in with OAuth");
+    DDLogDebug(@"ENTERED");
     
     sharedService.imapSession.OAuth2Token = [sharedService.user oAuth];
     sharedService.imapSession.authType = MCOAuthTypeXOAuth2;
@@ -469,10 +469,13 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     dispatch_async([ImapSync sharedServices:user].s_queue, ^{
         
+        DDLogDebug(@"BLOCK START - DISPATCH_QUEUE_PRIORITY_DEFAULT");
+        
         [sharedService.imapCheckOp start:^(NSError* error) {
             if (error) {
                 
-                DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                DDLogError(@"Error 1:%@ loading oauth account:%@", error, sharedService.user.username);
+                
                 GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
                                                                                                        clientID:CLIENT_ID
                                                                                                    clientSecret:CLIENT_SECRET];
@@ -539,14 +542,14 @@ static NSArray<ImapSync*>* sharedServices = nil;
                                             [subscriber sendCompleted];
                                         }
                                         else {
-                                            DDLogError(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                                            DDLogError(@"Error 2:%@ loading oauth account:%@", error, sharedService.user.username);
                                             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                                         }
                                     }];
                                 });
                             }
                             else {
-                                DDLogDebug(@"Error:%@ loading oauth account:%@", error, sharedService.user.username);
+                                DDLogError(@"Error 3:%@ loading oauth account:%@", error, sharedService.user.username);
                                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
                             }
                         }];

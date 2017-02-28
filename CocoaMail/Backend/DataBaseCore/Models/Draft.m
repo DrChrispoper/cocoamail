@@ -140,7 +140,15 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"outbox"];
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
     
-    return  [NSKeyedArchiver archiveRootObject:self toFile:fileName];
+    BOOL writeSuccessful = [NSKeyedArchiver archiveRootObject:self toFile:fileName];
+    
+    if ( writeSuccessful ) {
+        DDLogDebug(@"Saving Outbox Draft to file \"%@\"",fileName);
+    } else {
+        DDLogError(@"Error: Failure to save Outbox Draft file \"%@\"",fileName);
+    }
+    
+    return writeSuccessful;
 }
 
 -(void)deleteOutboxDraft
@@ -152,7 +160,9 @@
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
     
     if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-        DDLogInfo(@"Local draft file deleted");
+        DDLogDebug(@"Outbox Draft file \"%@\" deleted.",fileName);
+    } else {
+        DDLogError(@"Error: Failure to delete Outbox Draft file \"%@\".",fileName);
     }
 }
 

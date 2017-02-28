@@ -226,7 +226,7 @@ static SearchRunner * searchSingleton = nil;
                                             filePathInDocumentsDirectoryForFileName:dbFilename];
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:dbFilenameInDocDir];
             
-            DDLogDebug(@"Using FM DB Queue file \"%@\".",dbFilename);
+            DDLogDebug(@"Using FMDB Queue file \"%@\".",dbFilename);
             
             [queue inDatabase:^(FMDatabase* db) {
                 NSMutableString* query = [NSMutableString string];
@@ -235,11 +235,11 @@ static SearchRunner * searchSingleton = nil;
                 FMResultSet* results = [db executeQuery:query];
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    DDLogError(@"FM DB hadError == TRUE && lastErrorCode == 1");
+                    DDLogError(@"FMDB hadError == TRUE && lastErrorCode == 1");
                     [Mail tableCheck:db];
                 }
                 
-                DDLogDebug(@"Have FM DB Queue file results");
+                DDLogDebug(@"Have FMDB Queue file results");
                 
                 while ([results next]) {
                     Mail* email = [Mail newMailFromDatabaseResult:results];
@@ -443,6 +443,8 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) allEmailsSearch
 {
+    DDLogInfo(@"");
+    
     self.cancelled = NO;
     
     return [self searchForSignal:[self performAllSearch]];

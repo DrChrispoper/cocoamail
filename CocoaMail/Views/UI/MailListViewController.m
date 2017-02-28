@@ -854,7 +854,7 @@
 
 -(void)_insertTableSection:(NSUInteger)section
 {
-    DDLogInfo(@"Insert Section = %@",@(section));
+    DDLogVerbose(@"Insert Section = %@",@(section));
     
     NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
     
