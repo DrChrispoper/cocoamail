@@ -76,12 +76,12 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     DDLogVerbose(@"ENTERED");
     
+    if (updated) {
+        sharedServices = nil;
+    }
+    
     @synchronized(self) {
         
-        if (updated) {
-            sharedServices = nil;
-        }
-    
         // If we already have one or more shared services, then return them
         if (sharedServices && sharedServices.count > 0) {
             DDLogVerbose(@"Returning existing sharedServices[0..%@]",@(sharedServices.count));
