@@ -212,7 +212,10 @@ static SearchRunner * searchSingleton = nil;
         
         dbNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
         
+        DDLogDebug(@"Have %@ dbNums",@(dbNums.count));
+        
         for (NSNumber* dbNum in dbNums) {
+            
             if (self.cancelled || allFound <= 0) {
                 [subscriber sendCompleted];
                 

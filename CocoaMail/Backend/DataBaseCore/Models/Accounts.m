@@ -174,7 +174,7 @@
 
     [self.localFetchQueue addOperationWithBlock:^{
         
-        DDLogDebug(@"STARTING BLOCK ON localFetchQueue.");
+        DDLogDebug(@"Adding BLOCK to localFetchQueue.");
         
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Mail* email) {
