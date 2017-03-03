@@ -31,7 +31,7 @@
 @property (nonatomic) dispatch_queue_t s_queue;
 
 +(ImapSync*) sharedServices:(UserSettings*)user;
-+(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated;
++(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)update;
 +(RACSignal*) doLogin:(UserSettings*)user;
 
 +(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession;

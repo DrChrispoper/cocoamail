@@ -52,9 +52,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
 //
 +(ImapSync*) sharedServices:(UserSettings*)user
 {
-    DDAssert(user, @"No user at accountNum:%ld",(long)user.accountNum);
+    DDAssert(user, @"(UserSettings*)user must exist.");
     
-    DDAssert(!user.isDeleted, @"AccountNum:%ld is deleted",(long)user.accountNum);
+    DDAssert(!user.isDeleted, @"Account # %@ is deleted",@(user.accountNum));
     
     // Find the shared IMAP Sync Service with the matching Account Number
     NSArray<ImapSync*>* allSharedServices = [ImapSync allSharedServices:nil];
@@ -69,14 +69,16 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     DDLogError(@"Unable to find Account Number %@",@(user.accountNum));
     
+    DDAssert(nil,@"Must be able to find an Account!");
+    
     return nil;
 }
 
-+(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)updated
++(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)update
 {
     DDLogVerbose(@"ENTERED");
     
-    if (updated) {
+    if (update) {
         sharedServices = nil;
     }
     
@@ -474,7 +476,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         [sharedService.imapCheckOp start:^(NSError* error) {
             if (error) {
                 
-                DDLogError(@"Error 1:%@ loading oauth account:%@", error, sharedService.user.username);
+                DDLogInfo(@"Error 1:%@ loading oauth account:%@", error, sharedService.user.username);
                 
                 GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
                                                                                                        clientID:CLIENT_ID
@@ -619,6 +621,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
     // NB: Called only from Login methods
     
     DDLogInfo(@"ENTERED");
+    
+    DDAssert(self.s_queue, @"s_queue must be set");
     
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
     
@@ -841,6 +845,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
         MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:folderPath expression:expr];
         
+        DDAssert(self.s_queue, @"s_queue must be set");
+
         dispatch_async(self.s_queue, ^{
             [searchOperation start:^(NSError* error, MCOIndexSet* searchResult) {
                 if (error) {
@@ -876,6 +882,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchRecipient:person.email];
         MCOIMAPSearchOperation* searchOperation = [self.imapSession searchExpressionOperationWithFolder:[self.user folderServerName:currentFolder]
                                                                                 expression:expr];
+        
+        DDAssert(self.s_queue, @"s_queue must be set");
+
         dispatch_async(self.s_queue, ^{
             [searchOperation start:^(NSError* error, MCOIndexSet* searchResult) {
                 
@@ -921,7 +930,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
     = [self.imapSession fetchMessagesOperationWithFolder:folderServerName
                                              requestKind:self.user.requestKind
                                                     uids:searchResult];
-    
+    DDAssert(self.s_queue, @"s_queue must be set");
+
     dispatch_async(self.s_queue, ^{
         [imapMessagesFetchOp start:^(NSError* error, NSArray<MCOIMAPMessage*>* messages, MCOIndexSet* vanishedMessages){
             
@@ -981,6 +991,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         return;
     }
     
+    DDAssert(self.s_queue, @"s_queue must be set");
+
     dispatch_async(self.s_queue, ^{
         
         [[self.imapSession plainTextBodyRenderingOperationWithMessage:msg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
@@ -1168,6 +1180,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
               (isFromStart?@"TRUE":@"FALSE"),
               (getAll?@"TRUE":@"FALSE"));
     
+    DDAssert(self.s_queue, @"s_queue must be set");
+
     MCOIMAPFetchFoldersOperation* fio = [self.imapSession fetchAllFoldersOperation];
     dispatch_async(self.s_queue, ^{
         
@@ -1203,6 +1217,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 - (void)_processFoldersAndGetImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll imapFolders:(NSArray<MCOIMAPFolder*>*)imapFolders
 {
     DDLogInfo(@"ENTERED");
+    
+    DDAssert(self.s_queue, @"s_queue must be set");
     
     dispatch_async(self.s_queue, ^{
         
@@ -1482,6 +1498,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 - (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
 {
     DDLogInfo(@"ENTERED, folder path = %@",folderPath);
+    
+    DDAssert(self.s_queue, @"s_queue must be set");
 
     dispatch_async(self.s_queue, ^{
         
@@ -1570,6 +1588,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 - (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
     DDLogInfo(@"ENTERED, num IMAP msgs = %@",@(imapMessages.count));
+    
+    DDAssert(self.s_queue, @"s_queue must be set");
     
     dispatch_async(self.s_queue, ^{
         
@@ -1830,6 +1850,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
          
          MCOIMAPFetchMessagesOperation* op = [self.imapSession  fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindFlags uids:uidsIS];
          
+         DDAssert(self.s_queue, @"s_queue must be set");
+         
          dispatch_async(self.s_queue, ^{
              [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
                  
@@ -1927,6 +1949,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
              completedBlock(delDatas, upDatas, days);
              return;
          }
+         
+         DDAssert(self.s_queue, @"s_queue must be set");
          
          // Get the headers and flags for all the messages in the folder
          MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags uids:uidsIS];
