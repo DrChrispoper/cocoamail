@@ -333,16 +333,16 @@
                 
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
-                [[PKHUD sharedHUD] hideAfterDelay:1.0];
+                    [[PKHUD sharedHUD] hideAfterDelay:1.0];
 
-                [ViewController refreshCocoaButton];
-                
-                if ([Accounts sharedInstance].accountsCount>1) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
-                }
-                else {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
-                }
+                    [ViewController refreshCocoaButton];
+                    
+                    if ([Accounts sharedInstance].accountsCount>1) {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
+                    }
+                    else {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
+                    }
                     
                 }]; // end main operation queue block
                 
