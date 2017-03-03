@@ -6,7 +6,7 @@
 
 #define LOG_ASYNC_ENABLED NO        // make CocoaLumberjack logging synchronous
 
-#define USING_INSTABUG    TRUE      // enable InstaBug (instabug.com)
+//#define USING_INSTABUG    TRUE      // enable InstaBug (instabug.com)
 
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
