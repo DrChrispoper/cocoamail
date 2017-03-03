@@ -112,11 +112,13 @@ static NSArray<ImapSync*>* sharedServices = nil;
             sharedService.user = user;
             sharedService.connected = NO;
             
-            sharedService.s_queue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+//            sharedService.s_queue = dispatch_queue_create("CocoaMail" /*DISPATCH_QUEUE_PRIORITY_DEFAULT*/, DISPATCH_QUEUE_SERIAL);
+            
+            sharedService.s_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
             
             // If an updated Imap Session was passed in, and its username matches this user, then update the new service
-            if (updated && [updated.username isEqualToString:user.username]) {
-                sharedService.imapSession = updated;
+            if (update && [update.username isEqualToString:user.username]) {
+                sharedService.imapSession = update;
                 sharedService.imapSession.dispatchQueue = sharedService.s_queue;
                 sharedService.connected = YES;
             }
@@ -125,6 +127,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 
                 dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
                 
+                
+                // TODO: Should I remove the semaphores and change this to dispatch_sync?
                 dispatch_async(sharedService.s_queue, ^{
                     sharedService.imapSession = [AppSettings imapSession:user];
                     sharedService.imapSession.dispatchQueue = sharedService.s_queue;
@@ -515,7 +519,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     NSString *userAgent = [auth userAgent];
                     [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
                     
-                    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [[NSOperationQueue mainQueue] addOperationWithBlock:^{  
                         
                         [auth authorizeRequest:request completionHandler:^(NSError *error) {
                             
