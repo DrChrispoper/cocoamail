@@ -148,14 +148,17 @@
     
 //    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user];
 
+#ifdef BETA_ONLY
     NSInteger currentAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
     NSInteger unreadCount = [AppSettings inboxUnread:currentAccountIndex];
     
     NSString *titleWithCounts = [NSString stringWithFormat:@"%@ (%@, %@)",self.folderName,@(mailCount),@(unreadCount)];
     
     UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:titleWithCounts];
+#else // not BETA_ONLY
+    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:self.folderName];
+#endif
     
-//    UILabel* l = [WhiteBlurNavBar titleViewForItemTitle:self.folderName];
     item.titleView = l;
 }
 
@@ -696,7 +699,7 @@
 
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
 {
-    DDLogInfo(@", Conversation Index date = %@",ciToInsert.date.description);
+    DDLogInfo(@"Conversation Index date = %@",ciToInsert.date.description);
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                 
