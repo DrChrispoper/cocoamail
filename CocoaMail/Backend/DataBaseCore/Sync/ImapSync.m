@@ -355,7 +355,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogInfo(@", IMAP hostname = \"%@\"",user.imapHostname);
+    DDLogInfo(@"userSesstings.imapHostname = \"%@\"",user.imapHostname);
     
     if (!user || user.isDeleted) {
         
@@ -1057,8 +1057,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                                                            forAccount:accountNum];
     
     [self _updateSyncStateWithImapMessageCountForFolder:folder.path
-                                          atFolderIndex:newFolderSyncIndex
-                                       forAccountNumber:accountNum];
+                                          atFolderIndex:newFolderSyncIndex];
     
     return;
 }
@@ -1067,9 +1066,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 // MARK: Local methods for addFolder:
 
--(void) _updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex forAccountNumber:(NSUInteger)accountNum
+-(void) _updateSyncStateWithImapMessageCountForFolder:(NSString *)folderPath atFolderIndex:(NSInteger)folderIndex
 {
-    DDLogInfo(@"ENTERED");
+    DDLogInfo(@"Folder Index = %@, Path = \"%@\"",@(folderIndex),folderPath);
 
     MCOIMAPFolderInfoOperation* folderOp = [self.imapSession folderInfoOperation:folderPath];
     
