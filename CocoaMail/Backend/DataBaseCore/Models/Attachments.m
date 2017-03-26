@@ -465,30 +465,32 @@
                 }
             };
             
-            dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-            [self.op start:^(NSError* error, NSData* partData) {
-                if (error) {
-                    DDLogError(@"%@", error);
-                    return;
-                }
-                att.data = partData;
-                [Attachment updateData:att];
+            dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+            DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+            dispatch_async(imapDispatchQueue, ^{
                 
-                self.size.text = [att stringSize];
-                
-                att.image = nil;
-                self.mini.image = [att miniature];
-                
-                if ([att.mimeType rangeOfString:@"image/"].location != NSNotFound || [att.mimeType rangeOfString:@"video/"].location != NSNotFound) {
-                    self.extention.text = @"";
-                }
+                [self.op start:^(NSError* error, NSData* partData) {
+                    if (error) {
+                        DDLogError(@"%@", error);
+                        return;
+                    }
+                    att.data = partData;
+                    [Attachment updateData:att];
+                    
+                    self.size.text = [att stringSize];
+                    
+                    att.image = nil;
+                    self.mini.image = [att miniature];
+                    
+                    if ([att.mimeType rangeOfString:@"image/"].location != NSNotFound || [att.mimeType rangeOfString:@"video/"].location != NSNotFound) {
+                        self.extention.text = @"";
+                    }
 
-                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                    [self.delegate downloaded:att];
-                    [self doneDownloading];
+                    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                        [self.delegate downloaded:att];
+                        [self doneDownloading];
+                    }];
                 }];
-            }];
-                
             });
         }
     //}

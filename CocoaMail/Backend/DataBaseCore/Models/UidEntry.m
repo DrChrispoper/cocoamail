@@ -541,8 +541,10 @@
                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                         destFolder:toFolderName];
         
-        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
+        dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+        DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+        dispatch_async(imapDispatchQueue, ^{
+            
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
                 DDLogDebug(@"Email copied to folder!");
@@ -595,8 +597,10 @@
         MCOIMAPCopyMessagesOperation* opMove = [[ImapSync sharedServices:user].imapSession copyMessagesOperationWithFolder:fromFolderName
                                                                                                                               uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                                         destFolder:toFolderName];
-        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
+        dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+        DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+        dispatch_async(imapDispatchQueue, ^{
+            
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
                 DDLogDebug(@"Email copied to folder!");
@@ -640,8 +644,10 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindSet
                                                                                                            flags:MCOMessageFlagDeleted];
-        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
+        dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+        DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+        dispatch_async(imapDispatchQueue, ^{
+            
         [op start:^(NSError* error) {
             if (!error) {
                 DDLogDebug(@"Updated the deleted flags!");
@@ -715,8 +721,10 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindAdd
                                                                                                            flags:flag];
-        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
+        dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+        DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+        dispatch_async(imapDispatchQueue, ^{
+            
         [op start:^(NSError* error) {
             if (!error) {
                 DDLogDebug(@"Added flag!");
@@ -767,8 +775,11 @@
                                                                                                             uids:[MCOIndexSet indexSetWithIndex:uidE.uid]
                                                                                                             kind:MCOIMAPStoreFlagsRequestKindRemove
                                                                                                            flags:flag];
-        dispatch_async([ImapSync sharedServices:user].s_queue, ^{
-
+        
+        dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+        DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+        dispatch_async(imapDispatchQueue, ^{
+            
         [op start:^(NSError* error) {
             if (!error) {
                 DDLogDebug(@"Removed flag!");

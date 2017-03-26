@@ -113,7 +113,10 @@
                                             flags:MCOMessageFlagSeen
                                             customFlags:nil];
     
-    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+    dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+    DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+    dispatch_async(imapDispatchQueue, ^{
+        
         [addOp start:^(NSError * error, uint32_t createdUID) {
             if (error == nil) {
                 NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
