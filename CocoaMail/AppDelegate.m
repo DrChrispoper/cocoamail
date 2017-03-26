@@ -101,7 +101,7 @@
 //    [DDLog addLogger:[DDASLLogger sharedInstance]];
 
     
-#ifdef USING_INSTABUG
+#ifdef USING_INSTABUG_LOGGER
     // This will log CocoaLumberjack into Instabug
     DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
     if ( ibgLogger ) {
@@ -133,6 +133,19 @@
 
 
 #endif // not using Instabug
+    
+#ifdef USING_INSTABUG
+    DDLogInfo(@"USING INSTABUG");
+#else
+    DDLogInfo(@"NOT USING INSTABUG");
+#endif
+    
+#ifdef USING_INSTABUG_LOGGER
+    DDLogInfo(@"USING INSTABUG-COCOALUMBERJACK LOGGER");
+#else
+    DDLogInfo(@"NOT USING INSTABUG-COCOALUMBERJACK LOGGER");
+#endif
+    DDLogInfo(@"\n");
 
     
     // Send debug info to log files
