@@ -238,7 +238,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
         return;
     }
     
-    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+    dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+    DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+    dispatch_async(imapDispatchQueue, ^{
         
         NSInteger inboxFolder = [user numFolderWithFolder:inboxFolderType()];
         NSString* serverFolderPath = [user folderServerName:inboxFolder];
@@ -473,7 +475,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
     sharedService.imapSession.connectionType = MCOConnectionTypeTLS;
     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
     
-    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+    
+    dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+    DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+    dispatch_async(imapDispatchQueue, ^{
         
         DDLogDebug(@"BLOCK START - DISPATCH_QUEUE_PRIORITY_DEFAULT");
         
@@ -532,7 +537,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
                                 sharedService.imapSession = [AppSettings imapSession:sharedService.user];
                                 sharedService.imapSession.dispatchQueue = sharedService.s_queue;
                                 
-                                dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+                                dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+                                DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+                                dispatch_async(imapDispatchQueue, ^{
                                     
                                     DDLogDebug(@"\tLoggin Again with OAuth with token:%@", [sharedService.user oAuth]);
                                     
@@ -582,7 +589,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     DDLogDebug(@"\tLogging in with Password (not oAuth)");
     
-    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+    dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+    DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+    dispatch_async(imapDispatchQueue, ^{
         
         [sharedService.imapCheckOp start:^(NSError* error) {
             if (error) {
