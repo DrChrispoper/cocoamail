@@ -3,34 +3,28 @@
 //  PKHUD
 //
 //  Created by Philip Kluz on 6/12/15.
-//  Copyright (c) 2015 NSExceptional. All rights reserved.
+//  Copyright (c) 2016 NSExceptional. All rights reserved.
+//  Licensed under the MIT license.
 //
 
 import UIKit
 import QuartzCore
 
 /// PKHUDProgressView provides an indeterminate progress view.
-public class PKHUDProgressView: PKHUDImageView, PKHUDAnimating {
-    
-    public init() {
-        super.init(image: PKHUDAssets.progressImage)
+open class PKHUDProgressView: PKHUDSquareBaseView, PKHUDAnimating {
+
+    public init(title: String? = nil, subtitle: String? = nil) {
+        super.init(image: PKHUDAssets.progressActivityImage, title: title, subtitle: subtitle)
     }
-    
+
     public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
-    
-    override func commonInit(image image: UIImage?) {
-        super.commonInit(image: image)
-        let progressImage = PKHUDAssets.progressImage
-        imageView.image = progressImage
-        imageView.alpha = 0.9
+
+    public func startAnimation() {
+        imageView.layer.add(PKHUDAnimation.discreteRotation, forKey: "progressAnimation")
     }
-    
-    func startAnimation() {
-        imageView.layer.addAnimation(PKHUDAnimation.rotation, forKey: "progressAnimation")
-    }
-    
-    func stopAnimation() {
+
+    public func stopAnimation() {
     }
 }
