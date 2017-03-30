@@ -44,10 +44,6 @@ PODS:
   - GTMSessionFetcher/Core (1.1.8)
   - GTMSessionFetcher/Full (1.1.8):
     - GTMSessionFetcher/Core (= 1.1.8)
-  - Instabug (7.0.5)
-  - Instabug-CocoaLumberjack (1.0.2):
-    - CocoaLumberjack
-    - Instabug (>= 6.2)
   - libextobjc (0.4.1):
     - libextobjc/EXTADT (= 0.4.1)
     - libextobjc/EXTConcreteProtocol (= 0.4.1)
@@ -103,8 +99,6 @@ DEPENDENCIES:
   - GoogleAPIClient/Drive (~> 1.0)
   - GoogleSignIn
   - GTMOAuth2 (~> 1.1.0)
-  - Instabug
-  - Instabug-CocoaLumberjack
   - libextobjc (~> 0.4)
   - pop (~> 1.0)
   - Reachability (~> 3.1.1)
@@ -122,14 +116,12 @@ SPEC CHECKSUMS:
   GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
   GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
   GTMSessionFetcher: 6f8d8b28b7e345549ac471071608170b31cb4977
-  Instabug: 1595db90e56b3de741be687211afbad72facc7e9
-  Instabug-CocoaLumberjack: 569556b9d3891147021fa8dbaa7fbfbf8c9d3e98
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
   pop: f667631a5108a2e60d9e8797c9b32ddaf2080bce
   Reachability: dd9aa4fb6667b9f787690a74f53cb7634ce99893
   ReactiveCocoa: e2db045570aa97c695e7aa97c2bcab222ae51f4a
 
-PODFILE CHECKSUM: 3a249df515afe519b9825f83762bae7acc92a5fc
+PODFILE CHECKSUM: b373ba1f885f4fecf97b2c9fda85dfd9c0b582f0
 
 COCOAPODS: 1.2.0

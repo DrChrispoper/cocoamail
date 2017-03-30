@@ -17,14 +17,19 @@ target 'CocoaMail' do
 	pod 'GTMOAuth2', '~> 1.1.0'
 	pod 'box-ios-browse-sdk', '1.0.4'
 	pod 'DZNEmptyDataSet'
+	
+# PKHUD is written in Swift.  Use of Swift in CocoaPods
+# requires the use of Frameworks instead of Static Libraries.
+# Using Frameworks in our project would be a major change
+# and is not worth the effort at this time.
+#use_frameworks!
+#pod 'PKHUD', '~> 4.0'
+
 # pod 'Flurry-iOS-SDK/FlurrySDK'
-	pod 'Instabug'
+#	pod 'Instabug'
   pod 'CocoaLumberjack' 
-  pod 'Instabug-CocoaLumberjack'
+#  pod 'Instabug-CocoaLumberjack'
   
-#  use_frameworks!
-  # Use 4.0 for swift 3.x
-#  pod 'PKHUD', '~> 3.0'
 end
 
 
