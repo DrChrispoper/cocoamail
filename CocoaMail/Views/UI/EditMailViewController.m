@@ -417,8 +417,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if (self.isDownloading != 0) {
         [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
         [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString stringWithFormat:@"Downloading transfered attachments (%ld)",(long)self.isDownloading]];
-        [[PKHUD sharedHUD] show];
-        [[PKHUD sharedHUD] hideAfterDelay:2.0];
+        [[PKHUD sharedHUD] showOnView:nil];
+        [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
         return;
     }
     
@@ -1767,8 +1767,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2 code:0];
 }
@@ -1778,8 +1778,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDErrorView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2 code:2];
 }
@@ -1813,8 +1813,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     [self _updateAttachView];
 }

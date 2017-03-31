@@ -327,13 +327,13 @@
         if ([directAction isEqualToString:@"DELETE"]) {
             [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
             [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"account.deleting", @"HUD Message: Deleting...")];
-            [[PKHUD sharedHUD] show];
+            [[PKHUD sharedHUD] showOnView:nil];
             
             [[Accounts sharedInstance] deleteAccount:self.account completed:^{
                 
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
-                    [[PKHUD sharedHUD] hideAfterDelay:1.0];
+                    [[PKHUD sharedHUD] hideAfterDelay:1.0 completion:nil];
 
                     [ViewController refreshCocoaButton];
                     

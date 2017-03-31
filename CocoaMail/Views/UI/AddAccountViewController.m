@@ -498,7 +498,7 @@
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = FALSE;
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-settings", @"HUD Message: Fetching settings...")];
-    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] showOnView:nil];
     
     [MCOMailProvidersManager sharedManager];
     
@@ -515,7 +515,7 @@
             DDLogError(@"error loading imap account: %@", strongSelf.accountVal.imapError);
             DDLogError(@"error loading smtp account: %@", strongSelf.accountVal.smtpError);
             
-            [[PKHUD sharedHUD] hideWithAnimated:YES];
+            [[PKHUD sharedHUD] hideWithAnimated:YES completion:nil];
             
             if (strongSelf.accountVal.imapError.code == MCOErrorAuthentication || strongSelf.accountVal.smtpError.code == MCOErrorAuthentication) {
                 [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Alert message: Wrong credentials")];
@@ -544,7 +544,7 @@
     DDLogInfo(@"2 - Start setting Folders");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.account-in-config", @"HUD Message: Account Configuration...")];
-    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] showOnView:nil];
     
     MCOIMAPSession* imapSession = [[MCOIMAPSession alloc] init];
     
@@ -563,7 +563,7 @@
     [namespaceOp start:^(NSError* error, NSDictionary* namespaces) {
         if (error) {
             DDLogError(@"%@", error.description);
-            [[PKHUD sharedHUD] hideWithAnimated:YES];
+            [[PKHUD sharedHUD] hideWithAnimated:YES completion:nil];
             
             return ;
         }
@@ -575,7 +575,7 @@
         [op start:^(NSError*  error, NSArray* folders) {
             if (error) {
                 DDLogError(@"%@", error.description);
-                [[PKHUD sharedHUD] hideWithAnimated:YES];
+                [[PKHUD sharedHUD] hideWithAnimated:YES completion:nil];
                 
                 return ;
             }
@@ -661,7 +661,7 @@
                         DDLogDebug(@"      Failed to create folder \"Archive\", NSError = %@",[error description]);
 
                         //Account not supported
-                        [[PKHUD sharedHUD] hideWithAnimated:YES];
+                        [[PKHUD sharedHUD] hideWithAnimated:YES completion:nil];
                         [ViewController presentAlertWIP:NSLocalizedString(@"add-account-view.error.email-not-supported", @"Alert Message: This email provider is not supported")];
                     }
                 }];
@@ -799,7 +799,7 @@
     DDLogInfo(@"4 - Go!");
     
     [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:NSLocalizedString(@"add-account-view.loading-hud.fetching-emails", @"HUD Message: Fetching first emails")];
-    [[PKHUD sharedHUD] show];
+    [[PKHUD sharedHUD] showOnView:nil];
     
     self.user = user;
     /*self.step = 1;
@@ -832,7 +832,7 @@
 -(void) serverSearchDone:(BOOL)done
 {
     if (done) {
-        [[PKHUD sharedHUD] hideWithAnimated:NO];
+        [[PKHUD sharedHUD] hideWithAnimated:NO completion:nil];
         
         self.user.linkedAccount.mailListSubscriber = nil;
         

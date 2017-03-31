@@ -7,6 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1403FEEE1E8DAD250085E099 /* FrameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEDE1E8DAD250085E099 /* FrameView.swift */; };
+		1403FEEF1E8DAD250085E099 /* HUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEDF1E8DAD250085E099 /* HUD.swift */; };
+		1403FEF01E8DAD250085E099 /* PKHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE01E8DAD250085E099 /* PKHUD.swift */; };
+		1403FEF11E8DAD250085E099 /* PKHUDAnimating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE11E8DAD250085E099 /* PKHUDAnimating.swift */; };
+		1403FEF21E8DAD250085E099 /* PKHUDAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE21E8DAD250085E099 /* PKHUDAnimation.swift */; };
+		1403FEF31E8DAD250085E099 /* PKHUDAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE31E8DAD250085E099 /* PKHUDAssets.swift */; };
+		1403FEF41E8DAD250085E099 /* PKHUDErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE41E8DAD250085E099 /* PKHUDErrorView.swift */; };
+		1403FEF51E8DAD250085E099 /* PKHUDProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE51E8DAD250085E099 /* PKHUDProgressView.swift */; };
+		1403FEF61E8DAD250085E099 /* PKHUDRotatingImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE61E8DAD250085E099 /* PKHUDRotatingImageView.swift */; };
+		1403FEF71E8DAD250085E099 /* PKHUDSquareBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE71E8DAD250085E099 /* PKHUDSquareBaseView.swift */; };
+		1403FEF81E8DAD250085E099 /* PKHUDSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE81E8DAD250085E099 /* PKHUDSuccessView.swift */; };
+		1403FEF91E8DAD250085E099 /* PKHUDSystemActivityIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEE91E8DAD250085E099 /* PKHUDSystemActivityIndicatorView.swift */; };
+		1403FEFA1E8DAD250085E099 /* PKHUDTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEEA1E8DAD250085E099 /* PKHUDTextView.swift */; };
+		1403FEFB1E8DAD250085E099 /* PKHUDWideBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEEB1E8DAD250085E099 /* PKHUDWideBaseView.swift */; };
+		1403FEFC1E8DAD250085E099 /* Window.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEEC1E8DAD250085E099 /* Window.swift */; };
+		1403FEFD1E8DAD250085E099 /* WindowRootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEED1E8DAD250085E099 /* WindowRootViewController.swift */; };
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
@@ -59,20 +75,6 @@
 		271D4E111B85DC6200D19373 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4E101B85DC6100D19373 /* StoreKit.framework */; };
 		2723201B1BF48E84000F7EFF /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2723201D1BF48E84000F7EFF /* Localizable.strings */; };
 		272320201BF48E88000F7EFF /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 272320221BF48E88000F7EFF /* InfoPlist.strings */; };
-		273219D91C466B360019967C /* PKHUDAnimating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219CB1C466B360019967C /* PKHUDAnimating.swift */; };
-		273219DA1C466B360019967C /* PKHUDAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219CC1C466B360019967C /* PKHUDAnimation.swift */; };
-		273219DB1C466B360019967C /* PKHUDErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219CD1C466B360019967C /* PKHUDErrorView.swift */; };
-		273219DC1C466B360019967C /* PKHUDImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219CE1C466B360019967C /* PKHUDImageView.swift */; };
-		273219DD1C466B360019967C /* PKHUDProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219CF1C466B360019967C /* PKHUDProgressView.swift */; };
-		273219DE1C466B360019967C /* PKHUDSquareBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D01C466B360019967C /* PKHUDSquareBaseView.swift */; };
-		273219DF1C466B360019967C /* PKHUDStatusProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D11C466B360019967C /* PKHUDStatusProgressView.swift */; };
-		273219E01C466B360019967C /* PKHUDStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D21C466B360019967C /* PKHUDStatusView.swift */; };
-		273219E11C466B360019967C /* PKHUDSubtitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D31C466B360019967C /* PKHUDSubtitleView.swift */; };
-		273219E21C466B360019967C /* PKHUDSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D41C466B360019967C /* PKHUDSuccessView.swift */; };
-		273219E31C466B360019967C /* PKHUDSystemActivityIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D51C466B360019967C /* PKHUDSystemActivityIndicatorView.swift */; };
-		273219E41C466B360019967C /* PKHUDTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D61C466B360019967C /* PKHUDTextView.swift */; };
-		273219E51C466B360019967C /* PKHUDTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D71C466B360019967C /* PKHUDTitleView.swift */; };
-		273219E61C466B360019967C /* PKHUDWideBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273219D81C466B360019967C /* PKHUDWideBaseView.swift */; };
 		273E62DA1BDF7FC700E3F318 /* CCMStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 273E62D91BDF7FC700E3F318 /* CCMStatus.m */; };
 		273EA08B1BA18221009AC691 /* MCOMessageView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 273EA0891BA18221009AC691 /* MCOMessageView.mm */; };
 		273EA08C1BA18221009AC691 /* MCOMessageViewScript.js in Resources */ = {isa = PBXBuildFile; fileRef = 273EA08A1BA18221009AC691 /* MCOMessageViewScript.js */; };
@@ -315,14 +317,9 @@
 		27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3AD601CB2413D00F6430E /* CCMSearchTableViewController.m */; };
 		27F3C9CE1C807FCE0066116B /* Conversation.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F3C9CD1C807FCE0066116B /* Conversation.m */; };
 		27F9B6B41C689DC20008D681 /* ContactTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 27F9B6B31C689DC20008D681 /* ContactTableViewCell.m */; };
-		27FABC191B9D8AC10089634A /* PKHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC161B9D8AC10089634A /* PKHUD.swift */; };
-		27FABC1A1B9D8AC10089634A /* PKHUDAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC171B9D8AC10089634A /* PKHUDAssets.swift */; };
-		27FABC241B9D8E030089634A /* FrameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC211B9D8E030089634A /* FrameView.swift */; };
-		27FABC251B9D8E030089634A /* Window.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC221B9D8E030089634A /* Window.swift */; };
-		27FABC261B9D8E030089634A /* WindowRootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FABC231B9D8E030089634A /* WindowRootViewController.swift */; };
 		27FADA3A1C5774FC007A3D14 /* UIView+RenderViewToImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 27FADA391C5774FC007A3D14 /* UIView+RenderViewToImage.m */; };
 		27FDE1701C4A4CF300FD69F1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 27FDE16E1C4A4CF300FD69F1 /* Main.storyboard */; };
-		6A8D5F497F086BD47ADD116A /* libPods-CocoaMail.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAF94853EC065E63930E0AFF /* libPods-CocoaMail.a */; };
+		B8A904493AA0341E6EE4700A /* libPods-CocoaMail.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 98F8470A9318AD57FBB6364A /* libPods-CocoaMail.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -392,6 +389,22 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1403FEDE1E8DAD250085E099 /* FrameView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FrameView.swift; sourceTree = "<group>"; };
+		1403FEDF1E8DAD250085E099 /* HUD.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HUD.swift; sourceTree = "<group>"; };
+		1403FEE01E8DAD250085E099 /* PKHUD.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUD.swift; sourceTree = "<group>"; };
+		1403FEE11E8DAD250085E099 /* PKHUDAnimating.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAnimating.swift; sourceTree = "<group>"; };
+		1403FEE21E8DAD250085E099 /* PKHUDAnimation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAnimation.swift; sourceTree = "<group>"; };
+		1403FEE31E8DAD250085E099 /* PKHUDAssets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAssets.swift; sourceTree = "<group>"; };
+		1403FEE41E8DAD250085E099 /* PKHUDErrorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDErrorView.swift; sourceTree = "<group>"; };
+		1403FEE51E8DAD250085E099 /* PKHUDProgressView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDProgressView.swift; sourceTree = "<group>"; };
+		1403FEE61E8DAD250085E099 /* PKHUDRotatingImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDRotatingImageView.swift; sourceTree = "<group>"; };
+		1403FEE71E8DAD250085E099 /* PKHUDSquareBaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSquareBaseView.swift; sourceTree = "<group>"; };
+		1403FEE81E8DAD250085E099 /* PKHUDSuccessView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSuccessView.swift; sourceTree = "<group>"; };
+		1403FEE91E8DAD250085E099 /* PKHUDSystemActivityIndicatorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSystemActivityIndicatorView.swift; sourceTree = "<group>"; };
+		1403FEEA1E8DAD250085E099 /* PKHUDTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDTextView.swift; sourceTree = "<group>"; };
+		1403FEEB1E8DAD250085E099 /* PKHUDWideBaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDWideBaseView.swift; sourceTree = "<group>"; };
+		1403FEEC1E8DAD250085E099 /* Window.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Window.swift; sourceTree = "<group>"; };
+		1403FEED1E8DAD250085E099 /* WindowRootViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowRootViewController.swift; sourceTree = "<group>"; };
 		141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCMConversationsByDay.h; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.h; sourceTree = "<group>"; };
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
@@ -479,21 +492,6 @@
 		272320211BF48E88000F7EFF /* en-US */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-US"; path = "en-US.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		272320231BF48EA7000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; lineEnding = 0; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.simpleColoring; };
 		272320241BF48EA8000F7EFF /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		273219CA1C466B360019967C /* PKHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKHUD.h; sourceTree = "<group>"; };
-		273219CB1C466B360019967C /* PKHUDAnimating.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAnimating.swift; sourceTree = "<group>"; };
-		273219CC1C466B360019967C /* PKHUDAnimation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAnimation.swift; sourceTree = "<group>"; };
-		273219CD1C466B360019967C /* PKHUDErrorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDErrorView.swift; sourceTree = "<group>"; };
-		273219CE1C466B360019967C /* PKHUDImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDImageView.swift; sourceTree = "<group>"; };
-		273219CF1C466B360019967C /* PKHUDProgressView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDProgressView.swift; sourceTree = "<group>"; };
-		273219D01C466B360019967C /* PKHUDSquareBaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSquareBaseView.swift; sourceTree = "<group>"; };
-		273219D11C466B360019967C /* PKHUDStatusProgressView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDStatusProgressView.swift; sourceTree = "<group>"; };
-		273219D21C466B360019967C /* PKHUDStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDStatusView.swift; sourceTree = "<group>"; };
-		273219D31C466B360019967C /* PKHUDSubtitleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSubtitleView.swift; sourceTree = "<group>"; };
-		273219D41C466B360019967C /* PKHUDSuccessView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSuccessView.swift; sourceTree = "<group>"; };
-		273219D51C466B360019967C /* PKHUDSystemActivityIndicatorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDSystemActivityIndicatorView.swift; sourceTree = "<group>"; };
-		273219D61C466B360019967C /* PKHUDTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDTextView.swift; sourceTree = "<group>"; };
-		273219D71C466B360019967C /* PKHUDTitleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDTitleView.swift; sourceTree = "<group>"; };
-		273219D81C466B360019967C /* PKHUDWideBaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDWideBaseView.swift; sourceTree = "<group>"; };
 		273E62D81BDF7FC700E3F318 /* CCMStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMStatus.h; sourceTree = "<group>"; };
 		273E62D91BDF7FC700E3F318 /* CCMStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMStatus.m; sourceTree = "<group>"; };
 		273EA0881BA18221009AC691 /* MCOMessageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = MCOMessageView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -814,11 +812,6 @@
 		27F3C9CD1C807FCE0066116B /* Conversation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Conversation.m; sourceTree = "<group>"; };
 		27F9B6B21C689DC10008D681 /* ContactTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactTableViewCell.h; sourceTree = "<group>"; };
 		27F9B6B31C689DC20008D681 /* ContactTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContactTableViewCell.m; sourceTree = "<group>"; };
-		27FABC161B9D8AC10089634A /* PKHUD.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUD.swift; sourceTree = "<group>"; };
-		27FABC171B9D8AC10089634A /* PKHUDAssets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDAssets.swift; sourceTree = "<group>"; };
-		27FABC211B9D8E030089634A /* FrameView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FrameView.swift; sourceTree = "<group>"; };
-		27FABC221B9D8E030089634A /* Window.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Window.swift; sourceTree = "<group>"; };
-		27FABC231B9D8E030089634A /* WindowRootViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowRootViewController.swift; sourceTree = "<group>"; };
 		27FADA381C5774FC007A3D14 /* UIView+RenderViewToImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+RenderViewToImage.h"; sourceTree = "<group>"; };
 		27FADA391C5774FC007A3D14 /* UIView+RenderViewToImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+RenderViewToImage.m"; sourceTree = "<group>"; };
 		27FDE1711C4A4CFE00FD69F1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -828,7 +821,7 @@
 		55683D925F45599EB9CB2647 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		677DA1BA2CCF6575EBE3F048 /* Pods-CocoaMail.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CocoaMail.release.xcconfig"; path = "Pods/Target Support Files/Pods-CocoaMail/Pods-CocoaMail.release.xcconfig"; sourceTree = "<group>"; };
 		706BC244180948685CD07EB6 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
-		DAF94853EC065E63930E0AFF /* libPods-CocoaMail.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CocoaMail.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		98F8470A9318AD57FBB6364A /* libPods-CocoaMail.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CocoaMail.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F79058654E0663E09B97C5B5 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -866,7 +859,7 @@
 				271D4D481B8471AC00D19373 /* libpop.a in Frameworks */,
 				271D4D491B8471AC00D19373 /* libReachability.a in Frameworks */,
 				271D4D4A1B8471AC00D19373 /* libReactiveCocoa.a in Frameworks */,
-				6A8D5F497F086BD47ADD116A /* libPods-CocoaMail.a in Frameworks */,
+				B8A904493AA0341E6EE4700A /* libPods-CocoaMail.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1558,26 +1551,22 @@
 		27C203E51C7B225D00BB9960 /* PK */ = {
 			isa = PBXGroup;
 			children = (
-				27FABC211B9D8E030089634A /* FrameView.swift */,
-				27FABC221B9D8E030089634A /* Window.swift */,
-				27FABC231B9D8E030089634A /* WindowRootViewController.swift */,
-				27FABC161B9D8AC10089634A /* PKHUD.swift */,
-				27FABC171B9D8AC10089634A /* PKHUDAssets.swift */,
-				273219CA1C466B360019967C /* PKHUD.h */,
-				273219CB1C466B360019967C /* PKHUDAnimating.swift */,
-				273219CC1C466B360019967C /* PKHUDAnimation.swift */,
-				273219CD1C466B360019967C /* PKHUDErrorView.swift */,
-				273219CE1C466B360019967C /* PKHUDImageView.swift */,
-				273219CF1C466B360019967C /* PKHUDProgressView.swift */,
-				273219D01C466B360019967C /* PKHUDSquareBaseView.swift */,
-				273219D11C466B360019967C /* PKHUDStatusProgressView.swift */,
-				273219D21C466B360019967C /* PKHUDStatusView.swift */,
-				273219D31C466B360019967C /* PKHUDSubtitleView.swift */,
-				273219D41C466B360019967C /* PKHUDSuccessView.swift */,
-				273219D51C466B360019967C /* PKHUDSystemActivityIndicatorView.swift */,
-				273219D61C466B360019967C /* PKHUDTextView.swift */,
-				273219D71C466B360019967C /* PKHUDTitleView.swift */,
-				273219D81C466B360019967C /* PKHUDWideBaseView.swift */,
+				1403FEDE1E8DAD250085E099 /* FrameView.swift */,
+				1403FEDF1E8DAD250085E099 /* HUD.swift */,
+				1403FEE01E8DAD250085E099 /* PKHUD.swift */,
+				1403FEE11E8DAD250085E099 /* PKHUDAnimating.swift */,
+				1403FEE21E8DAD250085E099 /* PKHUDAnimation.swift */,
+				1403FEE31E8DAD250085E099 /* PKHUDAssets.swift */,
+				1403FEE41E8DAD250085E099 /* PKHUDErrorView.swift */,
+				1403FEE51E8DAD250085E099 /* PKHUDProgressView.swift */,
+				1403FEE61E8DAD250085E099 /* PKHUDRotatingImageView.swift */,
+				1403FEE71E8DAD250085E099 /* PKHUDSquareBaseView.swift */,
+				1403FEE81E8DAD250085E099 /* PKHUDSuccessView.swift */,
+				1403FEE91E8DAD250085E099 /* PKHUDSystemActivityIndicatorView.swift */,
+				1403FEEA1E8DAD250085E099 /* PKHUDTextView.swift */,
+				1403FEEB1E8DAD250085E099 /* PKHUDWideBaseView.swift */,
+				1403FEEC1E8DAD250085E099 /* Window.swift */,
+				1403FEED1E8DAD250085E099 /* WindowRootViewController.swift */,
 			);
 			name = PK;
 			sourceTree = "<group>";
@@ -1638,7 +1627,7 @@
 				271D4D3E1B8471AC00D19373 /* libReachability.a */,
 				271D4D3F1B8471AC00D19373 /* libReactiveCocoa.a */,
 				55683D925F45599EB9CB2647 /* libPods.a */,
-				DAF94853EC065E63930E0AFF /* libPods-CocoaMail.a */,
+				98F8470A9318AD57FBB6364A /* libPods-CocoaMail.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1694,7 +1683,7 @@
 					271D4CFD1B846E4500D19373 = {
 						CreatedOnToolsVersion = 6.4;
 						DevelopmentTeam = 2MGU5T4CQD;
-						LastSwiftMigration = 0800;
+						LastSwiftMigration = 0830;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -2005,7 +1994,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#--- SCRIPT BEGIN ---\n# SKIP_SIMULATOR_BUILDS=1\n#SCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\n#if [ ! \"${SCRIPT_SRC}\" ]; then\n#echo \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\n#exit 1\n#fi\n#APP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\n#source \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---\n";
+			shellScript = "#--- SCRIPT BEGIN ---\nSKIP_SIMULATOR_BUILDS=1\nSCRIPT_SRC=$(find \"$PROJECT_DIR\" -name 'Instabug_dsym_upload.sh' | head -1)\nif [ ! \"${SCRIPT_SRC}\" ]; then\necho \"Instabug: err: script not found. Make sure that you're including Instabug.bundle in your project directory\"\nexit 1\nfi\necjp $\nAPP_TOKEN=\"745ee58bde267456dafb4be700be1924\"\nsource \"${SCRIPT_SRC}\"\n#--- SCRIPT END ---\n";
 		};
 		1C2F9E1F295DFDC02481677C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2074,55 +2063,52 @@
 			buildActionMask = 2147483647;
 			files = (
 				27818C641BABF24F00D26D1A /* UIGlobal.m in Sources */,
-				27FABC1A1B9D8AC10089634A /* PKHUDAssets.swift in Sources */,
 				27F9B6B41C689DC20008D681 /* ContactTableViewCell.m in Sources */,
 				141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */,
 				27818C5F1BABF22500D26D1A /* PullToRefresh.m in Sources */,
-				273219DA1C466B360019967C /* PKHUDAnimation.swift in Sources */,
 				27818C601BABF22500D26D1A /* UIImage+ImageEffects.m in Sources */,
 				277D64CA1C8EE7F900C0135F /* OnePasswordExtension.m in Sources */,
-				273219DD1C466B360019967C /* PKHUDProgressView.swift in Sources */,
+				1403FEEF1E8DAD250085E099 /* HUD.swift in Sources */,
 				271D4D9B1B84758E00D19373 /* ImapSync.m in Sources */,
+				1403FEF41E8DAD250085E099 /* PKHUDErrorView.swift in Sources */,
 				271D4D911B84758E00D19373 /* CacheDBAccessor.m in Sources */,
-				273219DF1C466B360019967C /* PKHUDStatusProgressView.swift in Sources */,
 				2771085E1C61500600A459E1 /* HTMLEncoding.m in Sources */,
 				277D64D01C8F0A9800C0135F /* SGProgressView.m in Sources */,
 				271D4D071B846E4500D19373 /* AppDelegate.m in Sources */,
 				14E657CD1E54CC5F009070E9 /* CCMDDLogFormatter.m in Sources */,
 				2771085D1C61500600A459E1 /* HTMLElement.m in Sources */,
 				27818C581BABF22500D26D1A /* InViewController.m in Sources */,
-				27FABC251B9D8E030089634A /* Window.swift in Sources */,
 				271D4DA21B8475B700D19373 /* DateUtil.m in Sources */,
 				27818C4B1BABF22500D26D1A /* AddAccountViewController.m in Sources */,
 				277108681C61500600A459E1 /* HTMLTokenizer.m in Sources */,
-				273219E41C466B360019967C /* PKHUDTextView.swift in Sources */,
 				277108671C61500600A459E1 /* HTMLTextNode.m in Sources */,
+				1403FEF11E8DAD250085E099 /* PKHUDAnimating.swift in Sources */,
 				2771085A1C61500600A459E1 /* HTMLComment.m in Sources */,
 				27818C511BABF22500D26D1A /* ConversationViewController.m in Sources */,
 				27818C6D1BABF28D00D26D1A /* Persons.m in Sources */,
 				271D4D9C1B84758E00D19373 /* SyncManager.m in Sources */,
 				277108601C61500600A459E1 /* HTMLNode.m in Sources */,
+				1403FEF51E8DAD250085E099 /* PKHUDProgressView.swift in Sources */,
 				2770B9791C19DF2E008F7784 /* MCOCIDURLProtocol.mm in Sources */,
 				27818C611BABF22500D26D1A /* WhiteBlurNavBar.m in Sources */,
 				27818C4A1BABF22500D26D1A /* AccountViewController.m in Sources */,
+				1403FEEE1E8DAD250085E099 /* FrameView.swift in Sources */,
 				27818C571BABF22500D26D1A /* FolderViewController.m in Sources */,
-				273219E11C466B360019967C /* PKHUDSubtitleView.swift in Sources */,
 				2771085C1C61500600A459E1 /* HTMLDocumentType.m in Sources */,
-				273219DC1C466B360019967C /* PKHUDImageView.swift in Sources */,
 				27818C5B1BABF22500D26D1A /* SearchViewController.m in Sources */,
 				277108611C61500600A459E1 /* HTMLOrderedDictionary.m in Sources */,
 				27818C4E1BABF22500D26D1A /* SearchTableViewCell.m in Sources */,
 				27818C6B1BABF28D00D26D1A /* Attachments.m in Sources */,
 				277D89021BB14B1B00FAFED5 /* DropboxBrowserViewController.m in Sources */,
 				277108661C61500600A459E1 /* HTMLString.m in Sources */,
+				1403FEF21E8DAD250085E099 /* PKHUDAnimation.swift in Sources */,
 				27818C561BABF22500D26D1A /* EditMailViewController.m in Sources */,
 				27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */,
 				271D4D991B84758E00D19373 /* SearchRunner.m in Sources */,
-				27FABC191B9D8AC10089634A /* PKHUD.swift in Sources */,
 				277108691C61500600A459E1 /* HTMLTreeEnumerator.m in Sources */,
-				273219D91C466B360019967C /* PKHUDAnimating.swift in Sources */,
 				277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */,
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
+				1403FEFA1E8DAD250085E099 /* PKHUDTextView.swift in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
 				2798B56B1C4AAE6600C98321 /* ViewController.m in Sources */,
 				2700855B1CB90CE0004069B4 /* AlternateViewController.m in Sources */,
@@ -2130,16 +2116,13 @@
 				2771086A1C61500600A459E1 /* NSString+HTMLEntities.m in Sources */,
 				27818C5E1BABF22500D26D1A /* CocoaButton.m in Sources */,
 				271D4D041B846E4500D19373 /* main.m in Sources */,
-				273219E31C466B360019967C /* PKHUDSystemActivityIndicatorView.swift in Sources */,
-				27FABC261B9D8E030089634A /* WindowRootViewController.swift in Sources */,
 				27B7FD781C2405DC00FF8AE5 /* SpamListViewController.m in Sources */,
 				270FD3FD1C4CE4A3001B82F2 /* MailListViewController+UIViewControllerPreviewing.m in Sources */,
-				273219E01C466B360019967C /* PKHUDStatusView.swift in Sources */,
-				273219E21C466B360019967C /* PKHUDSuccessView.swift in Sources */,
 				27818C521BABF22500D26D1A /* CreditContentViewController.m in Sources */,
-				273219E61C466B360019967C /* PKHUDWideBaseView.swift in Sources */,
 				2777380E1B8B03A40030F299 /* MailListViewController.m in Sources */,
+				1403FEF81E8DAD250085E099 /* PKHUDSuccessView.swift in Sources */,
 				271D4D901B84758E00D19373 /* AttachmentDBAccessor.m in Sources */,
+				1403FEF01E8DAD250085E099 /* PKHUD.swift in Sources */,
 				2771085F1C61500600A459E1 /* HTMLEntities.m in Sources */,
 				271D4D941B84758E00D19373 /* UidDBAccessor.m in Sources */,
 				27818C6C1BABF28D00D26D1A /* Mail.m in Sources */,
@@ -2153,23 +2136,24 @@
 				27C077BA1BBC1E4300FC1841 /* RegExCategories.m in Sources */,
 				277D64CF1C8F0A9800C0135F /* InViewController+SGProgress.m in Sources */,
 				271D4D4E1B84720000D19373 /* AppSettings.m in Sources */,
+				1403FEF91E8DAD250085E099 /* PKHUDSystemActivityIndicatorView.swift in Sources */,
 				277108641C61500600A459E1 /* HTMLSelector.m in Sources */,
 				271D4D921B84758E00D19373 /* EmailDBAccessor.m in Sources */,
 				271D4DA31B8475B700D19373 /* StringUtil.m in Sources */,
 				277D64D41C8F0BBA00C0135F /* NSDate+TimeAgo.m in Sources */,
+				1403FEFC1E8DAD250085E099 /* Window.swift in Sources */,
 				271D4D951B84758E00D19373 /* CCMAttachment.m in Sources */,
+				1403FEF31E8DAD250085E099 /* PKHUDAssets.swift in Sources */,
 				27818C4F1BABF22500D26D1A /* CloudViewController.m in Sources */,
 				271D4D551B84721A00D19373 /* PDKeychainBindingsController.m in Sources */,
 				27026F0D1C1EBA8900BC2C1A /* MyLabel.m in Sources */,
 				27818C551BABF22500D26D1A /* EditCocoaButtonView.m in Sources */,
 				277108621C61500600A459E1 /* HTMLParser.m in Sources */,
 				271D4D9A1B84758E00D19373 /* EmailProcessor.m in Sources */,
-				273219DB1C466B360019967C /* PKHUDErrorView.swift in Sources */,
 				271D4D971B84758E00D19373 /* UidEntry.m in Sources */,
 				2747697C1C48F9DD00BF04DE /* PreviewViewController.m in Sources */,
-				273219E51C466B360019967C /* PKHUDTitleView.swift in Sources */,
 				27A636551CA02EB5000B6D2D /* LoginTableViewCell.m in Sources */,
-				27FABC241B9D8E030089634A /* FrameView.swift in Sources */,
+				1403FEFB1E8DAD250085E099 /* PKHUDWideBaseView.swift in Sources */,
 				27818C5D1BABF22500D26D1A /* UserFolderViewController.m in Sources */,
 				277108651C61500600A459E1 /* HTMLSerialization.m in Sources */,
 				271D4D931B84758E00D19373 /* GlobalDBFunctions.m in Sources */,
@@ -2179,15 +2163,17 @@
 				27D4A6B31C6097AA00F7670A /* FindQuote.m in Sources */,
 				273EA08B1BA18221009AC691 /* MCOMessageView.mm in Sources */,
 				277606A21C5A257000C4A71E /* ContactsTableViewCell.m in Sources */,
+				1403FEFD1E8DAD250085E099 /* WindowRootViewController.swift in Sources */,
 				27818C4D1BABF22500D26D1A /* ConversationTableViewCell.m in Sources */,
 				277108631C61500600A459E1 /* HTMLPreprocessedInputStream.m in Sources */,
 				271D4D981B84758E00D19373 /* CachedAction.m in Sources */,
+				1403FEF61E8DAD250085E099 /* PKHUDRotatingImageView.swift in Sources */,
+				1403FEF71E8DAD250085E099 /* PKHUDSquareBaseView.swift in Sources */,
 				27818C541BABF22500D26D1A /* DefaultAccountViewController.m in Sources */,
 				2771085B1C61500600A459E1 /* HTMLDocument.m in Sources */,
 				27FADA3A1C5774FC007A3D14 /* UIView+RenderViewToImage.m in Sources */,
 				277F4C231C859BF500720479 /* Draft.m in Sources */,
 				27818C531BABF22500D26D1A /* CreditViewController.m in Sources */,
-				273219DE1C466B360019967C /* PKHUDSquareBaseView.swift in Sources */,
 				270C84E61C565DED006C0B7F /* ARSafariActivity.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2399,7 +2385,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
-				SWIFT_VERSION = 2.3;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -2468,7 +2454,7 @@
 				PROVISIONING_PROFILE = "";
 				SKIP_OBJCLEAN = 1;
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/acerier/Dev_Local/clean-cocoamail/CocoaMail/CocoaMail-Bridging-Header.h";
-				SWIFT_VERSION = 2.3;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};

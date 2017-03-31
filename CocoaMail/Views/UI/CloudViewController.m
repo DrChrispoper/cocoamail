@@ -104,7 +104,7 @@
     NSString* alertViewString = NSLocalizedString(@"cloud-services-view.alert-view.message.not-linked", @"Alert message: An error occured, your %@ account has not been linked");
 
     if ([[notification name] isEqualToString:@"AuthNotification"]) {
-        [[PKHUD sharedHUD] hideWithAnimated:YES];
+        [[PKHUD sharedHUD] hideWithAnimated:YES completion:nil];
         
         if ([[notification userInfo][@"cloudServiceName"] isEqualToString:@"Dropbox"]) {
             if ([[DBSession sharedSession] isLinked]) {
