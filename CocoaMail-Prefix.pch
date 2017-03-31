@@ -4,9 +4,13 @@
 
 #import <Availability.h>
 
-#define LOG_ASYNC_ENABLED NO        // make CocoaLumberjack logging synchronous
+#undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
 
-//#define USING_INSTABUG    TRUE      // enable InstaBug (instabug.com)
+#undef USING_INSTABUG          // enable InstaBug (instabug.com)
+
+#undef USING_INSTABUG_COCOALUMBERJACK
+
+#define BETA_ONLY                   // For features we only want in the BETA
 
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
