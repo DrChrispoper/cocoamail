@@ -11,6 +11,7 @@
 #import "UserSettings.h"
 #import "RegExCategories.h"
 #import "ImapSync.h"
+#import "SyncManager.h"
 
 @implementation Draft
 
@@ -20,7 +21,7 @@
         return nil;
     }
     
-    self.accountNum = [decoder decodeIntegerForKey:@"accountNum"];
+    self.accountNum = [decoder decodeIntegerForKey:kFolderStateAccountNumberKey];
     self.toPersons = [decoder decodeObjectForKey:@"toPersons"];
     self.isBcc = [decoder decodeBoolForKey:@"isBcc"];
     self.transferContent = [decoder decodeObjectForKey:@"transferContent"];
@@ -35,7 +36,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
-    [encoder encodeInteger:self.accountNum forKey:@"accountNum"];
+    [encoder encodeInteger:self.accountNum forKey:kFolderStateAccountNumberKey];
     [encoder encodeObject:self.toPersons forKey:@"toPersons"];
     [encoder encodeBool:self.isBcc forKey:@"isBcc"];
     [encoder encodeObject:self.transferContent forKey:@"transferContent"];
@@ -73,7 +74,8 @@
     return [CCMAttachment getAttachmentsWithMsgID:self.msgID];
 }
 
--(void)save
+// Save Draft to "drafts" folder as "draft_<msgID>"
+-(void)saveToDraftsFolder
 {
     self.datetime = [NSDate date];
     
@@ -95,7 +97,7 @@
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
 
     if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-        NSLog(@"Local draft file deleted");
+        DDLogInfo(@"Local draft file deleted");
     }
 }
 
@@ -111,7 +113,10 @@
                                             flags:MCOMessageFlagSeen
                                             customFlags:nil];
     
-    dispatch_async([ImapSync sharedServices:user].s_queue, ^{
+    dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+    DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+    dispatch_async(imapDispatchQueue, ^{
+        
         [addOp start:^(NSError * error, uint32_t createdUID) {
             if (error == nil) {
                 NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -119,7 +124,7 @@
                 NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"outbox_%@", self.msgID]];
                 
                 if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-                    NSLog(@"Local outbox file deleted");
+                    DDLogInfo(@"Local outbox file deleted");
                 }
             }
         }];
@@ -138,7 +143,15 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:@"outbox"];
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
     
-    return  [NSKeyedArchiver archiveRootObject:self toFile:fileName];
+    BOOL writeSuccessful = [NSKeyedArchiver archiveRootObject:self toFile:fileName];
+    
+    if ( writeSuccessful ) {
+        DDLogDebug(@"Saving Outbox Draft to file \"%@\"",fileName);
+    } else {
+        DDLogError(@"Error: Failure to save Outbox Draft file \"%@\"",fileName);
+    }
+    
+    return writeSuccessful;
 }
 
 -(void)deleteOutboxDraft
@@ -150,7 +163,9 @@
     NSString* fileName = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:@"draft_%@", self.msgID]];
     
     if ([[NSFileManager defaultManager] removeItemAtPath:fileName error:nil]) {
-        NSLog(@"Local draft file deleted");
+        DDLogDebug(@"Outbox Draft file \"%@\" deleted.",fileName);
+    } else {
+        DDLogError(@"Error: Failure to delete Outbox Draft file \"%@\".",fileName);
     }
 }
 
@@ -204,7 +219,7 @@
     [builder writeToFile:fileName error:&error];
 
     if (error) {
-        NSLog(@"error saving outbox message :%@", error.description);
+        DDLogError(@"error saving outbox message :%@", error.description);
     }
     
     return fileName;

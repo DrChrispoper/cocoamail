@@ -11,6 +11,7 @@
 #import "AppSettings.h"
 #import "MailListViewController.h"
 #import "Conversation.h"
+#import "CCMConstants.h"
 
 @class Conversation;
 @class Account;
@@ -39,12 +40,12 @@
 
 -(Account*) currentAccount;
 -(NSArray*) accounts;
--(Account*) account:(NSInteger)accountIndex;
+-(Account*) account:(NSUInteger)accountIndex;
 -(NSInteger) accountsCount;
 -(void) addAccount:(Account*)account;
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;
--(NSInteger) getPersonID:(NSInteger)accountIndex;
+-(NSInteger) getPersonID:(NSUInteger)accountIndex;
 -(void) getDrafts;
 -(void) appeared;
 
@@ -55,11 +56,11 @@
 
 @interface Account : NSObject
 
--(NSInteger) idx;
+-(NSInteger) idx;               // Account index
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
-@property (nonatomic, strong) NSArray* userFolders;
+@property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
 @property (nonatomic) NSInteger currentFolderIdx;
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;
@@ -99,7 +100,9 @@
 -(void) deleteDraft:(Draft*)draft;
 -(void) addLocalDraft:(Draft*)draft;
 
--(NSArray*) systemFolderNames;
+-(NSArray*) systemFolderNames;      // System Folder Names
+-(NSArray*) userFolderNames;
+
 -(void) deliverUpdate:(NSArray<Mail*>*)emails;
 -(void) deliverDelete:(NSArray<Mail*>*)emails fromFolder:(CCMFolderType)folderFrom;
 -(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom;
@@ -110,5 +113,9 @@
 -(void) localFetchMore:(BOOL)loadMore;
 
 -(NSString *) description;
+-(NSString *) folderDescription:(CCMFolderType)folderType;
+-(NSString *) currentFolderTypeValue;
+-(NSString *) baseFolderType:(BaseFolderType)folderType;
+
 
 @end

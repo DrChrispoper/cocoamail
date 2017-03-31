@@ -544,7 +544,7 @@
                   ];
     }
     else {
-        NSLog(@"COCOABUTTON : 3 ou 4 buttons only !!!");
+        DDLogInfo(@"COCOABUTTON : 3 ou 4 buttons only !!!");
         return;
     }
     

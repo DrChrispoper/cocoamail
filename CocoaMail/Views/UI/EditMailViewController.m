@@ -353,7 +353,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                               [self.selectedAccount refreshCurrentFolder];
                                                                           }
                                                                           else {
-                                                                              [self.draft save];
+                                                                              [self.draft saveToDraftsFolder];
                                                                           }
                                                                       }];
                                                                           
@@ -389,7 +389,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                                                                       
                                                                       //[self.selectedAccount insertRows:self.mail];
                                                                       
-                                                                      [self.draft save];
+                                                                      [self.draft saveToDraftsFolder];
                                                                   }
                                                               }];
         [ac addAction:defaultAction];
@@ -417,8 +417,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     if (self.isDownloading != 0) {
         [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
         [PKHUD sharedHUD].contentView = [[PKHUDTextView alloc]initWithText:[NSString stringWithFormat:@"Downloading transfered attachments (%ld)",(long)self.isDownloading]];
-        [[PKHUD sharedHUD] show];
-        [[PKHUD sharedHUD] hideAfterDelay:2.0];
+        [[PKHUD sharedHUD] showOnView:nil];
+        [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
         return;
     }
     
@@ -952,7 +952,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
              encoding:MCOEncodingBase64];
             
             op.progress = ^(unsigned int current, unsigned int maximum){
-                CCMLog(@"%u, %u", current,maximum);
+                DDLogInfo(@"%u, %u", current,maximum);
             };
             
             self.isDownloading++;
@@ -962,7 +962,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
             [op start:^(NSError*  error, NSData*  partData) {
                 self.isDownloading--;
                 if(error){
-                    CCMLog(@"%@",error);
+                    DDLogError(@"%@",error);
                     return;
                 }
                 att.data = partData;
@@ -1301,7 +1301,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
                     }
                     
                     if (nextOffset.y < 0.0f) {
-                        NSLog(@"NextOffset was < 0 :( ?");
+                        DDLogInfo(@"NextOffset was < 0 :( ?");
                         nextOffset.y = 0.0f;
                     }
 
@@ -1702,10 +1702,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
-        CCMLog(@"Downloaded %@ by overwriting local file", fileName);
+        DDLogInfo(@"Downloaded %@ by overwriting local file", fileName);
     }
     else {
-        CCMLog(@"Downloaded %@ without overwriting", fileName);
+        DDLogInfo(@"Downloaded %@ without overwriting", fileName);
     }
     
     /*Attachment* attach = [[Attachment alloc]init];
@@ -1767,8 +1767,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded", @"Link added") dismissAfter:2 code:0];
 }
@@ -1778,8 +1778,8 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDErrorView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     //[CCMStatus showStatus:NSLocalizedString(@"editmail.dropbox.linkadded.not", @"Error adding link") dismissAfter:2 code:2];
 }
@@ -1787,10 +1787,10 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
 {
     if (isLocalFileOverwritten == YES) {
-        CCMLog(@"Downloaded %@ by overwriting local file", fileName);
+        DDLogInfo(@"Downloaded %@ by overwriting local file", fileName);
     }
     else {
-        CCMLog(@"Downloaded %@ without overwriting", fileName);
+        DDLogInfo(@"Downloaded %@ without overwriting", fileName);
     }
     
     Attachment* attach = [[Attachment alloc]init];
@@ -1813,20 +1813,20 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
     
     [PKHUD sharedHUD].userInteractionOnUnderlyingViewsEnabled = YES;
     [PKHUD sharedHUD].contentView = [[PKHUDSuccessView alloc]init];
-    [[PKHUD sharedHUD] show];
-    [[PKHUD sharedHUD] hideAfterDelay:2.0];
+    [[PKHUD sharedHUD] showOnView:nil];
+    [[PKHUD sharedHUD] hideAfterDelay:2.0 completion:nil];
     
     [self _updateAttachView];
 }
 
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser didFailToDownloadFile:(NSString*)fileName
 {
-    CCMLog(@"Failed to download %@", fileName);
+    DDLogError(@"Failed to download %@", fileName);
 }
 
 -(void) dropboxBrowser:(DropboxBrowserViewController*)browser fileConflictWithLocalFile:(NSURL*)localFileURL withDropboxFile:(DBMetadata*)dropboxFile withError:(NSError*)error
 {
-    CCMLog(@"File conflict between %@ and %@\n%@ last modified on %@\nError: %@", localFileURL.lastPathComponent, dropboxFile.filename, dropboxFile.filename, dropboxFile.lastModifiedDate, error);
+    DDLogError(@"File conflict between %@ and %@\n%@ last modified on %@\nError: %@", localFileURL.lastPathComponent, dropboxFile.filename, dropboxFile.filename, dropboxFile.lastModifiedDate, error);
 }
 
 -(void) dropboxBrowserDismissed:(DropboxBrowserViewController*)browser
@@ -1870,12 +1870,12 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) itemsViewController:(BOXItemsViewController*)itemsViewController didTapFolder:(BOXFolder*)folder inItems:(NSArray*)items
 {
-    NSLog(@"Did tap folder: %@", folder.name);
+    DDLogInfo(@"Did tap folder: %@", folder.name);
 }
 
 -(void) itemsViewController:(BOXItemsViewController*)itemsViewController didTapFile:(BOXFile*)file inItems:(NSArray*)items
 {
-    NSLog(@"Did tap file: %@", file.name);
+    DDLogInfo(@"Did tap file: %@", file.name);
     
     BOXContentClient* contentClient = [BOXContentClient defaultClient];
     NSString* localFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:file.name];
@@ -1916,7 +1916,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 {
     // If you don't implement this, the navigation controller will be dismissed for you.
     // Only implement if you need to customize behavior.
-    NSLog(@"Did tap close button");
+    DDLogInfo(@"Did tap close button");
     [self.navControllerForBrowseSDK popViewControllerAnimated:YES];
 }
 // By default the following sort order will be applied:
@@ -1936,7 +1936,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) folderViewController:(BOXFolderViewController*)folderViewController didChooseFolder:(BOXFolder*)folder
 {
-    NSLog(@"Did choose folder: %@", folder.name);
+    DDLogInfo(@"Did choose folder: %@", folder.name);
 }
 
 -(BOOL) folderViewControllerShouldShowCreateFolderButton:(BOXFolderViewController*)folderViewController
@@ -1946,7 +1946,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) folderViewController:(BOXFolderViewController*)folderViewController didCreateNewFolder:(BOXFolder*)folder
 {
-    NSLog(@"Did create new folder: %@", folder.name);
+    DDLogInfo(@"Did create new folder: %@", folder.name);
 }
 
 -(BOOL) folderViewController:(BOXFolderViewController*)folderViewController shouldShowDeleteButtonForItem:(BOXItem*)item
@@ -1956,7 +1956,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 -(void) folderViewController:(BOXFolderViewController*)folderViewController didDeleteItem:(BOXItem*)item
 {
-    NSLog(@"Did delete item: %@", item.name);
+    DDLogInfo(@"Did delete item: %@", item.name);
 }
 
 -(BOOL) folderViewControllerShouldShowSearchBar:(BOXFolderViewController*)folderViewController

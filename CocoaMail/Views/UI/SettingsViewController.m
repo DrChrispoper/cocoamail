@@ -37,6 +37,16 @@
     item.leftBarButtonItem = [self backButtonInNavBar];
     
     NSString* title = NSLocalizedString(@"settings-view.title", @"Settings");
+    
+#ifdef BETA_ONLY
+    // TODO: Version/Build numbers put after title of settings view.
+    NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]; // TEMP
+    NSString * build = [[NSBundle mainBundle] objectForInfoDictionaryKey: (NSString *)kCFBundleVersionKey]; // TEMP
+    
+    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ v%@ (%@)",title,version,build]; // TEMP
+    title = [NSString stringWithString:titleWithVersionAndBuild]; // TEMP
+#endif
+    
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
     UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
@@ -167,6 +177,8 @@
 {
     [self _prepareTable];
     [self.table reloadData];
+    
+    [super viewWillAppear:animated];
 }
 
 #pragma mark - Table Datasource

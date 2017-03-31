@@ -18,10 +18,15 @@
 #import "ImapSync.h"
 #import "ARSafariActivity.h"
 #import "FindQuote.h"
-#import "Flurry.h"
 #import "ViewController.h"
 #import "UserSettings.h"
 #import "Draft.h"
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
+
+
 
 @import SafariServices;
 
@@ -394,7 +399,7 @@
     NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:&error];
     
     if (error) {
-        CCMLog(@"%@", error.description);
+        DDLogError(@"%@", error.description);
     }
     
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
@@ -542,7 +547,7 @@
 
 -(void) _executeMoveOnSelectedCellsTo:(CCMFolderType)toFolder
 {
-    
+#ifdef USING_FLURRY
     NSString* fromFolderString;
     NSString* toFolderString;
     
@@ -567,6 +572,7 @@
                                    ,nil];
     
     [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
     
     [self.conversation.user.linkedAccount moveConversation:self.conversation from:self.folder to:toFolder updateUI:YES];
     
@@ -615,7 +621,7 @@
             break;
         }
         default:
-            NSLog(@"WTF !!!");
+            DDLogError(@"WTF !!!");
             doNothing = YES;
             break;
     }
@@ -852,7 +858,7 @@
             
             idxFix++;
             
-            //NSLog(@"Origin.x:%f", baseFrame.origin.x);
+            //DDLogInfo(@"Origin.x:%f", baseFrame.origin.x);
             
             if (name == [btns lastObject]) {
                 [b addTarget:self action:@selector(_fav:) forControlEvents:UIControlEventTouchUpInside];
@@ -1127,13 +1133,13 @@
                      encoding:MCOEncodingBase64];
                     
                     op.progress = ^(unsigned int current, unsigned int maximum){
-                        CCMLog(@"%u, %u", current,maximum);
+                        DDLogInfo(@"%u, %u", current,maximum);
                     };
                     
                     dispatch_async([ImapSync sharedServices:conv.user].s_queue, ^{
                         [op start:^(NSError*  error, NSData*  partData) {
                             if(error){
-                                CCMLog(@"%@",error);
+                                DDLogError(@"%@",error);
                                 return;
                             }
                             att.data = partData;

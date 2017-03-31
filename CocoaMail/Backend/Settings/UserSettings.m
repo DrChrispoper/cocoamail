@@ -32,7 +32,29 @@
 @synthesize accountNum = _accountNum;
 @synthesize deleted = _deleted;
 @synthesize all = _all;
+@synthesize folderPathDelimiter = _folderPathDelimiter;
+@synthesize folderPathPrefix = _folderPathPrefix;
 
+
+-(NSString *) folderPathPrefix
+{
+    if ( !_folderPathPrefix ) {
+        _folderPathPrefix = @"";
+    }
+    return _folderPathPrefix;
+}
+
+-(NSString *) folderPathDelimiter
+{
+    // This will usually be set except for those who upgrade the app
+    // after the version with this change is first introduced.
+    // Rather than forcing them to update the app, I am returning a
+    // default value (which will work for Google accounts at least).
+    if ( !_folderPathDelimiter ) {
+        _folderPathDelimiter = @"/";
+    }
+    return _folderPathDelimiter;
+}
 -(NSString *) identifier
 {
     return _identifier;
@@ -123,62 +145,87 @@
     return _all;
 }
 
+-(void)setFolderPathPrefix:(NSString *)folderPathPrefix
+{
+    DDLogInfo(@"ENTERED");
+    _folderPathPrefix = [folderPathPrefix copy];
+    [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
+}
+
+-(void)setFolderPathDelimiter:(NSString *)folderPathDelimiter
+{
+    DDLogInfo(@"ENTERED");
+    _folderPathDelimiter = [folderPathDelimiter copy];
+    [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
+}
+
 -(void) setIdentifier:(NSString *)identifier
 {
+    DDLogInfo(@"ENTERED");
     _identifier = identifier;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setUsername:(NSString *)username
 {
+    DDLogInfo(@"ENTERED");
     _username = username;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapHostname:(NSString *)imapHostname
 {
+    DDLogInfo(@"ENTERED");
     _imapHostname = imapHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapPort:(NSUInteger)imapPort
 {
+    DDLogInfo(@"ENTERED");
     _imapPort = imapPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImapConnectionType:(NSUInteger)imapConnectionType
 {
+    DDLogInfo(@"ENTERED");
     _imapConnectionType = imapConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpHostname:(NSString *)smtpHostname
 {
+    DDLogInfo(@"ENTERED");
     _smtpHostname = smtpHostname;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpPort:(NSUInteger)smtpPort
 {
+    DDLogInfo(@"ENTERED");
     _smtpPort = smtpPort;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSmtpConnectionType:(NSUInteger)smtpConnectionType
 {
+    DDLogInfo(@"ENTERED");
     _smtpConnectionType = smtpConnectionType;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setSignature:(NSString *)signature
 {
+    DDLogInfo(@"ENTERED");
     _signature = signature;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setName:(NSString *)name
 {
+    DDLogInfo(@"ENTERED");
+
     if (!self.isAll) {
         self.linkedAccount.person.name = name;
     }
@@ -189,6 +236,8 @@
 
 -(void)setInitials:(NSString *)initials
 {
+    DDLogInfo(@"ENTERED");
+
     if (!self.isAll) {
         self.linkedAccount.person.codeName = initials;
     }
@@ -199,24 +248,33 @@
 
 -(void)setColor:(UIColor *)color
 {
+    DDLogInfo(@"ENTERED");
+
     _color = color;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setImportantFolders:(NSMutableArray *)importantFolders
 {
+    DDLogInfo(@"ENTERED");
+
     _importantFolders = importantFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void) setAllFoldersDisplayNames:(NSMutableArray *)allFolders
 {
-    _allFoldersDisplayNames = allFolders;
+    DDLogInfo(@"ENTERED");
+
+    _allFoldersDisplayNames = allFolders;   // does this copy or assign?
+    
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setAccountNum:(NSUInteger)accountNum
 {
+    DDLogInfo(@"ENTERED");
+
     _accountNum = accountNum;
     
     NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -228,12 +286,16 @@
 
 -(void)setDeleted:(BOOL)deleted
 {
+    DDLogInfo(@"ENTERED");
+
     _deleted = deleted;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
 -(void)setAll:(BOOL)all
 {
+    DDLogInfo(@"ENTERED");
+
     _all = all;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
@@ -286,6 +348,8 @@
 
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder
 {
+    DDLogInfo(@"ENTERED");
+    
     if (_importantFolders.count == 0) {
         _importantFolders = [[NSMutableArray alloc] initWithObjects:@"", @"", @"", @"", @"", @"", nil];
     }
@@ -321,6 +385,9 @@
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder
 {
+    DDAssert(_allFoldersDisplayNames,@"_addFoldersDisplayNames must be initialized.");
+    DDAssert(folder>=0, @"folder index must not be negative.");
+    
     return _allFoldersDisplayNames[folder];
 }
 
@@ -331,14 +398,15 @@
 
 -(NSString*) folderServerName:(NSInteger)folder
 {
-    NSMutableDictionary* folderState = [[SyncManager getSingleton] retrieveState:folder accountNum:_accountNum];
-    NSString* name = folderState[@"folderPath"];
-    if (!name) {
-        NSLog(@"NO NAME!");
-    }
-    return name;
+    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:folder
+                                                       accountNum:_accountNum];
+    return folderPath;
 }
 
+-(NSInteger)inboxFolderNumber
+{
+    return [self numFolderWithFolder:inboxFolderType()];
+}
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder
 {
     NSString* folderName;
@@ -346,7 +414,8 @@
     if (folder.type == FolderTypeUser) {
         folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
-            if ([folderName isEqualToString:_allFoldersDisplayNames[index]]) {
+            NSString *indexedFolderDisplayName = [self folderDisplayNameForIndex:index];
+            if ([folderName isEqualToString:indexedFolderDisplayName]) {
                 return index;
             }
         }
@@ -359,6 +428,12 @@
 
 -(NSArray*) allNonImportantFoldersName
 {
+    if ( !_allFoldersDisplayNames ){
+        _allFoldersDisplayNames = [NSMutableArray arrayWithObject:@"nothing here"];
+    }
+
+    DDAssert(_importantFolders, @"_importantFolders must be initialized.");
+    
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
     
     for (NSNumber* index in _importantFolders) {
@@ -370,9 +445,13 @@
     return [[foldersSet allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
--(Account*) linkedAccount
+-(Account*) linkedAccount   // Returns the Account object for self.accountNum
 {
-    return [[Accounts sharedInstance] account:[AppSettings indexForAccountNum:_accountNum]];
+    NSUInteger appSettingsIndexForAccount = [self accountIndex];
+    
+    DDAssert(appSettingsIndexForAccount >= 0, @"AppSettings Account Index must be found");
+    
+    return [[Accounts sharedInstance] account:appSettingsIndexForAccount];
 }
 
 - (MCOIMAPMessagesRequestKind)requestKind
@@ -399,6 +478,8 @@
         return nil;
     }
     
+    _folderPathDelimiter = [decoder decodeObjectForKey:@"folderPathDelimiter"];
+    _folderPathPrefix = [decoder decodeObjectForKey:@"folderPathPrefix"];
     _identifier = [decoder decodeObjectForKey:@"identifier"];
     _username = [decoder decodeObjectForKey:@"username"];
     
@@ -417,7 +498,9 @@
 
     _importantFolders = [decoder decodeObjectForKey:@"importantFolders"];
     _allFoldersDisplayNames = [decoder decodeObjectForKey:@"allFolders"];
-
+    
+//    DDAssert(_allFoldersDisplayNames,@"_allFoldersDisplayNames should not be nil");
+    
     _deleted = [decoder decodeBoolForKey:@"deleted"];
     _all = [decoder decodeBoolForKey:@"all"];
 
@@ -428,13 +511,16 @@
     NSString* folderPath = [documentsDirectory stringByAppendingPathComponent:FOLDER_USER_SETTINGS_KEY];
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
-    DDLogInfo(@"Decoded UserSettings: %@",[self description]);
+    DDLogVerbose(@"DECODED UserSettings: %@",[self description]);
 
     return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
+    [encoder encodeObject:_folderPathDelimiter forKey:@"folderPathDelimiter"];
+    [encoder encodeObject:_folderPathPrefix forKey:@"folderPathPrefix"];
+    
     [encoder encodeObject:_identifier forKey:@"identifier"];
     [encoder encodeObject:_username forKey:@"username"];
     
@@ -450,10 +536,15 @@
     [encoder encodeObject:_name forKey:@"name"];
     [encoder encodeObject:_initials forKey:@"initials"];
     [encoder encodeObject:[UserSettings _stringForColor:_color] forKey:@"color"];
-    
+        
     [encoder encodeObject:_importantFolders forKey:@"importantFolders"];
     [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     
+    if ( _allFoldersDisplayNames == nil ) {
+        DDLogDebug(@"Archiving NIL _allFolderDisplayNames for account %@",@(_accountNum));
+    } else {
+        DDLogDebug(@"Archiving %@ _allFolderDisplayNames for account %@",@(_allFoldersDisplayNames.count),@(_accountNum));
+    }
     [encoder encodeBool:_deleted forKey:@"deleted"];
     [encoder encodeBool:_all forKey:@"all"];
 
@@ -487,7 +578,14 @@
     NSMutableString *desc = [NSMutableString string];
     
     [desc appendString:@"\n--- UserSettings: ---\n"];
-        
+    
+    [desc appendFormat:@"\taccount number = %@\n",@(self.accountNum)];
+    [desc appendString:@"\n"];
+
+    [desc appendFormat:@"\tdelimiter = \"%@\"\n",self.folderPathDelimiter];
+    [desc appendFormat:@"\tprefix    = \"%@\"\n",self.folderPathPrefix];
+    [desc appendString:@"\n"];
+
     [desc appendFormat:@"\tidentifier = \"%@\"\n",self.identifier];
     [desc appendFormat:@"\tusername   = \"%@\"\n",self.username];
     [desc appendString:@"\n"];
@@ -512,15 +610,25 @@
     [desc appendFormat:@"\tcolor     = \"%@\"\n",[self.color description]];
     [desc appendString:@"\n"];
 
-    [desc appendFormat:@"\tImportant Folders count = %ld\n",
-     [self.importantFolders count]];
-    for (NSString *importantFolderName in self.importantFolders) {
-        [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
+    if (self.importantFolders == nil) {
+        [desc appendFormat:@"\tImportant Folders array is nil!\n"];
+    } else {
+        [desc appendFormat:@"\tImportant Folders count = %ld\n",
+         (unsigned long)[self.importantFolders count]];
+        for (NSString *importantFolderName in self.importantFolders) {
+            [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
+        }
     }
-    [desc appendFormat:@"\tFolder Display Names count = %ld\n",
-     [self.allFoldersDisplayNames count]];
-    for (NSString *folderName in self.allFoldersDisplayNames) {
-        [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
+    
+    if ( self.allFoldersDisplayNames == nil ) {
+        [desc appendFormat:@"\tFolder Display Names array is nil!\n"];
+    } else {
+        [desc appendFormat:@"\tFolder Display Names count = %ld\n",
+         (unsigned long)[self.allFoldersDisplayNames count]];
+        for (NSString *folderName in self.allFoldersDisplayNames) {
+            [desc appendFormat:@"\t\tName = \"%@\"\n",folderName];
+        }
+    
     }
     [desc appendString:@"\n"];
 

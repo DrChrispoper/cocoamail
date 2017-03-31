@@ -16,7 +16,6 @@
 #import <Instabug/Instabug.h>
 #endif
 
-static AppSettings * singleton = nil;
 
 @implementation AppSettings
 
@@ -29,13 +28,23 @@ static AppSettings * singleton = nil;
 @synthesize globalDBVersion = _globalDBVersion;
 @synthesize users = _users;
 
+
+
+
+
 +(AppSettings*) getSingleton
 {
-    @synchronized(self) {
+    static dispatch_once_t once;
+    static AppSettings* singleton = nil;
+    
+    dispatch_once(&once, ^{
+        
+        DDLogInfo(@"Creating Singleton");
+
         if (singleton == nil) {
             singleton = [[self alloc] init];
         }
-    }
+    });
     
     return singleton;
 }
@@ -78,10 +87,11 @@ static AppSettings * singleton = nil;
             
             [_users addObject:user];
             
-            DDLogInfo(@"Created \"All Files\" UserSettings: %@",[user description]);
+            DDLogInfo(@"Created \"All Files\" UserSettings");
         }
         else {
             for (NSString* fileName in dirFiles) {
+                
                 NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
                 
                 UserSettings* user = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
@@ -94,7 +104,7 @@ static AppSettings * singleton = nil;
                     user = [NSKeyedUnarchiver unarchiveObjectWithData:data]; // nil
                 }
                 
-                NSAssert(user, @"User can't be nil, Filename:%@", fileName);
+                DDAssert(user, @"User can't be nil, Filename:%@", fileName);
                 
                 [_users addObject:user];
                 
@@ -252,7 +262,7 @@ static AppSettings * singleton = nil;
 //NumAccout:1 - 2 - 4 If 3 is deleted
 /*+(NSInteger) numAccountForIndex:(NSInteger)accountIndex
 {
-    NSAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
+    DDAssert(accountIndex < [AppSettings numActiveAccounts], @"Index:%li is incorrect only %li active account",(long)accountIndex,(long)[AppSettings numActiveAccounts]);
 
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (user.accountIndex == accountIndex) {
@@ -264,9 +274,9 @@ static AppSettings * singleton = nil;
 }*/
 
 //numIndex:0 - 1 - 2 ...
-+(NSInteger) indexForAccountNum:(NSInteger)accountNum
++(NSUInteger) indexForAccountNum:(NSInteger)accountNum
 {
-    NSInteger index = 0;
+    NSUInteger index = 0;
     
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (!user.isDeleted) {
@@ -313,7 +323,7 @@ static AppSettings * singleton = nil;
     
     for (UserSettings* user in _users) {
         if (user.isAll) {
-            continue;
+            continue;  // There is no account for the User record
         }
         
         accountNum++;
@@ -321,6 +331,8 @@ static AppSettings * singleton = nil;
     
     UserSettings* user = [[UserSettings alloc] init];
     user.accountNum = accountNum;
+    
+    DDAssert(user, @"UserSettings must not be nil.");
     
     [_users insertObject:user atIndex:_users.count-1];
     
@@ -351,9 +363,12 @@ static AppSettings * singleton = nil;
 {
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (user.accountNum == accountNum) {
+            DDLogVerbose(@"Found UserSettings (username=%@) for accountNum %@",user.username,@(accountNum));
             return user;
         }
     }
+    
+    DDLogVerbose(@"No UserSettings found for accountNum %@",@(accountNum));
     
     return nil;
 }
@@ -386,15 +401,16 @@ static AppSettings * singleton = nil;
     }
     
     imapSession.maximumConnections = 6;
-    
+        
     return imapSession;
 }
 
-+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
-{
-    UserSettings* user = [AppSettings userWithIndex:accountIndex];
-    return [AppSettings imapSession:user];
-}
+//#warning method below not called from anywhere?
+//+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex
+//{
+//    UserSettings* user = [AppSettings userWithIndex:accountIndex];
+//    return [AppSettings imapSession:user];
+//}
 
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum
 {
@@ -511,6 +527,7 @@ static AppSettings * singleton = nil;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
     
+    
     int badge = 0;
     
     if ([[AppSettings getSingleton] badgeCount] == 1) {
@@ -518,7 +535,8 @@ static AppSettings * singleton = nil;
             badge += [AppSettings inboxUnread:index];
         }
     }
-        
+    DDLogDebug(@"Setting Inbox Unread to %ld",(long)badge);
+    
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
 }
 

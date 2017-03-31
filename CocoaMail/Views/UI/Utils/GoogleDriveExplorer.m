@@ -162,7 +162,7 @@ static NSString * currentFileName = nil;
     }
     else {
         selectedFile = [self.driveFiles objectAtIndex:indexPath.row];
-        //CCMLog(@"File Type: %@ Name:%@ MIMEType:%@",file.kind,file.name,file.mimeType);
+        //DDLogInfo(@"File Type: %@ Name:%@ MimeType:%@",file.kind,file.name,file.mimeType);
         
         if ([selectedFile.mimeType isEqualToString:@"application/vnd.google-apps.folder"]) {
             // Create new UITableViewController
@@ -262,12 +262,12 @@ static NSString * currentFileName = nil;
         
         [fetcher beginFetchWithCompletionHandler:^(NSData* data, NSError* error) {
             if (error == nil) {
-                NSLog(@"Retrieved file content");
+                DDLogInfo(@"Retrieved file content");
                 // Do something with data
                 [self downloadedFile];
             }
             else {
-                NSLog(@"An error occurred: %@", error);    
+                DDLogError(@"An error occurred: %@", error);
             }
         }];
         
@@ -472,7 +472,7 @@ static NSString * currentFileName = nil;
             [self.tableView reloadData];
         }
         else {
-            NSLog(@"An error occurred: %@", error);
+            DDLogError(@"An error occurred: %@", error);
         }
     }];
 }

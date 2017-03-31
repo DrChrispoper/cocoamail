@@ -49,6 +49,16 @@ static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
     return type;
 }
 
+static inline CCMFolderType inboxFolderType()
+{
+    return FolderTypeWith(FolderTypeInbox, 0);
+}
+
+static inline CCMFolderType allFolderType()
+{
+    return FolderTypeWith(FolderTypeAll, 0);
+}
+
 static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
 {
     return t.type * 4096 + t.idx;
@@ -68,4 +78,13 @@ static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
     return type;
 }
 
+static inline BOOL folderTypeIsUserFolder(CCMFolderType folder)
+{
+    return ( folder.type == FolderTypeUser );
+}
+static inline BOOL folderTypeIsSystemFolder(CCMFolderType folder)
+{
+    // If a folder is not a user folder, then it is a system folder
+    return ( ! folderTypeIsUserFolder(folder) );
+}
 #endif /* CCMConstants_h */

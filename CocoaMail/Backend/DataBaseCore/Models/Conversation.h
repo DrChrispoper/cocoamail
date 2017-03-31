@@ -11,13 +11,14 @@
 
 @interface Conversation : NSObject
 
-@property (nonatomic, strong, readonly) NSMutableArray* mails;
+@property (nonatomic, strong, readonly) NSMutableArray<Mail *>* mails;
 @property (nonatomic) BOOL isDraft;
 
 -(NSMutableSet*) foldersType;
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;
+-(BOOL) isInFolder:(NSInteger)folderNum;
 -(BOOL) isInInbox;
 -(UserSettings*) user;
 -(void) toggleFav;

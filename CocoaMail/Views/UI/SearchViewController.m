@@ -50,6 +50,15 @@
 
 @implementation SearchViewController
 
+-(void) updateDays:(NSArray*)days
+{
+    DDLogWarn(@"Empty updateDays: called");
+}
+-(void) insertConversationIndex:(ConversationIndex*)ci
+{
+    DDLogWarn(@"Empty insertConversationIndex: called");
+}
+
 -(void) viewDidLoad
 {
     [super viewDidLoad];
@@ -142,13 +151,13 @@
     if (kisActiveAccountAll) {
         for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
-            [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+            [alls addObjectsFromArray:[a getConversationsForFolder:allFolderType()]];
             
         }
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
-        [alls addObjectsFromArray:[a getConversationsForFolder:FolderTypeWith(FolderTypeAll, 0)]];
+        [alls addObjectsFromArray:[a getConversationsForFolder:allFolderType()]];
     }
     
     self.data = [alls mutableCopy];
@@ -531,7 +540,7 @@
         [UIView animateWithDuration:0 animations:^{
             [self.table reloadData];
         } completion:^(BOOL finished) {
-            NSLog(@"Finished");
+            DDLogInfo(@"Finished");
             [self.searchBar becomeFirstResponder];
         }];
     });*/

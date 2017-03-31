@@ -70,7 +70,7 @@
                         completionHandler:^(BOOL granted, NSError* _Nullable error) {
                             if (granted) {
                                 if (error) {
-                                    CCMLog(@"Error reading Address Book: %@", error.description);
+                                    DDLogError(@"Error reading Address Book: %@", error.description);
                                 }
                                 [self loadContacts:store];
                             }
@@ -148,7 +148,7 @@
 
         }];
     } else {
-        CCMLog(@"Error reading Address Book");
+        DDLogError(@"Error reading Address Book");
     }
 }
 
@@ -239,11 +239,13 @@
     p.codeName = codeName;
     p.email = mail;
     
-    if (!name) {
+    
+    // MARK: Added "mail &&" to both of these lines - revisit.
+    if (mail && !name) {
         p.name = mail;
     }
     
-    if (!codeName) {
+    if (mail && !codeName) {
         p.codeName = [[mail substringToIndex:3] uppercaseString];
     }
     
@@ -261,37 +263,44 @@
     }
     
     if (UIApplicationStateBackground != [UIApplication sharedApplication].applicationState && mail) {
-    NSURL* url = [p gravatarURL:mail];
-    
-    NSURLRequest *request = [NSURLRequest
-                             requestWithURL:url
-                             cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
-                             timeoutInterval:0.f];
-    
-    NSURLSession *session = [NSURLSession sharedSession];
-    
-    NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request
-                                                            completionHandler:
-                                              ^(NSURL *location, NSURLResponse *response, NSError *error) {
-                                                  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
-
-                                                  if (!error && httpResponse.statusCode != 404) {
-                                                      NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-                                                      NSURL *documentsDirectoryURL = [NSURL fileURLWithPath:documentsPath];
-                                                      NSURL *documentURL = [documentsDirectoryURL URLByAppendingPathComponent:[response
-                                                                                                                           suggestedFilename]];
-                                                      [[NSFileManager defaultManager] moveItemAtURL:location
-                                                                                          toURL:documentURL
-                                                                                          error:nil];
+        
+        NSURL* url = [p gravatarURL:mail];
+        
+        
+        NSURLRequest *request = [NSURLRequest
+                                 requestWithURL:url
+                                 cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                                 timeoutInterval:0.f];
+        
+        NSURLSession *session = [NSURLSession sharedSession];
+        
+//        DDLogInfo(@"Gravatar URL: \"%@\"",url.description);
+        
+        NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request
+                                                                completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+                                                      NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+                                                                    
+                                                                    if ( error ) {
+                                                                        DDLogError(@"NSURLSessionDownloadTask error \"%@\"",error.description);
+                                                                    }
                                                       
-                                                      NSString* fP = [NSString stringWithFormat:@"%@/%@",documentsPath,[response suggestedFilename]];
-                                                    if ([[NSFileManager defaultManager] fileExistsAtPath:fP]) {
-                                                          p.image = [UIImage imageWithContentsOfFile:fP];
-                                                    }
-                                                  }
-                                              }];
-    
-            [downloadTask resume];
+                                                      if (!error && httpResponse.statusCode != 404) {
+                                                          NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+                                                          NSURL *documentsDirectoryURL = [NSURL fileURLWithPath:documentsPath];
+                                                          NSURL *documentURL = [documentsDirectoryURL URLByAppendingPathComponent:[response
+                                                                                                                                   suggestedFilename]];
+                                                          [[NSFileManager defaultManager] moveItemAtURL:location
+                                                                                                  toURL:documentURL
+                                                                                                  error:nil];
+                                                          
+                                                          NSString* fP = [NSString stringWithFormat:@"%@/%@",documentsPath,[response suggestedFilename]];
+                                                          if ([[NSFileManager defaultManager] fileExistsAtPath:fP]) {
+                                                              p.image = [UIImage imageWithContentsOfFile:fP];
+                                                          }
+                                                      }
+                                                  }];
+        
+        [downloadTask resume];
     }
     
     [[Persons sharedInstance] addPerson:p];
@@ -568,7 +577,7 @@
     [desc appendFormat:@"\tCodename   = \"%@\"\n",self.codeName];
     [desc appendFormat:@"\tEmail      = \"%@\"\n",self.email];
     [desc appendFormat:@"\tIs Generic = %@\n",(self.isGeneric?@"TRUE":@"FALSE")];
-    [desc appendFormat:@"\tImage Data:\n%@",[self.imageData description]];
+//    [desc appendFormat:@"\tImage Data:\n%@",[self.imageData description]];
     
     [desc appendString:@" --- End Person ---\n"];
     

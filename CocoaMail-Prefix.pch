@@ -4,6 +4,14 @@
 
 #import <Availability.h>
 
+#undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
+
+#undef USING_INSTABUG          // enable InstaBug (instabug.com)
+
+#undef USING_INSTABUG_COCOALUMBERJACK
+
+#define BETA_ONLY                   // For features we only want in the BETA
+
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
@@ -11,7 +19,9 @@
 #import <CocoaLumberjack/CocoaLumberjack.h>
 #endif
 
-#define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+// CCMLog replaced by DDLog (CocoaLumberjack)
+//#define CCMLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #define OptionsHasValue(options, value) (((options) & (value)) == (value))
 
@@ -29,5 +39,9 @@
 #define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
 
 // Change this to change the log level for CocoaLumberjack
-static const DDLogLevel ddLogLevel = DDLogLevelVerbose;
+#ifdef DEBUG    // DEBUG BUILD
+static const DDLogLevel ddLogLevel = DDLogLevelDebug;   // Don't show Verbose
+#else           // RELEASE BUILD
+static const DDLogLevel ddLogLevel = DDLogLevelInfo; // Don't show Debug, Verbose
+#endif
 

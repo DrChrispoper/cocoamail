@@ -79,7 +79,7 @@
 
 - (void) startLoading
 {
-    //NSLog(@"waiting for %p %@", self, [self _partUniqueID]);
+    //DDLogInfo(@"waiting for %p %@", self, [self _partUniqueID]);
     if ([self _data] != NULL) {
         [[self class] partDownloadedMessage:[self _message] partUniqueID:[self _partUniqueID] data:[self _data]];
     }

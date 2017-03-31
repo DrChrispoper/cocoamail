@@ -54,7 +54,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 		self.shuttingDown = NO;
 		
 		NSOperationQueue* ops = [[NSOperationQueue alloc] init];
-		[ops setMaxConcurrentOperationCount:1]; // note that this makes it a simple, single queue
+		[ops setMaxConcurrentOperationCount:1]; // note that this makes it a simple, single queue (i.e. non-concurrent)
 		self.operationQueue = ops;
 		
         NSLocale* enUSPOSIXLocale;
@@ -76,16 +76,23 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) rolloverAddEmailDBTo:(NSInteger)dbNum
 {
+    DDLogDebug(@"-[EmailProcessor rolloverAddEmailDBTo:dbNum]");
+
 	//[[[EmailDBAccessor sharedManager] databaseQueue] close];
 	
 	// create new, empty db file
 	NSString* fileName = [GlobalDBFunctions dbFileNameForNum:dbNum];
 	NSString* dbPath = [StringUtil filePathInDocumentsDirectoryForFileName:fileName];
     
+    DDLogDebug(@"\tdbNum    = %ld",(long)dbNum);
+    DDLogDebug(@"\tfilename = \"%@\"",fileName);
+//    DDLogDebug(@"\tdbPath   = \"%@\"",dbPath);
+    
 	if (![[NSFileManager defaultManager] fileExistsAtPath:dbPath]) {
         [[NSFileManager defaultManager] createFileAtPath:dbPath contents:nil attributes:@{NSFileProtectionKey: NSFileProtectionNone}];
+        DDLogDebug(@"\tdatabase doesn't exist, creating");
 	}
-	
+    
 	[[EmailDBAccessor sharedManager] setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:fileName]];
 	
     [Mail tableCheck];
@@ -217,7 +224,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
         UidEntry* u = [mail uidEWithFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
         if (u) {
             if (![mail.sender.displayName isEqualToString:@""] || ![mail.sender.displayName isEqualToString:mail.sender.mailbox]) {
-                NSLog(@"New display name:%@",mail.sender.displayName);
+                DDLogInfo(@"New display name:%@",mail.sender.displayName);
                 mail.user.name = mail.sender.displayName;
             }
         }

@@ -320,9 +320,9 @@
 
     if (!_activityItems) {
         _activityItems = [[NSMutableArray alloc]init];
-        previewController.currentPreviewItemIndex = 0;
     }
-    else if (![_activityItems containsObject:url]) {
+    
+    if (![_activityItems containsObject:url]) {
         [_activityItems addObject:url];
         previewController.currentPreviewItemIndex  = _activityItems.count - 1;
     }

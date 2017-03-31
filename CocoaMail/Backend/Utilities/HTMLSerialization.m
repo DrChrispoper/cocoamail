@@ -43,7 +43,7 @@ static void RecursiveDescriptionHelper(HTMLNode *self, NSMutableString *string, 
 - (NSString *)serializedFragment
 {
     [self doesNotRecognizeSelector:_cmd];
-    return nil;
+    return @"ERROR";
 }
 
 @end

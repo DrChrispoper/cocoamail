@@ -60,9 +60,19 @@ static NSDateFormatter * s_df_hour = nil;
     return uids;
 }
 
+-(BOOL) isInFolder:(NSInteger)folderNum
+{
+    for (Mail* mail in self.mails) {
+        if ([mail isInFolder:folderNum]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 -(BOOL) isInInbox
 {
-    return [self uidsWithFolder:[[self user] numFolderWithFolder:FolderTypeWith(FolderTypeInbox, 0)]].count > 0;
+    return [self uidsWithFolder:[[self user] numFolderWithFolder:inboxFolderType()]].count > 0;
 }
 
 -(UserSettings*) user
@@ -178,28 +188,26 @@ static NSDateFormatter * s_df_hour = nil;
     return [self isEqualToConversation:(Conversation*)object];
 }
 
+// Return a Set of all the Folder Types of all the Mails in this Conversation
 -(NSMutableSet*) foldersType
 {
-    NSMutableSet* tempFodles= [[NSMutableSet alloc] init];
+    NSMutableSet* tempFodles = [[NSMutableSet alloc] init];
     
-    NSArray* tmp = [self.mails copy];
+    NSArray<Mail*>* tmp = [self.mails copy];  // copy in case self.mails changes while in this func?
     
     if (self.isDraft) {
         [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
     }
     else {
-    for (Mail* mail in tmp) {
-        mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
-        
-        for (UidEntry* uid in mail.uids) {
-            CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
-            [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+        for (Mail* mail in tmp) {
+            mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
+            
+            for (UidEntry* uid in mail.uids) {
+                CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
+                [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+            }
         }
     }
-    }
-    
-
-    
     return tempFodles;
 }
 
@@ -228,18 +236,19 @@ static NSDateFormatter * s_df_hour = nil;
     return cI;
 }
 
--(NSDate*) date
+-(NSDate*) date  // return the datetime of the first mail in the conversation
 {
     Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
     return [conversation firstMail].datetime;
 }
 
--(NSDate*) day
+-(NSDate*) day  // return the day (date only) of the first mail of the conversation
 {
-    Conversation* conversation = [[Accounts sharedInstance] conversationForCI:self];
-    NSString* stringDate = [[DateUtil getSingleton] humanDate:[conversation firstMail].datetime];
+    NSDate *datetimeOfConversation = [self date];
     
-    return [s_df_day dateFromString:stringDate];
+    NSString* stringDate = [[DateUtil getSingleton] humanDate:datetimeOfConversation];
+    
+    return [s_df_day dateFromString:stringDate];    // returns "d MMM yy" 
 }
 
 @end

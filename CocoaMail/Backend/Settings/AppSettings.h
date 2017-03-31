@@ -29,14 +29,14 @@
 @property (nonatomic) BOOL premiumPurchased;
 @property (nonatomic) NSInteger globalDBVersion;
 
-@property (nonatomic, strong) NSMutableArray* users; // array of UserSettings*
+@property (nonatomic, strong) NSMutableArray<UserSettings *>* users;
 
 +(AppSettings*) getSingleton;
 
-+(NSInteger) numActiveAccounts;
++(NSInteger) numActiveAccounts; // number of non-deleted accounts
 +(NSMutableArray*) activeUsers;
 
--(UserSettings*) createNewUser;
+-(UserSettings*) createNewUser; 
 
 //Account Main Settings
 +(UserSettings*) userWithIndex:(NSInteger)accountIndex;
@@ -44,11 +44,11 @@
 +(UserSettings*) userWithEmail:(NSString*)email;
 
 //+(NSInteger) numAccountForIndex:(NSInteger)accountIndex;
-+(NSInteger) indexForAccountNum:(NSInteger)accountNum;
++(NSUInteger) indexForAccountNum:(NSInteger)accountNum;  // returns -1 on failure
 
 //Account Server Settings
 +(MCOIMAPSession*) imapSession:(UserSettings*)user;
-+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
+//+(MCOIMAPSession*) createImapSession:(NSInteger)accountIndex;
 
 //Account Other Settings
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;

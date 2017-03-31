@@ -59,10 +59,11 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 
 -(BOOL) hasAttachments;
 
--(void) loadData;
+//-(void) loadData;
 -(BOOL) existsLocally;
 -(UserSettings*) user;
 -(UidEntry*) uidEWithFolder:(NSInteger)folderNum;
+-(BOOL)isInFolder:(NSInteger)folderNum;
 -(NSArray*) uids;
 -(void) setUids:(NSArray<UidEntry *> *)uids;
 -(NSString*) sonID;
@@ -91,7 +92,7 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 
 +(Mail*) getMailWithMsgId:(NSString*)msgIdDel dbNum:(NSInteger)dbNum;
 +(NSMutableArray*) getMails;
-+(Mail*) resToMail:(FMResultSet*)result;
++(Mail*) newMailFromDatabaseResult:(FMResultSet*)result;
 
 +(void) clean:(NSString*)msgID dbNum:(NSInteger)dbNum;
 +(NSInteger) insertMail:(Mail*)mail;
@@ -104,6 +105,8 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 +(Mail*) mailWithDraft:(Draft*)draft;
 
 -(Draft*) toDraft;
+
+-(NSString*)description;
 
 @end
 

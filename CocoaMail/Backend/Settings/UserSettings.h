@@ -34,6 +34,9 @@
 @property NSMutableArray* importantFolders;
 @property NSMutableArray* allFoldersDisplayNames;
 
+@property NSString* folderPathDelimiter;      // folder path delimiter is actually a char
+@property NSString* folderPathPrefix;
+
 @property (getter = isDeleted) BOOL deleted;
 @property (getter = isAll) BOOL all;
 
@@ -54,6 +57,7 @@
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder;
 -(CCMFolderType) typeOfFolder:(NSInteger)folder;
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder;
+-(NSInteger)inboxFolderNumber;
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder;
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder;

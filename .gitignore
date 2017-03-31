@@ -25,3 +25,5 @@ DerivedData
 #
 Pods/
 .DS_Store
+/podforceupdate.sh
+/DropboxSDK.framework.save.framework

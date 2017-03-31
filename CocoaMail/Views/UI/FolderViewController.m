@@ -16,6 +16,9 @@
 #import "StringUtil.h"
 #import "UserSettings.h"
 
+#define kIMPORTANT_FOLDERS_SECTION    0
+#define kUSER_FOLDERS_SECTION         1
+
 @interface FolderViewController () <UITableViewDataSource, UITableViewDelegate>
 {
     CRefreshCompletionHandler _completionHandler;
@@ -107,16 +110,37 @@
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
-    return (ac.userFolders.count>0) ? 2 : 1;
+    NSInteger numberOfSections = 1;     // The Important Folders
+    
+    BOOL haveUserFolders = (ac.userFolders.count > 0);
+    
+    if ( haveUserFolders ) {
+        numberOfSections+=1;    // Add one section for the user folders
+    }
+    
+    return numberOfSections;
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    Account* ac = [[Accounts sharedInstance] currentAccount];
+    Account* curAccount = [[Accounts sharedInstance] currentAccount];
     
-    BOOL showOutBox = [ac outBoxNb] > 0;
+    NSInteger numberOfRows = 0;
     
-    return (section==0) ? ([[Accounts sharedInstance].currentAccount systemFolderNames].count - (showOutBox?0:1)) : ac.userFolders.count;
+    if (section==kIMPORTANT_FOLDERS_SECTION) {
+
+        numberOfRows = curAccount.systemFolderNames.count;
+        
+        BOOL showOutBox = [curAccount outBoxNb] > 0;
+        if ( !showOutBox ) {
+            numberOfRows -= 1;
+        }
+    }
+    else { // User Folders Section
+        
+        numberOfRows = curAccount.userFolders.count;
+    }
+    return numberOfRows;
 }
 
 -(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
@@ -131,9 +155,9 @@
     NSString* text = @"";
     NSString* imageName = nil;
     
-    Account* cac = [[Accounts sharedInstance] currentAccount];
+    Account* currentAcnt = [[Accounts sharedInstance] currentAccount];
     
-    if (indexPath.section == 0) {
+    if (indexPath.section == kIMPORTANT_FOLDERS_SECTION) { // This is the first section (ie. Important folders)
         
         UIColor* colorBubble = nil;
         
@@ -142,21 +166,21 @@
         imageName = [Accounts systemFolderIcons][indexPath.row];
         
         switch (indexPath.row) {
-            case 0:
-                colorBubble = cac.user.color;
-                count = [cac unreadInInbox];
+            case 0: // INBOX folder
+                colorBubble = currentAcnt.user.color;
+                count = [currentAcnt unreadInInbox];
                 break;
-            case 1:
+            case 1: // FLAGGED folder
                 colorBubble = [UIColor whiteColor];
-                count = [cac favorisCount];
+                count = [currentAcnt favorisCount];
                 break;
-            case 3:
+            case 3: // DRAFTS folder
                 colorBubble = [UIGlobal bubbleFolderGrey];
-                count = [cac draftCount];
+                count = [currentAcnt draftCount];
                 break;
-            case 7:
+            case 7: // OUTBOX folder
                 colorBubble = [UIGlobal bubbleFolderGrey];
-                count = [cac outBoxNb];
+                count = [currentAcnt outBoxNb];
                 break;
             default:
                 break;
@@ -193,10 +217,10 @@
             [cell addSubview:counter];
         }
     }
-    else {
+    else { // User Folders Section
         
         imageName = [Accounts userFolderIcon];
-        NSArray* subfolder = [cac userFolders][indexPath.row];
+        NSArray* subfolder = [currentAcnt userFolders][indexPath.row];
         
         NSInteger indentation = [subfolder[1] integerValue];
         
@@ -226,10 +250,12 @@
         cell.separatorInset = UIEdgeInsetsMake(0, 53 + 27 * indentation, 0, 0);
     }
     
+    DDLogDebug(@"\t FolderViewController TableCell = \"%@\"",text);
+    
     cell.textLabel.text = text;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
-    cell.imageView.tintColor = cac.user.color;
+    cell.imageView.tintColor = currentAcnt.user.color;
     
     cell.selectionStyle = UITableViewCellSelectionStyleGray;
     
@@ -238,7 +264,12 @@
 
 -(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
-    return (section==0) ? nil : NSLocalizedString(@"folder-view.header.user-folders", @"My Folders");
+    NSString *sectionTitle = nil;
+    
+    if ( section > kIMPORTANT_FOLDERS_SECTION ) { // User Folders Section
+        sectionTitle = NSLocalizedString(@"folder-view.header.user-folders", @"My Folders");
+    }
+    return sectionTitle;
 }
 
 #pragma mark Table Delegate
@@ -257,7 +288,7 @@
 {
     CCMFolderType type;
     
-    if (indexPath.section == 0) {
+    if (indexPath.section == kIMPORTANT_FOLDERS_SECTION) {
         if (indexPath.row == 7) {
             [[[Accounts sharedInstance] currentAccount] sendOutboxs];
             [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -295,14 +326,14 @@
          } error:^(NSError* error) {
              NSDate *fetchEnd = [NSDate date];
              NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
              _completionHandler(hasNewEmail);
          } completed:^{
              NSDate *fetchEnd = [NSDate date];
              NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
-             NSLog(@"Background Fetch Duration: %f seconds", timeElapsed);
+             DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
              _completionHandler(hasNewEmail);
@@ -317,7 +348,7 @@
      
      if (reason) {
      NSInteger reasonValue = [reason integerValue];
-     NSLog(@"storeChanged with reason %ld", (long)reasonValue);
+     DDLogDebug(@"storeChanged with reason %ld", (long)reasonValue);
      
      if ((reasonValue == NSUbiquitousKeyValueStoreServerChange) ||
      (reasonValue == NSUbiquitousKeyValueStoreInitialSyncChange)) {
@@ -329,7 +360,7 @@
      for (NSString *key in keys) {
      id value = [store objectForKey:key];
      [userDefaults setObject:value forKey:key];
-     NSLog(@"storeChanged updated value for %@",key);
+     DDLogDebug(@"storeChanged updated value for %@",key);
      }
      }
      }*/

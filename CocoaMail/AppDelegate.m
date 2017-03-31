@@ -17,14 +17,21 @@
 #import "GlobalDBFunctions.h"
 #import "Reachability.h"
 #import <DropboxSDK/DropboxSDK.h>
-#import "Flurry.h"
 #import "UserSettings.h"
 #import "Draft.h"
 #import <CocoaLumberjack/CocoaLumberjack.h>
+#import "CCMDDLogFormatter.h"
+
+//#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
+
+#ifdef USING_FLURRY
+#import "Flurry.h"
+#endif
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
-#endif
+#import <Instabug-CocoaLumberjack/DDInstabugLogger.h>
+#endif  // USING_INSTABUG
 
 @implementation AppDelegate
 
@@ -37,45 +44,13 @@
     [Instabug setIntroMessageEnabled:NO];
 #endif
     
+    // Initialize CocoaLumberjack logging system
+    [self _initCocoaLumberjack ];
     
-    /**********************************/
-    /*** Initialize CocoaLumberjack ***/
-    /**********************************/
-        
-    // Enable XcodeColors
-    setenv("XcodeColors", "YES", 0);
-
-    // Send debug statements to the System Log (Console.app)
-//    [DDLog addLogger:[DDASLLogger sharedInstance]];
-    
-    // Send debug statements to the Xcode console (uses XcodeColor)
-    DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
-    if (ttyLogger) {
-        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
-        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
-        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
-        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
-        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
-        [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
-    }
-    
-    // Send debug info to log files
-//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init]; // File Logger
-//    fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
-//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-//    [DDLog addLogger:fileLogger];
-    
-    // Show the Xcode console colors
-    DDLogError(  @"Color Demo: DDLogError");    // Red
-    DDLogWarn(   @"Color Demo: DDLogWarn");     // Orange
-    DDLogInfo(   @"Color Demo: DDLogInfo");     // Green
-    DDLogDebug(  @"Color Demo: DDLogDebug");    // Cyan
-    DDLogVerbose(@"Color Demo: DDLogVerbose");  // Default (black)
-    
-    
-    
+#ifdef USING_FLURRY
     // Initialize Flurry analytics
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
+#endif
     
     // First, create an action
     UIMutableUserNotificationAction *acceptAction = [self createAction];
@@ -104,12 +79,91 @@
     DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
-    [Accounts sharedInstance];
+    [Accounts sharedInstance];  // Allocate the shared instance
     [[Accounts sharedInstance] getDrafts];
     
     //[self registerGoogleSignIn];
     
     return shouldPerformAdditionalDelegateHandling;
+}
+
+/**********************************/
+/*** Initialize CocoaLumberjack ***/
+/**********************************/
+-(void) _initCocoaLumberjack
+{
+#ifdef USING_XCODECOLORS
+    // Enable XcodeColors
+    setenv("XcodeColors", "YES", 0);
+#endif
+    
+//    // Send debug statements to the System Log (Console.app)
+//    [DDLog addLogger:[DDASLLogger sharedInstance]];
+
+    
+#ifdef USING_INSTABUG_LOGGER
+    // This will log CocoaLumberjack into Instabug
+    DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
+    if ( ibgLogger ) {
+        
+        ibgLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
+        
+        [DDLog addLogger:ibgLogger];
+    }
+    
+    DDLogInfo(@"USING INSTABUG DD LOGGER.");
+#else // not using Instabug
+        
+    // Send debug statements to the Xcode console (uses XcodeColor)
+    DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
+    if (ttyLogger) {
+#ifdef USING_XCODECOLORS
+        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
+        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
+        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
+        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
+        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
+#endif
+        ttyLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
+        
+        [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
+    }
+    
+    DDLogInfo(@"USING STANDARD DD LOGGER.");
+
+
+#endif // not using Instabug
+    
+#ifdef USING_INSTABUG
+    DDLogInfo(@"USING INSTABUG");
+#else
+    DDLogInfo(@"NOT USING INSTABUG");
+#endif
+    
+#ifdef USING_INSTABUG_LOGGER
+    DDLogInfo(@"USING INSTABUG-COCOALUMBERJACK LOGGER");
+#else
+    DDLogInfo(@"NOT USING INSTABUG-COCOALUMBERJACK LOGGER");
+#endif
+    DDLogInfo(@"\n");
+
+    
+    // Send debug info to log files
+//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
+//    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
+//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+//    [DDLog addLogger:fileLogger];
+//    
+//    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
+//    DDLogInfo(@"*********");
+//    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
+//    DDLogInfo(@"*********");
+   
+//    DDLogError(  @"Demo: DDLogError");    // Red
+//    DDLogWarn(   @"Demo: DDLogWarn");     // Orange
+//    DDLogInfo(   @"Demo: DDLogInfo");     // Green
+//    DDLogDebug(  @"Demo: DDLogDebug");    // Cyan
+//    DDLogVerbose(@"Demo: DDLogVerbose");  // Default (black)
 }
 
 -(BOOL) application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
@@ -133,7 +187,7 @@
     }
     
     if (notification && application.applicationState == 1) {
-        NSLog(@"Notification Body: %@", notification.alertBody);
+        DDLogInfo(@"Notification Body: %@", notification.alertBody);
         self.launchedNotification = notification;
     }
 }
@@ -189,8 +243,8 @@
             
             [conversation foldersType];
             
-            NSLog(@"Opening email:%@", [conversation firstMail].subject);
-            NSLog(@"Index: %ld",(long)cIndex.index);
+            DDLogInfo(@"Opening email:%@", [conversation firstMail].subject);
+            DDLogInfo(@"Index: %ld",(long)cIndex.index);
             
             Accounts* A = [Accounts sharedInstance];
 
@@ -237,7 +291,7 @@
     
     if ([identifier isEqualToString:@"DELETE_IDENTIFIER"]) {
         // handle it
-        NSLog(@"Delete Cached Email");
+        DDLogInfo(@"Delete Cached Email");
         
         NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
         NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
@@ -247,10 +301,11 @@
         
         Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
         
-        CCMLog(@"Email in account:%ld", (long)[conversation user].accountNum);
+        DDLogInfo(@"Email in account:%ld", (long)[conversation user].accountNum);
 
-        [convIndex.user.linkedAccount moveConversation:conversation from:FolderTypeWith(FolderTypeInbox, 0) to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
+        [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
         
+#ifdef USING_FLURRY
         NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
         
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -258,8 +313,8 @@
                                        toFolderString, @"to_Folder",
                                        @"lock_screen", @"action_Location"
                                        ,nil];
-        
         [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
     }
     
     // Call this when you're finished
@@ -350,14 +405,14 @@ didSignInForUser:(GIDGoogleUser*)user
             if (![accessToken isEqualToString:[AppSettings oAuth:accountIndex]]) {
                 [AppSettings setOAuth:accessToken accountIndex:accountIndex];
                 [[ImapSync doLogin:accountIndex] subscribeError:^(NSError *error) {
-                    CCMLog(@"connection error");
+                    DDLogError(@"connection error");
                 } completed:^{}];
             }
         }
     }
     }
     else {
-        CCMLog(@"Erorr signing in %@",error.localizedDescription);
+        DDLogError(@"Erorr signing in %@",error.localizedDescription);
     }
 }*/
 
@@ -414,7 +469,7 @@ didSignInForUser:(GIDGoogleUser*)user
     
     NSError* configureError;
     [[GGLContext sharedInstance] configureWithError:&configureError];
-    NSAssert(!configureError, @"Error configuring Google services: %@", configureError);
+    DDAssert(!configureError, @"Error configuring Google services: %@", configureError);
     
     [GIDSignIn sharedInstance].delegate = self;
 }*/
@@ -453,7 +508,7 @@ didSignInForUser:(GIDGoogleUser*)user
 
 -(BOOL) handleShortcut:(UIApplicationShortcutItem*)shortcutItem
 {
-    NSLog(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
+    DDLogInfo(@"A shortcut item was pressed. It was %@.", shortcutItem.localizedTitle);
     
     if ([shortcutItem.type isEqualToString:@"com.fav"]) {
         CCMFolderType type = CCMFolderTypeFavoris;
