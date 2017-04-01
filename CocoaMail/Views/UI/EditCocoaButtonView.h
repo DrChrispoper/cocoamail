@@ -17,7 +17,7 @@
 
 +(instancetype) editCocoaButtonViewForAccount:(Account*)account;
 
--(void) becomeFirstResponder;
+-(BOOL)becomeFirstResponder;
 
 @property (nonatomic, copy) void (^cocobuttonUpdated)(void);
 

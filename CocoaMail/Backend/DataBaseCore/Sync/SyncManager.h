@@ -12,7 +12,7 @@
 //
 //  However, SyncManager itself has none of the syncing logic.
 
-#import <MailCore/Mailcore.h>
+#import <MailCore/MailCore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
 #define kFolderStateAccountNumberKey        @"accountNum"

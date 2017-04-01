@@ -8,7 +8,7 @@
 
 #import "CCMConstants.h"
 #import "Accounts.h"
-#import <MailCore/Mailcore.h>
+#import <MailCore/MailCore.h>
 
 #define USER_SETTINGS_FILE_NAME_TEMPLATE    @"user_settings_%lu"
 #define FOLDER_USER_SETTINGS_KEY		@"userSettings"
