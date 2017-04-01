@@ -23,6 +23,7 @@
 		1403FEFB1E8DAD250085E099 /* PKHUDWideBaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEEB1E8DAD250085E099 /* PKHUDWideBaseView.swift */; };
 		1403FEFC1E8DAD250085E099 /* Window.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEEC1E8DAD250085E099 /* Window.swift */; };
 		1403FEFD1E8DAD250085E099 /* WindowRootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1403FEED1E8DAD250085E099 /* WindowRootViewController.swift */; };
+		1403FF061E90063B0085E099 /* Account.m in Sources */ = {isa = PBXBuildFile; fileRef = 1403FF051E90063B0085E099 /* Account.m */; };
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
@@ -405,6 +406,8 @@
 		1403FEEB1E8DAD250085E099 /* PKHUDWideBaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKHUDWideBaseView.swift; sourceTree = "<group>"; };
 		1403FEEC1E8DAD250085E099 /* Window.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Window.swift; sourceTree = "<group>"; };
 		1403FEED1E8DAD250085E099 /* WindowRootViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowRootViewController.swift; sourceTree = "<group>"; };
+		1403FF041E90063B0085E099 /* Account.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Account.h; sourceTree = "<group>"; };
+		1403FF051E90063B0085E099 /* Account.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Account.m; sourceTree = "<group>"; };
 		141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCMConversationsByDay.h; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.h; sourceTree = "<group>"; };
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
@@ -1059,6 +1062,8 @@
 				27818C6A1BABF28D00D26D1A /* Persons.m */,
 				277738091B8B03830030F299 /* Accounts.h */,
 				2777380A1B8B03830030F299 /* Accounts.m */,
+				1403FF041E90063B0085E099 /* Account.h */,
+				1403FF051E90063B0085E099 /* Account.m */,
 				271D4D7E1B84758D00D19373 /* CCMAttachment.h */,
 				271D4D7F1B84758D00D19373 /* CCMAttachment.m */,
 				271D4D821B84758D00D19373 /* UidEntry.h */,
@@ -2065,6 +2070,7 @@
 				27818C641BABF24F00D26D1A /* UIGlobal.m in Sources */,
 				27F9B6B41C689DC20008D681 /* ContactTableViewCell.m in Sources */,
 				141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */,
+				1403FF061E90063B0085E099 /* Account.m in Sources */,
 				27818C5F1BABF22500D26D1A /* PullToRefresh.m in Sources */,
 				27818C601BABF22500D26D1A /* UIImage+ImageEffects.m in Sources */,
 				277D64CA1C8EE7F900C0135F /* OnePasswordExtension.m in Sources */,
