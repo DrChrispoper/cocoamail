@@ -504,7 +504,7 @@
     
     account.mailListSubscriber = self;
     
-    NSMutableArray *conversationsForFolder = [account getConversationsForFolder:folder];
+    NSArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
     
     DDLogInfo(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
     
@@ -950,7 +950,7 @@
         folderConversations = [self _filterResultsForPerson:folderConversations];
     }
     
-    CCMMutableConvIndexArray* folderConvs = [folderConversations mutableCopy];
+    NSMutableArray<ConversationIndex*>* folderConvs = [folderConversations mutableCopy];
     
     // TODO: If pConvs/convs only has one entry, then sort by date seems unnedsecary
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
@@ -1366,7 +1366,7 @@
     
 //    DDLogInfo(@"TABLEVIEW Get UITableViewCell for NSIndexPath SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
     
-//    CCMMutableConvIndexArray* convs = [self.convByDay conversationsForDay:indexPath.section];
+//    NSMutableArray<ConversationIndex*>* convs = [self.convByDay conversationsForDay:indexPath.section];
 //    ConversationIndex* conversationIndex = convs[indexPath.row];
     
     ConversationIndex* conversationIndex = [self.convByDay conversation:conIndex onDay:dayIndex];
@@ -1600,7 +1600,7 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         
-        CCMMutableConvIndexArray* res = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
+        NSMutableArray<ConversationIndex*>* res = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
         
         NSInteger dayCount = [self.convByDay dayCount];
         for (NSInteger section = 0; section < dayCount; section++ ) {

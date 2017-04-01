@@ -36,10 +36,8 @@
     UserSettings* _user;
 }
 
-typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
-
 // All Mail Conversations for this Account
-@property (nonatomic, strong) CCMMutableConversationArray* allConversations;
+@property (nonatomic, strong) NSMutableArray<Conversation*>* allConversations;
 
 // All Conversation ID's, used only(?) in InsertRows() function.
 @property (nonatomic, strong) NSMutableSet* convIDs;
@@ -485,7 +483,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 {
     DDAssert(!self.user.isAll, @"Should not be called for All Account");
     
-    CCMMutableConversationArray* tmp = [self.allConversations mutableCopy];
+    NSMutableArray<Conversation*>* tmp = [self.allConversations mutableCopy];
     NSUInteger index = [tmp indexOfObject:conv];
     
     if (index == NSNotFound) {
@@ -518,7 +516,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
 
 #pragma mark - Get Mails
 
--(CCMMutableConversationArray*) conversations
+-(NSMutableArray<Conversation*>*) conversations
 {
     return self.allConversations;
 }
@@ -530,7 +528,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     return [self.allConversations objectAtIndex:index];
 }
 
--(NSMutableArray*) getConversationsForFolder:(CCMFolderType)folderHandle
+-(NSMutableArray<ConversationIndex*>*) getConversationsForFolder:(CCMFolderType)folderHandle
 {
     DDLogInfo(@"CCMFolderType .index=%@ .type=%@",
               @(folderHandle.idx),@(folderHandle.type));
@@ -541,7 +539,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSMutableArray<ConversationIndex *>* conversationsForFolder = [NSMutableArray arrayWithCapacity:[conversationIndexSet count]];
     
-    CCMMutableConversationArray* allConversations = [self.allConversations mutableCopy]; // why copy it? It doesn't look like we are going to change it??
+    NSMutableArray<Conversation*>* allConversations = [self.allConversations mutableCopy]; // why copy it? It doesn't look like we are going to change it??
     
     [allConversations enumerateObjectsAtIndexes:conversationIndexSet
                                         options:0
@@ -899,7 +897,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     // Cannot move a converstaion from the All Mails folder
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    CCMMutableConversationArray* tmp = [self.allConversations mutableCopy];
+    NSMutableArray<Conversation*>* tmp = [self.allConversations mutableCopy];
     NSUInteger idx = [tmp indexOfObject:conversation];
     
     if (idx == NSNotFound) {
@@ -910,7 +908,7 @@ typedef NSMutableArray<Conversation*> CCMMutableConversationArray;
     
     NSMutableIndexSet* toFolderMailIndecies = [self _mailIndeciesForFolder:folderTo];
     
-#warning This seems kludgy.  This kind of knowledge might be better kept in a Type object
+#warning Someday this information should be stored in Folder Type classes
     // Re above warning - structure with type could include CanMoveFrom and CanMoveTo BOOLs
     
     switch (folderTo.type) {

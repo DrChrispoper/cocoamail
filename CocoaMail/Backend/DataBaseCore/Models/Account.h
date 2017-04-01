@@ -53,13 +53,13 @@
 
 -(void) insertRows:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
--(NSMutableArray*) getConversationsForFolder:(CCMFolderType)type;
+-(NSMutableArray<ConversationIndex*>*) getConversationsForFolder:(CCMFolderType)type;
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
 -(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(void) star:(BOOL)add conversation:(Conversation*)conversation;
 
--(NSArray*) conversations;
+-(NSMutableArray<Conversation*>*) conversations;
 
 -(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs;
 -(void) deleteDraft:(Draft*)draft;

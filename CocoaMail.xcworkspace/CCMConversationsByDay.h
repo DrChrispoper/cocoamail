@@ -12,9 +12,6 @@
 
 @class Mail, ConversationIndex;
 
-typedef NSMutableArray<ConversationIndex *> CCMMutableConvIndexArray;
-
-
 @interface CCMConversationsByDay : NSObject
 
 - (instancetype)initWithDayCapacity:(NSInteger)capacity;
