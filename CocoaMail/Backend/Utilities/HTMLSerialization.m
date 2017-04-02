@@ -43,7 +43,7 @@ static void RecursiveDescriptionHelper(HTMLNode *self, NSMutableString *string, 
 - (NSString *)serializedFragment
 {
     [self doesNotRecognizeSelector:_cmd];
-    return @"ERROR";
+    return nil;
 }
 
 @end
@@ -163,7 +163,7 @@ static void RecursiveDescriptionHelper(HTMLNode *self, NSMutableString *string, 
     
     if (StringIsEqualToAnyOf(self.tagName, @"pre", @"textarea", @"listing")) {
         if ([self.children.firstObject isKindOfClass:[HTMLTextNode class]]) {
-            HTMLTextNode *textNode = self.children.firstObject;
+            HTMLTextNode *textNode = (HTMLTextNode *)self.children.firstObject;
             if ([textNode.data hasPrefix:@"\n"]) {
                 [fragment appendString:@"\n"];
             }

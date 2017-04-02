@@ -40,6 +40,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, nonatomic) HTMLMutableOrderedSetOf(HTMLNode *) *mutableChildren;
 
 /**
+    Add a child to the end of the node's set of children, removing it from its current parentNode's set of children. If the child is already in the node's set of children, nothing happens.
+ */
+- (void)addChild:(HTMLNode *)child;
+
+/**
+    Remove a child from the node's set of children. If the child is not in the node's set of children, nothing happens.
+ */
+- (void)removeChild:(HTMLNode *)child;
+
+/**
     The number of nodes that have the node as their parent.
  
     This method is faster than calling `aNode.children.count`.
@@ -70,7 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (HTMLEnumeratorOf(HTMLNode *) *)treeEnumerator;
 
-/// Emits in tree order the node in the subree rooted at the node, except children are enumerated back to front.
+/// Emits in tree order the nodes in the subtree rooted at the node, except that children are enumerated back to front.
 - (HTMLEnumeratorOf(HTMLNode *) *)reversedTreeEnumerator;
 
 /**
@@ -83,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
     Returns the contents of each child text node. Only direct children are considered; no further descendants are included.
  */
-@property (readonly, copy, nonatomic) NSArray *textComponents;
+@property (readonly, copy, nonatomic) HTMLArrayOf(NSString *) *textComponents;
 
 /**
     Convenience method for either adding a string to an existing text node or creating a new text node.
