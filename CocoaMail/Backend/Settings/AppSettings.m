@@ -516,18 +516,32 @@
     user.smtpConnectionType = accountVal.smtpServer.connectionType;
 }
 
+// MARK: - Set and Get Inbox Unread Counts
+
++(NSString *)_inboxKeyForAccount:(NSInteger)accountIndex
+{
+    NSInteger accountNumber = [AppSettings userWithIndex:accountIndex].accountNum;
+    
+    return [NSString stringWithFormat:@"inboxUnread_%li", (long)accountNumber];
+}
+
 +(NSInteger) inboxUnread:(NSInteger)accountIndex
 {
-    NSNumber* str =  [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
+    NSNumber* str =  [[NSUserDefaults standardUserDefaults] objectForKey:[AppSettings _inboxKeyForAccount:accountIndex]];
     return [str integerValue];
 }
 
 +(void) setInboxUnread:(NSInteger)value accountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@(value) forKey:[NSString stringWithFormat:@"inboxUnread_%li", (long)[AppSettings userWithIndex:accountIndex].accountNum]];
+    [defaults setObject:@(value) forKey:[AppSettings _inboxKeyForAccount:accountIndex]];
     
-    
+    [AppSettings _updateIconBadgeCount];
+}
+
+// MARK: - Update Unread Count on App Icon Badge
++(void)_updateIconBadgeCount
+{
     int badge = 0;
     
     if ([[AppSettings getSingleton] badgeCount] == 1) {
@@ -535,7 +549,7 @@
             badge += [AppSettings inboxUnread:index];
         }
     }
-    DDLogDebug(@"Setting Inbox Unread to %ld",(long)badge);
+    DDLogInfo(@"Set Icon Badge (Total of all unread in all inboxes) %ld",(long)badge);
     
     [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
 }
