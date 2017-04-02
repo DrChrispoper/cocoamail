@@ -8,6 +8,7 @@
 #import <MailCore/MailCore.h>
 #import "Persons.h"
 #import "Mail.h"
+#import "CCMConstants.h"
 
 // CocoaMail Error Domain and Errors
 #define CCMErrorDomain          @"com.cocoasoft.cocoamail"
@@ -46,9 +47,11 @@
 -(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deletedAndWait:(UserSettings*)deleteUser;
-+(void) runInboxUnread:(UserSettings*)user;
+//+(void) runInboxUnread:(UserSettings*)user;
 -(void) cancel;
-+(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock;;
++(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock;
++(void) runUnreadCount:(UserSettings*)user folder:(CCMFolderType)folder completed:(void (^)(void))completedBlock;
+
 
 //-(NSMutableSet*) emailIDs;
 //-(void) newOAuthSet;

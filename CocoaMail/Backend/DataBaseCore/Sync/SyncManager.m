@@ -199,7 +199,7 @@ static SyncManager * singleton = nil;
         }
     //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         
-        [ImapSync runInboxUnread:user];
+        [ImapSync runInboxUnread:user completed:^{}];     // Why call this, as it has no completion block
         
         NSInteger inboxFolderIndex = [user inboxFolderNumber];
         

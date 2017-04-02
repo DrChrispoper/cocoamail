@@ -100,7 +100,7 @@
         
         [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
         //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
-        //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
+        //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{}];
     }
 }
 

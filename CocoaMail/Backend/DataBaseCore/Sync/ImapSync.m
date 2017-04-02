@@ -222,46 +222,64 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 // MARK: - IMAP Sync Service: Get the User's Inbox Unread Mail Count from the IMAP Server
 
-+(void) runInboxUnread:(UserSettings*)user
-{
-    [ImapSync runInboxUnread:user completed:^{}];
-}
+//+(void) runInboxUnread:(UserSettings*)user
+//{
+//    [ImapSync runInboxUnread:user completed:^{}];
+//}
 
 // Get the Unread Count for User's Inbox
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock
 {
     DDLogInfo(@"ENTERED");
     
-    if (![ImapSync _isNetworkAvailable] | user.isAll) {
-        DDLogDebug(@"Network is not available OR this is All account");
+    if ( ![ImapSync _isNetworkAvailable] ) {
+        DDLogInfo(@"Network is not available");
         completedBlock();
         return;
     }
     
+    if ( user.isAll ) {
+        DDLogInfo(@"This is All account, don't run Inbox Unread.");
+        completedBlock();
+        return;
+    }
+    
+    [self runUnreadCount:user folder:inboxFolderType() completed:completedBlock];
+}
+
++(void) runUnreadCount:(UserSettings*)user folder:(CCMFolderType)folder completed:(void (^)(void))completedBlock
+{
+    DDLogInfo(@"ENTERED");
+
     dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
     DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
     dispatch_async(imapDispatchQueue, ^{
         
-        NSInteger inboxFolder = [user numFolderWithFolder:inboxFolderType()];
-        NSString* serverFolderPath = [user folderServerName:inboxFolder];
+        NSInteger folderNumber = [user numFolderWithFolder:folder];
+        NSString* serverFolderPath = [user folderServerName:folderNumber];
         MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
         MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
         
         [so start:^(NSError* error, MCOIndexSet* searchResult) {
-            DDLogDebug(@"STARTED Search for All Unread Mails Operation");
+            DDLogInfo(@"STARTED Search for All Unread Mails Operation");
             
             if (!error) {
-                DDLogDebug(@"Got Inbox Unread search results, count = %u",searchResult.count);
+                DDLogInfo(@"Got Folder's Unread search results, count = %u",searchResult.count);
                 
                 [AppSettings setInboxUnread:searchResult.count accountIndex:user.accountIndex];
             }
             else {
                 DDLogError(@"Search for All Unread Mails Operation Failed, error = %@",error);
             }
-            completedBlock();
+            
+            if (completedBlock) {
+                completedBlock();
+            }
         }];
     });
+ 
 }
+
 
 
 // MARK: - IMAP Sync Service: set this IMAP service as Cancelled

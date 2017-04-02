@@ -146,7 +146,7 @@
     NSInteger mailCount = [self.convByDay totalConversationCount];
 //    NSInteger mailUnread = 0;
     
-//    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user];
+//    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user completed:^{}];
 
 #ifdef BETA_ONLY
     NSInteger currentAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
@@ -321,7 +321,7 @@
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
     [self _updateViewTitle];
     //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
-    //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user];
+    //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{}];
 }
 
 - (BOOL)canBecomeFirstResponder {

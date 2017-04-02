@@ -226,7 +226,7 @@
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    [ImapSync runInboxUnread:self.user];
+    [ImapSync runInboxUnread:self.user completed:^{}];
     
     [self refreshCurrentFolder];
     
