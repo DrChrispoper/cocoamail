@@ -144,6 +144,7 @@
 -(void) _applyTrueTitleViewTo:(UINavigationItem*)item
 {
     NSInteger mailCount = [self.convByDay totalConversationCount];
+    
 //    NSInteger mailUnread = 0;
     
 //    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user completed:^{}];

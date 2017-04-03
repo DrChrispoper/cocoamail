@@ -25,6 +25,7 @@
 #import "InViewController+SGProgress.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+
 static SearchRunner * searchSingleton = nil;
 
 @implementation SearchRunner
@@ -67,6 +68,8 @@ static SearchRunner * searchSingleton = nil;
     DDLogInfo(@"ENTERED, search text = \"%@\", account num = %@",searchText,@(accountNum));
     
     NSArray* dbNumbers = [SearchRunner dbNumsInAccountNum:accountNum];
+    
+    DDLogDebug(@"Account %@ has %@ dbNums.",@(accountNum),@(dbNumbers.count));
     
     searchText = [searchText stringByAppendingString:@"*"];
     
@@ -130,8 +133,7 @@ static SearchRunner * searchSingleton = nil;
         
         [subscriber sendCompleted];
         
-        return [RACDisposable disposableWithBlock:^{
-        }];
+        return [RACDisposable disposableWithBlock:^{}];
     }];
 }
 
@@ -199,20 +201,22 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performAllSearch
 {
+    ddLogLevel = DDLogLevelInfo;       // Limit reporting to Info and above for now
+    
     DDLogInfo(@"ENTERED");
     
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
-        NSInteger __block allFound = 500;
+        NSInteger __block allFound = 500;       // DOES THS CAP # OF MAIL MSGS THAT CAN BE READ or BREAK FETCHING INTO BLOCKS?
         NSArray* dbNums = [SearchRunner _dbNumsInAllAccountNums];
+        
+        DDLogDebug(@"Have %@ FMDB numbers across all Accounts.",@(dbNums.count));
         
         NSSortDescriptor* sortOrder =
         [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self))
                                       ascending:NO];
         
         dbNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
-        
-        DDLogDebug(@"Have %@ dbNums",@(dbNums.count));
         
         for (NSNumber* dbNum in dbNums) {
             
@@ -229,20 +233,22 @@ static SearchRunner * searchSingleton = nil;
                                             filePathInDocumentsDirectoryForFileName:dbFilename];
             FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:dbFilenameInDocDir];
             
-            DDLogDebug(@"Using FMDB Queue file \"%@\".",dbFilename);
+            DDLogDebug(@"Query FMDB file \"%@\".",dbFilename);
             
             [queue inDatabase:^(FMDatabase* db) {
                 NSMutableString* query = [NSMutableString string];
                 [query appendString:kQueryAll];
                 
+                DDLogVerbose(@"Query = \"%@\"",query);
+                
                 FMResultSet* results = [db executeQuery:query];
                 
                 if ([db hadError] && [db lastErrorCode] == 1) {
-                    DDLogError(@"FMDB hadError == TRUE && lastErrorCode == 1");
+                    DDLogError(@"FMDB Query Failed, Error Code = 1");
                     [Mail tableCheck:db];
                 }
                 
-                DDLogDebug(@"Have FMDB Queue file results");
+                DDLogDebug(@"FMDB Query returned FMResultSet*.");
                 
                 while ([results next]) {
                     Mail* email = [Mail newMailFromDatabaseResult:results];
@@ -266,7 +272,7 @@ static SearchRunner * searchSingleton = nil;
                 [results close];
                 
                 for (Mail* m in dels) {
-                    DDLogInfo(@"Delete mail with subject \"%@\"",m.subject);
+                    DDLogDebug(@"Delete mail with subject \"%@\"",m.subject);
                     [db executeUpdate:kQueryDelete, m.msgID];
                 }
             }];
@@ -274,8 +280,7 @@ static SearchRunner * searchSingleton = nil;
         
         [subscriber sendCompleted];
         
-        return [RACDisposable disposableWithBlock:^{
-        }];
+        return [RACDisposable disposableWithBlock:^{}];
     }];
 }
 
@@ -429,7 +434,7 @@ static SearchRunner * searchSingleton = nil;
 #if (LOG_INFO)
 //                NSDate *fetchEndG = [NSDate date];
 //                NSTimeInterval timeElapsedG = [fetchEndG timeIntervalSinceDate:fetchStartG];
-//                DDLogInfo(@"Group Fetch Duration: %f seconds.", timeElapsedG);
+//                Have FMDB Queue file results(@"Group Fetch Duration: %f seconds.", timeElapsedG);
 #endif
                 
                 [results close];
@@ -446,7 +451,7 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) allEmailsSearch
 {
-    DDLogInfo(@"");
+    DDLogInfo(@"BEGIN");
     
     self.cancelled = NO;
     

@@ -127,6 +127,8 @@
 
 -(void) runLoadData
 {
+    ddLogLevel = DDLogLevelDebug;
+    
     DDLogInfo(@"ENTERED");
     
     // If this is NOT the All Mails user account ..

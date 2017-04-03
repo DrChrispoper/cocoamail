@@ -121,7 +121,7 @@
                     uid_entry.msgID,
                     @(uid_entry.folder + 1000 * uid_entry.accountNum)];
         if (success) {
-            DDLogVerbose(@"UID Deleted");
+            DDLogDebug(@"UID Deleted");
         }
     }];
     
@@ -139,7 +139,7 @@
         BOOL success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? ;",
                          msgID];
         if (success) {
-            DDLogVerbose(@"UID Deleted");
+            DDLogDebug(@"UID Deleted");
         }
     }];
 }
@@ -232,7 +232,7 @@
             for (NSArray* uidEs in uids) {
                 for (UidEntry* uid in uidEs) {
                     if ([db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? ", uid.msgID]) {
-                        DDLogVerbose(@"UID Deleted");
+                        DDLogDebug(@"UID Deleted");
                     }
                 }
             }
@@ -420,34 +420,36 @@
 
 +(BOOL) hasUidEntrywithMsgId:(NSString*)msgID inAccount:(NSInteger)accountNum
 {
+    ddLogLevel = DDLogLevelWarning;
+    
     __block BOOL result = NO;
     NSString* folder = [NSString stringWithFormat:@"%ld___", (long)accountNum];
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     
-    DDLogVerbose(@"ENTERED, msg id = %@, account = %@",msgID,@(accountNum));
+    DDLogInfo(@"ENTERED, msg id = %@, account = %@",msgID,@(accountNum));
 
     [[UidDBAccessor sharedManager].databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results = [db executeQuery:@"SELECT * FROM uid_entry WHERE msg_id = ? AND folder LIKE ?", msgID, folder];
         
-        DDLogVerbose(@"Executed Database Query for match on msgID \"%@\" and folder \"%@\"",msgID,folder);
+        DDLogDebug(@"Executed Database Query for match on msgID \"%@\" and folder \"%@\"",msgID,folder);
         
         if ([results next]) {
-            DDLogVerbose(@"FOUND MATCHING RECORD = YES");
+            DDLogDebug(@"FOUND MATCHING RECORD = YES");
             result = YES;
             [results close];
             dispatch_semaphore_signal(semaphore);
             return;
         }
         
-        DDLogVerbose(@"\tFOUND MATCHING RECORD = NO");
+        DDLogDebug(@"\tFOUND MATCHING RECORD = NO");
         
         dispatch_semaphore_signal(semaphore);
     }];
     
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     
-    DDLogVerbose(@"RETURNING %@",(result?@"YES":@"NO"));
+    DDLogDebug(@"RETURNING %@",(result?@"YES":@"NO"));
     
     return result;
 }
@@ -547,7 +549,7 @@
             
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
-                DDLogDebug(@"Email copied to folder!");
+                DDLogInfo(@"Email copied to folder!");
                 
                 [CachedAction removeAction:action];
                 
@@ -603,7 +605,7 @@
             
         [opMove start:^(NSError* error, NSDictionary* destUids) {
             if (!error && destUids) {
-                DDLogDebug(@"Email copied to folder!");
+                DDLogInfo(@"Email copied to folder!");
                 
                 [CachedAction removeAction:action];
                 
@@ -650,7 +652,7 @@
             
         [op start:^(NSError* error) {
             if (!error) {
-                DDLogDebug(@"Updated the deleted flags!");
+                DDLogInfo(@"Updated the deleted flags!");
                 
                 MCOIMAPOperation* deleteOp = [[ImapSync sharedServices:user].imapSession expungeOperation:[user folderServerName:uidE.folder]];
                 [deleteOp start:^(NSError* error) {
@@ -727,7 +729,7 @@
             
         [op start:^(NSError* error) {
             if (!error) {
-                DDLogDebug(@"Added flag!");
+                DDLogInfo(@"Added flag!");
                 if (action) {
                     [CachedAction removeAction:action];
                 }
@@ -782,7 +784,7 @@
             
         [op start:^(NSError* error) {
             if (!error) {
-                DDLogDebug(@"Removed flag!");
+                DDLogInfo(@"Removed flag!");
                 if (action) {
                     [CachedAction removeAction:action];
                 }

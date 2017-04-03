@@ -1312,7 +1312,12 @@
                                  [res addObject:obj];
                              }];
         
+        DDLogInfo(@"*** 3-CALLING runUpToDateTest:folderIndex:completed:");
+
         [[ImapSync sharedServices:self.user] runUpToDateTest:res folderIndex:self.currentFolderIdx completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+            
+            DDLogInfo(@"runUpToDateTest completed block");
+            
             [self.mailListSubscriber updateDays:days];
             //[self localFetchMore:NO];
         }];
