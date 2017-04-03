@@ -39,9 +39,12 @@
 #define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
 
 // Change this to change the log level for CocoaLumberjack
-#ifdef DEBUG    // DEBUG BUILD
-static const DDLogLevel ddLogLevel = DDLogLevelDebug;   // Don't show Verbose
-#else           // RELEASE BUILD
-static const DDLogLevel ddLogLevel = DDLogLevelInfo; // Don't show Debug, Verbose
+#ifdef DEBUG    
+// For the DEBUG build, don't show Debug or Verbose logging.
+// Logging level can be set per Method by modifyin ddLogLevel at its start.
+  static DDLogLevel ddLogLevel = DDLogLevelInfo;
+#else           
+// For the RELEASE build, don't show Info, Debug or Verbose logging.
+  static const DDLogLevel ddLogLevel = DDLogLevelWarning;
 #endif
 
