@@ -30,6 +30,9 @@
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
+#endif
+
+#ifdef USING_INSTABUG_COCOALUMBERJACK
 #import <Instabug-CocoaLumberjack/DDInstabugLogger.h>
 #endif  // USING_INSTABUG
 
@@ -42,6 +45,8 @@
 #ifdef USING_INSTABUG
     [Instabug startWithToken:@"745ee58bde267456dafb4be700be1924" invocationEvent:IBGInvocationEventScreenshot];
     [Instabug setIntroMessageEnabled:NO];
+    [Instabug setIBGLogPrintsToConsole:NO];
+    [Instabug setNetworkLoggingEnabled:NO];
 #endif
     
     // Initialize CocoaLumberjack logging system
@@ -92,47 +97,31 @@
 /**********************************/
 -(void) _initCocoaLumberjack
 {
-#ifdef USING_XCODECOLORS
-    // Enable XcodeColors
-    setenv("XcodeColors", "YES", 0);
-#endif
     
 //    // Send debug statements to the System Log (Console.app)
 //    [DDLog addLogger:[DDASLLogger sharedInstance]];
 
     
-#ifdef USING_INSTABUG_LOGGER
+#ifdef USING_INSTABUG_COCOALUMBERJACK
     // This will log CocoaLumberjack into Instabug
     DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
     if ( ibgLogger ) {
         
         ibgLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
         
-        [DDLog addLogger:ibgLogger];
+        [DDLog addLogger:ibgLogger withLevel:DDLogLevelWarning];
     }
+#endif // using Instabug
     
-    DDLogInfo(@"USING INSTABUG DD LOGGER.");
-#else // not using Instabug
-        
     // Send debug statements to the Xcode console (uses XcodeColor)
     DDTTYLogger *ttyLogger = [DDTTYLogger sharedInstance];
     if (ttyLogger) {
-#ifdef USING_XCODECOLORS
-        [ttyLogger setForegroundColor:[UIColor redColor] backgroundColor:nil forFlag:DDLogFlagError];
-        [ttyLogger setForegroundColor:[UIColor yellowColor] backgroundColor:nil forFlag:DDLogFlagWarning];
-        [ttyLogger setForegroundColor:[UIColor greenColor] backgroundColor:nil forFlag:DDLogFlagInfo];
-        [ttyLogger setForegroundColor:[UIColor cyanColor] backgroundColor:nil forFlag:DDLogFlagDebug];
-        [ttyLogger setColorsEnabled:YES]; // Enables XCodeColors XCode plugin, if available
-#endif
         ttyLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
         
         [DDLog addLogger:ttyLogger]; // Send debug statements to the XCode Console, if available
     }
     
     DDLogInfo(@"USING STANDARD DD LOGGER.");
-
-
-#endif // not using Instabug
     
 #ifdef USING_INSTABUG
     DDLogInfo(@"USING INSTABUG");
@@ -140,7 +129,7 @@
     DDLogInfo(@"NOT USING INSTABUG");
 #endif
     
-#ifdef USING_INSTABUG_LOGGER
+#ifdef USING_INSTABUG_COCOALUMBERJACK
     DDLogInfo(@"USING INSTABUG-COCOALUMBERJACK LOGGER");
 #else
     DDLogInfo(@"NOT USING INSTABUG-COCOALUMBERJACK LOGGER");
