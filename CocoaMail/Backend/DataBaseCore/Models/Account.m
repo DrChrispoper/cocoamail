@@ -1177,7 +1177,7 @@
              DDLogDebug(@"\tsubscribeNext^(email)");
          }
          error:^(NSError* error) {
-            self.isSyncing = NO;
+            _isSyncing = NO;
              
              DDLogDebug(@"\tError: %@",error);
              
