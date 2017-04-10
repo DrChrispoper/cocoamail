@@ -26,9 +26,9 @@ target 'CocoaMail' do
 #pod 'PKHUD', '~> 4.0'
 
 # pod 'Flurry-iOS-SDK/FlurrySDK'
-#	pod 'Instabug'
+	pod 'Instabug'
   pod 'CocoaLumberjack' 
-#  pod 'Instabug-CocoaLumberjack'
+  pod 'Instabug-CocoaLumberjack'
   
 end
 

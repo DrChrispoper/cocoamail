@@ -27,6 +27,7 @@
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
 		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
+		1476686C1E9AFBF400AE24BA /* XcodeWarnings.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 1476686B1E9AFBF400AE24BA /* XcodeWarnings.xcconfig */; };
 		147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */; };
 		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
 		14E657CD1E54CC5F009070E9 /* CCMDDLogFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 14E657CC1E54CC5F009070E9 /* CCMDDLogFormatter.m */; };
@@ -412,6 +413,7 @@
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
+		1476686B1E9AFBF400AE24BA /* XcodeWarnings.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = XcodeWarnings.xcconfig; path = CocoaMail/XcodeWarnings.xcconfig; sourceTree = "<group>"; };
 		147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
 		14ADBBF71E23F1530087E9B7 /* CCMConversationsPerAccount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMConversationsPerAccount.h; sourceTree = "<group>"; };
 		14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMConversationsPerAccount.m; sourceTree = "<group>"; };
@@ -904,6 +906,7 @@
 		271D4CF51B846E4500D19373 = {
 			isa = PBXGroup;
 			children = (
+				1476686B1E9AFBF400AE24BA /* XcodeWarnings.xcconfig */,
 				271D4D001B846E4500D19373 /* CocoaMail */,
 				271D4CFF1B846E4500D19373 /* Products */,
 				14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */,
@@ -1804,6 +1807,7 @@
 				272320201BF48E88000F7EFF /* InfoPlist.strings in Resources */,
 				271D4DBE1B84856B00D19373 /* providers.json in Resources */,
 				277D89871BB183B300FAFED5 /* page_white_dvd@2x.png in Resources */,
+				1476686C1E9AFBF400AE24BA /* XcodeWarnings.xcconfig in Resources */,
 				277D897D1BB183B300FAFED5 /* page_white_code@2x.png in Resources */,
 				277D898F1BB183B300FAFED5 /* page_white_gear@2x.png in Resources */,
 				277D896D1BB183B300FAFED5 /* keynote@2x.png in Resources */,
@@ -2275,11 +2279,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SWIFT_VERSION = 2.3;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -2317,11 +2321,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 2.3;
+				SWIFT_VERSION = 3.0;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -2331,6 +2335,14 @@
 			baseConfigurationReference = 51D95F8ACAD71E78C0B5E5E3 /* Pods-CocoaMail.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER = YES;
+				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = YES;
+				CLANG_WARN_OBJC_EXPLICIT_OWNERSHIP_TYPE = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CocoaMail/CocoaMail.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -2344,6 +2356,9 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CocoaMail-Prefix.pch";
+				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = CocoaMail/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -2400,6 +2415,14 @@
 			baseConfigurationReference = 677DA1BA2CCF6575EBE3F048 /* Pods-CocoaMail.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER = YES;
+				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_IMPLICIT_SIGN_CONVERSION = YES;
+				CLANG_WARN_OBJC_EXPLICIT_OWNERSHIP_TYPE = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CocoaMail/CocoaMail.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -2413,6 +2436,9 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CocoaMail-Prefix.pch";
+				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = CocoaMail/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
