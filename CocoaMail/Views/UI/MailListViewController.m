@@ -736,7 +736,7 @@
             
             if (!isInFolder) {
 #ifdef USING_INSTABUG
-                IBGLog(@"%@", [NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)ciToInsert.index]);
+                IBGLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
 #endif
                 DDLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
                 
@@ -978,7 +978,7 @@
             
             if (!isInFolder) {
 #ifdef USING_INSTABUG
-                IBGLog(@"%@", [NSString stringWithFormat:@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index]);
+                IBGLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
 #endif
                 DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
                 
@@ -1207,7 +1207,7 @@
             }
             
 #ifdef USING_INSTABUG
-            IBGLog(@"%@", [NSString stringWithFormat:@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type]);
+            IBGLogDebug(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
 #endif
              DDLogDebug(@"Swipe Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)fromtype.type, (unsigned long)totype.type);
             
@@ -1662,7 +1662,7 @@
             Account* ac = [[Accounts sharedInstance] account:conversationIndex.user.accountIndex];
             
 #ifdef USING_INSTABUG
-            IBGLog(@"%@", [NSString stringWithFormat:@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type]);
+            IBGLogDebug(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
 #endif
             DDLogDebug(@"Bulk Move conversation (%ld) from %lu to %lu", (long)conversationIndex.index, (unsigned long)self.folder.type, (unsigned long)toFolder.type);
             

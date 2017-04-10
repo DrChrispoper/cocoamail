@@ -14,10 +14,10 @@
 
 @interface CCMConversationsByDay : NSObject
 
-- (instancetype)initWithDayCapacity:(NSInteger)capacity;
+- (instancetype)initWithDayCapacity:(NSUInteger)capacity;
 
--(NSInteger) dayCount;
--(NSInteger) conversationCountOnDay:(NSInteger)dayIndex;
+-(NSUInteger) dayCount;
+-(NSUInteger) conversationCountOnDay:(NSUInteger)dayIndex;
 
 -(BOOL) isEmpty;        // dayCount == 0
 -(NSInteger) totalConversationCount;        // total of all conversations on all days
@@ -25,21 +25,21 @@
 -(void)enumerateAllMailsUsingBlock:(void (^)(Mail *msg))block;
 
 // access elements of a day's conversations
--(NSDate*)dateForDay:(NSInteger)day;
--(ConversationIndex*) conversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex;
+-(NSDate*)dateForDay:(NSUInteger)day;
+-(ConversationIndex*) conversation:(NSUInteger)convIndex onDay:(NSUInteger)dayIndex;
 -(NSDate*)datetimeForConversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex;
 
 
--(void)sortConversationsByDateForDay:(NSInteger)dayIndex;
+-(void)sortConversationsByDateForDay:(NSUInteger)dayIndex;
 
--(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex;
+-(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSUInteger)dayIndex;
 -(void)appendNewDayWithConversationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate;
--(void)removeDayAtIndex:(NSInteger)dayIndex;
+-(void)removeDayAtIndex:(NSUInteger)dayIndex;
 
--(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSInteger)dayIndex;
--(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSInteger)convArrayIndex onDay:(NSInteger)dayIndex;
--(void)removeConversation:(NSInteger)conIndex onDay:(NSInteger)dayIndex;
--(void)exchangeConversationsAtIndex:(NSInteger)convIndexOne withConversationAtIndex:(NSInteger)convIndexTwo onDay:(NSInteger)dayIndex;
+-(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSUInteger)dayIndex;
+-(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSUInteger)convArrayIndex onDay:(NSUInteger)dayIndex;
+-(void)removeConversation:(NSUInteger)conIndex onDay:(NSUInteger)dayIndex;
+-(void)exchangeConversationsAtIndex:(NSUInteger)convIndexOne withConversationAtIndex:(NSUInteger)convIndexTwo onDay:(NSUInteger)dayIndex;
 
 - (void)InsertConversation:(ConversationIndex *)ciToInsert;
 

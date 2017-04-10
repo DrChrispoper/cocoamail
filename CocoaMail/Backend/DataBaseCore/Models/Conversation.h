@@ -38,7 +38,7 @@
 @property (nonatomic) NSInteger index;
 @property (nonatomic) UserSettings* user;
 
-+(ConversationIndex*) initWithIndex:(NSInteger)index user:(UserSettings*)user;
++(ConversationIndex*) initWithIndex:(NSUInteger)index user:(UserSettings*)user;
 -(NSDate*) date;
 -(NSDate*) day;
 

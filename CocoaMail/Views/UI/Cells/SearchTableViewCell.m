@@ -170,12 +170,12 @@ static NSDateFormatter * s_df_date = nil;
                      animations:^{
                          overView.alpha = 0.8f;
                      }
-                     completion:^(BOOL fini){
+                     completion:^(BOOL fini1){
                          [UIView animateWithDuration:0.1
                                           animations:^{
                                               overView.alpha = 0.0f;
                                           }
-                                          completion:^(BOOL fini){
+                                          completion:^(BOOL fini2){
                                               [overView removeFromSuperview];
                                               [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
                                                                                                   object:nil

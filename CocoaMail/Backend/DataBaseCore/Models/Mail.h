@@ -64,7 +64,7 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 -(UserSettings*) user;
 -(UidEntry*) uidEWithFolder:(NSInteger)folderNum;
 -(BOOL)isInFolder:(NSInteger)folderNum;
--(NSArray*) uids;
+-(NSArray<UidEntry *>*) uids;
 -(void) setUids:(NSArray<UidEntry *> *)uids;
 -(NSString*) sonID;
 -(BOOL) haveSonInFolder:(NSInteger)folderIdx;

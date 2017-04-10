@@ -488,7 +488,7 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] addObserverForName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
 #ifdef USING_INSTABUG
-        IBGLog(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
+        IBGLogInfo(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
 #endif
         DDLogInfo(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
@@ -527,7 +527,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_FOLDER_NOTIFICATION);
+        IBGLogInfo(kPRESENT_FOLDER_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_FOLDER_NOTIFICATION);
         
@@ -573,7 +573,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_SETTINGS_NOTIFICATION);
+        IBGLogInfo(kPRESENT_SETTINGS_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_SETTINGS_NOTIFICATION);
         
@@ -589,7 +589,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_CREDIT_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_CREDIT_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_CREDIT_NOTIFICATION);
         
@@ -605,7 +605,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_CREDIT2_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_CREDIT2_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_CREDIT2_NOTIFICATION);
         
@@ -622,7 +622,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_SPAMTEST_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_SPAMTEST_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_SPAMTEST_NOTIFICATION);
         
@@ -638,7 +638,7 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_CLOUD_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_CLOUD_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_CLOUD_NOTIFICATION);
         
@@ -655,7 +655,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_MAIN_ACCOUNT_NOTIFICATION);
         
@@ -670,7 +670,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_SWIPE_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_SWIPE_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_SWIPE_NOTIFICATION);
         
@@ -685,7 +685,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_NOTIF_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_NOTIF_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_NOTIF_NOTIFICATION);
         
@@ -701,7 +701,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_ACCOUNT_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_ACCOUNT_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_ACCOUNT_NOTIFICATION);
         
@@ -717,7 +717,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_ACCOUNT_SIGN_NOTIFICATION);
         
@@ -733,7 +733,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
+        IBGLogInfo(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
 #endif
         DDLogInfo(kSETTINGS_ADD_ACCOUNT_NOTIFICATION);
         
@@ -749,7 +749,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_CONVERSATION_NOTIFICATION);
+        IBGLogInfo(kPRESENT_CONVERSATION_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_CONVERSATION_NOTIFICATION);
         
@@ -765,7 +765,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
+        IBGLogInfo(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION);
         
@@ -787,7 +787,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_CONTACTS_NOTIFICATION);
+        IBGLogInfo(kPRESENT_CONTACTS_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_CONTACTS_NOTIFICATION);
         
@@ -804,7 +804,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_SEARCH_NOTIFICATION);
+        IBGLogInfo(kPRESENT_SEARCH_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_SEARCH_NOTIFICATION);
         
@@ -821,7 +821,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_EDITMAIL_NOTIFICATION);
+        IBGLogInfo(kPRESENT_EDITMAIL_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_EDITMAIL_NOTIFICATION);
         
@@ -837,7 +837,7 @@ static ViewController * s_self;
             return;
         }
 #ifdef USING_INSTABUG
-        IBGLog(kPRESENT_DROPBOX_NOTIFICATION);
+        IBGLogInfo(kPRESENT_DROPBOX_NOTIFICATION);
 #endif
         DDLogInfo(kPRESENT_DROPBOX_NOTIFICATION);
         
@@ -854,7 +854,7 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_TO_INBOX_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
 #ifdef USING_INSTABUG
-        IBGLog(kBACK_TO_INBOX_NOTIFICATION);
+        IBGLogInfo(kBACK_TO_INBOX_NOTIFICATION);
 #endif
         DDLogInfo(kBACK_TO_INBOX_NOTIFICATION);
         
@@ -894,9 +894,9 @@ static ViewController * s_self;
         }
         
 #ifdef USING_INSTABUG
-        IBGLog(kBACK_NOTIFICATION);
+        IBGLogInfo(kBACK_NOTIFICATION);
 #endif
-        //        DDLogInfo(kBACK_NOTIFICATION);
+        DDLogInfo(kBACK_NOTIFICATION);
         
         // Get the current (top) view controller, clean up and remove controller from stack.
         InViewController* vc = [self.viewControllers lastObject];
@@ -971,9 +971,9 @@ static ViewController * s_self;
         DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
         
 #ifdef USING_INSTABUG
-        IBGLog(kACCOUNT_CHANGED_NOTIFICATION);
+        IBGLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
 #endif
-        //        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
+        DDLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
         
         //[[Parser sharedParser] cleanConversations];
         
@@ -1017,9 +1017,9 @@ static ViewController * s_self;
         DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
         
 #ifdef USING_INSTABUG
-        IBGLog(kQUICK_ACTION_NOTIFICATION);
+        IBGLogInfo(kQUICK_ACTION_NOTIFICATION);
 #endif
-        //        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
+        DDLogInfo(kQUICK_ACTION_NOTIFICATION);
         
         BOOL inFolders = self.viewControllers.count == 1;
         

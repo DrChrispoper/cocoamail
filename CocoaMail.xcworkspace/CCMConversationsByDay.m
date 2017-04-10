@@ -22,7 +22,7 @@
 
 @implementation CCMConversationsByDay
 
-- (instancetype)initWithDayCapacity:(NSInteger)capacity
+- (instancetype)initWithDayCapacity:(NSUInteger)capacity
 {
     self = [super init];
     if (self) {
@@ -31,12 +31,12 @@
     return self;
 }
 
--(NSDictionary*) _dayProperties:(NSInteger)day
+-(NSDictionary*) _dayProperties:(NSUInteger)day
 {
     @synchronized (self.conversationsPerDay) {
-        NSInteger dayCount = [self dayCount];
+        NSUInteger dayCount = [self dayCount];
         
-        if ( day < 0 || day >= dayCount ) {
+        if ( day >= dayCount ) {
             DDLogInfo(@"_dayProperties: day (%@) out of bounds (0-%@)",@(day),(@(dayCount-1)));
             return nil;
         }
@@ -45,7 +45,7 @@
     }
 }
 
--(NSMutableArray<ConversationIndex*>*) _conversationsForDay:(NSInteger) day
+-(NSMutableArray<ConversationIndex*>*) _conversationsForDay:(NSUInteger) day
 {
     @synchronized (self.conversationsPerDay) {
         NSDictionary *dayDict = [self _dayProperties:day];
@@ -55,7 +55,7 @@
         return dayConvList;
     }
 }
--(NSDate*)dateForDay:(NSInteger)day
+-(NSDate*)dateForDay:(NSUInteger)day
 {
     @synchronized (self.conversationsPerDay) {
         NSDictionary *dayDict = [self _dayProperties:day];
@@ -72,15 +72,15 @@
     }
 }
 
--(NSInteger) dayCount
+-(NSUInteger) dayCount
 {
     @synchronized (self.conversationsPerDay) {
-        NSInteger numberOfDays = self.conversationsPerDay.count;
+        NSUInteger numberOfDays = self.conversationsPerDay.count;
         
         return numberOfDays;
     }
 }
--(NSInteger) conversationCountOnDay:(NSInteger)dayIndex
+-(NSUInteger) conversationCountOnDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSDictionary *dayDict = [self _dayProperties:dayIndex];
@@ -101,13 +101,13 @@
     @synchronized (self.conversationsPerDay) {
         NSInteger totalConversations = 0;
         
-        for (NSInteger day = 0; day < self.conversationsPerDay.count; day++ ) {
+        for (NSUInteger day = 0; day < self.conversationsPerDay.count; day++ ) {
             totalConversations += [self conversationCountOnDay:day];
         }
         return totalConversations;
     }
 }
--(ConversationIndex*) conversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex
+-(ConversationIndex*) conversation:(NSUInteger)convIndex onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSMutableArray<ConversationIndex*>* convs = [self _conversationsForDay:dayIndex];
@@ -136,7 +136,7 @@
     }
 }
 
--(void)sortConversationsByDateForDay:(NSInteger)dayIndex
+-(void)sortConversationsByDateForDay:(NSUInteger)dayIndex
 {
     NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
     
@@ -159,7 +159,7 @@
     return conversationIndex;
 }
 
--(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSInteger)dayIndex
+-(void)insertNewDayWithConservationIndex:(ConversationIndex*)conIndex andDate:(NSDate*)conDate atDayIndex:(NSUInteger)dayIndex
 {
     NSDictionary* daysConversations = [self _createNewConversationsList:conIndex forDate:conDate];
     
@@ -177,10 +177,10 @@
         [self.conversationsPerDay addObject:daysConversations];
     }
 }
--(void)removeDayAtIndex:(NSInteger)dayIndex
+-(void)removeDayAtIndex:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
-        NSInteger dayCount = [self dayCount];
+        NSUInteger dayCount = [self dayCount];
         
         DDAssert(dayIndex >= 0 && dayIndex < dayCount,
                  @"removeDayAtIndex: day index (%@) out of range (0 - %@)",
@@ -190,7 +190,7 @@
     }
 
 }
--(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSInteger)dayIndex
+-(void)appendConversation:(ConversationIndex*)conIndex onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSMutableArray<ConversationIndex*>* conversationsForDay = [self _conversationsForDay:dayIndex];
@@ -198,7 +198,7 @@
         [conversationsForDay addObject:conIndex];
     }
 }
--(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSInteger)convArrayIndex onDay:(NSInteger)dayIndex
+-(void)insertConversation:(ConversationIndex*)ciToInsert atConversationArrayIndex:(NSUInteger)convArrayIndex onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSMutableArray<ConversationIndex*>* conversationsForDay = [self _conversationsForDay:dayIndex];
@@ -208,7 +208,7 @@
         [conversationsForDay insertObject:ciToInsert atIndex:convArrayIndex];
     }
 }
--(void)removeConversation:(NSInteger)conIndex onDay:(NSInteger)dayIndex
+-(void)removeConversation:(NSUInteger)conIndex onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSMutableArray<ConversationIndex*>* conversationsForDay = [self _conversationsForDay:dayIndex];
@@ -216,7 +216,7 @@
         [conversationsForDay removeObjectAtIndex:conIndex];
     }
 }
--(void)exchangeConversationsAtIndex:(NSInteger)convIndexOne withConversationAtIndex:(NSInteger)convIndexTwo onDay:(NSInteger)dayIndex
+-(void)exchangeConversationsAtIndex:(NSUInteger)convIndexOne withConversationAtIndex:(NSUInteger)convIndexTwo onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         NSMutableArray<ConversationIndex*>* conversationsForDay = [self _conversationsForDay:dayIndex];
@@ -231,8 +231,8 @@
         BOOL conversationAddedToConvByDate = NO;
         
         // To find where to insert this conversation, we look through the convByDate array
-        NSInteger dayCount = [self dayCount];
-        for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
+        NSUInteger dayCount = [self dayCount];
+        for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             
             NSDate* indexedDayDate = [self dateForDay:dayIndex];
             
@@ -253,15 +253,15 @@
                     
                     [self sortConversationsByDateForDay:dayIndex];
                     
-                    NSInteger conCount = [self conversationCountOnDay:dayIndex];
+                    NSUInteger conCount = [self conversationCountOnDay:dayIndex];
                     
-                    for (int convArrayIndex = 0 ; convArrayIndex < conCount ; convArrayIndex++) {
+                    for (NSUInteger convArrayIndex = 0 ; convArrayIndex < conCount ; convArrayIndex++) {
                         
                         ConversationIndex* indexedConversationIndex = [self conversation:convArrayIndex onDay:dayIndex];
                         
-                        NSComparisonResult result = [[ciToInsert date] compare:[indexedConversationIndex date]];
+                        NSComparisonResult compareResult = [[ciToInsert date] compare:[indexedConversationIndex date]];
                         
-                        if (result == NSOrderedDescending) {
+                        if (compareResult == NSOrderedDescending) {
                             
                             [self insertConversation:ciToInsert atConversationArrayIndex:convArrayIndex onDay:dayIndex];
                             
@@ -294,29 +294,29 @@
     NSMutableString *text = [NSMutableString string];
     
     @synchronized (self.conversationsPerDay) {
-        NSInteger dayCount = [self dayCount];
+        NSUInteger dayCount = [self dayCount];
         [text appendFormat:@"\n\nCCMConversationsByDay has %@ days:\n",@(dayCount)];
         
-        for (NSInteger day = 0; day < dayCount; day++ ) {
+        for (NSUInteger day = 0; day < dayCount; day++ ) {
             
             NSDate *convDate = [self dateForDay:day];
             NSString* humanDate = [[DateUtil getSingleton] humanDate:convDate];
             
             NSMutableArray<ConversationIndex*> *dayConvs = [self _conversationsForDay:day];
-            NSInteger dayCount = dayConvs.count;
+            NSUInteger convsCount = dayConvs.count;
             
-            [text appendFormat:@"DAY [%@], \"%@\" has %@ conversations.\n",@(day),humanDate,@(dayCount)];
+            [text appendFormat:@"DAY [%@], \"%@\" has %@ conversations.\n",@(day),humanDate,@(convsCount)];
             
-            for ( NSInteger convNum = 0; convNum < dayConvs.count; convNum++ ) {
+            for ( NSUInteger convNum = 0; convNum < convsCount; convNum++ ) {
                 
                 ConversationIndex *ci = dayConvs[convNum];
                 Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
-                NSInteger msgCount = conv.mails.count;
+                NSUInteger msgCount = conv.mails.count;
                 
                 [text appendFormat:@"\tCONVERSATION %@ has %@ mail messages (draft = %@):\n",
                  @(convNum),@(msgCount),(conv.isDraft?@"YES":@"NO")];
                 
-                for (NSInteger mailNum = 0; mailNum < msgCount; mailNum++ ) {
+                for (NSUInteger mailNum = 0; mailNum < msgCount; mailNum++ ) {
                     Mail *msg = conv.mails[mailNum];
                     NSString *subj  = msg.subject;
                     NSString *msgid = [msg.msgID substringToIndex:8];

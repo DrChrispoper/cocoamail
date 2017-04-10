@@ -407,7 +407,7 @@
 {
     return [self numFolderWithFolder:inboxFolderType()];
 }
--(NSInteger) numFolderWithFolder:(CCMFolderType)folder
+-(NSUInteger) numFolderWithFolder:(CCMFolderType)folder
 {
     NSString* folderName;
     

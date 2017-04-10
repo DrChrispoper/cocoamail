@@ -64,9 +64,9 @@
     return a;
 }
 
--(NSInteger) idx
+-(NSUInteger) idx
 {
-    return [AppSettings indexForAccountNum:_user.accountNum];
+    return [AppSettings indexForAccountNum:(NSInteger)_user.accountNum];
 }
 
 -(UserSettings*) user
@@ -109,10 +109,10 @@
     // Initialize the "User" IMAP Folders
     //
     
-    const NSInteger userFolderCount = self.userFolders.count;
+    const NSUInteger userFolderCount = self.userFolders.count;
     
     NSMutableArray* arrayU = [[NSMutableArray alloc] initWithCapacity:userFolderCount];
-    for (int i = 0; i < userFolderCount; i++) {
+    for (NSUInteger i = 0; i < userFolderCount; i++) {
         [arrayU addObject:[[NSMutableIndexSet alloc] init]];
     }
     
@@ -120,18 +120,18 @@
     
     
     //Including Non selectable
-    NSInteger folderCount = [[SyncManager getSingleton] folderCount:self.user.accountNum];
+    NSUInteger folderCount = [[SyncManager getSingleton] folderCount:(NSInteger)self.user.accountNum];
     
     _lastEmails = [[NSMutableArray alloc]initWithCapacity:folderCount];
     
-    for (int index = 0; index < folderCount ; index++) {
+    for (NSUInteger index = 0; index < folderCount ; index++) {
         [_lastEmails addObject:[[Mail alloc]init]];
     }
     
     self.currentFolderType = decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue);
     
     if (self.currentFolderType.type == FolderTypeUser) {
-        if (self.currentFolderType.idx >= self.userFolders.count) {
+        if ((NSUInteger)self.currentFolderType.idx >= self.userFolders.count) {
             self.currentFolderType = CCMFolderTypeInbox;
             self.currentFolderIdx = [self.user numFolderWithFolder:self.currentFolderType];
         }
@@ -139,7 +139,7 @@
             // Set Current Folder Index to the index in the All Folder Names of the Current Folder
             NSString* name = self.userFolders[self.currentFolderType.idx][0];
             NSArray* names = [self.user allFoldersDisplayNames];
-            for (int i = 0; i < names.count; i++) {
+            for (NSUInteger i = 0; i < names.count; i++) {
                 if ([name isEqualToString:names[i]]) {
                     self.currentFolderIdx = i;
                     break;
@@ -164,7 +164,7 @@
         DDLogInfo(@"User.isAll = TRUE");
         
         NSArray<Account*>* allAccounts = [[Accounts sharedInstance] accounts];
-        for (NSInteger acntIndex = 0; acntIndex < allAccounts.count;acntIndex++) {
+        for (NSUInteger acntIndex = 0; acntIndex < allAccounts.count;acntIndex++) {
             Account *acnt = allAccounts[acntIndex];
             
             DDLogInfo(@"Evaluate Accounts[%ld]:",(long)acntIndex);
@@ -261,7 +261,7 @@
     if (folder.type == FolderTypeUser) {
         NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
         NSArray* names = [self.user allFoldersDisplayNames];
-        for (int i = 0; i < names.count; i++) {
+        for (NSUInteger i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]) {
                 self.currentFolderIdx = i;
                 [self refreshCurrentFolder];
@@ -619,12 +619,12 @@
     
     MCOAddress *addressWithDispName = [MCOAddress addressWithDisplayName:[user name] mailbox:[user username]];
     
-    MCOSMTPSendOperation * op =
+    MCOSMTPSendOperation * sendOp =
     [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
                                             from:addressWithDispName
                                       recipients:to];
     
-    op.progress = ^(unsigned int current, unsigned int maximum){
+    sendOp.progress = ^(unsigned int current, unsigned int maximum){
         [self._getInVC setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum))
                                   andTintColor:self.user.color];
     };
@@ -639,7 +639,7 @@
         
         [self beginBackgroundUpdateTask];
         
-        [op start:^(NSError* error) {
+        [sendOp start:^(NSError* error) {
             
             if (error) {
                 if (error.code == MCOErrorNeedsConnectToWebmail) {
@@ -666,25 +666,25 @@
                     DDLogInfo(@"Sending with:%@ port:%u authType:%ld", smtpSessionAux.hostname, smtpSessionAux.port, (long)MCOAuthTypeSASLNone);
                     
                     MCOAddress *addr = [MCOAddress addressWithDisplayName:[user name] mailbox:[user username]];
-                    MCOSMTPSendOperation * op =
+                    MCOSMTPSendOperation * sendOp2 =
                     [smtpSession sendOperationWithContentsOfFile:rfc822DataFilename
                                                             from:addr
                                                       recipients:to];
                     
-                    op.progress = ^(unsigned int current, unsigned int maximum){
+                    sendOp2.progress = ^(unsigned int current, unsigned int maximum){
                         
                         [self._getInVC setSGProgressPercentage:(MAX(10 ,(long)(current*100)/maximum))
                                                   andTintColor:self.user.color];
                     };
                     
-                    [op start:^(NSError* error) {
-                        if (error) {
-                            if (error.code == MCOErrorNeedsConnectToWebmail) {
+                    [sendOp2 start:^(NSError* error2) {
+                        if (error2) {
+                            if (error2.code == MCOErrorNeedsConnectToWebmail) {
                                 [self _authorizeWebmail];
                             }
                             
                             [self._getInVC finishSGProgress];
-                            DDLogError(@"%@ Error sending email:%@", self.user.username, error);
+                            DDLogError(@"%@ Error sending email:%@", self.user.username, error2);
                             
                             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.error-sending", @"Error: Email not sent.") dismissAfter:2 code:2];
                             self.isSendingOut--;
@@ -831,7 +831,7 @@
                 continue;   // next draft file
             }
             
-            if (draft.accountNum == self.user.accountNum) {
+            if (draft.accountNum == (NSInteger)self.user.accountNum) {
                 
                 // create an array of Person ID's from the toPersons array
                 NSMutableArray* toPIDs = [[NSMutableArray alloc] initWithCapacity:draft.toPersons.count];
@@ -868,7 +868,7 @@
         // TODO: We unarchive the entire file to get one value - can we get just the value?  Perhaps if we added it to the Draft Archive Name??
         Draft* draft = [NSKeyedUnarchiver unarchiveObjectWithFile:localPath];
         
-        if (draft.accountNum == self.user.accountNum) {
+        if (draft.accountNum == (NSInteger)self.user.accountNum) {
             count++;
         }
     }
@@ -878,7 +878,7 @@
 
 #pragma mark - Move Indexed Conversation from Folder to Folder
 
--(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
+-(BOOL) moveConversationAtIndex:(NSUInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI
 {
     DDLogInfo(@"%@ Main Thread",([NSThread isMainThread]?@"Is":@"Isn't"));
     
@@ -1177,7 +1177,7 @@
              DDLogDebug(@"\tsubscribeNext^(email)");
          }
          error:^(NSError* error) {
-             _isSyncing = NO;
+            self.isSyncing = NO;
              
              DDLogDebug(@"\tError: %@",error);
              
@@ -1242,7 +1242,7 @@
     
     // Create an array (resultingFolderMail) of all the conversations indexed by the current folder mail indecies
     [allConversations enumerateObjectsAtIndexes:currentFolderMailIndecies
-                                        options:0
+                                        options:0UL
                                      usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
                                          [resultingFolderMail addObject:obj];
                                      }];

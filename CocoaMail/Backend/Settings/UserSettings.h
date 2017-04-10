@@ -56,7 +56,7 @@
 //-(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder;
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder;
 -(CCMFolderType) typeOfFolder:(NSInteger)folder;
--(NSInteger) numFolderWithFolder:(CCMFolderType)folder;
+-(NSUInteger) numFolderWithFolder:(CCMFolderType)folder;
 -(NSInteger)inboxFolderNumber;
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder;

@@ -21,12 +21,12 @@
 
 @interface Account : NSObject
 
--(NSInteger) idx;               // Account index
+-(NSUInteger) idx;               // Account index
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
 @property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
-@property (nonatomic) NSInteger currentFolderIdx;
+@property (nonatomic) NSUInteger currentFolderIdx;
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;
 -(void) setCurrentFolder:(CCMFolderType)folder;
@@ -55,7 +55,7 @@
 -(NSUInteger) addConversation:(Conversation*)conv;
 -(NSMutableArray<ConversationIndex*>*) getConversationsForFolder:(CCMFolderType)type;
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
--(BOOL) moveConversationAtIndex:(NSInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
+-(BOOL) moveConversationAtIndex:(NSUInteger)index from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(void) star:(BOOL)add conversation:(Conversation*)conversation;
 

@@ -503,7 +503,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         [sharedService.imapCheckOp start:^(NSError* error) {
             if (error) {
                 
-                DDLogInfo(@"Error 1:%@ loading oauth account:%@", error, sharedService.user.username);
+                DDLogError(@"Error 1:%@ loading oauth account:%@", error, sharedService.user.username);
                 
                 GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
                                                                                                        clientID:CLIENT_ID
@@ -1792,7 +1792,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
         if (![eIds containsObject:email.msgID]) {
             Mail* newE = [email copy];
-            DDLogInfo(@"Had Cached %ld Emails in account:%ld", (unsigned long)eIds.count, (long)[email.uids[0] accountNum]);
+            UidEntry *uid = email.uids[0];
+            DDLogInfo(@"Had Cached %@ Emails in account:%@", @(eIds.count), @(uid.accountNum));
             
             //[self.cachedData addObject:newE];
             [eIds addObject:newE.msgID];
@@ -1810,7 +1811,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             ConversationIndex* index = [ConversationIndex initWithIndex:[email.user.linkedAccount addConversation:conv] user:email.user]; ;
             
-            if (isUnread && [AppSettings notifications:self.user.accountNum]) {
+            if (isUnread && [AppSettings notifications:(NSInteger)self.user.accountNum]) {
                 
                 UILocalNotification* localNotification = [[UILocalNotification alloc] init];
                 localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];

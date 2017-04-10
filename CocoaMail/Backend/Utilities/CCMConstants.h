@@ -29,7 +29,7 @@ typedef NS_ENUM(NSUInteger, BaseFolderType) {
 
 typedef struct CCMFolderType{
     BaseFolderType type;
-    NSInteger idx;
+    NSUInteger idx;
 } CCMFolderType;
 
 static CCMFolderType CCMFolderTypeInbox     = { FolderTypeInbox, 0 };
@@ -40,7 +40,7 @@ static CCMFolderType CCMFolderTypeAll       = { FolderTypeAll, 0 };
 static CCMFolderType CCMFolderTypeDeleted   = { FolderTypeDeleted, 0 };
 static CCMFolderType CCMFolderTypeSpam      = { FolderTypeSpam, 0 };
 
-static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
+static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSUInteger idx)
 {
     CCMFolderType type;
     type.type = t;
@@ -59,9 +59,9 @@ static inline CCMFolderType allFolderType()
     return FolderTypeWith(FolderTypeAll, 0);
 }
 
-static inline NSInteger encodeFolderTypeWith(CCMFolderType t)
+static inline NSUInteger encodeFolderTypeWith(CCMFolderType t)
 {
-    return t.type * 4096 + t.idx;
+    return (t.type * 4096) + t.idx;
 }
 
 static inline NSNumber* numberWithFolderType(BaseFolderType t)

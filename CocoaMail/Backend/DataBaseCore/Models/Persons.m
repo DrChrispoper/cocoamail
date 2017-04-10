@@ -555,7 +555,7 @@
     const char *cStr = [_email UTF8String];
     unsigned char digest[16];
     
-    CC_MD5(cStr, (int)strlen(cStr), digest);
+    CC_MD5(cStr, (CC_LONG)strlen(cStr), digest);
     
     NSMutableString *emailMD5 = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
     

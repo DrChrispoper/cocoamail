@@ -296,7 +296,7 @@ static SyncManager * singleton = nil;
 // MARK: - Return number of folders in an account
 
 // Return the number of folders in the account from the local local Sync State
--(NSInteger) folderCount:(NSInteger)accountNum
+-(NSUInteger) folderCount:(NSInteger)accountNum
 {
     
     NSMutableArray* folderStates = [self _folderStatesForAccountNumber:accountNum];

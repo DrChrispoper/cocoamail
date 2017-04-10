@@ -64,7 +64,7 @@
 -(void) addAccountState;
 -(NSInteger) addNewStateForFolder:(MCOIMAPFolder*)folder named:(NSString*)folderName forAccount:(NSUInteger)accountNum;
 
--(NSInteger) folderCount:(NSInteger)accountNum;
+-(NSUInteger) folderCount:(NSInteger)accountNum;
 
 // MARK: - getters
 -(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum;

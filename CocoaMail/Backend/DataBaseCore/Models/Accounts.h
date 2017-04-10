@@ -34,7 +34,7 @@
 -(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx;
 -(void) setQuickSwipeType:(QuickSwipeType)quickSwipeType;
 
-@property (nonatomic) NSInteger currentAccountIdx;
+@property (nonatomic) NSUInteger currentAccountIdx;
 
 -(Account*) currentAccount;
 -(NSArray<Account*>*) accounts;

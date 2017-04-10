@@ -227,7 +227,7 @@ static NSDateFormatter * s_df_hour = nil;
     return self;
 }
 
-+(ConversationIndex*) initWithIndex:(NSInteger)index user:(UserSettings*)user
++(ConversationIndex*) initWithIndex:(NSUInteger)index user:(UserSettings*)user
 {
     ConversationIndex* cI = [[ConversationIndex alloc]init];
     cI.index = index;
