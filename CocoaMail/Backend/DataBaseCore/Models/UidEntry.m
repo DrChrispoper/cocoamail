@@ -512,6 +512,8 @@
 
 +(void) copy:(UidEntry*)uidE toFolder:(NSInteger)to
 {
+    DDLogInfo(@"from folder %@ to folder %@",@(uidE.folder),@(to));
+    
     if (uidE.uid == 0) {
         DDLogError(@"Draft not in DB no copy");
         return ;
@@ -520,7 +522,7 @@
     //No Important folder at Index
     if (to == -1) {
 #ifdef USING_INSTABUG
-        IBGLog(@"Email not synced in folder, so can't move it");
+        IBGLogError(@"Email not synced in folder, so can't move it");
 #endif
         DDLogError(@"Email not synced in folder, so can't move it");
         return ;
@@ -567,6 +569,8 @@
 
 +(void) move:(UidEntry*)uidE toFolder:(NSInteger)to
 {
+    DDLogInfo(@"from folder %@ to folder %@",@(uidE.folder),@(to));
+
     if (uidE.uid == 0) {
         DDLogError(@"Draft not in DB no move");
         return ;
@@ -575,7 +579,7 @@
     //No Important folder at Index
     if (to == -1) {
 #ifdef USING_INSTABUG
-        IBGLog(@"Email not synced in folder, so can't move it");
+        IBGLogError(@"Email not synced in folder, so can't move it");
 #endif
         DDLogError(@"Email not synced in folder, so can't move it");
         return ;
@@ -626,6 +630,8 @@
 
 +(void) deleteUidEntry:(UidEntry*)uidE
 {
+    DDLogInfo(@"from folder %@",@(uidE.folder));
+    
     if (uidE.uid == 0) {
         DDLogError(@"Draft not in DB no delete");
         return ;
