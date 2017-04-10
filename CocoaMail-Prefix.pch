@@ -6,9 +6,9 @@
 
 #undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
 
-#undef USING_INSTABUG          // enable InstaBug (instabug.com)
+#define USING_INSTABUG   TRUE      // enable InstaBug (instabug.com)
 
-#undef USING_INSTABUG_COCOALUMBERJACK
+#define USING_INSTABUG_COCOALUMBERJACK  TRUE
 
 #define BETA_ONLY                   // For features we only want in the BETA
 

@@ -109,7 +109,7 @@
         
         ibgLogger.logFormatter = [[CCMDDLogFormatter alloc] init];
         
-        [DDLog addLogger:ibgLogger withLevel:DDLogLevelWarning];
+        [DDLog addLogger:ibgLogger withLevel:DDLogLevelInfo];
     }
 #endif // using Instabug
     
