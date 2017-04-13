@@ -107,9 +107,9 @@
     CGFloat moreRightSpace = 0.f;
     
     if ([self.reuseIdentifier isEqualToString:kCONVERSATION_CELL_ID]) {
-        UIImage* rBack = [[UIImage imageNamed:@"cell_conversation_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44,44, 44)];
+        UIImage* rBack2 = [[UIImage imageNamed:@"cell_conversation_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44,44, 44)];
         //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack];
+        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack2];
         iv.frame = CGRectMake(8., 0, screenBounds.size.width - 9, 89);
         back = iv;
         sepWidth = iv.bounds.size.width - 7.f;
@@ -117,9 +117,9 @@
         
     }
     else {
-        UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
+        UIImage* rBack3 = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
         //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack];
+        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack3];
         iv.frame = CGRectMake(8, 0, screenBounds.size.width - 16, 89);
         back = iv;
         sepWidth = iv.bounds.size.width;
