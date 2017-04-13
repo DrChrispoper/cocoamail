@@ -143,15 +143,20 @@
 
 -(void) _applyTrueTitleViewTo:(UINavigationItem*)item
 {
-    NSInteger mailCount = [self.convByDay totalConversationCount];
     
 //    NSInteger mailUnread = 0;
     
 //    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user completed:^{}];
 
+#ifdef KS_DEMO
+#undef BETA_ONLY
+#endif
+    
 #ifdef BETA_ONLY
-    NSInteger currentAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
-    NSInteger unreadCount = [AppSettings inboxUnread:currentAccountIndex];
+    NSUInteger mailCount = [self.convByDay totalConversationCount];
+    
+    NSUInteger currentAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
+    NSInteger unreadCount = [AppSettings inboxUnread:(NSInteger)currentAccountIndex];
     
     NSString *titleWithCounts = [NSString stringWithFormat:@"%@ (%@, %@)",self.folderName,@(mailCount),@(unreadCount)];
     
