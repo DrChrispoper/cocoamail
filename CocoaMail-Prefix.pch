@@ -43,10 +43,11 @@
 // Change this to change the log level for CocoaLumberjack
 #ifdef DEBUG    
 // For the DEBUG build, don't show Debug or Verbose logging.
-// Logging level can be set per Method by modifyin ddLogLevel at its start.
+// Logging level can be set per Method by modifying ddLogLevel at its start.
   static DDLogLevel ddLogLevel = DDLogLevelInfo;
 #else           
 // For the RELEASE build, don't show Info, Debug or Verbose logging.
-  static const DDLogLevel ddLogLevel = DDLogLevelWarning;
+// Logging level can be set per Method by modifying ddLogLevel at its start.
+  static DDLogLevel ddLogLevel = DDLogLevelWarning;
 #endif
 

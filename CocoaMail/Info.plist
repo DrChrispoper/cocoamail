@@ -430,7 +430,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
+<<<<<<< HEAD
 	<string>969</string>
+=======
+	<string>963</string>
+>>>>>>> bbf552d... Fix ddLogLevel for RELEASE build versions
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
