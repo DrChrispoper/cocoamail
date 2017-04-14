@@ -681,7 +681,10 @@
         self.leftAction.highlighted = ![conv isInInbox];
     }
     
+#ifndef KS_DEMO
+    
     if (![conv isUnread]) {
+        // Conversation is READ
         
         if (self.readMask == nil) {
             UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
@@ -698,7 +701,8 @@
         }
         
     }
-    else {
+    else { // Conversation is UNREAD
+        
         [self.readMask removeFromSuperview];
         self.readMask = nil;
         
@@ -706,7 +710,17 @@
             self.leftAction.highlighted = YES;
         }
     }
+#else // is KS_DEMO (kickstarter demo)
+    DDLogInfo(@"Conversation has %@ mails, IS KS_DEMO, all conv's are UNREAD.",@(conv.mails.count));
     
+    [self.readMask removeFromSuperview];
+    self.readMask = nil;
+    
+    if (idxQuickSwipe == QuickSwipeMark) {
+        self.leftAction.highlighted = YES;
+    }
+
+#endif
     
     // selection
     self.currentSwipedPosition = (selected) ? -[self _limiteRightSwipe] : 0.f;
