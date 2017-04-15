@@ -96,10 +96,10 @@
         return ( [self dayCount] == 0 );
     }
 }
--(NSInteger) totalConversationCount        // total of all conversations on all days
+-(NSUInteger) totalConversationCount        // total of all conversations on all days
 {
     @synchronized (self.conversationsPerDay) {
-        NSInteger totalConversations = 0;
+        NSUInteger totalConversations = 0;
         
         for (NSUInteger day = 0; day < self.conversationsPerDay.count; day++ ) {
             totalConversations += [self conversationCountOnDay:day];

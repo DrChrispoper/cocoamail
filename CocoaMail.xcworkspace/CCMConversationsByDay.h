@@ -17,10 +17,11 @@
 - (instancetype)initWithDayCapacity:(NSUInteger)capacity;
 
 -(NSUInteger) dayCount;
--(NSUInteger) conversationCountOnDay:(NSUInteger)dayIndex;
-
 -(BOOL) isEmpty;        // dayCount == 0
--(NSInteger) totalConversationCount;        // total of all conversations on all days
+
+-(NSUInteger) conversationCountOnDay:(NSUInteger)dayIndex;
+-(NSUInteger) totalConversationCount;        // total of all conversations on all days
+
 
 -(void)enumerateAllMailsUsingBlock:(void (^)(Mail *msg))block;
 
