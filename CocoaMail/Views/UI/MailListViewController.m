@@ -148,10 +148,7 @@
     
 //    [ImapSync runInboxUnread:self.[Accounts sharedInstance].currentAccount.user completed:^{}];
 
-#ifdef KS_DEMO
-#undef BETA_ONLY
-#endif
-    
+    // BETA_ONLY is only enabled during DEBUG
 #ifdef BETA_ONLY
     NSUInteger mailCount = [self.convByDay totalConversationCount];
     

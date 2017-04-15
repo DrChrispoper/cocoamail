@@ -12,7 +12,9 @@
 
 #define USING_INSTABUG_COCOALUMBERJACK  TRUE
 
+#ifdef DEBUG
 #define BETA_ONLY                   // For features we only want in the BETA
+#endif
 
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
