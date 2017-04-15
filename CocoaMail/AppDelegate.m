@@ -310,12 +310,27 @@
     completionHandler();
 }
 
+#pragma mark - openURL
+
+// This protocol method replaced the one below it in iOS 9
+-(BOOL) application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+    return [self _openURL:url];
+}
+
+// This protocol method was depricated in iOS 9, and replaced by the call above
+//  I'll leave it here so we can still operate with an older iOS.
 -(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
 {
     /*if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
         return YES;
     }*/
     
+    return [self _openURL:url];
+}
+
+-(BOOL) _openURL:(NSURL *)url
+{
     if ([[DBSession sharedSession] handleOpenURL:url]) {
         NSDictionary* statusText = @{@"cloudServiceName":@"Dropbox"};
         [[NSNotificationCenter defaultCenter]
@@ -349,25 +364,26 @@
             }
             
             /*if (mail.attachments == nil) {
-                mail.attachments = @[attach];
-            }
-            else {
-                NSMutableArray* ma = [mail.attachments mutableCopy];
-                [ma addObject:attach];
-                mail.attachments = ma;
-            }*/
+             mail.attachments = @[attach];
+             }
+             else {
+             NSMutableArray* ma = [mail.attachments mutableCopy];
+             [ma addObject:attach];
+             mail.attachments = ma;
+             }*/
         }
         
         for (NSString* fileName in dirFiles) {
             NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
             [filemgr removeItemAtPath:localPath error:nil];
         }
-
+        
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
     }
     // Add whatever other url handling code your app requires here
     return NO;
+    
 }
 
 /*-(void) signIn:(GIDSignIn*)signIn
