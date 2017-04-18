@@ -641,7 +641,7 @@ margin : 0;\
         // Second comparison is original, in case this is an error and Apple fixes it.
         else if ( [[url scheme] isEqualToString:@"showmore"] || [[url scheme] isEqualToString:@"showMore"] ) {
             
-            float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
+            CGFloat contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
             
                 //ShowMore
                 if (_showLessSize == 0) {
