@@ -457,6 +457,7 @@ margin : 0;\
     NSURL *url = [request URL];
 
     DDLogInfo(@"url:%@",url);
+    DDLogInfo(@"\tscheme=\"%@\"",[url scheme]);
     
     if ([[url scheme] isEqualToString:@"image"]) {
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
@@ -636,7 +637,10 @@ margin : 0;\
             
             return NO;
         }
-        else if ([[url scheme] isEqualToString:@"showMore"]) {
+        // As of Xcode 8.3.1, [url scheme] is returning all lower case.
+        // Second comparison is original, in case this is an error and Apple fixes it.
+        else if ( [[url scheme] isEqualToString:@"showmore"] || [[url scheme] isEqualToString:@"showMore"] ) {
+            
             float contentHeight = [[[url host] componentsSeparatedByString:@","][0] integerValue];
             
                 //ShowMore
