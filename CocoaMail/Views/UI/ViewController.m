@@ -968,7 +968,7 @@ static ViewController * s_self;
 {
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
-        DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
+        DDLogInfo(@"ENTERED \"%@\" notification observer block",notif.name);
         
 #ifdef USING_INSTABUG
         IBGLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
