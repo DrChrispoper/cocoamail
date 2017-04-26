@@ -56,13 +56,13 @@
 //-(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder;
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder;
 -(CCMFolderType) typeOfFolder:(NSInteger)folder;
--(NSUInteger) numFolderWithFolder:(CCMFolderType)folder;
--(NSInteger)inboxFolderNumber;
+-(NSInteger) numFolderWithFolder:(CCMFolderType)folder;     // Can return -1!
+-(NSInteger) inboxFolderNumber;
 
 -(NSString*) folderDisplayNameForIndex:(NSInteger)folder;
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder;
 
--(NSString*) folderServerName:(NSInteger)folder;
+-(NSString*) folderServerName:(NSUInteger)folder;
 -(NSArray*) allNonImportantFoldersName;
 
 -(Account*) linkedAccount;

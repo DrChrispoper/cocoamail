@@ -113,7 +113,7 @@
         
         NSMutableString* accounts = [NSMutableString stringWithString:@""];
         
-        for (int index = 0; index < _users.count; index++) {
+        for (NSUInteger index = 0; index < _users.count; index++) {
             UserSettings* user = _users[index];
             
             if (user.isAll) {
@@ -134,8 +134,8 @@
         if (_users.count == 1) {
             _badgeCount = 1;
 
-            NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-            [defaults setObject:@(_badgeCount) forKey:@"badgecount_preference"];
+            NSUserDefaults* standardDefaults = [NSUserDefaults standardUserDefaults];
+            [standardDefaults setObject:@(_badgeCount) forKey:@"badgecount_preference"];
         }
     }
     

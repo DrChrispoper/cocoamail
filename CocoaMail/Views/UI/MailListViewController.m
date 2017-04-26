@@ -418,13 +418,15 @@
 
 -(void) cleanBeforeGoingBack
 {
+    UITableView* localTable = self.table;
+
     //self.pageIndex = 1;
     self.countBeforeLoadMore = 0;
     self.indexCount = 0;
     self.viewIsClosing = YES;
 
-    self.table.delegate = nil;
-    self.table.dataSource = nil;
+    localTable.delegate = nil;
+    localTable.dataSource = nil;
     [[SearchRunner getSingleton] cancel];
 }
 
@@ -463,9 +465,11 @@
 
 -(void) viewWillDisappear:(BOOL)animated
 {
+    UITableView* localTable = self.table;
+    
     [super viewWillDisappear:animated];
     
-    [self.table setContentOffset:self.table.contentOffset animated:NO];
+    [localTable setContentOffset:localTable.contentOffset animated:NO];
     
     //[[Accounts sharedInstance] currentAccount].mailListSubscriber = nil;
 
@@ -487,7 +491,9 @@
         
         DDLogDebug(@"\tActive Account is \"All\" Account");
         
-        for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+        NSUInteger activeAccountCount = (NSUInteger)[AppSettings numActiveAccounts];
+        
+        for (NSUInteger idx = 0; idx < activeAccountCount; idx++) {
             Account* acnt = [[Accounts sharedInstance] account:idx];
             [self _addConversationsForAccount:acnt folder:self.folder];
 
@@ -545,7 +551,8 @@
         
         for (ConversationIndex* convIndex in convs) {
             
-            if ([self.conversationsPerAccount containsConversationIndex:convIndex.index inAccount:convIndex.user.accountIndex]) {
+            if ([self.conversationsPerAccount containsConversationIndex:(NSInteger)convIndex.index
+                                                              inAccount:(NSInteger)convIndex.user.accountIndex]) {
                 
                 DDLogDebug(@"ConversationIndex:%ld in Account:%ld",
                           (long)convIndex.index,
@@ -553,19 +560,19 @@
                 
                 BOOL found = NO;
                 
-                NSInteger dayCount = [self.convByDay dayCount];
+                NSUInteger dayCount = [self.convByDay dayCount];
                 
-                for (NSInteger dayIndex = 0; dayIndex < dayCount ;dayIndex++) {  // Day Index is the table Section
+                for (NSUInteger dayIndex = 0; dayIndex < dayCount ;dayIndex++) {  // Day Index is the table Section
                     
-                    NSInteger convCount = [self.convByDay conversationCountOnDay:dayIndex];
+                    NSUInteger convCount = [self.convByDay conversationCountOnDay:dayIndex];
 
-                    for (NSInteger conv = 0; conv < convCount; conv++) { // Conv is the table Row
+                    for (NSUInteger conv = 0; conv < convCount; conv++) { // Conv is the table Row
                         
                         ConversationIndex* conversationIndex = [self.convByDay conversation:conv onDay:dayIndex ];
                         
                         if (conversationIndex.index == convIndex.index) {
                             
-                            [ips addObject:[NSIndexPath indexPathForRow:conv inSection:dayIndex]];
+                            [ips addObject:[NSIndexPath indexPathForRow:(NSInteger)conv inSection:(NSInteger)dayIndex]];
                             found = YES;
                             break;
                         }
@@ -590,14 +597,14 @@
         
         NSMutableArray* reAddConvs = [[NSMutableArray alloc] init];
         
-        NSInteger dayCount = [self.convByDay dayCount];
-        for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
+        NSUInteger dayCount = [self.convByDay dayCount];
+        for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             
             NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];
             
-            NSInteger convsOnDay = [self.convByDay conversationCountOnDay:dayIndex];
+            NSUInteger convsOnDay = [self.convByDay conversationCountOnDay:dayIndex];
             
-            for (int j = 0 ; j < convsOnDay; j++) {
+            for (NSUInteger j = 0 ; j < convsOnDay; j++) {
                 
                 ConversationIndex* cI = [self.convByDay conversation:j onDay:dayIndex];
                 
@@ -651,8 +658,8 @@
         s_df_day.dateFormat = @"d MMM yy";
         NSDate* dayDate = [s_df_day dateFromString:day];
         
-        NSInteger dayCount = [self.convByDay dayCount];
-        for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
+        NSUInteger dayCount = [self.convByDay dayCount];
+        for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];
             if ([dayDate compare:tmpDay] == NSOrderedSame){
                 [sections addIndex:dayIndex];
@@ -662,13 +669,15 @@
     
     DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(sections.count));
     
+    UITableView* strongTable = self.table;
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
         DDLogInfo(@"START: Update table via block on mainQueue");
         
-        [self.table beginUpdates];
-        [self.table reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
-        [self.table endUpdates];
+        [strongTable beginUpdates];
+        [strongTable reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
+        [strongTable endUpdates];
         
         DDLogInfo(@"END: Update table via block on mainQueue");
 
@@ -719,7 +728,8 @@
         }
     
         // If this view already contains this conversation ...
-        if ([self.conversationsPerAccount containsConversationIndex:ciToInsert.index inAccount:ciToInsert.user.accountIndex]) {
+        if ([self.conversationsPerAccount containsConversationIndex:ciToInsert.index
+                                                          inAccount:(NSInteger)ciToInsert.user.accountIndex]) {
             return;
         }
         
@@ -748,12 +758,12 @@
             }
         }
     
-        [self.conversationsPerAccount addConversationIndex:ciToInsert.index forAccount:ciToInsert.user.accountIndex];
+        [self.conversationsPerAccount addConversationIndex:ciToInsert.index forAccount:(NSInteger)ciToInsert.user.accountIndex];
                 
         BOOL added = NO;
         
-        NSInteger dayCount = [self.convByDay dayCount];
-        for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
+        NSUInteger dayCount = [self.convByDay dayCount];
+        for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             
             DDLogVerbose(@"DAY INDEX %@",@(dayIndex));
             
@@ -783,9 +793,9 @@
                 
                 [self.convByDay sortConversationsByDateForDay:dayIndex];
                 
-                NSInteger convCount = [self.convByDay conversationCountOnDay:dayIndex];
+                NSUInteger convCount = [self.convByDay conversationCountOnDay:dayIndex];
                 
-                for (int convIndex = 0 ; convIndex < convCount ; convIndex++) {  // For each of the day's conversations ...
+                for (NSUInteger convIndex = 0 ; convIndex < convCount ; convIndex++) {  // For each of the day's conversations ...
                     
                     // NB: datetime comparison to find position of conversation In Time in Dated Section
                     NSDate *indexedConvDate = [self.convByDay datetimeForConversation:convIndex onDay:dayIndex];
@@ -820,7 +830,7 @@
                     
                     if ( [self.convByDay dayCount] > dayIndex) { // validate dayIndex
                         
-                        NSInteger convIndex = [self.convByDay conversationCountOnDay:dayIndex] - 1;     // append conversation to end of section
+                        NSUInteger convIndex = [self.convByDay conversationCountOnDay:dayIndex] - 1;     // append conversation to end of section
                         
                         [self _insertTableRow:convIndex inSection:dayIndex];
                     }else {
@@ -848,7 +858,7 @@
             
             //if( [self.convByDay dayCount] < pager) {
             
-            NSInteger dayIndex = [self.convByDay dayCount] - 1;  // insert at end of sections
+            NSUInteger dayIndex = [self.convByDay dayCount] - 1;  // insert at end of sections
             
             [self _insertTableSection:dayIndex];    // no need to insert row into section
 
@@ -860,27 +870,32 @@
 
 -(void)_insertTableSection:(NSUInteger)section
 {
+    UITableView *localTable = self.table;
+    
     DDLogVerbose(@"Insert Section = %@",@(section));
     
     NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
     
-    [self.table beginUpdates];
+    [localTable beginUpdates];
     
-    [self.table insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
+    [localTable insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
     
-    [self.table endUpdates];
+    [localTable endUpdates];
 }
 -(void)_insertTableRow:(NSUInteger)row inSection:(NSUInteger)section
 {
+    UITableView *localTable = self.table;
+
     DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
 
-    [self.table beginUpdates];
+    [localTable beginUpdates];
     
-    NSArray<NSIndexPath*> *indexPaths = @[ [NSIndexPath indexPathForRow:row inSection:section] ];
+    NSArray<NSIndexPath*> *indexPaths = @[ [NSIndexPath indexPathForRow:(NSInteger)row
+                                                              inSection:(NSInteger)section] ];
     
-    [self.table insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
+    [localTable insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
     
-    [self.table endUpdates];
+    [localTable endUpdates];
 }
 
 //- (void)_InsertConversation:(ConversationIndex *)ciToInsert
@@ -964,7 +979,7 @@
     for (ConversationIndex* conversationIndex in folderConvs) {
         
         if ([self.conversationsPerAccount containsConversationIndex:conversationIndex.index
-                                                          inAccount:conversationIndex.user.accountIndex]) {
+                                                          inAccount:(NSInteger)conversationIndex.user.accountIndex]) {
             continue;
         }
         
@@ -990,7 +1005,8 @@
             }
         }
         
-        [self.conversationsPerAccount addConversationIndex:conversationIndex.index forAccount:conversationIndex.user.accountIndex];
+        [self.conversationsPerAccount addConversationIndex:conversationIndex.index
+                                                forAccount:(NSInteger)conversationIndex.user.accountIndex];
         
         [self.convByDay InsertConversation:conversationIndex];
     }
@@ -1049,7 +1065,7 @@
 -(UIImageView*) imageViewForQuickSwipeAction
 {
     NSArray* imgNames = @[@"swipe_archive", @"swipe_delete", @"swipe_reply_single", @"swipe_read", @"swipe_inbox"];
-    NSInteger swipetype = [Accounts sharedInstance].quickSwipeType;
+    NSUInteger swipetype = [Accounts sharedInstance].quickSwipeType;
     
     CCMFolderType type;
     
@@ -1086,13 +1102,15 @@
 
 -(void) unselectAll
 {
+    WhiteBlurNavBar *localNavBar = self.navBar;
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
         [UIView setAnimationsEnabled:NO];
         
-        UINavigationItem* item = self.navBar.items.lastObject;
+        UINavigationItem* item = localNavBar.items.lastObject;
         [self _applyTrueTitleViewTo:item];
-        [self.navBar setNeedsDisplay];
+        [localNavBar setNeedsDisplay];
         [UIView setAnimationsEnabled:YES];
         
         NSArray* visibles = self.table.visibleCells;
@@ -1106,71 +1124,94 @@
     }];
 }
 
--(void) _commonRemoveConvs:(NSMutableArray*)ips
+-(void) _commonRemoveConvs:(NSMutableArray<NSIndexPath*>*)conversationIndexPaths
 {
+    UITableView *localTable = self.table;
+    
     DDLogInfo(@"ENTERED");
 
-    NSMutableIndexSet* is = [[NSMutableIndexSet alloc] init];
+    NSMutableIndexSet* conversationSectionIndeciesToDelete = [[NSMutableIndexSet alloc] init];
     
-    [ips sortUsingSelector:@selector(compare:)];
+    [conversationIndexPaths sortUsingSelector:@selector(compare:)];
     
-    NSMutableArray* tmpIps = [[NSMutableArray alloc] initWithCapacity:ips.count];
+    NSMutableArray<NSIndexPath*>* conversationRowIndeciesToDelete
+        = [[NSMutableArray alloc] initWithCapacity:conversationIndexPaths.count];
     
-    for (NSIndexPath* indexPath in [ips reverseObjectEnumerator]) {
+    for (NSIndexPath* indexPath in [conversationIndexPaths reverseObjectEnumerator]) {
         // change in model
         
-        NSInteger dayIndex = indexPath.section;
-        NSInteger conIndex = indexPath.row;
+        NSUInteger dayIndex = (NSUInteger)indexPath.section;    // table section is day index
+        NSUInteger conIndex = (NSUInteger)indexPath.row;        // table row is conversation index on that day
         
         ConversationIndex *cIndex = [self.convByDay conversation:conIndex onDay:dayIndex];
         
-        if ([self.conversationsPerAccount containsConversationIndex:cIndex.index inAccount:cIndex.user.accountIndex]) {
+        DDLogInfo(@"Conversation in acntNum %@ indexNum %@ is in: dayIndex %@ conIndex %@.",
+                  @(cIndex.index),@(cIndex.user.accountIndex),@(dayIndex),@(conIndex));
+        
+        if ([self.conversationsPerAccount containsConversationIndex:(NSInteger)cIndex.index
+                                                          inAccount:(NSInteger)cIndex.user.accountIndex]) {
             
-            NSInteger dayCount = [self.convByDay dayCount];
-            NSInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
+            NSUInteger dayCount = [self.convByDay dayCount];
+            NSUInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
+            
+            DDLogInfo(@"    There is a total of %@ days.",@(dayCount));
+            DDLogInfo(@"    Our conversation's day has %@ conversations.",@(conCount));
+            
             
             if ( conCount == 1 ) {
-                DDLogDebug(@"Delete section:%li self.convByDay.count:%li", (long)dayIndex, (unsigned long)dayCount);
-
+                
                 if ( dayIndex < dayCount ) {
+                    DDLogInfo(@"dayIndex %@ is less than dayCount %@, AND there is only a single conversation on this day, so add the dayIndex to the Days-To-Delete",
+                              @(dayIndex),@(dayCount));
+                    
                     [self.convByDay removeDayAtIndex:dayIndex];
-                    [is addIndex:dayIndex];
+                    [conversationSectionIndeciesToDelete addIndex:dayIndex];
                 }
             }
             else {
-                DDLogDebug(@"Delete cell section:%li row:%li", (long)dayIndex, (long)conIndex );
 
                 if ( conIndex < conCount ) {
+                    DDLogInfo(@"conIndex %@ is less than conCount %@, so add this coversation to the Conversations-To-Remove",
+                              @(conIndex),@(conCount));
+                    
                     [self.convByDay removeConversation:conIndex onDay:dayIndex];
-                    [tmpIps addObject:indexPath];
+                    [conversationRowIndeciesToDelete addObject:indexPath];
                 }
             }
             
-            [self.conversationsPerAccount removeConversationIndex:cIndex.index forAccount:cIndex.user.accountIndex];
+            [self.conversationsPerAccount removeConversationIndex:cIndex.index
+                                                       forAccount:(NSInteger)cIndex.user.accountIndex];
         }
     }
     
     //self.deletedSections = self.deletedSections + is.count;
 
-#warning - are we on main queue
-    [self.table beginUpdates];
+#warning - are we on main queue?
+    [localTable beginUpdates];
     
-    [self.table deleteRowsAtIndexPaths:tmpIps withRowAnimation:UITableViewRowAnimationFade];
+    DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+    [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
 
-    if (is.count > 0) {
-        [self.table deleteSections:is withRowAnimation:UITableViewRowAnimationFade];
+    if (conversationSectionIndeciesToDelete.count > 0) {
+        DDLogInfo(@"Delete Sections (days): %@",conversationRowIndeciesToDelete.description);
+        [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
     }
     
-    [self.table endUpdates];
+    [localTable endUpdates];
 
-    //[self.table reloadEmptyDataSet];
+    //[localTable reloadEmptyDataSet];
 }
 
 -(void) leftActionDoneForCell:(ConversationTableViewCell*)cell
 {
-    NSIndexPath* indexPath = [self.table indexPathForCell:cell];
+    UITableView *localTable = self.table;
     
-    ConversationIndex* conversationIndex = [self.convByDay conversation:indexPath.row onDay:indexPath.section];
+    NSIndexPath* indexPath = [localTable indexPathForCell:cell];
+    
+    NSUInteger conIndex = (NSUInteger)indexPath.row;
+    NSUInteger dayIndex = (NSUInteger)indexPath.section;
+    
+    ConversationIndex* conversationIndex = [self.convByDay conversation:conIndex onDay:dayIndex];
     
     QuickSwipeType swipetype = [Accounts sharedInstance].quickSwipeType;
     
@@ -1240,17 +1281,18 @@
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
 #endif
             
-            if ([conversationIndex.user.linkedAccount moveConversationAtIndex:conversationIndex.index from:fromtype to:totype updateUI:FALSE]) {
+            if ([conversationIndex.user.linkedAccount moveConversationAtIndex:(NSUInteger)conversationIndex.index
+                                                                         from:fromtype to:totype updateUI:FALSE]) {
                 if (encodeFolderTypeWith(fromtype) == encodeFolderTypeWith(self.folder)) {
-                    NSIndexPath* ip = [self.table indexPathForCell:cell];
+                    NSIndexPath* ip = [localTable indexPathForCell:cell];
                     [self _commonRemoveConvs:[@[ip] mutableCopy]];
                 }
                 else {
-                    [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+                    [localTable reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
                 }
             }
             else {
-                [self.table reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+                [localTable reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
             }
             
             break;
@@ -1260,7 +1302,9 @@
 
 -(void) cell:(ConversationTableViewCell*)cell isChangingDuring:(double)timeInterval
 {
-    CGPoint point = CGPointMake(100, self.table.contentOffset.y + self.table.contentInset.top);
+    UITableView *tbl = self.table;
+    
+    CGPoint point = CGPointMake(100, tbl.contentOffset.y + tbl.contentInset.top);
     CGRect bigger = CGRectInset(cell.frame, -500, 0);
     
     if (CGRectContainsPoint(bigger, point)) {
@@ -1270,11 +1314,13 @@
 
 -(void) _manageCocoaButton
 {
+    __weak WhiteBlurNavBar *navBar = self.navBar;
+    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
         CocoaButton* cb = [CocoaButton sharedButton];
-        UINavigationItem* item = self.navBar.items.lastObject;
-        const NSInteger numberSelectedCells = self.selectedCells.count;
+        UINavigationItem* item = navBar.items.lastObject;
+        const NSUInteger numberSelectedCells = self.selectedCells.count;
         
         if (numberSelectedCells==0) {
             [cb forceCloseHorizontal];
@@ -1344,7 +1390,7 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    NSInteger sectionCount = [self.convByDay dayCount];
+    NSInteger sectionCount = (NSInteger)[self.convByDay dayCount];
     
     DDLogVerbose(@"Section count = %@",@(sectionCount));
     
@@ -1353,7 +1399,7 @@
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    NSInteger conversationCountOnDay = [self.convByDay conversationCountOnDay:section];
+    NSInteger conversationCountOnDay = (NSInteger)[self.convByDay conversationCountOnDay:(NSUInteger)section];
     
     DDLogVerbose(@"Section %ld has %lu rows.",(long)section,(unsigned long)conversationCountOnDay);
     
@@ -1364,8 +1410,8 @@
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    NSInteger dayIndex = indexPath.section;
-    NSInteger conIndex = indexPath.row;
+    NSUInteger dayIndex = (NSUInteger)indexPath.section;
+    NSUInteger conIndex = (NSUInteger)indexPath.row;
     
 //    DDLogInfo(@"TABLEVIEW Get UITableViewCell for NSIndexPath SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
     
@@ -1380,8 +1426,8 @@
     }
     
     
-    NSInteger dayCount = [self.convByDay dayCount];
-    NSInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
+    NSUInteger dayCount = [self.convByDay dayCount];
+    NSUInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
     
     BOOL lastSection = (dayIndex == dayCount - 1);//(indexPath.section == pageCount * self.pageIndex || indexPath.section == dayCount - 1);
     BOOL lastRow     = (conIndex == conCount - 1);
@@ -1449,7 +1495,7 @@
 
 -(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
-    NSDate* convDate = [self.convByDay dateForDay:section];
+    NSDate* convDate = [self.convByDay dateForDay:(NSUInteger)section];
     NSString* dateS = [[DateUtil getSingleton] humanDate:convDate];
 
     NSInteger idx = [Mail isTodayOrYesterday:dateS];
@@ -1605,11 +1651,11 @@
         
         NSMutableArray<ConversationIndex*>* res = [[NSMutableArray alloc] initWithCapacity:self.selectedCells.count];
         
-        NSInteger dayCount = [self.convByDay dayCount];
-        for (NSInteger section = 0; section < dayCount; section++ ) {
+        NSUInteger dayCount = [self.convByDay dayCount];
+        for (NSUInteger section = 0; section < dayCount; section++ ) {
             
-            NSInteger conCount = [self.convByDay conversationCountOnDay:section];
-            for ( NSInteger row = 0; row < conCount; row++) {
+            NSUInteger conCount = [self.convByDay conversationCountOnDay:section];
+            for ( NSUInteger row = 0; row < conCount; row++) {
                 
                 ConversationIndex* conversationIndex = [self.convByDay conversation:row onDay:section];
                 
@@ -1695,7 +1741,7 @@
             [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
 #endif
             
-            if([ac moveConversationAtIndex:conversationIndex.index from:self.folder to:toFolder updateUI:FALSE]) {
+            if([ac moveConversationAtIndex:(NSUInteger)conversationIndex.index from:self.folder to:toFolder updateUI:FALSE]) {
                 [dels addObject:conversationIndex];
             }
             
@@ -1836,7 +1882,8 @@
         
         //if (self.convByDay.count <= pageCount * self.pageIndex ) {
             if (kisActiveAccountAll) {
-                for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+                NSUInteger activeAccounts = (NSUInteger)[AppSettings numActiveAccounts];
+                for (NSUInteger idx = 0; idx < activeAccounts; idx++) {
                     Account* a = [[Accounts sharedInstance] account:idx];
                     [self insertConversations:[a getConversationsForFolder:self.folder]];
                     

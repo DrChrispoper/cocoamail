@@ -1044,7 +1044,7 @@ static NSDateFormatter * s_df_hour = nil;
     return newEmail;
 }
 
-#pragma Email Actions
+#pragma mark - Email Actions
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {

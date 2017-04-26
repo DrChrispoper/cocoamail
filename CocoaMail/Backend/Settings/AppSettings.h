@@ -29,6 +29,7 @@
 @property (nonatomic) BOOL premiumPurchased;
 @property (nonatomic) NSInteger globalDBVersion;
 
+
 @property (nonatomic, strong) NSMutableArray<UserSettings *>* users;
 
 +(AppSettings*) getSingleton;

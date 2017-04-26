@@ -36,9 +36,7 @@
     static Accounts * sharedInstance;
     
     dispatch_once(&once, ^{
-        
-        DDLogInfo(@"dispatch_once");
-        
+                
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = [[AppSettings getSingleton] quickSwipe];
         sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];

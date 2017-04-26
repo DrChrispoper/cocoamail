@@ -396,10 +396,10 @@
     return [self folderDisplayNameForIndex:[self numFolderWithFolder:folder]];
 }
 
--(NSString*) folderServerName:(NSInteger)folder
+-(NSString*) folderServerName:(NSUInteger)folder
 {
-    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:folder
-                                                       accountNum:_accountNum];
+    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:(NSInteger)folder
+                                                       accountNum:(NSInteger)_accountNum];
     return folderPath;
 }
 
@@ -407,13 +407,13 @@
 {
     return [self numFolderWithFolder:inboxFolderType()];
 }
--(NSUInteger) numFolderWithFolder:(CCMFolderType)folder
+-(NSInteger) numFolderWithFolder:(CCMFolderType)folder
 {
     NSString* folderName;
     
     if (folder.type == FolderTypeUser) {
         folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
-        for (int index = 0; index < [_allFoldersDisplayNames count]; index++) {
+        for (NSUInteger index = 0; index < [_allFoldersDisplayNames count]; index++) {
             NSString *indexedFolderDisplayName = [self folderDisplayNameForIndex:index];
             if ([folderName isEqualToString:indexedFolderDisplayName]) {
                 return index;
@@ -423,7 +423,7 @@
         return [self importantFolderNumforBaseFolder:folder.type];
     }
     
-    return -1;
+    return -1;      // NB: CAN RETURN -1
 }
 
 -(NSArray*) allNonImportantFoldersName

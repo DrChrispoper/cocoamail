@@ -68,7 +68,7 @@
 	if (_databaseFilepath == nil) {
 		NSMutableString* ret = [NSMutableString string];
 		NSString* appName = [[NSProcessInfo processInfo] processName];
-		for (int i = 0; i < [appName length]; i++) {
+		for (NSUInteger i = 0; i < [appName length]; i++) {
 			NSRange range = NSMakeRange(i, 1);
             
 			NSString* oneChar = [appName substringWithRange:range];
@@ -146,7 +146,7 @@
     if (_databaseFilepath == nil) {
         NSMutableString* ret = [NSMutableString string];
         NSString* appName = [[NSProcessInfo processInfo] processName];
-        for (int i = 0; i < [appName length]; i++) {
+        for (NSUInteger i = 0; i < [appName length]; i++) {
             NSRange range = NSMakeRange(i, 1);
             
             NSString* oneChar = [appName substringWithRange:range];
