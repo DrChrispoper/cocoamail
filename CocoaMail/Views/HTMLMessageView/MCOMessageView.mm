@@ -454,10 +454,12 @@ margin : 0;\
 
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
+    id <MCOMessageViewDelegate> del = _delegate;   // does this solve weak _delegate issue
+    
     NSURL *url = [request URL];
 
-    DDLogInfo(@"url:%@",url);
-    DDLogInfo(@"\tscheme=\"%@\"",[url scheme]);
+    DDLogVerbose(@"url:%@",url);
+    DDLogVerbose(@"\tscheme=\"%@\"",[url scheme]);
     
     if ([[url scheme] isEqualToString:@"image"]) {
         NSArray* comps = [[url absoluteString] componentsSeparatedByString:@":"];
@@ -465,7 +467,7 @@ margin : 0;\
         NSString* urlString = comps[1];
         urlString = [urlString substringFromIndex:2];
 
-        [_delegate openContentID:urlString];
+        [del openContentID:urlString];
     }
     else if ([[url scheme] isEqualToString:@"long"]) {
     
@@ -487,7 +489,7 @@ margin : 0;\
                 [correctURL insertString:@":" atIndex:range.location+range.length];
             }
             
-            [_delegate openLongURL:[NSURL URLWithString:correctURL]];
+            [del openLongURL:[NSURL URLWithString:correctURL]];
         }
         else if ([urlString isEqualToString:@"mailto"]){
             //[_delegate openLongURL:[NSURL URLWithString:[NSString stringWithFormat:@"mailto:%@", comps[2]]]];
@@ -498,7 +500,7 @@ margin : 0;\
             [CCMStatus showStatus:NSLocalizedString(@"Email copied", @"Email copied to pasteboad") dismissAfter:2 code:0];
         }
         else {
-            [_delegate openLongContentID:urlString];
+            [del openLongContentID:urlString];
         }
         
         return false;
