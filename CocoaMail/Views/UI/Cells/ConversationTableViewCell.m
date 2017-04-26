@@ -711,7 +711,7 @@
         }
     }
 #else // is KS_DEMO (kickstarter demo)
-    DDLogInfo(@"Conversation has %@ mails, IS KS_DEMO, all conv's are UNREAD.",@(conv.mails.count));
+    DDLogVerbose(@"Conversation has %@ mails, IS KS_DEMO, all conv's are UNREAD.",@(conv.mails.count));
     
     [self.readMask removeFromSuperview];
     self.readMask = nil;
