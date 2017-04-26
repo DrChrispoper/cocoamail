@@ -10,6 +10,7 @@
 #import "UserSettings.h"
 #import "Accounts.h"
 #import "CCMAttachment.h"
+#import "AppDelegate.h"
 
 
 @interface SettingsViewController () <UITableViewDataSource, UITableViewDelegate>
@@ -43,7 +44,11 @@
     NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]; // TEMP
     NSString * build = [[NSBundle mainBundle] objectForInfoDictionaryKey: (NSString *)kCFBundleVersionKey]; // TEMP
     
-    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ v%@ (%@)",title,version,build]; // TEMP
+    AppDelegate *appdelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+
+    NSString *bgFetchCnt = appdelegate.bgFetchCount.stringValue;
+    
+    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"v%@ (%@) bf=%@",version,build,bgFetchCnt]; // TEMP
     title = [NSString stringWithString:titleWithVersionAndBuild]; // TEMP
 #endif
     
