@@ -7,14 +7,18 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <UserNotifications/UserNotifications.h>
 //#import <Google/SignIn.h>
 
-
-@interface AppDelegate : UIResponder <UIApplicationDelegate/*, GIDSignInDelegate*/>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UNUserNotificationCenterDelegate/*, GIDSignInDelegate*/>
 
 @property (strong, nonatomic) UIWindow* window;
 @property (strong, nonatomic) UIApplicationShortcutItem* launchedShortcutItem;
-@property (strong, nonatomic) UILocalNotification* launchedNotification;
+
+@property (strong, nonatomic) UILocalNotification* launchedNotification;        // Pre iOS 10.0
+@property (strong, nonatomic) UNNotificationRequest* notificationRequest;       // For iOS 10.0+
+
+@property (strong, nonatomic) NSNumber* bgFetchCount;   // unsigned long long count
 
 @end
 

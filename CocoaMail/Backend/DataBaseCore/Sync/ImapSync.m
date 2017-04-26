@@ -25,11 +25,16 @@
 #import "CCMConstants.h"
 #import "UserSettings.h"
 
+#import <NotificationCenter/NotificationCenter.h>
+#import <UserNotifications/UserNotifications.h>
+#import <UserNotificationsUI/UserNotificationsUI.h>
+
 #import <CocoaLumberjack/CocoaLumberjack.h>
 
 #ifdef USING_INSTABUG
 #import <Instabug/Instabug.h>
 #endif
+
 
 #define ONE_MONTH_IN_SECONDS    ( 60 * 60 * 24 * 30 )
 
@@ -1265,7 +1270,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_checkLocalFoldersForDeletionOnIMAPServer:(NSArray<MCOIMAPFolder*>*)imapFolders
 {
-    ddLogLevel = DDLogLevelWarning;
+//    ddLogLevel = DDLogLevelWarning;
     
     SyncManager* syncMgr = [SyncManager getSingleton];
     
@@ -1764,9 +1769,12 @@ static NSArray<ImapSync*>* sharedServices = nil;
     //Cache email if in Background
     if ( [self _isRunningInBackground] ) {
         
+        DDLogInfo(@"IS RUNNING IN BACKGROUND.");
         return [self _cacheEmail:currentFolder email:email];
     }
     else {
+        DDLogInfo(@"IS NOT RUNNING IN BACKGROUND.");
+
         NSInvocationOperation* nextOp
         = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
                                                selector:@selector(addEmailWrapper:)
@@ -1813,26 +1821,117 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             if (isUnread && [AppSettings notifications:(NSInteger)self.user.accountNum]) {
                 
-                UILocalNotification* localNotification = [[UILocalNotification alloc] init];
-                localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
-                NSString* alertText = [[NSString alloc]initWithFormat:@"%@\n%@%@", email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
-                alertText = [alertText stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
-                localNotification.alertBody = alertText;
-                localNotification.timeZone = [NSTimeZone defaultTimeZone];
-                localNotification.userInfo = @{@"cIndexIndex":@(index.index),
-                                               @"cIndexAccountNum":@(index.user.accountNum)};
-                localNotification.category = @"MAIL_CATEGORY";
-                
-                DDLogDebug(@"Index: %ld",(long)index.index);
-                DDLogDebug(@"Conversation: %@",[conv firstMail].subject);
-                
-                [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+                [self notify:email ci:index conv:conv];
             }
             
             emailCached = YES;
         }
     }
     return emailCached;
+}
+
+#pragma xyzzy
+
+
+-(void)notify:(Mail *)email ci:(ConversationIndex *)index conv:(Conversation*)conv
+{
+    
+    if ( [UNUserNotificationCenter class] ) {
+        
+        NSString* alertText = [NSString stringWithFormat:@"%@%@",(email.hasAttachments?@"📎 ":@""), email.subject];
+        
+        // escape % signs
+        alertText = [alertText stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
+        
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        DDAssert(center, @"The UNUserNotificationCenter must exist");
+        
+        [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+            
+            if ( settings.authorizationStatus == UNAuthorizationStatusAuthorized ) {
+                DDLogInfo(@"The User has Authorized Notifications");
+                
+                UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
+                
+                if ( settings.alertSetting == UNNotificationSettingEnabled ) {
+                    
+                    DDLogInfo(@"Notification Alerts are Enabled.");
+                    
+                    content.title = @"CocoaMail"; //[NSString localizedUserNotificationStringForKey:@"NewMailNotifTitle" arguments:nil];
+                    content.subtitle = email.sender.displayName;
+                    content.body  = alertText;
+                }
+                else {
+                    DDLogInfo(@"Notification Alerts are NOT Enabled.");
+                }
+                
+                if ( settings.soundSetting == UNNotificationSettingEnabled) {
+                    DDLogInfo(@"Notification Sounds are Enabled.");
+                    
+                    content.sound = [UNNotificationSound defaultSound];
+                }
+                else {
+                    DDLogInfo(@"Notification Sounds are NOT Enabled.");
+                }
+                
+                if ( settings.badgeSetting == UNNotificationSettingEnabled ) {
+                    DDLogInfo(@"Notification Badge is Enabled.");
+                    
+                    NSNumber *unreadMailCount = [[NSNumber alloc] initWithInteger:0];
+                    content.badge = unreadMailCount;
+                }
+                else {
+                    DDLogInfo(@"Notification Badge is NOT Enabled.");
+                }
+                
+                content.categoryIdentifier = @"MAIL_CATEGORY";
+                content.userInfo = @{ @"cIndexIndex"      : @(index.index),
+                                      @"cIndexAccountNum" : @(index.user.accountNum) };
+                
+                UNTimeIntervalNotificationTrigger *trigger = nil;   // trigger the notification right away
+                
+                UNNotificationRequest *notificationRequest = [UNNotificationRequest requestWithIdentifier:@"NewMessageNotification"
+                                                                                                  content:content
+                                                                                                  trigger:trigger];
+                
+                [center addNotificationRequest:notificationRequest
+                         withCompletionHandler:^(NSError * _Nullable error) {
+                             if ( error ) {
+                                 // Report Error
+                                 DDLogError(@"Failed to add NUNotificationRequest, error = %@",error);
+                             } else {
+                                 DDLogInfo(@"Added NUNotifidationRequest.");
+                             }
+                         }];
+            }
+            else {
+                DDLogInfo(@"The User has NOT Authorized Notifications");
+            }
+        }];
+        
+    } else {
+        
+        NSString* alertText = [NSString stringWithFormat:@"%@\n%@%@",
+                               email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
+        
+        // escape % signs
+        alertText = [alertText stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
+        
+        UILocalNotification* localNotification = [[UILocalNotification alloc] init];
+        
+        localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
+        localNotification.alertBody = alertText;
+        localNotification.timeZone = [NSTimeZone defaultTimeZone];
+        localNotification.userInfo = @{ @"cIndexIndex"      : @(index.index),
+                                        @"cIndexAccountNum" : @(index.user.accountNum) };
+        localNotification.category = @"MAIL_CATEGORY";
+        
+        DDLogDebug(@"Index: %ld",(long)index.index);
+        DDLogDebug(@"Conversation: %@",[conv firstMail].subject);
+        
+        [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+    }
+    
 }
 
 -(NSMutableSet *) _emailIDs
@@ -1869,14 +1968,16 @@ static NSArray<ImapSync*>* sharedServices = nil;
 -(void) runUpToDateCachedTest:(NSArray*)emails
 {
     MCOIndexSet* uidsIS = [[MCOIndexSet alloc]init];
-    NSString* path = [self.user folderServerName:[[Accounts sharedInstance].currentAccount currentFolderIdx]];
+    Account *currentAccount = [Accounts sharedInstance].currentAccount;
+    NSString* path = [self.user folderServerName:[currentAccount currentFolderIdx]];
     
     NSMutableArray* datas = [[NSMutableArray alloc]init];
     
     for (Mail* email in emails) {
         //TODO: Get the right uid corresponding to the message id and folder
         
-        UidEntry* uid_entry = [UidEntry getUidEntryWithFolder:[[Accounts sharedInstance].currentAccount currentFolderIdx] msgID:email.msgID];
+        UidEntry* uid_entry = [UidEntry getUidEntryWithFolder:(NSInteger)[currentAccount currentFolderIdx]
+                                                        msgID:email.msgID];
         [uidsIS addIndex:uid_entry.uid];
         
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
@@ -1973,7 +2074,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         }
     }
     
-    NSString* path = [self.user folderServerName:folderIdx];
+    NSString* path = [self.user folderServerName:(NSUInteger)folderIdx];
     
     DDLogDebug(@"Testing folder \"%@\" with %i emails in accountIndex:%ld", path, uidsIS.count, (long)self.user.accountNum);
     
@@ -2000,7 +2101,11 @@ static NSArray<ImapSync*>* sharedServices = nil;
          DDAssert(self.s_queue, @"s_queue must be set");
          
          // Get the headers and flags for all the messages in the folder
-         MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags uids:uidsIS];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wassign-enum"
+         MCOIMAPMessagesRequestKind requestKind = MCOIMAPMessagesRequestKindHeaders | MCOIMAPMessagesRequestKindFlags;
+#pragma clang diagnostic pop
+         MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:requestKind uids:uidsIS];
          dispatch_async(self.s_queue, ^{
              [op start:^(NSError* error, NSArray* messages, MCOIndexSet* vanishedMessages) {
                  

@@ -22,6 +22,11 @@
 #import <CocoaLumberjack/CocoaLumberjack.h>
 #import "CCMDDLogFormatter.h"
 
+#import <NotificationCenter/NotificationCenter.h>
+#import <UserNotifications/UserNotifications.h>
+#import <UserNotificationsUI/UserNotificationsUI.h>
+
+
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
 
 #ifdef USING_FLURRY
@@ -57,16 +62,11 @@
     [Flurry startSession:@"D67NTWY4V6RW5RFVMRGK"];
 #endif
     
-    // First, create an action
-    UIMutableUserNotificationAction *acceptAction = [self createAction];
-    
-    // Second, create a category and tie those actions to it (only the one action for now)
-    UIMutableUserNotificationCategory *inviteCategory = [self createCategory:@[acceptAction]];
+    [self _initNotifications];
     
     application.applicationSupportsShakeToEdit = YES;
     
     UIApplicationShortcutItem* shortcutItem = launchOptions[UIApplicationLaunchOptionsShortcutItemKey];
-    
     if (shortcutItem) {
         self.launchedShortcutItem = shortcutItem;
         
@@ -76,15 +76,17 @@
     
     [self createItemsWithIcons];
     
-    // Third, register those settings with our new notification category
-    [self registerSettings:inviteCategory];
+    // set the background fetch to trigger as often as possible
+    NSTimeInterval numberOfSeconds = UIApplicationBackgroundFetchIntervalMinimum;
+    DDLogInfo(@"Requesting MinimumBackgroundFetchInterval = %@ seconds.",@(numberOfSeconds));
+    [application setMinimumBackgroundFetchInterval:numberOfSeconds];
     
-    [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
+    self.bgFetchCount = [NSNumber numberWithUnsignedLongLong:0];
     
     DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
-    [Accounts sharedInstance];  // Allocate the shared instance
+//    [Accounts sharedInstance];  // Allocate the shared instance
     [[Accounts sharedInstance] getDrafts];
     
     //[self registerGoogleSignIn];
@@ -92,16 +94,76 @@
     return shouldPerformAdditionalDelegateHandling;
 }
 
+-(void) _initNotifications
+{
+    self.launchedNotification = nil;
+    self.notificationRequest  = nil;
+    
+    if ( [UNUserNotificationCenter class] ) {   // If the class exists ...
+                                                // iOS version 10.0 and above
+        
+        DDLogInfo(@"iOS VERSION 10.0 OR HIGHER: using UNUserNotificationCenter.");
+        
+        UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+        
+        center.delegate = self;
+        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wassign-enum"
+        UNAuthorizationOptions desiredSettings = (UNAuthorizationOptionAlert + UNAuthorizationOptionBadge + UNAuthorizationOptionSound);
+#pragma clang diagnostic pop
+        
+        [center requestAuthorizationWithOptions:desiredSettings
+                              completionHandler:^(BOOL granted, NSError * _Nullable error) {
+                                  // this block runs asynchronously in background
+                                  
+                                  // Enable or disable features based on authorization.
+                                  if (granted) {
+                                      // autorizations agreed
+                                      DDLogInfo(@"Authorization granted for User Notification Alert, Badge AND/OR Sound.");
+                                      
+                                  } else {
+                                      // An Error occurred
+                                      DDLogError(@"Error while authorizing Alert|Badge|Sound for User Notification, error=|%@|",error);
+                                  }
+                              }];
+        
+        UNNotificationAction *deleteMessageAction =
+        [UNNotificationAction actionWithIdentifier:@"DELETE_IDENTIFIER"
+                                             title:NSLocalizedString(@"quick-swipe.delete",@"Lock screen swipe")
+                                           options:UNNotificationActionOptionDestructive];
+        
+        UNNotificationCategory *newMessageCategory =
+        [UNNotificationCategory categoryWithIdentifier:@"MAIL_CATEGORY"
+                                               actions:@[deleteMessageAction]
+                                     intentIdentifiers:@[]
+                                               options:UNNotificationCategoryOptionNone];
+        
+        [center setNotificationCategories:[NSSet setWithObjects:newMessageCategory, nil]];
+        
+        
+    } else {
+        // For pre-iOS 10.0
+        
+        DDLogInfo(@"UNUserNotificationCenter class does not exist, so using older notifications.");
+        
+        // First, create an action
+        UIMutableUserNotificationAction *deleteMessageAction = [self createAction];
+        
+        // Second, create a category and tie those actions to it (only the one action for now)
+        UIMutableUserNotificationCategory *newMessageCategory = [self createCategory:@[deleteMessageAction]];
+        
+        // Third, register those settings with our new notification category
+        [self registerSettings:newMessageCategory];
+    }
+}
+
 /**********************************/
 /*** Initialize CocoaLumberjack ***/
 /**********************************/
 -(void) _initCocoaLumberjack
 {
-    
-//    // Send debug statements to the System Log (Console.app)
-//    [DDLog addLogger:[DDASLLogger sharedInstance]];
 
-    
 #ifdef USING_INSTABUG_COCOALUMBERJACK
     // This will log CocoaLumberjack into Instabug
     DDInstabugLogger *ibgLogger = [[DDInstabugLogger alloc] init];
@@ -123,6 +185,20 @@
     
     DDLogInfo(@"USING STANDARD DD LOGGER.");
     
+    // Send debug statements to the System Log (Console.app)
+//    [DDLog addLogger:[DDASLLogger sharedInstance]];
+    
+    // Send debug info to log files
+//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
+//    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
+//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
+//    [DDLog addLogger:fileLogger];
+//    
+//    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
+//    DDLogInfo(@"USING DD FILE LOGGER.");
+//    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
+
+    
 #ifdef USING_INSTABUG
     DDLogInfo(@"USING INSTABUG");
 #else
@@ -134,19 +210,8 @@
 #else
     DDLogInfo(@"NOT USING INSTABUG-COCOALUMBERJACK LOGGER");
 #endif
-    DDLogInfo(@"\n");
-
     
-    // Send debug info to log files
-//    DDFileLogger *fileLogger = [[DDFileLogger alloc] init];     // File Logger
-//    fileLogger.rollingFrequency = 60 * 60 * 24;                 // 24 hour rolling
-//    fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
-//    [DDLog addLogger:fileLogger];
-//    
-//    DDLogFileInfo *lfi = [fileLogger currentLogFileInfo];
-//    DDLogInfo(@"*********");
-//    DDLogInfo(@"LOG PATH: \"%@\"",[lfi filePath]);
-//    DDLogInfo(@"*********");
+    DDLogInfo(@"--------------------------------------------");
    
 //    DDLogError(  @"Demo: DDLogError");    // Red
 //    DDLogWarn(   @"Demo: DDLogWarn");     // Orange
@@ -165,18 +230,32 @@
     return YES;
 }
 
-- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+
++(void)_saveAllCachedData
 {
     for (UserSettings* user in [AppSettings getSingleton].users) {
-        if (user.isDeleted) {
-            continue;
+        // if user is not deleted
+        if (!user.isDeleted) {
+            // then save its cache
+            [[ImapSync sharedServices:user] saveCachedData];
         }
-    //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-        [[ImapSync sharedServices:user] saveCachedData];
     }
-    
-    if (notification && application.applicationState == 1) {
-        DDLogInfo(@"Notification Body: %@", notification.alertBody);
+}
+
+#pragma mark - notification received
+// The method called prior to iOS v10.0
+//      For iOS v10.0 and above we Use UserNotifications Framework's
+//          -[UNUserNotificationCenterDelegate willPresentNotification:withCompletionHandler:] or
+//          -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]
+//
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+    [AppDelegate _saveAllCachedData];
+        
+    // if we received a notificatino and application is inactive
+    if (notification && application.applicationState == 1) {  // UIApplicationStateInactive
+        DDLogInfo(@"UILocalNotification Body: %@", notification.alertBody);
+        // Save the notification for later
         self.launchedNotification = notification;
     }
 }
@@ -203,107 +282,139 @@
 
 -(void) applicationDidBecomeActive:(UIApplication*)application
 {
-    if ([AppSettings numActiveAccounts] > 0) {
-        for (UserSettings* user in [AppSettings getSingleton].users) {
-            if (user.isDeleted) {
-                continue;
-            }
-        //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
-            [[ImapSync sharedServices:user] saveCachedData];
-        }
+    if ([AppSettings numActiveAccounts] == 0) {
+        [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+    }
+    else { // there is at least one active accounty
+        
+        // if there was a notification saved while we were inactive,
+        // then execute it now.
+    
+        [AppDelegate _saveAllCachedData];
         
         [[AppSettings getSingleton] setCache:@[]];
         
         if (self.launchedShortcutItem) {
-            UIApplicationShortcutItem* shortCut = self.launchedShortcutItem ;
-            [self handleShortcut:shortCut];
             
+            [self handleShortcut:self.launchedShortcutItem];
             self.launchedShortcutItem = nil;
         }
-        else if (self.launchedNotification) {
-            UILocalNotification* notification = self.launchedNotification;
+        else if ( self.launchedNotification ) {
             
-            NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
-            NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
-            UserSettings* user = [AppSettings userWithNum:accountNum];
-            
-            ConversationIndex *cIndex = [ConversationIndex initWithIndex:index user:user];
-            Conversation* conversation = [cIndex.user.linkedAccount getConversationForIndex:cIndex.index];
-            
-            [conversation foldersType];
-            
-            DDLogInfo(@"Opening email:%@", [conversation firstMail].subject);
-            DDLogInfo(@"Index: %ld",(long)cIndex.index);
-            
-            Accounts* A = [Accounts sharedInstance];
-
-            A.currentAccountIdx = cIndex.user.accountIndex;
-            [[A currentAccount] connect];
-            
-            [ViewController refreshCocoaButton];
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
-                                                                object:nil
-                                                              userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
-            
-
-            
+            [self _selectConversationForNotificationUserInfoDictionary:self.launchedNotification.userInfo];
             self.launchedNotification = nil;
         }
-    } else {
-        [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+        else if ( self.notificationRequest ) {
+            
+            [self _selectConversationForNotificationUserInfoDictionary:self.notificationRequest.content.userInfo];
+            self.notificationRequest = nil;
+        }
     }
 }
 
+-(ConversationIndex *)_conversationIndexForUserInfo:(NSDictionary *)userInfo
+{
+    NSInteger index      = [[userInfo objectForKey:@"cIndexIndex"] integerValue];
+    NSInteger accountNum = [[userInfo objectForKey:@"cIndexAccountNum"] integerValue];
+    
+    UserSettings* user = [AppSettings userWithNum:accountNum];
+    
+    if ( user == nil ) {
+        DDLogWarn(@"Cannot find UserSettings for index:%@",@(index));
+    }
+
+    return [ConversationIndex initWithIndex:(NSUInteger)index user:user];
+}
+
+- (void)_selectConversationForNotificationUserInfoDictionary:(NSDictionary *)userInfo
+{
+    ConversationIndex *cIndex = [self _conversationIndexForUserInfo:userInfo];
+
+    Conversation *conversation = [cIndex.user.linkedAccount getConversationForIndex:(NSUInteger)cIndex.index];
+    
+    [conversation foldersType];     // Return a Set of all the Folder Types of all the Mails in this Conversation
+    
+    DDLogInfo(@"Opening email:%@", [conversation firstMail].subject);
+    DDLogInfo(@"Index: %@",@(cIndex.index));
+    
+    Accounts* allAccounts = [Accounts sharedInstance];
+    
+    allAccounts.currentAccountIdx = cIndex.user.accountIndex;
+    [[allAccounts currentAccount] connect];
+    
+    [ViewController refreshCocoaButton];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_NOTIFICATION
+                                                        object:nil
+                                                      userInfo:@{kPRESENT_CONVERSATION_KEY:conversation}];
+}
+
+
+// This method is called when we are running in the Background.
+//
 -(void) application:(UIApplication*)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
+    // Here be Background Fetch
+    
+    // Increment fetch count
+    unsigned long long uLLCount = [self.bgFetchCount unsignedLongLongValue];
+    self.bgFetchCount = [NSNumber numberWithUnsignedLongLong:uLLCount + 1];
+    
+    DDLogInfo(@"Begin Background Fetch number %@.",self.bgFetchCount.stringValue);
     
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable ) {
+        DDLogInfo(@"Cannot Background Fetch: Internet Unreachable");
         completionHandler(UIBackgroundFetchResultNoData);
     }
     else if ([self.window.rootViewController isKindOfClass:[ViewController class]]) {
         [(ViewController*)self.window.rootViewController refreshWithCompletionHandler:^(BOOL didReceiveNewPosts) {
             if (didReceiveNewPosts) {
+                DDLogInfo(@"Background Fetch Complete: HAVE NEW DATA.");
                 completionHandler(UIBackgroundFetchResultNewData);
             } else {
+                DDLogInfo(@"Background Fetch Complete: NO NEW DATA.");
                 completionHandler(UIBackgroundFetchResultNoData);
             }
         }];
     } else {
+        DDLogWarn(@"rootViewController is not a ViewController");
         completionHandler(UIBackgroundFetchResultNoData);
     }
 }
 
+- (void)_deleteConversationForNotificationUserInfo:(NSDictionary *)userInfo {
+    
+    ConversationIndex *convIndex = [self _conversationIndexForUserInfo:userInfo];
+    
+    Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
+        
+    DDLogInfo(@"Email in account:%ld", (long)[conversation user].accountNum);
+    
+#ifdef USING_FLURRY
+    NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
+    
+    NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
+                                   @"INBOX", @"from_Folder",
+                                   toFolderString, @"to_Folder",
+                                   @"lock_screen", @"action_Location"
+                                   ,nil];
+    [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
+#endif
+
+    [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
+}
+
+// The method called prior to iOS v10.0
+//
 - (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler {
     
     if ([identifier isEqualToString:@"DELETE_IDENTIFIER"]) {
         // handle it
         DDLogInfo(@"Delete Cached Email");
         
-        NSInteger index = [[notification.userInfo objectForKey:@"cIndexIndex"] integerValue];
-        NSInteger accountNum = [[notification.userInfo objectForKey:@"cIndexAccountNum"] integerValue];
-        UserSettings* user = [AppSettings userWithNum:accountNum];
-        
-        ConversationIndex *convIndex = [ConversationIndex initWithIndex:index user:user];
-        
-        Conversation* conversation = [[Accounts sharedInstance] conversationForCI:convIndex];
-        
-        DDLogInfo(@"Email in account:%ld", (long)[conversation user].accountNum);
-
-        [convIndex.user.linkedAccount moveConversation:conversation from:inboxFolderType() to:FolderTypeWith(FolderTypeDeleted, 0) updateUI:YES];
-        
-#ifdef USING_FLURRY
-        NSString* toFolderString = [convIndex.user.linkedAccount systemFolderNames][FolderTypeDeleted];
-        
-        NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
-                                       @"INBOX", @"from_Folder",
-                                       toFolderString, @"to_Folder",
-                                       @"lock_screen", @"action_Location"
-                                       ,nil];
-        [Flurry logEvent:@"Conversation Moved" withParameters:articleParams];
-#endif
+        [self _deleteConversationForNotificationUserInfo:notification.userInfo];
     }
     
     // Call this when you're finished
@@ -320,14 +431,14 @@
 
 // This protocol method was depricated in iOS 9, and replaced by the call above
 //  I'll leave it here so we can still operate with an older iOS.
--(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
-{
-    /*if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
-        return YES;
-    }*/
-    
-    return [self _openURL:url];
-}
+//-(BOOL) application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
+//{
+//    /*if ([[GIDSignIn sharedInstance] handleURL:url sourceApplication:sourceApplication annotation:annotation]) {
+//        return YES;
+//    }*/
+//    
+//    return [self _openURL:url];
+//}
 
 -(BOOL) _openURL:(NSURL *)url
 {
@@ -421,9 +532,59 @@ didSignInForUser:(GIDGoogleUser*)user
     }
 }*/
 
+#pragma mark - UNUserNotificationCenterDelegate
+
+// This method is called, in iOS 10.0 and above, when we are in the Foreground and a notification is received
+//
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler
+{
+    [AppDelegate _saveAllCachedData];
+    
+    if (notification) {
+        DDLogInfo(@"Notification Body: %@", notification.request.content.body);
+        self.notificationRequest = notification.request;
+    }
+    
+    if ( completionHandler ) {
+        completionHandler(UNNotificationPresentationOptionNone);    // we are in the FG, don't show alert.
+    }
+}
+
+// This method is called, in iOS 10.0 and above, when the User has acted on an on-screen notification.
+//
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(nonnull UNNotificationResponse *)response withCompletionHandler:(nonnull void (^)())completionHandler
+{
+    
+    NSDictionary *userInfo = response.notification.request.content.userInfo;
+
+    if ( [response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier] ) {
+        // App was opened from the notification interface
+        
+        [self _selectConversationForNotificationUserInfoDictionary:userInfo];
+        self.notificationRequest = nil;
+    }
+    else if ([response.actionIdentifier isEqualToString:@"DELETE_IDENTIFIER"]) {   // THIS is incorrect
+        
+        //  handle it
+        DDLogInfo(@"Delete Cached Email");
+        
+        [self _deleteConversationForNotificationUserInfo:userInfo];
+    }
+    else {
+        DDLogWarn(@"Unknown Identifier \"%@\"",response.actionIdentifier);
+    }
+    
+    // Call this when you're finished
+    if ( completionHandler ) {
+        completionHandler();
+    }
+}
+
+
 #pragma mark - Notifications
 
 - (UIMutableUserNotificationAction *)createAction {
+    
     UIMutableUserNotificationAction *acceptAction = [[UIMutableUserNotificationAction alloc] init];
     acceptAction.identifier = @"DELETE_IDENTIFIER";
     acceptAction.title = NSLocalizedString(@"quick-swipe.delete",@"Lock screeen swipe");
@@ -441,7 +602,9 @@ didSignInForUser:(GIDGoogleUser*)user
 }
 
 - (UIMutableUserNotificationCategory *)createCategory:(NSArray *)actions {
+    
     UIMutableUserNotificationCategory *mailCategory = [[UIMutableUserNotificationCategory alloc] init];
+    
     mailCategory.identifier = @"MAIL_CATEGORY";
     
     // You can define up to 4 actions in the 'default' context
@@ -456,7 +619,11 @@ didSignInForUser:(GIDGoogleUser*)user
 }
 
 - (void)registerSettings:(UIMutableUserNotificationCategory *)category {
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wassign-enum"
     UIUserNotificationType types = (UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound);
+#pragma clang diagnostic pop
     
     NSSet *categories = [NSSet setWithObjects:category, nil];
     UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:types categories:categories];
