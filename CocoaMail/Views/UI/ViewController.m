@@ -868,10 +868,12 @@ static ViewController * s_self;
         }
         
         if (self.viewControllers.count>2) {
-            MailListViewController* f = [[MailListViewController alloc] initWithFolder:[[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:kActiveFolderIndex]];
-            [self.viewControllers replaceObjectAtIndex:1 withObject:f];
+            NSUInteger activeFolderIndex  = [[[Accounts sharedInstance] currentAccount] currentFolderIdx];
+            NSUInteger activeAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
+            CCMFolderType activeFolder    = [[AppSettings userWithIndex:activeAccountIndex] typeOfFolder:(NSInteger)activeFolderIndex];
+            MailListViewController* mlvc = [[MailListViewController alloc] initWithFolder:activeFolder];
+            [self.viewControllers replaceObjectAtIndex:1 withObject:mlvc];
         }
-        
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
     }];
@@ -991,8 +993,9 @@ static ViewController * s_self;
             [[[Accounts sharedInstance] currentAccount] cancelSearch];
             
             // Get the folder type of the current account and current folder
-            UserSettings *user = [AppSettings userWithIndex:kActiveAccountIndex];
-            CCMFolderType folderType = [user typeOfFolder:kActiveFolderIndex];
+            NSUInteger currAcntIndex = [Accounts sharedInstance].currentAccountIdx;
+            UserSettings *user = [AppSettings userWithIndex:currAcntIndex];
+            CCMFolderType folderType = [user typeOfFolder:[[Accounts sharedInstance] currentAccount].currentFolderIdx];
             
             MailListViewController* mlvc
             = [[MailListViewController alloc] initWithFolder:folderType];

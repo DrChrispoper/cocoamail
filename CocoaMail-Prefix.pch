@@ -37,10 +37,7 @@
 #define CCMAccountFour 0x81d8ab
 #define CCMAccountFive 0xf6db6e
 
-#define kActiveAccountNum [Accounts sharedInstance].currentAccount.user.accountNum
-#define kActiveAccountIndex [Accounts sharedInstance].currentAccountIdx
-#define kActiveFolderIndex [[Accounts sharedInstance] currentAccount].currentFolderIdx
-#define kisActiveAccountAll [[Accounts sharedInstance] currentAccount].user.isAll
+
 
 // Change this to change the log level for CocoaLumberjack
 #ifdef DEBUG    

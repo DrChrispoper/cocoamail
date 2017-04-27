@@ -55,7 +55,7 @@
 /// Indexes are: 0-INBOX 1-Starred 2-Sent Mail 3-Draft 4-All Mail 5-Trash  6-Spam
 //-(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder;
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder;
--(CCMFolderType) typeOfFolder:(NSInteger)folder;
+-(CCMFolderType) typeOfFolder:(NSUInteger)folder;
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder;     // Can return -1!
 -(NSInteger) inboxFolderNumber;
 

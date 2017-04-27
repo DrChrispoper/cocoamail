@@ -334,13 +334,13 @@
     return [AppSettings defaultAccountIndex];
 }
 
--(void) setCurrentAccountIdx:(NSInteger)currentAccountIdx
+-(void) setCurrentAccountIdx:(NSUInteger)currentAccountIdx
 {
     _currentAccountIdx = currentAccountIdx;
     [AppSettings setLastAccountIndex:currentAccountIdx];
 }
 
--(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx
+-(void) setDefaultAccountIdx:(NSUInteger)defaultAccountIdx
 {
     [AppSettings setDefaultAccountNum:[AppSettings userWithIndex:defaultAccountIdx].accountNum];
 }

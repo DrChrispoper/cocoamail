@@ -34,13 +34,13 @@
 
 +(AppSettings*) getSingleton;
 
-+(NSInteger) numActiveAccounts; // number of non-deleted accounts
++(NSUInteger) numActiveAccounts; // number of non-deleted accounts
 +(NSMutableArray*) activeUsers;
 
 -(UserSettings*) createNewUser; 
 
 //Account Main Settings
-+(UserSettings*) userWithIndex:(NSInteger)accountIndex;
++(UserSettings*) userWithIndex:(NSUInteger)accountIndex;
 +(UserSettings*) userWithNum:(NSInteger)accountNum;
 +(UserSettings*) userWithEmail:(NSString*)email;
 
@@ -55,8 +55,8 @@
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;
 +(BOOL) notifications:(NSInteger)accountNum;
 
-+(NSInteger) defaultAccountIndex;
-+(void) setDefaultAccountNum:(NSInteger)accountNum;
++(NSUInteger) defaultAccountIndex;
++(void) setDefaultAccountNum:(NSUInteger)accountNum;
 +(NSInteger) lastAccountIndex;
 +(void) setLastAccountIndex:(NSInteger)accountIndex;
 

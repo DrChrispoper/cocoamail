@@ -148,8 +148,9 @@
 {
     NSMutableArray* alls = [[NSMutableArray alloc] init];
     
-    if (kisActiveAccountAll) {
-        for (int idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
+    BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
+    if (isActiveAccountAll) {
+        for (NSUInteger idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
             [alls addObjectsFromArray:[a getConversationsForFolder:allFolderType()]];
             

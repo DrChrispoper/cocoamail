@@ -487,7 +487,8 @@
     DDLogInfo(@"ENTERED");
     
     // If we are showing the All Mail account ...
-    if (kisActiveAccountAll) {
+    BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
+    if (isActiveAccountAll) {
         
         DDLogDebug(@"\tActive Account is \"All\" Account");
         
@@ -1881,7 +1882,8 @@
 //        NSInteger mailCountBefore = [self.conversationsPerAccount conversationsInAllAccounts];
         
         //if (self.convByDay.count <= pageCount * self.pageIndex ) {
-            if (kisActiveAccountAll) {
+            BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
+            if (isActiveAccountAll) {
                 NSUInteger activeAccounts = (NSUInteger)[AppSettings numActiveAccounts];
                 for (NSUInteger idx = 0; idx < activeAccounts; idx++) {
                     Account* a = [[Accounts sharedInstance] account:idx];

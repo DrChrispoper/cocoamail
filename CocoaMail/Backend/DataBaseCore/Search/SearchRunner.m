@@ -412,10 +412,14 @@ static SearchRunner * searchSingleton = nil;
                     if ([email isInMultipleAccounts]) {
                         Mail* e = [email secondAccountDuplicate];
                         
-                        if (kisActiveAccountAll) {
+                        Account *currAcnt = [[Accounts sharedInstance] currentAccount];
+                        DDAssert(currAcnt,@"Current Account must noty be nil");
+                        
+                        BOOL isActiveAccountAll = currAcnt.user.isAll;
+                        if (isActiveAccountAll) {
                             [subscriber sendNext:e];
                         }
-                        else if (e.user.accountNum == kActiveAccountNum) {
+                        else if (e.user.accountNum == currAcnt.user.accountNum) {
                             email = e;
                         }
                     }

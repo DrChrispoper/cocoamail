@@ -104,7 +104,9 @@
     }
     // TODO put it elsewhere
     
-    self.folder = [[AppSettings userWithIndex:kActiveFolderIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
+    NSUInteger currFolderIdx = [[Accounts sharedInstance] currentAccount].currentFolderIdx;
+
+    self.folder = [[AppSettings userWithIndex:currFolderIdx] typeOfFolder:currFolderIdx];
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     

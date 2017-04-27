@@ -291,9 +291,9 @@
     return -1;
 }
 
-+(NSInteger) numActiveAccounts
++(NSUInteger) numActiveAccounts
 {
-    NSInteger num = 0;
+    NSUInteger num = 0;
     
     for (UserSettings* user in [[AppSettings getSingleton] users]) {
         if (!user.isDeleted) {
@@ -350,7 +350,7 @@
 }
 
 
-+(UserSettings*) userWithIndex:(NSInteger)accountIndex;
++(UserSettings*) userWithIndex:(NSUInteger)accountIndex;
 {
     if (accountIndex < [AppSettings activeUsers].count) {
         return [AppSettings activeUsers][accountIndex];
@@ -444,7 +444,7 @@
     }*/
 }
 
-+(void) setDefaultAccountNum:(NSInteger)accountNum
++(void) setDefaultAccountNum:(NSUInteger)accountNum
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@(accountNum) forKey:[NSString stringWithFormat:@"dAccountNum"]];

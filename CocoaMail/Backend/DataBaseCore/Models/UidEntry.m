@@ -328,19 +328,21 @@
         
         NSMutableString* query = [NSMutableString string];
 
-            NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
+        NSNumber* folderAccount = @(folderNum + 1000 * accountNum);
 
-            if (folderNum != [[AppSettings userWithIndex:kActiveAccountIndex] numFolderWithFolder:CCMFolderTypeAll]) {
-                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder = %@ "
-                //[query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c) "
-                         "OR t.folder != %@ "
-                         "AND t.son_msg_id IN (SELECT c.msg_id FROM uid_entry c WHERE c.folder = %@)",
-                  uidE.uid, folderAccount, folderAccount, folderAccount];
-            }
-            else {
-                NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
-                [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder LIKE %@ ", uidE.uid, folder];
-            }
+        NSUInteger currAcntIndex = [Accounts sharedInstance].currentAccountIdx;
+        
+        if (folderNum != [[AppSettings userWithIndex:currAcntIndex] numFolderWithFolder:CCMFolderTypeAll]) {
+            [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder = %@ "
+            //[query appendFormat:@"SELECT * FROM uid_entry t WHERE t.folder = %@ AND t.msg_id NOT IN (SELECT c.son_msg_id FROM uid_entry c) "
+                     "OR t.folder != %@ "
+                     "AND t.son_msg_id IN (SELECT c.msg_id FROM uid_entry c WHERE c.folder = %@)",
+              uidE.uid, folderAccount, folderAccount, folderAccount];
+        }
+        else {
+            NSString* folder = [NSString stringWithFormat:@"'%ld___'", (long)accountNum];
+            [query appendFormat:@"SELECT * FROM uid_entry t WHERE t.uid < %i AND t.folder LIKE %@ ", uidE.uid, folder];
+        }
         
         [query appendString:@" ORDER BY uid DESC"];
         

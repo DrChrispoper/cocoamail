@@ -232,7 +232,8 @@
     
     [self sendOutboxs];
     
-    if (kisActiveAccountAll){
+    BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
+    if (isActiveAccountAll){
         [[Accounts sharedInstance].currentAccount connect];
     }
 }

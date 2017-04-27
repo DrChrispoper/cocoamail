@@ -29,9 +29,9 @@
 @property (nonatomic) BOOL canUI;
 
 @property (nonatomic, readonly) QuickSwipeType quickSwipeType;
-@property (nonatomic, readonly) NSInteger defaultAccountIdx;
+@property (nonatomic, readonly) NSUInteger defaultAccountIdx;
 
--(void) setDefaultAccountIdx:(NSInteger)defaultAccountIdx;
+-(void) setDefaultAccountIdx:(NSUInteger)defaultAccountIdx;
 -(void) setQuickSwipeType:(QuickSwipeType)quickSwipeType;
 
 @property (nonatomic) NSUInteger currentAccountIdx;

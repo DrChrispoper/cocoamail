@@ -359,7 +359,7 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(CCMFolderType) typeOfFolder:(NSInteger)folder
+-(CCMFolderType) typeOfFolder:(NSUInteger)folder
 {
     if (_all) {
         return FolderTypeWith(folder, 0);

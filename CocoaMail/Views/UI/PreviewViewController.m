@@ -169,8 +169,10 @@
     UIPreviewAction *action3 = [UIPreviewAction actionWithTitle:NSLocalizedString(@"quick-swipe.archive", @"Archive") style:UIPreviewActionStyleDestructive handler:^(UIPreviewAction * _Nonnull action, UIViewController * _Nonnull previewViewController) {
         Account* ac = [[Accounts sharedInstance] account:self.conversation.user.accountIndex];
         
-        CCMFolderType fromfolder = [[AppSettings userWithIndex:kActiveAccountIndex] typeOfFolder:[Accounts sharedInstance].currentAccount.currentFolderIdx];
-        CCMFolderType tofolder = CCMFolderTypeAll;
+        NSUInteger currAcntIndex = [[Accounts sharedInstance] currentAccountIdx];
+        NSUInteger currFoldIndex = [[[Accounts sharedInstance] currentAccount] currentFolderIdx];
+        CCMFolderType fromfolder = [[AppSettings userWithIndex:currAcntIndex] typeOfFolder:currFoldIndex];
+        CCMFolderType tofolder   = CCMFolderTypeAll;
         
 #ifdef USING_FLURRY
         NSDictionary *articleParams = [NSDictionary dictionaryWithObjectsAndKeys:
