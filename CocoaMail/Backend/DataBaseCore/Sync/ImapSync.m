@@ -1270,8 +1270,6 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (void)_checkLocalFoldersForDeletionOnIMAPServer:(NSArray<MCOIMAPFolder*>*)imapFolders
 {
-//    ddLogLevel = DDLogLevelWarning;
-    
     SyncManager* syncMgr = [SyncManager getSingleton];
     
     // mark folders that were deleted on the server as deleted on the client
@@ -1295,7 +1293,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             DDLogInfo(@"Local Folder %@: \"%@\" is (already) marked deleted locally.",@(localFolderIndex),localFolderPath);
         }
         else { // folder is not deleted locally
-            DDLogInfo(@"Local Folder %@: \"%@\" is NOT marked deleted locally.",@(localFolderIndex),localFolderPath);
+//            DDLogInfo(@"Local Folder %@: \"%@\" is NOT marked deleted locally.",@(localFolderIndex),localFolderPath);
 
 //            BOOL folderDeletedOnImapServer ? ![imapFolders containsObject:localFolderPath];  // is imapFolders = [folders valueForKey @"path"]?
             BOOL folderDeletedOnImapServer = ![self _folderPath:localFolderPath isFoundInIMAPFolders:imapFolders];
@@ -1469,13 +1467,13 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     DDLogInfo(@"\tImportant Folder Path = \"%@\"", importantImapFolderPath);
                     
                     // Review each local folder
-                    NSInteger localFolderCount = [syncMgr folderCount:self.user.accountNum];
-                    int localFolderIndex = 0;
+                    NSUInteger localFolderCount = [syncMgr folderCount:(NSInteger)self.user.accountNum];
+                    NSUInteger localFolderIndex = 0;
                     while ( localFolderIndex < localFolderCount ) {
                         
                         NSString* localFolderPath =
-                        [syncMgr retrieveFolderPathFromFolderState:localFolderIndex
-                                                        accountNum:self.user.accountNum];
+                        [syncMgr retrieveFolderPathFromFolderState:(NSInteger)localFolderIndex
+                                                        accountNum:(NSInteger)self.user.accountNum];
                         
                         // If the Important Imap Folder matches the local folder
                         if ( [importantImapFolderPath isEqualToString:localFolderPath] ) {
@@ -1835,7 +1833,6 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(void)notify:(Mail *)email ci:(ConversationIndex *)index conv:(Conversation*)conv
 {
-    
     if ( [UNUserNotificationCenter class] ) {
         
         NSString* alertText = [NSString stringWithFormat:@"%@%@",(email.hasAttachments?@"📎 ":@""), email.subject];
