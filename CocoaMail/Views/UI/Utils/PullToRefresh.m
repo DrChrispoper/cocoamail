@@ -27,13 +27,15 @@
 
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
-    if (self.pullToRefresh.isAnimating) {
+    UIActivityIndicatorView* strongPullToRefresh = self.pullToRefresh;
+    
+    if (strongPullToRefresh.isAnimating) {
         return;
     }
     
     if (scrollView.contentOffset.y < (-scrollView.contentInset.top- 0 - self.delta)) {
         
-        if (self.pullToRefresh == nil ) {
+        if (strongPullToRefresh == nil ) {
             /*
             UIView* support = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 44, 44)];
             support.layer.cornerRadius = 22.;
@@ -58,10 +60,10 @@
             av.center = CGPointMake(scrollView.frame.size.width / 2, -35 + self.delta);
             [scrollView addSubview:av];
             
-            self.pullToRefresh = av;
+            strongPullToRefresh = av;
         }
         
-        self.pullToRefresh.hidden = NO;
+        strongPullToRefresh.hidden = NO;
         
         CGFloat limite = -scrollView.contentInset.top - 60;
         CGFloat pourc = scrollView.contentOffset.y / limite;
@@ -72,10 +74,10 @@
         
         pourc = pourc * pourc;
         //self.pullToRefresh.transform = CGAffineTransformMakeRotation(M_PI_2);
-        self.pullToRefresh.transform = CGAffineTransformScale(CGAffineTransformMakeRotation(M_PI_2), pourc, pourc);
+        strongPullToRefresh.transform = CGAffineTransformScale(CGAffineTransformMakeRotation(M_PI_2), pourc, pourc);
     }
     else {
-        self.pullToRefresh.hidden = YES;
+        strongPullToRefresh.hidden = YES;
     }
 }
 

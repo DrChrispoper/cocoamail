@@ -521,7 +521,7 @@ static NSString *const AppExtensionWebViewPageDetails = @"pageDetails";
 		controller.popoverPresentationController.sourceRect = [sender frame];
 	}
 	else {
-		DDLogInfo(@"sender can be nil on iPhone");
+		NSLog(@"sender can be nil on iPhone");
 	}
 
 	return controller;

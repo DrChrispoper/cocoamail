@@ -543,7 +543,7 @@
     NSMutableArray<Conversation*>* allConversations = [self.allConversations mutableCopy]; // why copy it? It doesn't look like we are going to change it??
     
     [allConversations enumerateObjectsAtIndexes:conversationIndexSet
-                                        options:0
+                                        options:0UL
                                      usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop){
                                          [conversationsForFolder addObject:[ConversationIndex initWithIndex:idx user:self.user]];
                                      }];
@@ -1266,7 +1266,7 @@
                                                        NSMutableArray* resultingAllFolderMail = [NSMutableArray arrayWithCapacity:[allFolderMailIndecies count]];
                                                        
                                                        [allConversations enumerateObjectsAtIndexes:allFolderMailIndecies
-                                                                                           options:0
+                                                                                           options:0UL
                                                                                         usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
                                                                                             [resultingAllFolderMail addObject:obj];
                                                                                         }];

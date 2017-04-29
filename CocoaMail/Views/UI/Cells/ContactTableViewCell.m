@@ -83,18 +83,20 @@
     return;
 }
 
--(void) fillWithPerson:(Person*)p
+-(void) fillWithPerson:(Person*)person
 {
+    UIView *badge = self.badge;     // strong - will keep badge around while we use it
+    
     if (self.baseView == nil) {
         [self setup];
     }
     
-    self.person = p;
-
-    self.name.text = [NSString stringWithFormat:@"%@ - %@", self.person.name, self.person.email];
+    self.name.text = [NSString stringWithFormat:@"%@ - %@", person.name, person.email];
     
-    [self.badge.subviews.firstObject removeFromSuperview];
-    [self.badge addSubview:[self.person badgeView]];
+    [badge.subviews.firstObject removeFromSuperview];
+    [badge addSubview:[person badgeView]];
+    
+    self.person = person;
 }
 
 @end

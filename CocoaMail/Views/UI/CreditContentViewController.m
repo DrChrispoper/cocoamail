@@ -88,6 +88,7 @@
         text = NSLocalizedString(@"credits.bio.thanks",@"");
         name = nil;
         self.barTitle = @"Thanks";
+        self.btnActions = @[];
     }
     
     
