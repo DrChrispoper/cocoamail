@@ -4,7 +4,7 @@
 
 #import <Availability.h>
 
-#undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
+//#undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
 
 #define KS_DEMO                     // Comment out to disable
 
