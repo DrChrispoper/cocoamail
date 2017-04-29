@@ -125,7 +125,7 @@
 
 -(void) runLoadData
 {
-    ddLogLevel = DDLogLevelDebug;
+//    ddLogLevel = DDLogLevelDebug;
     
     DDLogInfo(@"ENTERED");
     
