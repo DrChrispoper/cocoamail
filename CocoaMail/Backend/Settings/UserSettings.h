@@ -15,32 +15,33 @@
 
 @interface UserSettings : NSObject <NSCoding>
 
-@property NSString *identifier;
-@property NSString *username;
+@property (nonatomic) NSString *identifier;
+@property (nonatomic) NSString *username;
 
-@property NSString *imapHostname;
-@property NSUInteger imapPort;
-@property NSUInteger imapConnectionType;
+@property (nonatomic) NSString *imapHostname;
+@property (nonatomic) NSUInteger imapPort;
+@property (nonatomic) NSUInteger imapConnectionType;
 
-@property NSString *smtpHostname;
-@property NSUInteger smtpPort;
-@property NSUInteger smtpConnectionType;
+@property (nonatomic) NSString *smtpHostname;
+@property (nonatomic) NSUInteger smtpPort;
+@property (nonatomic) NSUInteger smtpConnectionType;
 
-@property NSString *signature;
-@property NSString *name;
-@property NSString *initials;
-@property UIColor* color;
+@property (nonatomic) NSString *signature;
+@property (nonatomic) NSString *name;
+@property (nonatomic) NSString *initials;
+@property (nonatomic) UIColor* color;
 
-@property NSMutableArray* importantFolders;
-@property NSMutableArray* allFoldersDisplayNames;
+@property (nonatomic) NSMutableArray* importantFolders;
+@property (nonatomic) NSMutableArray* allFoldersDisplayNames;
 
-@property NSString* folderPathDelimiter;      // folder path delimiter is actually a char
-@property NSString* folderPathPrefix;
+@property (nonatomic) NSString* folderPathDelimiter;      // folder path delimiter is actually a char
+@property (nonatomic) NSString* folderPathPrefix;
 
-@property (getter = isDeleted) BOOL deleted;
-@property (getter = isAll) BOOL all;
+@property (nonatomic, getter = isDeleted) BOOL deleted;
+@property (nonatomic, getter = isAll) BOOL all;
 
-@property NSInteger accountNum;
+@property (nonatomic) NSInteger accountNum;
+
 -(NSUInteger) accountIndex;
 
 -(NSString*) password;
