@@ -532,6 +532,13 @@ didSignInForUser:(GIDGoogleUser*)user
     }
 }*/
 
+-(void)application:(UIApplication *)application didReceiveRemoteNotification:(nonnull NSDictionary *)userInfo fetchCompletionHandler:(nonnull void (^)(UIBackgroundFetchResult))completionHandler
+{
+    DDLogInfo(@"UserInfro = %@",userInfo);
+    
+    completionHandler(UIBackgroundFetchResultNoData);
+}
+
 #pragma mark - UNUserNotificationCenterDelegate
 
 // This method is called, in iOS 10.0 and above, when we are in the Foreground and a notification is received
