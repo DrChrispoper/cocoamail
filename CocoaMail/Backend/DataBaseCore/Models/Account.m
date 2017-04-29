@@ -128,7 +128,15 @@
         [_lastEmails addObject:[[Mail alloc]init]];
     }
     
-    self.currentFolderType = decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue);
+    NSNumber *lastFolderIndex = [AppSettings lastFolderIndex];
+    if ( lastFolderIndex == nil ) {
+        DDLogWarn(@"Last Folder Index not found.");
+        self.currentFolderType = inboxFolderType(); // we could not find a previous folder, so start in Inbox
+    }
+    else {        
+        NSInteger lastFolderValue = [lastFolderIndex integerValue];
+        self.currentFolderType = decodeFolderTypeWith(lastFolderValue);
+    }
     
     if (self.currentFolderType.type == FolderTypeUser) {
         if ((NSUInteger)self.currentFolderType.idx >= self.userFolders.count) {
