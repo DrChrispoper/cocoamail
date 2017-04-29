@@ -125,7 +125,7 @@
     return _allFoldersDisplayNames;
 }
 
--(NSUInteger)accountNum
+-(NSInteger)accountNum
 {
     return _accountNum;
 }

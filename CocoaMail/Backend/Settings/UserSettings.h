@@ -40,7 +40,7 @@
 @property (getter = isDeleted) BOOL deleted;
 @property (getter = isAll) BOOL all;
 
-@property NSUInteger accountNum;
+@property NSInteger accountNum;
 -(NSUInteger) accountIndex;
 
 -(NSString*) password;
