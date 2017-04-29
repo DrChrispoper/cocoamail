@@ -83,20 +83,19 @@ static NSArray<ImapSync*>* sharedServices = nil;
 {
     DDLogVerbose(@"ENTERED");
     
-    if (update) {
-        sharedServices = nil;
-    }
-    
-    @synchronized(self) {
+    @synchronized(sharedServices) {
         
+        if (update) {
+            DDLogInfo(@"Updating IMAP Session, so generate new sharedServices.");
+            sharedServices = nil;
+        }
+    
         // If we already have one or more shared services, then return them
         if (sharedServices && sharedServices.count > 0) {
-            DDLogVerbose(@"Returning existing sharedServices[0..%@]",@(sharedServices.count));
+            DDLogInfo(@"RETURNING existing sharedServices[0..%@]",@(sharedServices.count));
             return sharedServices;
         }
-        
-        DDLogVerbose(@"creating new sharedServices array, one for each User.");
-        
+                
         // Create new sharedServices, one for each user.
         
         NSMutableArray* newSharedServices = [[NSMutableArray alloc]init];
@@ -110,7 +109,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 continue;   // next UserSettings
             }
             
-            DDLogVerbose(@"Create new IMAP Shared Service to for Account \"%@\" (# %@)",user.username,@(user.accountNum));
+            DDLogInfo(@"Create new IMAP Shared Service to for Account \"%@\" (# %@)",user.username,@(user.accountNum));
             
             // Create and set up new Imap Sync Shared Service
             ImapSync* sharedService = [[super allocWithZone:nil] init];
@@ -152,7 +151,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
         return sharedServices;
         
-    } // end @synchronized(self)
+    } // end @synchronized(sharedServices)
 }
 
 // MARK: - IMAP Sync Service: is Network available via WiFi
