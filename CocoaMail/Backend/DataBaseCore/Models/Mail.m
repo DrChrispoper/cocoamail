@@ -829,7 +829,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(NSInteger) insertMail:(Mail*)email
 {
-    DDLogInfo(@"ENTERED, Mail from: \"%@\" subj: \"%@\"",email.sender.displayName,email.subject);
+    DDLogInfo(@"Mail from: \"%@\" subj: \"%@\"",email.sender.displayName,email.subject);
     
     __block sqlite_int64 success = -1 ;
         
@@ -868,7 +868,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) updateMail:(Mail*)email;
 {
-    DDLogInfo(@"ENTERED, Mail from: \"%@\" subj: \"%@\"",email.sender.displayName,email.subject);
+    DDLogInfo(@"Mail from: \"%@\" subj: \"%@\"",email.sender.displayName,email.subject);
     
     if (!email.subject) {
         NSException* myE = [NSException exceptionWithName:@"EmailHasNoSUBJECT" reason:@"Updating email with nil Subject" userInfo:nil];
@@ -896,7 +896,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(BOOL) removeMail:(NSString*)msgIdDel
 {
-    DDLogInfo(@"ENTERED, Message ID to delete = %@",msgIdDel);
+    DDLogInfo(@"Message ID to delete = %@",msgIdDel);
 
     __block BOOL success = FALSE;
     EmailDBAccessor* databaseManager = [EmailDBAccessor sharedManager];
