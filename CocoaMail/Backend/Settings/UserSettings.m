@@ -359,13 +359,13 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(CCMFolderType) typeOfFolder:(NSUInteger)folder
+-(CCMFolderType) typeOfFolder:(NSInteger)folder
 {
     if (_all) {
         return FolderTypeWith(folder, 0);
     }
     
-    for (int idx = (int)_importantFolders.count-1 ; idx >= 0 ; idx--) {
+    for (NSInteger idx = (NSInteger)_importantFolders.count-1 ; idx >= 0 ; idx--) {
         if (folder == [_importantFolders[idx] integerValue]) {
             return FolderTypeWith(idx, 0);
         }
@@ -374,7 +374,7 @@
     NSArray* nonImportantFolders = [self allNonImportantFoldersName];
     NSString* folderName = [self folderDisplayNameForIndex:folder];
     
-    for (int idx = 0; idx < nonImportantFolders.count;idx++) {
+    for (NSUInteger idx = 0; idx < nonImportantFolders.count;idx++) {
         if ([folderName isEqualToString:nonImportantFolders[idx]]) {
             return FolderTypeWith(FolderTypeUser, idx);
         }
@@ -383,10 +383,10 @@
     return CCMFolderTypeAll;
 }
 
--(NSString*) folderDisplayNameForIndex:(NSInteger)folder
+-(NSString*) folderDisplayNameForIndex:(NSUInteger)folder
 {
     DDAssert(_allFoldersDisplayNames,@"_addFoldersDisplayNames must be initialized.");
-    DDAssert(folder>=0, @"folder index must not be negative.");
+//    DDAssert(folder>=0, @"folder index must not be negative.");
     
     return _allFoldersDisplayNames[folder];
 }
@@ -409,21 +409,28 @@
 }
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder      // Can return -1
 {
-    NSString* folderName;
+    NSInteger folderIndex = -1;     // not found
     
     if (folder.type == FolderTypeUser) {
-        folderName = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
+        NSString *folderName = [[Accounts sharedInstance] currentAccount].userFolders[(NSUInteger)folder.idx][0];
         for (NSUInteger index = 0; index < [_allFoldersDisplayNames count]; index++) {
+            
             NSString *indexedFolderDisplayName = [self folderDisplayNameForIndex:index];
             if ([folderName isEqualToString:indexedFolderDisplayName]) {
-                return index;
+                folderIndex = (NSInteger)index;
+                break;
             }
-        }
+        } // end of loop
+        
     } else {
-        return [self importantFolderNumforBaseFolder:folder.type];
+        folderIndex = [self importantFolderNumforBaseFolder:folder.type];
     }
     
-    return -1;      // NB: CAN RETURN -1
+//    DDLogError(@"Folder for Type=%@ and Index=%@ COULD NOT BE FOUND",@(folder.type),@(folder.idx));
+    
+    DDAssert(folderIndex != -1, @"Folder Index must not be -1!");
+    
+    return folderIndex;      // NB: CAN RETURN -1
 }
 
 -(NSArray*) allNonImportantFoldersName

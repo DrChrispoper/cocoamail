@@ -1499,41 +1499,55 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
     DDLogInfo(@"ENTERED, folder num = %@",@(currentFolder));
     
+    NSInteger acntNumber = self.user.accountNum;
+    
     NSString* folderPath =
-    [syncMgr retrieveFolderPathFromFolderState:currentFolder
-                                    accountNum:self.user.accountNum];
+    [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:acntNumber];
+    
+    if ( folderPath == nil ) {
+        DDLogError(@"Unable to retrieve folder path for folder=%@ and account=%@",
+                   @(currentFolder),@(acntNumber));
+        return;
+    }
+    
+    NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder accountNum:acntNumber];
+    
+    if ( lastEnded == -1 )  {
+        DDLogError(@"Unable to retrieve last ended for folder=%@ and account=%@",
+                   @(currentFolder),@(acntNumber));
+        return;
+    }
+    
     
     MCOIMAPFolderInfoOperation* folderInfoOp = [self.imapSession folderInfoOperation:folderPath];
     
-    NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder
-                                                         accountNum:self.user.accountNum];
-    
     [folderInfoOp start:^(NSError* error, MCOIMAPFolderInfo* imapFolderInfo) {
         if (error) {
-            DDLogError(@"\tError %@ fetching folder %@, sending CCMConnectionError to subscriber",error.description, folderPath);
+            DDLogError(@"Unable to fetch IMAP folder for folder path \"%@\".  Error: %@", folderPath, error);
             
             self.connected = NO;
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
             
             return;
         }
+        
         if (self.isCanceled) {
-            DDLogInfo(@"\tCancelled == TRUE, so sending Completed to subscriber");
+            DDLogInfo(@"Cancelled == TRUE, so sending Completed to subscriber");
             [subscriber sendCompleted];
             return;
         }
         
         [self _fetchImapMessages:subscriber
-                   currentFolder:currentFolder
+                   currentFolder:(NSUInteger)currentFolder
                      isFromStart:isFromStart
                           getAll:getAll
                       folderPath:folderPath
-                    messageCount:imapFolderInfo.messageCount
-                       lastEnded:lastEnded];
+                    messageCount:(NSUInteger)imapFolderInfo.messageCount
+                       lastEnded:(NSUInteger)lastEnded];
     }];
 }
 
-- (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
+- (void)_fetchImapMessages:(id)subscriber currentFolder:(NSUInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSUInteger)msgCount lastEnded:(NSUInteger)lastEnded
 {
     DDLogInfo(@"ENTERED, folder path = %@",folderPath);
     
@@ -1558,7 +1572,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 
                 DDLogInfo(@"No Messages OR (Not from Start AND Last Ended == 1");
                 
-                NSInteger lastEndedIndex = 0;
+                NSUInteger lastEndedIndex = 0;
                 if ( msgCount == 0 ) {
                     lastEndedIndex = 1;
                 }
@@ -1577,24 +1591,26 @@ static NSArray<ImapSync*>* sharedServices = nil;
             }
         }
         
-        NSInteger from = msgCount;
+        NSUInteger from = (NSUInteger) msgCount;
         
         if (!(isFromStart || [self _isRunningInBackground]) && lastEnded != 0) {
             from = lastEnded-1;
         }
         
-        uint64_t batch = MIN(batchsize, msgCount);
+        NSUInteger batch = (NSUInteger) MIN( ((NSUInteger)batchsize), ((NSUInteger)msgCount) );
+        
+        uint64_t ullFrom = (uint64_t)from;
         
         batch--;
         
-        if (from > batch) {
-            from -= batch;
+        if ( ullFrom > batch) {
+            ullFrom -= batch;
         }
         else {
-            from = 1;
+            ullFrom = 1;
         }
         
-        MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(from, batch)];
+        MCOIndexSet* numbers = [MCOIndexSet indexSetWithRange:MCORangeMake(ullFrom, batch)];
         
         MCOIMAPFetchMessagesOperation* imapMessagesFetchOp =
         [self.imapSession fetchMessagesByNumberOperationWithFolder:folderPath
@@ -1623,7 +1639,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
 }
 
-- (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
+- (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSUInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
     DDLogInfo(@"ENTERED, num IMAP msgs = %@",@(imapMessages.count));
     
@@ -1647,14 +1663,19 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
             
+            if ( folderPath == nil ) {
+                DDLogError(@"Could not get Folder Path from Sync Manager for folder=%@ in account=%@",@(currentFolder),@(self.user.accountNum));
+                return;
+            }
+            
             Mail* email = [Mail mailWithMCOIMAPMessage:imapMsg inFolder:currentFolder andAccount:self.user.accountNum];
             
-            DDLogInfo(@"\nEMAIL Subj: \"%@\" | MsgId:  \"%@\" | AcntNum: %@ | FolderNum: %@\n",
+            DDLogInfo(@"\nEMAIL Subj: \"%@\" | MsgId:  \"%@\" | AcntNum: %@ | FolderNum: %@",
                       email.subject,email.msgID,@(self.user.accountNum),@(currentFolder));
             
             if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
                 
-                DDLogInfo(@"--- Message already exists in this Account's Databsase");
+//                DDLogInfo(@"--- Message already exists in this Account's Databsase");
                 
                 if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
                     // already have this email in other folder than this one -> add folder in uid_entry
@@ -1761,16 +1782,14 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 -(BOOL) _saveEmail:(Mail*)email folder:(NSInteger)currentFolder
 {
-    DDLogInfo(@"ENTERED");
-
     //Cache email if in Background
     if ( [self _isRunningInBackground] ) {
         
-        DDLogInfo(@"IS RUNNING IN BACKGROUND.");
+        DDLogInfo(@"Running in the Background, so Cache Email.");
         return [self _cacheEmail:currentFolder email:email];
     }
     else {
-        DDLogInfo(@"IS NOT RUNNING IN BACKGROUND.");
+        DDLogInfo(@"NOT Running in the background, So get next Email.");
 
         NSInvocationOperation* nextOp
         = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
@@ -1786,7 +1805,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
 
 - (BOOL)_cacheEmail:(NSInteger)currentFolder email:(Mail *)email
 {
-    DDLogInfo(@"ENTERED");
+    DDLogInfo(@"Cache mail:%@ in Folder:%@",email.sender.displayName,@(currentFolder));
     
     BOOL emailCached = NO;
     
@@ -1818,7 +1837,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             
             if (isUnread && [AppSettings notifications:(NSInteger)self.user.accountNum]) {
                 
-                [self notify:email ci:index conv:conv];
+                [self _notifyUserOfNewMail:email ci:index conv:conv];
             }
             
             emailCached = YES;
@@ -1827,12 +1846,12 @@ static NSArray<ImapSync*>* sharedServices = nil;
     return emailCached;
 }
 
-#pragma xyzzy
+#pragma mark - Notify User of New Mail
 
 
--(void)notify:(Mail *)email ci:(ConversationIndex *)index conv:(Conversation*)conv
+-(void)_notifyUserOfNewMail:(Mail *)email ci:(ConversationIndex *)index conv:(Conversation*)conv
 {
-    if ( [UNUserNotificationCenter class] ) {
+    if ( [UNUserNotificationCenter class] ) {   // Exists only on iOS 10 plus
         
         NSString* alertText = [NSString stringWithFormat:@"%@%@",(email.hasAttachments?@"📎 ":@""), email.subject];
         
@@ -1905,7 +1924,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
             }
         }];
         
-    } else {
+    } else { // user older deprecated notification system
         
         NSString* alertText = [NSString stringWithFormat:@"%@\n%@%@",
                                email.sender.displayName, (email.hasAttachments?@"📎 ":@""), email.subject];
@@ -1935,7 +1954,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     return [NSMutableSet setWithArray:[[AppSettings getSingleton] cache]];
 }
 
--(void) _writeFolderStateMessageCount:(NSInteger)messageCount andFolder:(NSInteger)folderNum
+-(void) _writeFolderStateMessageCount:(NSUInteger)messageCount andFolder:(NSUInteger)folderNum
 {
     if ( self.user.isDeleted ) {
         DDLogInfo(@"User is Deleted, don't write folder message count.");
@@ -1946,7 +1965,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
     [sm updateMessageCount:messageCount forFolderNumber:folderNum andAccountNum:self.user.accountNum];
 }
 
--(void) _writeFolderStateLastEnded:(NSInteger)lastEIndex andFolder:(NSInteger)folderNum
+-(void) _writeFolderStateLastEnded:(NSUInteger)lastEIndex andFolder:(NSUInteger)folderNum
 {
     if ( self.user.isDeleted ) {
         DDLogInfo(@"User is Deleted, don't write folder state last ended.");

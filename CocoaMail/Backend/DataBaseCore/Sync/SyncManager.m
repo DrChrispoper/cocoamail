@@ -386,7 +386,7 @@ static SyncManager * singleton = nil;
 // MARK: - Get "Folder Path" state for Account Folder
 
 // NB: Returns nil on error
--(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(NSString *)retrieveFolderPathFromFolderState:(NSUInteger)folderNum accountNum:(NSInteger)accountNum
 {
     id valForKey = [self _folderStateValueForKey:kFolderStateFolderPathKey
                                         account:accountNum

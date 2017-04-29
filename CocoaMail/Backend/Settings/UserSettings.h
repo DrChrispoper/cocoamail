@@ -59,7 +59,7 @@
 -(NSInteger) numFolderWithFolder:(CCMFolderType)folder;     // Can return -1!
 -(NSInteger) inboxFolderNumber;
 
--(NSString*) folderDisplayNameForIndex:(NSInteger)folder;
+-(NSString*) folderDisplayNameForIndex:(NSUInteger)folder;
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder;
 
 -(NSString*) folderServerName:(NSUInteger)folder;
