@@ -565,12 +565,13 @@ didSignInForUser:(GIDGoogleUser*)user
     NSDictionary *userInfo = response.notification.request.content.userInfo;
 
     if ( [response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier] ) {
-        // App was opened from the notification interface
+        // App was opened from the notification interface'
+        DDLogInfo(@"Notification is opening Application, so display notification's email messaage.");
         
         [self _selectConversationForNotificationUserInfoDictionary:userInfo];
         self.notificationRequest = nil;
     }
-    else if ([response.actionIdentifier isEqualToString:@"DELETE_IDENTIFIER"]) {   // THIS is incorrect
+    else if ([response.actionIdentifier isEqualToString:@"DELETE_IDENTIFIER"]) {   // is this correcty?
         
         //  handle it
         DDLogInfo(@"Delete Cached Email");

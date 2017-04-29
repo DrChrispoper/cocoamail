@@ -478,7 +478,7 @@
     [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"lastAccountNum"]];
 }
 
-+(NSNumber*) lastFolderIndex
++(NSNumber*) lastFolderIndex  // returns nil if key not found
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSNumber* folderNum = [defaults objectForKey:[NSString stringWithFormat:@"lastFolder"]];
