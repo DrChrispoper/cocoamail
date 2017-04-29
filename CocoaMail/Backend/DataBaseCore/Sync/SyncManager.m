@@ -363,6 +363,7 @@ static SyncManager * singleton = nil;
 }
 
 // MARK: - Get "Last Ended" state for Account Folder
+// Can return -1
 
 -(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
@@ -384,6 +385,7 @@ static SyncManager * singleton = nil;
 
 // MARK: - Get "Folder Path" state for Account Folder
 
+// NB: Returns nil on error
 -(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
     id valForKey = [self _folderStateValueForKey:kFolderStateFolderPathKey
