@@ -18,7 +18,5 @@
 @property (strong, nonatomic) UILocalNotification* launchedNotification;        // Pre iOS 10.0
 @property (strong, nonatomic) UNNotificationRequest* notificationRequest;       // For iOS 10.0+
 
-@property (strong, nonatomic) NSNumber* bgFetchCount;   // unsigned long long count
-
 @end
 

@@ -29,6 +29,10 @@
 #import <UserNotifications/UserNotifications.h>
 #import <UserNotificationsUI/UserNotificationsUI.h>
 
+extern NSString *const CCMCategoryIdentifier;
+extern NSString *const CCMDeleteTriggerIdentifier;
+
+
 #import <CocoaLumberjack/CocoaLumberjack.h>
 
 #ifdef USING_INSTABUG
@@ -1858,6 +1862,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
         // escape % signs
         alertText = [alertText stringByReplacingOccurrencesOfString:@"%" withString:@"%%"];
         
+        NSString *dateText = [NSDateFormatter localizedStringFromDate:[NSDate date]
+                                                            dateStyle:NSDateFormatterShortStyle
+                                                            timeStyle:NSDateFormatterShortStyle];
+        
         UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
         DDAssert(center, @"The UNUserNotificationCenter must exist");
         
@@ -1872,8 +1880,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     
                     DDLogInfo(@"Notification Alerts are Enabled.");
                     
-                    content.title = @"CocoaMail"; //[NSString localizedUserNotificationStringForKey:@"NewMailNotifTitle" arguments:nil];
-                    content.subtitle = email.sender.displayName;
+                    content.title = email.sender.displayName;
+                    content.subtitle = dateText;
                     content.body  = alertText;
                 }
                 else {
@@ -1892,18 +1900,18 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 if ( settings.badgeSetting == UNNotificationSettingEnabled ) {
                     DDLogInfo(@"Notification Badge is Enabled.");
                     
-                    NSNumber *unreadMailCount = [[NSNumber alloc] initWithInteger:0];
+                    NSNumber *unreadMailCount = [[NSNumber alloc] initWithInteger:[UIApplication sharedApplication].applicationIconBadgeNumber];   // is this necessary?  Doesn't setting this App Property update the badge?
                     content.badge = unreadMailCount;
                 }
                 else {
                     DDLogInfo(@"Notification Badge is NOT Enabled.");
                 }
                 
-                content.categoryIdentifier = @"MAIL_CATEGORY";
+                content.categoryIdentifier = CCMCategoryIdentifier;
                 content.userInfo = @{ @"cIndexIndex"      : @(index.index),
                                       @"cIndexAccountNum" : @(index.user.accountNum) };
                 
-                UNTimeIntervalNotificationTrigger *trigger = nil;   // trigger the notification right away
+                UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:5 repeats:FALSE];   // allow 5 seconds between notifications
                 
                 UNNotificationRequest *notificationRequest = [UNNotificationRequest requestWithIdentifier:@"NewMessageNotification"
                                                                                                   content:content
@@ -1913,9 +1921,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
                          withCompletionHandler:^(NSError * _Nullable error) {
                              if ( error ) {
                                  // Report Error
-                                 DDLogError(@"Failed to add NUNotificationRequest, error = %@",error);
+                                 DDLogError(@"Failed to add UNNotificationRequest, error = %@",error);
                              } else {
-                                 DDLogInfo(@"Added NUNotifidationRequest.");
+                                 DDLogInfo(@"Added UNNotifidationRequest.");
                              }
                          }];
             }
@@ -1939,7 +1947,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         localNotification.timeZone = [NSTimeZone defaultTimeZone];
         localNotification.userInfo = @{ @"cIndexIndex"      : @(index.index),
                                         @"cIndexAccountNum" : @(index.user.accountNum) };
-        localNotification.category = @"MAIL_CATEGORY";
+        localNotification.category = CCMCategoryIdentifier;
         
         DDLogDebug(@"Index: %ld",(long)index.index);
         DDLogDebug(@"Conversation: %@",[conv firstMail].subject);

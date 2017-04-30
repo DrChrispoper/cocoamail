@@ -26,6 +26,10 @@
 #import <UserNotifications/UserNotifications.h>
 #import <UserNotificationsUI/UserNotificationsUI.h>
 
+NSString *const CCMCategoryIdentifier = @"com.cocoamail.newmail";
+NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
+
+
 
 //#define USING_XCODECOLORS        // Define this to use XCodeColors (no longer supported in XCode 8)
 
@@ -81,8 +85,6 @@
     DDLogInfo(@"Requesting MinimumBackgroundFetchInterval = %@ seconds.",@(numberOfSeconds));
     [application setMinimumBackgroundFetchInterval:numberOfSeconds];
     
-    self.bgFetchCount = [NSNumber numberWithUnsignedLongLong:0];
-    
     DBSession* dbSession = [[DBSession alloc] initWithAppKey:@"hqbpjnlap118jqh" appSecret:@"mhdjbn703ama4wf" root:kDBRootDropbox];
     [DBSession setSharedSession:dbSession];
     
@@ -94,53 +96,15 @@
     return shouldPerformAdditionalDelegateHandling;
 }
 
+
 -(void) _initNotifications
 {
     self.launchedNotification = nil;
     self.notificationRequest  = nil;
     
     if ( [UNUserNotificationCenter class] ) {   // If the class exists ...
-                                                // iOS version 10.0 and above
-        
-        DDLogInfo(@"iOS VERSION 10.0 OR HIGHER: using UNUserNotificationCenter.");
-        
-        UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-        
-        center.delegate = self;
-        
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wassign-enum"
-        UNAuthorizationOptions desiredSettings = (UNAuthorizationOptionAlert + UNAuthorizationOptionBadge + UNAuthorizationOptionSound);
-#pragma clang diagnostic pop
-        
-        [center requestAuthorizationWithOptions:desiredSettings
-                              completionHandler:^(BOOL granted, NSError * _Nullable error) {
-                                  // this block runs asynchronously in background
-                                  
-                                  // Enable or disable features based on authorization.
-                                  if (granted) {
-                                      // autorizations agreed
-                                      DDLogInfo(@"Authorization granted for User Notification Alert, Badge AND/OR Sound.");
-                                      
-                                  } else {
-                                      // An Error occurred
-                                      DDLogError(@"Error while authorizing Alert|Badge|Sound for User Notification, error=|%@|",error);
-                                  }
-                              }];
-        
-        UNNotificationAction *deleteMessageAction =
-        [UNNotificationAction actionWithIdentifier:@"DELETE_IDENTIFIER"
-                                             title:NSLocalizedString(@"quick-swipe.delete",@"Lock screen swipe")
-                                           options:UNNotificationActionOptionDestructive];
-        
-        UNNotificationCategory *newMessageCategory =
-        [UNNotificationCategory categoryWithIdentifier:@"MAIL_CATEGORY"
-                                               actions:@[deleteMessageAction]
-                                     intentIdentifiers:@[]
-                                               options:UNNotificationCategoryOptionNone];
-        
-        [center setNotificationCategories:[NSSet setWithObjects:newMessageCategory, nil]];
-        
+
+        [self _setupUNNotifications];
         
     } else {
         // For pre-iOS 10.0
@@ -357,13 +321,7 @@
 -(void) application:(UIApplication*)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
     // Here be Background Fetch
-    
-    // Increment fetch count
-    unsigned long long uLLCount = [self.bgFetchCount unsignedLongLongValue];
-    self.bgFetchCount = [NSNumber numberWithUnsignedLongLong:uLLCount + 1];
-    
-    DDLogInfo(@"Begin Background Fetch number %@.",self.bgFetchCount.stringValue);
-    
+        
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable ) {
         DDLogInfo(@"Cannot Background Fetch: Internet Unreachable");
         completionHandler(UIBackgroundFetchResultNoData);
@@ -410,7 +368,7 @@
 //
 - (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler {
     
-    if ([identifier isEqualToString:@"DELETE_IDENTIFIER"]) {
+    if ([identifier isEqualToString:CCMDeleteTriggerIdentifier]) {
         // handle it
         DDLogInfo(@"Delete Cached Email");
         
@@ -539,7 +497,56 @@ didSignInForUser:(GIDGoogleUser*)user
     completionHandler(UIBackgroundFetchResultNoData);
 }
 
-#pragma mark - UNUserNotificationCenterDelegate
+#pragma mark - Set Up UNNotificationCenter notifications (iOS 10.0 and above)
+
+- (void)_setupUNNotifications
+{
+    // iOS version 10.0 and above
+    
+    DDLogInfo(@"iOS VERSION 10.0 OR HIGHER: using UNUserNotificationCenter.");
+    
+    UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+    
+    center.delegate = self;
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wassign-enum"
+    UNAuthorizationOptions desiredSettings = (UNAuthorizationOptionAlert | UNAuthorizationOptionBadge | UNAuthorizationOptionSound);
+#pragma clang diagnostic pop
+    
+    // Request user authhorization
+    [center requestAuthorizationWithOptions:desiredSettings
+                          completionHandler:^(BOOL granted, NSError * _Nullable error) {
+                              // this block runs asynchronously in background
+                              
+                              // Enable or disable features based on authorization.
+                              if (granted) {
+                                  // autorizations agreed
+                                  DDLogInfo(@"Authorization granted for User Notification Alert, Badge AND/OR Sound.");
+                                  
+                              } else {
+                                  // An Error occurred
+                                  DDLogError(@"Error while authorizing Alert|Badge|Sound for User Notification, error=|%@|",error);
+                              }
+                          }];
+    
+    UNNotificationAction *deleteMessageAction =
+    [UNNotificationAction actionWithIdentifier:CCMDeleteTriggerIdentifier
+                                         title:NSLocalizedString(@"quick-swipe.delete",@"Lock screen swipe")
+                                       options:UNNotificationActionOptionDestructive];
+    
+    UNNotificationCategory *newMessageCategory =
+    [UNNotificationCategory categoryWithIdentifier:CCMCategoryIdentifier
+                                           actions:@[deleteMessageAction]
+                                 intentIdentifiers:@[]
+                                           options:UNNotificationCategoryOptionCustomDismissAction];
+    
+    [center setNotificationCategories:[NSSet setWithObjects:newMessageCategory, nil]];
+}
+
+#pragma mark - UNUserNotificationCenterDelegate (iOS 10.0 and above)
+
+
 
 // This method is called, in iOS 10.0 and above, when we are in the Foreground and a notification is received
 //
@@ -571,7 +578,7 @@ didSignInForUser:(GIDGoogleUser*)user
         [self _selectConversationForNotificationUserInfoDictionary:userInfo];
         self.notificationRequest = nil;
     }
-    else if ([response.actionIdentifier isEqualToString:@"DELETE_IDENTIFIER"]) {   // is this correcty?
+    else if ([response.actionIdentifier isEqualToString:CCMDeleteTriggerIdentifier]) {   // is this correcty?
         
         //  handle it
         DDLogInfo(@"Delete Cached Email");
@@ -589,12 +596,12 @@ didSignInForUser:(GIDGoogleUser*)user
 }
 
 
-#pragma mark - Notifications
+#pragma mark - Set Up pre-iOS 10.0 style notifications
 
 - (UIMutableUserNotificationAction *)createAction {
     
     UIMutableUserNotificationAction *acceptAction = [[UIMutableUserNotificationAction alloc] init];
-    acceptAction.identifier = @"DELETE_IDENTIFIER";
+    acceptAction.identifier = CCMDeleteTriggerIdentifier;
     acceptAction.title = NSLocalizedString(@"quick-swipe.delete",@"Lock screeen swipe");
     
     // Given seconds, not minutes, to run in the background
@@ -613,7 +620,7 @@ didSignInForUser:(GIDGoogleUser*)user
     
     UIMutableUserNotificationCategory *mailCategory = [[UIMutableUserNotificationCategory alloc] init];
     
-    mailCategory.identifier = @"MAIL_CATEGORY";
+    mailCategory.identifier = CCMCategoryIdentifier;
     
     // You can define up to 4 actions in the 'default' context
     // On the lock screen, only the first two will be shown

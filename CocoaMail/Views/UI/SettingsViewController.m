@@ -46,10 +46,8 @@
     
     AppDelegate *appdelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     DDAssert(appdelegate, @"App Delegate must not be nil");
-    NSString *bgFetchCnt = appdelegate.bgFetchCount.stringValue;
-    DDAssert(bgFetchCnt, @"Background Fetch Count string pointer must not be nil.");
     
-    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"v%@ (%@) bf=%@",version,build,bgFetchCnt]; // TEMP
+    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ (%@ b%@)",title,version,build]; // TEMP
     title = [NSString stringWithString:titleWithVersionAndBuild]; // TEMP
 #endif
     
