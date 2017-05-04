@@ -44,7 +44,7 @@ PODS:
   - GTMSessionFetcher/Core (1.1.9)
   - GTMSessionFetcher/Full (1.1.9):
     - GTMSessionFetcher/Core (= 1.1.9)
-  - Instabug (7.2.1)
+  - Instabug (7.2.4)
   - Instabug-CocoaLumberjack (1.0.2):
     - CocoaLumberjack
     - Instabug (>= 6.2)
@@ -122,7 +122,7 @@ SPEC CHECKSUMS:
   GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
   GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
   GTMSessionFetcher: 5c046c76a1f859bc9c187e918f18e4fc7bb57b5e
-  Instabug: a8ef041c0278b798c9f03b4a7d8839aad07a0ac3
+  Instabug: 2bb20a8ed54b3e0c493f456fa8c2ce2aa83e2602
   Instabug-CocoaLumberjack: 569556b9d3891147021fa8dbaa7fbfbf8c9d3e98
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
