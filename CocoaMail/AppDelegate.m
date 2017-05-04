@@ -559,8 +559,14 @@ didSignInForUser:(GIDGoogleUser*)user
         self.notificationRequest = notification.request;
     }
     
+    // TODO: Can we request all 3 of these without checking that the user has authorized them?
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wassign-enum"
+    UNNotificationPresentationOptions presentationOptions = UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge;
+#pragma clang diagnostic pop
+    
     if ( completionHandler ) {
-        completionHandler(UNNotificationPresentationOptionNone);    // we are in the FG, don't show alert.
+        completionHandler(presentationOptions);
     }
 }
 
