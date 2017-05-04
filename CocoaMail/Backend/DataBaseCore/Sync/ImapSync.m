@@ -1883,6 +1883,9 @@ static NSArray<ImapSync*>* sharedServices = nil;
                     content.title = email.sender.displayName;
                     content.subtitle = dateText;
                     content.body  = alertText;
+                    
+                    // group notifications by mail host
+                    content.threadIdentifier = self.imapSession.hostname;
                 }
                 else {
                     DDLogInfo(@"Notification Alerts are NOT Enabled.");
