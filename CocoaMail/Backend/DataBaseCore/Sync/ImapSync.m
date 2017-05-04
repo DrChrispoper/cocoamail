@@ -1345,7 +1345,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
         
         DDLogInfo(@"Current Folder %li is deleted locally",(long)currentFolder);
         
-        CCMFolderType folderHandle = [self.user typeOfFolder:currentFolder];
+        CCMFolderType folderHandle = [self.user typeOfFolder:(NSUInteger)currentFolder];
         
         BOOL currentFolderIsAnImportantFolder = (folderHandle.type != FolderTypeUser);
         
