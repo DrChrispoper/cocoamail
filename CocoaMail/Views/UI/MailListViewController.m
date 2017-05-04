@@ -1190,11 +1190,23 @@
 #warning - are we on main queue?
     [localTable beginUpdates];
     
+    NSInteger sectionCount = [self.table numberOfSections];
+    DDLogInfo(@"table has %@ sections.",@(sectionCount));
+    IBGLog(@"table has %@ sections.",@(sectionCount));
+    for ( NSInteger idx = 0; idx < sectionCount; idx++) {
+        NSInteger rowCount = [self.table numberOfRowsInSection:idx];
+        DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+        IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+    }
+    
+    
     DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+    IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
     [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
 
     if (conversationSectionIndeciesToDelete.count > 0) {
         DDLogInfo(@"Delete Sections (days): %@",conversationRowIndeciesToDelete.description);
+        IBGLog(@"Delete Sections (days): %@",conversationRowIndeciesToDelete.description);
         [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
     }
     
