@@ -39,17 +39,15 @@
     
     NSString* title = NSLocalizedString(@"settings-view.title", @"Settings");
     
-#ifdef BETA_ONLY
     // TODO: Version/Build numbers put after title of settings view.
-    NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]; // TEMP
+//    NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]; // TEMP
     NSString * build = [[NSBundle mainBundle] objectForInfoDictionaryKey: (NSString *)kCFBundleVersionKey]; // TEMP
     
-    AppDelegate *appdelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-    DDAssert(appdelegate, @"App Delegate must not be nil");
+//    AppDelegate *appdelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+//    DDAssert(appdelegate, @"App Delegate must not be nil");
     
-    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ (%@ b%@)",title,version,build]; // TEMP
+    NSString *titleWithVersionAndBuild = [NSString stringWithFormat:@"%@ (b%@)",title,build]; // TEMP
     title = [NSString stringWithString:titleWithVersionAndBuild]; // TEMP
-#endif
     
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:title];
     
