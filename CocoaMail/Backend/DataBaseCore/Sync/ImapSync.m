@@ -1916,7 +1916,7 @@ static NSArray<ImapSync*>* sharedServices = nil;
                 
                 UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:5 repeats:FALSE];   // allow 5 seconds between notifications
                 
-                UNNotificationRequest *notificationRequest = [UNNotificationRequest requestWithIdentifier:@"NewMessageNotification"
+                UNNotificationRequest *notificationRequest = [UNNotificationRequest requestWithIdentifier:email.msgID
                                                                                                   content:content
                                                                                                   trigger:trigger];
                 
