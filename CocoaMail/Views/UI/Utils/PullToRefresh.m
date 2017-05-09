@@ -85,6 +85,8 @@
 {
     if (scrollView.contentOffset.y < (-scrollView.contentInset.top-60)) {
         
+        DDLogInfo(@"START OF PULL-TO-REFRESH");
+        
         [self.pullToRefresh startAnimating];
         
         [scrollView setContentOffset:scrollView.contentOffset animated:NO];

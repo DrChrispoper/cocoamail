@@ -171,16 +171,18 @@
     if (self.user.isAll) {
         DDLogInfo(@"User.isAll = TRUE");
         
+        // Connect all non-All Accounts
         NSArray<Account*>* allAccounts = [[Accounts sharedInstance] accounts];
         for (NSUInteger acntIndex = 0; acntIndex < allAccounts.count;acntIndex++) {
             Account *acnt = allAccounts[acntIndex];
             
-            DDLogInfo(@"Evaluate Accounts[%ld]:",(long)acntIndex);
+            DDLogInfo(@"Evaluate Account[%ld]:",(long)acntIndex);
             
             if (!acnt.user.isAll && !acnt.isConnected) {
                 
                 DDLogInfo(@"Not All Account AND Is Not Connected.");
                 
+                // note: returned RACSignal is ignored.
                 [[ImapSync doLogin:acnt.user] subscribeError:^(NSError *error) {
                     DDLogError(@"Account[%ld] connection failed, error = %@",(long)acntIndex,error);
                 } completed:^{
@@ -197,6 +199,9 @@
     else {
         DDLogInfo(@"User.isAll == FALSE; CALLING doLogin:%@",self.user.username);
         
+        // TODO: Same as what is called in the loop above, but above does not report errors.
+        
+        // note: returned RACSignal is ignored.
         [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
             
             DDLogError(@"doLogin:\"%@\" failed with error = %@",self.user.username,error);

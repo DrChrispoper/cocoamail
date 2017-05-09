@@ -96,10 +96,10 @@ static NSArray<ImapSync*>* sharedServices = nil;
     
         // If we already have one or more shared services, then return them
         if (sharedServices && sharedServices.count > 0) {
-            DDLogInfo(@"RETURNING existing sharedServices[0..%@]",@(sharedServices.count));
+            DDLogDebug(@"RETURNING existing sharedServices[0..%@]",@(sharedServices.count));
             return sharedServices;
         }
-                
+        
         // Create new sharedServices, one for each user.
         
         NSMutableArray* newSharedServices = [[NSMutableArray alloc]init];
@@ -648,6 +648,8 @@ static NSArray<ImapSync*>* sharedServices = nil;
 -(void) _checkForCachedActions
 {
     NSMutableArray* cachedActions = [CachedAction getActionsForAccount:self.user.accountNum];
+    
+    DDLogInfo(@"Doing %@ cached actions.",@(cachedActions.count));
     
     for (CachedAction* cachedAction in cachedActions) {
         [cachedAction doAction];
