@@ -154,7 +154,7 @@ static SyncManager * singleton = nil;
     return [self emailForSignal:racSignal];
 }
 
--(RACSignal*) refreshImportantFolder:(NSInteger)baseFolder user:(UserSettings*)user
+-(RACSignal*) refreshImportantFolder:(BaseFolderType)baseFolder user:(UserSettings*)user
 {
     DDLogInfo(@"ENTERED, Sync IMPORTANT Folder with IMAP Server. folder=%@ forUser=%@",
               [user.linkedAccount baseFolderType:baseFolder],user.username);
@@ -162,7 +162,7 @@ static SyncManager * singleton = nil;
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
-    NSUInteger folderIndex = [user numFolderWithFolder:FolderTypeWith(baseFolder, 0)];
+    NSInteger folderIndex = [user numFolderWithFolder:FolderTypeWith(baseFolder, 0)];
     
     RACSignal *racSignal = [imapSyncService runFolder:folderIndex
                                             fromStart:YES
@@ -266,7 +266,7 @@ static SyncManager * singleton = nil;
     // Account index is 0 based (or 999)
     DDAssert(accountNum<=accountCount || accountNum==999 ,@"Account Number must be <= %ld OR equal to 999",(long)accountCount);
     
-    NSDictionary *accountStates = self.syncStates[accountNum];
+    NSDictionary *accountStates = self.syncStates[(NSUInteger)accountNum];
     
     DDAssert(accountStates,@"Account States must exist.");
     
@@ -287,7 +287,7 @@ static SyncManager * singleton = nil;
         return nil;
     }
     
-    NSMutableDictionary *folderStates = accountFolderStates[folderNum];
+    NSMutableDictionary *folderStates = accountFolderStates[(NSUInteger)folderNum];
     
     return folderStates;
     
@@ -317,7 +317,7 @@ static SyncManager * singleton = nil;
 
 // MARK: - SETTERS
 
--(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum
+-(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum
 {
     NSMutableDictionary* syncState = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
     
@@ -327,7 +327,7 @@ static SyncManager * singleton = nil;
     
     [self _persistState:syncState forFolderNum:folderNum accountNum:accountNum];
 }
--(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum
+-(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum
 {
     NSMutableDictionary* syncState = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
     

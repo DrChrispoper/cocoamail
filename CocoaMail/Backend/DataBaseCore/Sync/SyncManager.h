@@ -12,6 +12,7 @@
 //
 //  However, SyncManager itself has none of the syncing logic.
 
+#import "CCMConstants.h"
 #import <MailCore/MailCore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
@@ -55,7 +56,7 @@
 //-(RACSignal*) refreshActiveFolder;
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user;
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
--(RACSignal*) refreshImportantFolder:(NSInteger)folder user:(UserSettings*)user;
+-(RACSignal*) refreshImportantFolder:(BaseFolderType)baseFolderType user:(UserSettings*)user;
 -(RACSignal*) syncInboxFoldersBackground;
 
 -(RACSignal*) searchPerson:(Person*)person user:(UserSettings*)user;
@@ -75,8 +76,8 @@
 
 // MARK: - setters
 -(void)markFolderDeleted:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
--(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum;
--(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSUInteger)accountNum;
+-(void)updateMessageCount:(NSInteger)messageCount forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum;
+-(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum;
 
 
 

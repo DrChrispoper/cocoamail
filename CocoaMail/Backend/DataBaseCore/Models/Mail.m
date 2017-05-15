@@ -764,6 +764,7 @@ static NSDateFormatter * s_df_hour = nil;
 -(UidEntry*) uidEWithFolder:(NSInteger)folderNum
 {
     if (folderNum == -1) {
+        DDLogInfo(@"folderNum equals -1, changing to 0.");
         folderNum = 0;
     }
 
@@ -771,8 +772,9 @@ static NSDateFormatter * s_df_hour = nil;
         if (uidE.folder == folderNum) {
             return uidE;
         }
+        
+        DDLogVerbose(@"UID Entry Folder (%@) NOT EQUAL TO Folder (%@)",@(uidE.folder),@(folderNum));
     }
-    
     return nil;
 }
 

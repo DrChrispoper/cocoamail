@@ -393,12 +393,12 @@
 
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder
 {
-    return [self folderDisplayNameForIndex:[self numFolderWithFolder:folder]];
+    return [self folderDisplayNameForIndex:(NSUInteger)[self numFolderWithFolder:folder]];
 }
 
--(NSString*) folderServerName:(NSUInteger)folder
+-(NSString*) folderServerName:(NSInteger)folder
 {
-    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:(NSInteger)folder
+    NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:folder
                                                        accountNum:(NSInteger)_accountNum];
     return folderPath;
 }
@@ -428,7 +428,7 @@
     
 //    DDLogError(@"Folder for Type=%@ and Index=%@ COULD NOT BE FOUND",@(folder.type),@(folder.idx));
     
-    DDAssert(folderIndex != -1, @"Folder Index must not be -1!");
+//    DDAssert(folderIndex != -1, @"Folder Index must not be -1!");
     
     return folderIndex;      // NB: CAN RETURN -1
 }

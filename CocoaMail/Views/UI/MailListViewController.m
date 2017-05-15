@@ -167,9 +167,11 @@
 
 -(void) _updateViewTitle
 {
-    UINavigationItem* item = self.navBar.items.lastObject;
+    WhiteBlurNavBar *navBar = self.navBar;
+    
+    UINavigationItem* item = navBar.items.lastObject;
     [self _applyTrueTitleViewTo:item];
-    [self.navBar setNeedsDisplay];
+    [navBar setNeedsDisplay];
 }
 
 //-(NSInteger)_unreadMailCount
@@ -290,7 +292,7 @@
     self.table = table;
 
     UIView* headerView = [[UIView alloc] init];
-    headerView.backgroundColor = self.table.backgroundColor;
+    headerView.backgroundColor = table.backgroundColor;
     
     UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
@@ -300,13 +302,13 @@
     
     [headerView setHidden:YES];
     
-    self.table.tableFooterView = headerView;
+    table.tableFooterView = headerView;
     
     // If NOT displaying only this one person's emails ...
     if (!self.showOnlyThisPerson) {
         
         self.refreshC = [[UIRefreshControl alloc] init];
-        [self.table addSubview:self.refreshC];
+        [table addSubview:self.refreshC];
         [self.refreshC addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
         //[self addPullToRefreshWithDelta:0];
         //table.emptyDataSetSource = self;
@@ -319,7 +321,8 @@
 }
 
 - (void)refreshTable {
-    DDLogInfo(@"ENTERED");
+    
+    DDLogInfo(@"START BACKGROUND REFRESH TABLE");
 
     [[Accounts sharedInstance].currentAccount refreshCurrentFolder];
     [self _updateViewTitle];
@@ -441,7 +444,7 @@
         [self.conversationsPerAccount appendEmptyAccount]; // TODO: why one?
     }
     
-    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+    [[Accounts sharedInstance] currentAccount].mailListDelegate = self;
     
     [self serverSearchDone:YES];
 
@@ -471,7 +474,7 @@
     
     [localTable setContentOffset:localTable.contentOffset animated:NO];
     
-    //[[Accounts sharedInstance] currentAccount].mailListSubscriber = nil;
+    //[[Accounts sharedInstance] currentAccount].mailListDelegate = nil;
 
 //    if (!self.showOnlyThisPerson) {
         //self.table.emptyDataSetSource = nil;
@@ -512,9 +515,9 @@
 {
     DDLogInfo(@"ENTERED, folder index = %@",@(folder.idx));
     
-    account.mailListSubscriber = self;
+    account.mailListDelegate = self;
     
-    NSArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
+    NSMutableArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
     
     DDLogInfo(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
     
@@ -641,15 +644,17 @@
     }];
 }
 
--(void) updateDays:(NSArray*)days
+// Update Day Sections
+-(void) updateDays:(NSArray<NSString *>*)days
 {
     DDLogInfo(@"NSArray days; count = %@; elements = %@.",@(days.count),days.description);
     
     if (!days || days.count == 0){
+        DDLogWarn(@"Cannot update with zero days");
         return;
     }
     
-    NSMutableIndexSet* sections = [[NSMutableIndexSet alloc] init];
+    NSMutableIndexSet* daySections = [[NSMutableIndexSet alloc] init];
     
     // Create an index set "sections" containing the indexes off all the
     // dates in our Conversations By Day structure (Days.Conversations.Mails)
@@ -663,24 +668,25 @@
         for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];
             if ([dayDate compare:tmpDay] == NSOrderedSame){
-                [sections addIndex:dayIndex];
+                [daySections addIndex:dayIndex];
             }
         }
     }
     
-    DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(sections.count));
+    DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(daySections.count));
     
     UITableView* strongTable = self.table;
     
+    // Update Mail List "Day Section Headers"
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        DDLogInfo(@"START: Update table via block on mainQueue");
+        DDLogInfo(@"START: Update table day sections via block on mainQueue");
         
         [strongTable beginUpdates];
-        [strongTable reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
+        [strongTable reloadSections:daySections withRowAnimation:UITableViewRowAnimationNone];
         [strongTable endUpdates];
         
-        DDLogInfo(@"END: Update table via block on mainQueue");
+        DDLogInfo(@"END: Update table table day setions via block on mainQueue");
 
     }];
 
@@ -1020,7 +1026,7 @@
     //}];
 }
 
--(NSMutableArray*) _filterResultsForPerson:(NSArray*)convs
+-(NSMutableArray*) _filterResultsForPerson:(NSArray<ConversationIndex*>*)convs
 {
     NSMutableArray* current = [convs mutableCopy];
     
@@ -1717,7 +1723,7 @@
 //        }
         // TODO find a less expensive way to do that
         
-        NSMutableArray* dels = [[NSMutableArray alloc] init];
+        NSMutableArray<ConversationIndex*>* dels = [[NSMutableArray alloc] init];
         
         for (ConversationIndex* conversationIndex in res) {
             Account* ac = [[Accounts sharedInstance] account:conversationIndex.user.accountIndex];
@@ -1875,11 +1881,13 @@
     
     if (self.serverSearchDone) {
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            DDLogInfo(@"End RefreshControl refresh");
             [self.refreshC endRefreshing];
         }];
     }
     else {
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            DDLogInfo(@"Begin RefreshControl refrest");
             [self.refreshC beginRefreshing];
         }];
     }

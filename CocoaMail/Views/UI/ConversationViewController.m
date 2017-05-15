@@ -427,12 +427,12 @@
 
 -(NSInteger) numberOfPreviewItemsInPreviewController:(QLPreviewController*)previewController
 {
-    return _activityItems.count;
+    return (NSInteger)_activityItems.count;
 }
 
 -(id) previewController:(QLPreviewController*)previewController previewItemAtIndex:(NSInteger)index
 {
-    return _activityItems[index];
+    return _activityItems[(NSUInteger)index];
 }
 
 -(void) previewControllerWillDismiss:(QLPreviewController*)controller

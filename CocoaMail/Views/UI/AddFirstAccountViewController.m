@@ -810,7 +810,7 @@
     
     [ViewController refreshCocoaButton];
     
-    account.mailListSubscriber = self;
+    account.mailListDelegate = self;
     
     [account refreshCurrentFolder];
 }
@@ -875,7 +875,7 @@
     if (done) {
         [[PKHUD sharedHUD] hideWithAnimated:NO completion:nil];
 
-        self.user.linkedAccount.mailListSubscriber = nil;
+        self.user.linkedAccount.mailListDelegate = nil;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:kACCOUNT_CHANGED_NOTIFICATION object:nil];
@@ -883,7 +883,7 @@
 }
 
 -(void) localSearchDone:(BOOL)done {}
--(void) removeConversationList:(NSArray*)convs {}
+-(void) removeConversationList:(NSArray<ConversationIndex*>*)convs {}
 -(void) reFetch:(BOOL)forceRefresh {}
 -(BOOL) isPresentingDrafts { return NO; }
 

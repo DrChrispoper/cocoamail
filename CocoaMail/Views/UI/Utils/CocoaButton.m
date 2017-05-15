@@ -130,10 +130,10 @@
 
 -(void) updateColor
 {
-    Account* cac = [[Accounts sharedInstance] currentAccount];
-    self.backView.backgroundColor = cac.user.color;
-    self.nameView.text = cac.user.initials;
-    self.backViewAnim.backgroundColor = cac.user.color;
+    Account* currentAccount = [[Accounts sharedInstance] currentAccount];
+    self.backView.backgroundColor = currentAccount.user.color;
+    self.nameView.text = currentAccount.user.initials;
+    self.backViewAnim.backgroundColor = currentAccount.user.color;
 }
 
 -(void) enterLevel:(NSInteger)level
@@ -544,7 +544,7 @@
                   ];
     }
     else {
-        DDLogInfo(@"COCOABUTTON : 3 ou 4 buttons only !!!");
+        DDLogInfo(@"COCOABUTTON : 3 or 4 buttons only !!!");
         return;
     }
     
@@ -557,7 +557,7 @@
                          CGFloat scale = 290.f / 44.f;
                          self.backView.transform = CGAffineTransformMakeScale(scale, scale);
                          
-                         NSInteger idx = 0;
+                         NSUInteger idx = 0;
                          
                          for (UIButton* b in buttons) {
                              b.alpha = 1;

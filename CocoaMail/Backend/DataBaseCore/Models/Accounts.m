@@ -125,22 +125,23 @@
 
 -(void) runLoadData
 {
-//    ddLogLevel = DDLogLevelDebug;
-    
-    DDLogInfo(@"ENTERED");
-    
     // If this is NOT the All Mails user account ..
     if (!self.currentAccount.user.isAll) {
 
-        DDLogDebug(@"\tNOT All Mail Messages");
+        DDLogDebug(@"User Account is not the All Mails one.");
+        
+        id<MailListDelegate> delegate = self.currentAccount.mailListDelegate;  // strong hold
+
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             
-            DDLogDebug(@"STARTING BLOCK on mainQueue.");
+            DDLogDebug(@"New Block on mainQueue.");
             
             //NSInteger refBatch = 5;
             //NSInteger __block batch = refBatch;
-            [self.currentAccount.mailListSubscriber localSearchDone:NO];
+            [self.currentAccount.mailListDelegate localSearchDone:NO];
+            
+            DDLogInfo(@"Search DB for Mail Messages in current account.");
 
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
@@ -150,13 +151,13 @@
                  [self _sortEmail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
-                    //[self.currentAccount.mailListSubscriber reFetch:YES];
+                    //[self.currentAccount.mailListDelegate reFetch:YES];
                  //}
              } // end SearchRunner subscribeNext block
              completed:^{
-                 DDLogDebug(@"SearchRunner returned \"completed\", so alerting currentAccount's mailListSubscriber that the localSearchDone:YES and reFetch:YES");
-                 [self.currentAccount.mailListSubscriber localSearchDone:YES];
-                 [self.currentAccount.mailListSubscriber reFetch:YES];
+                 DDLogDebug(@"SearchRunner returned \"completed\", so alerting currentAccount's mailListDelegate that the localSearchDone:YES and reFetch:YES");
+                 [delegate localSearchDone:YES];
+                 [delegate reFetch:YES];
              }]; // end SearchRunner completed block
         }]; // end mainQueue block
     } // end All Mail

@@ -16,7 +16,7 @@ typedef NS_ENUM(NSUInteger, QuickSwipeType) {
     QuickSwipeMark
 };
 
-typedef NS_ENUM(NSUInteger, BaseFolderType) {
+typedef NS_ENUM(NSInteger, BaseFolderType) {
     FolderTypeInbox,
     FolderTypeFavoris,
     FolderTypeSent,
@@ -61,7 +61,7 @@ static inline CCMFolderType allFolderType()
 
 static inline NSUInteger encodeFolderTypeWith(CCMFolderType t)
 {
-    return (t.type * 4096) + t.idx;
+    return (t.type * 4096) + (NSUInteger)t.idx;
 }
 
 static inline NSNumber* numberWithFolderType(BaseFolderType t)

@@ -14,7 +14,7 @@
 #import "AttachmentsViewController.h"
 #import "CCMConversationsByDay.h"
 
-@protocol MailListDelegate;
+//@protocol MailListDelegate;
 @class ConversationIndex;
 
 @interface MailListViewController : InViewController <CocoaButtonDatasource>
@@ -24,7 +24,7 @@
 
 -(BOOL) istheSame:(MailListViewController*)other;
 -(void) reFetch:(BOOL)forceRefresh;
--(void) removeConversationList:(NSArray*)convs;
+-(void) removeConversationList:(NSArray<ConversationIndex*>*)convs;
 
 @property (nonatomic, weak) UITableView* table;
 @property (nonatomic, strong) CCMConversationsByDay *convByDay;
@@ -37,8 +37,8 @@
 
 -(void) localSearchDone:(BOOL)done;
 -(void) serverSearchDone:(BOOL)done;
--(void) removeConversationList:(NSArray*)convs;
--(void) updateDays:(NSArray*)days;
+-(void) removeConversationList:(NSArray<ConversationIndex*>*)convs;
+-(void) updateDays:(NSArray<NSString*>*)days;
 -(void) reFetch:(BOOL)forceRefresh;
 -(BOOL) isPresentingDrafts;
 -(void) insertConversationIndex:(ConversationIndex*)ci;

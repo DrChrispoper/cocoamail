@@ -191,24 +191,28 @@ static NSDateFormatter * s_df_hour = nil;
 // Return a Set of all the Folder Types of all the Mails in this Conversation
 -(NSMutableSet*) foldersType
 {
-    NSMutableSet* tempFodles = [[NSMutableSet alloc] init];
+    NSMutableSet* foldersOfConversationsMails = [[NSMutableSet alloc] init];
     
-    NSArray<Mail*>* tmp = [self.mails copy];  // copy in case self.mails changes while in this func?
+    NSArray<Mail*>* conversationMails = [self.mails copy];
     
     if (self.isDraft) {
-        [tempFodles addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
+        [foldersOfConversationsMails addObject:@(encodeFolderTypeWith(FolderTypeWith(FolderTypeDrafts, 0)))];
     }
-    else {
-        for (Mail* mail in tmp) {
+    else { // This conversation mail is not a draft
+        
+        for (Mail* mail in conversationMails) {
+            
             mail.uids = [UidEntry getUidEntriesWithMsgId:mail.msgID];
             
             for (UidEntry* uid in mail.uids) {
+                
                 CCMFolderType Fuser = [[AppSettings userWithNum:uid.accountNum] typeOfFolder:uid.folder];
-                [tempFodles addObject:@(encodeFolderTypeWith(Fuser))];
+                
+                [foldersOfConversationsMails addObject:@(encodeFolderTypeWith(Fuser))];
             }
         }
     }
-    return tempFodles;
+    return foldersOfConversationsMails;
 }
 
 @end

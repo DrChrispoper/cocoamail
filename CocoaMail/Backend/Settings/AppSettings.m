@@ -274,7 +274,7 @@
 }*/
 
 //numIndex:0 - 1 - 2 ...
-+(NSUInteger) indexForAccountNum:(NSInteger)accountNum
++(NSInteger) indexForAccountNum:(NSInteger)accountNum
 {
     NSUInteger index = 0;
     

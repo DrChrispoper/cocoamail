@@ -21,19 +21,19 @@
 
 @interface Account : NSObject
 
--(NSUInteger) idx;               // Account index
+-(NSInteger) idx;               // Account index
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
 
 @property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
-@property (nonatomic) NSUInteger currentFolderIdx;
+@property (nonatomic) NSInteger currentFolderIdx;
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;
 -(void) setCurrentFolder:(CCMFolderType)folder;
 -(void) refreshCurrentFolder;
 @property (nonatomic, strong) Person* person;
 
-@property (nonatomic, weak) id<MailListDelegate> mailListSubscriber;
+@property (nonatomic, weak) id<MailListDelegate> mailListDelegate;
 
 +(instancetype) emptyAccount;
 

@@ -85,7 +85,7 @@
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
     
-    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+    [[Accounts sharedInstance] currentAccount].mailListDelegate = self;
 
     table.allowsSelection = false;
     //table.rowHeight = 90;
@@ -152,13 +152,15 @@
     if (isActiveAccountAll) {
         for (NSUInteger idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
-            [alls addObjectsFromArray:[a getConversationsForFolder:allFolderType()]];
+            NSMutableArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
+            [alls addObjectsFromArray:ci];
             
         }
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
-        [alls addObjectsFromArray:[a getConversationsForFolder:allFolderType()]];
+        NSMutableArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
+        [alls addObjectsFromArray:ci];
     }
     
     self.data = [alls mutableCopy];
@@ -210,7 +212,7 @@
 {
     [super viewDidAppear:animated];
     
-    [[Accounts sharedInstance] currentAccount].mailListSubscriber = self;
+    [[Accounts sharedInstance] currentAccount].mailListDelegate = self;
     
     // restore the searchController's active state
     

@@ -11,6 +11,7 @@
 
 @interface Conversation : NSObject
 
+
 @property (nonatomic, strong, readonly) NSMutableArray<Mail *>* mails;
 @property (nonatomic) BOOL isDraft;
 
