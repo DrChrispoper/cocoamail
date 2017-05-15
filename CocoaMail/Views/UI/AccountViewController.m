@@ -307,15 +307,24 @@
 
 -(NSIndexPath*) tableView:(UITableView*)tableView willSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    NSDictionary* sectionInfos = self.settings[indexPath.section];
+    NSUInteger section = (NSUInteger)indexPath.section;
+    NSUInteger row     = (NSUInteger)indexPath.row;
+    
+    NSDictionary* sectionInfos = self.settings[section];
+    DDAssert(sectionInfos, @"sectionInfos dictionary must exist.");
+    
     NSArray* content = sectionInfos[CONTENT];
-    NSDictionary* infoCell = content[indexPath.row];
+    DDAssert(content, @"content array must exist.");
+    
+    NSDictionary* infoCell = content[row];
+    DDAssert(infoCell, @"infoCell dictionary must exist.");
     
     NSString* directAction = infoCell[DACTION];
+    DDAssert(directAction, @"directAction string must exist.");
     
-    if (directAction.length>0) {
+    if ( directAction && directAction.length>0 ) {
         
-        NSArray* reload = nil;
+        NSArray* reload = nil;     // NOT USED
         
 //        if ([directAction isEqualToString:@"BADGE_COUNT"]) {
 //        }
@@ -349,15 +358,19 @@
             }]; // end account deletion completed block
             
         } // end directAction == @"DELETE"
+        else {
+            DDLogError(@"Unknown directAction == \"%@\"",directAction);
+        }
         
-        if (reload.count > 0) {
+        if (reload && reload.count > 0) {   // This will never happen
             [tableView reloadRowsAtIndexPaths:reload withRowAnimation:UITableViewRowAnimationNone];
         }
         
-        return nil;
+        return nil;     // returning nil disallows cell selection
     }
     
     NSString* action = infoCell[ACTION];
+    DDAssert(action, @"action string must exist.");
     
     if (action.length>0) {
         
@@ -369,10 +382,10 @@
             [[NSNotificationCenter defaultCenter] postNotificationName:action object:nil userInfo:nil];
         }
         
-        return nil;
+        return nil;   // returning nil disallows cell selection
     }
     
-    return nil;
+    return nil;   // returning nil disallows cell selection
 }
 
 -(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath

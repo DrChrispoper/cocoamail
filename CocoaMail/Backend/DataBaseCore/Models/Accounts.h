@@ -39,7 +39,7 @@
 -(Account*) currentAccount;
 -(NSArray<Account*>*) accounts;
 -(Account*) account:(NSUInteger)accountIndex;
--(NSInteger) accountsCount;
+-(NSUInteger) accountsCount;
 -(void) addAccount:(Account*)account;
 -(void) deleteAccount:(Account*)account completed:(void (^)(void))completedBlock;
 -(Conversation*) conversationForCI:(ConversationIndex*)conversationIndex;

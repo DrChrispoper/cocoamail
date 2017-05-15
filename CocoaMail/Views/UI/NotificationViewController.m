@@ -71,7 +71,9 @@
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [Accounts sharedInstance].accountsCount - 1;
+    NSInteger numberOfRowsInSection = (NSInteger)[Accounts sharedInstance].accountsCount;
+    
+    return ( numberOfRowsInSection - 1 );   // One "account" is all account, so subtract one
 }
 
 -(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath

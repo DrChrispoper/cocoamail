@@ -98,7 +98,9 @@
     
     // Get the folder name
     if (folder.type == FolderTypeUser) {
-        name = [[Accounts sharedInstance] currentAccount].userFolders[folder.idx][0];
+        NSUInteger folderIndex = (NSUInteger)folder.idx;
+        
+        name = [[Accounts sharedInstance] currentAccount].userFolders[folderIndex][0];
     }
     else {
         name = [[[Accounts sharedInstance] currentAccount] systemFolderNames][folder.type];
@@ -194,7 +196,7 @@
     
     // conversationsPerAccount is an NSMutableAreray of index sets, one for each account
     //      conversationsPerAccount[account] -> NSMutableIndexSet
-    NSInteger numberAccounts = [Accounts sharedInstance].accountsCount;
+    NSUInteger numberAccounts = [Accounts sharedInstance].accountsCount;
     self.conversationsPerAccount = [[CCMConversationsPerAccount alloc] initWithAccountCapacity:numberAccounts];
     
     // Set of conversation indecies
@@ -232,6 +234,8 @@
                                                                        screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     
+    @synchronized (table) {
+        
     
     CGFloat offsetToUse = 44.f;
     
@@ -318,6 +322,7 @@
     if ( [self.convByDay isEmpty] == 0) {
         [self setupData];
     }
+    } // end synchronized table
 }
 
 - (void)refreshTable {
@@ -421,6 +426,8 @@
 
 -(void) cleanBeforeGoingBack
 {
+    @synchronized (self.table) {
+        
     UITableView* localTable = self.table;
 
     //self.pageIndex = 1;
@@ -431,6 +438,8 @@
     localTable.delegate = nil;
     localTable.dataSource = nil;
     [[SearchRunner getSingleton] cancel];
+        
+    } // end synchronized
 }
 
 -(void) viewWillAppear:(BOOL)animated
@@ -468,11 +477,15 @@
 
 -(void) viewWillDisappear:(BOOL)animated
 {
+    @synchronized (self.table) {
+        
     UITableView* localTable = self.table;
     
     [super viewWillDisappear:animated];
     
     [localTable setContentOffset:localTable.contentOffset animated:NO];
+        
+    }  // end synchronized
     
     //[[Accounts sharedInstance] currentAccount].mailListDelegate = nil;
 
@@ -551,12 +564,12 @@
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
-        NSMutableArray* ips = [[NSMutableArray alloc]init];
+        NSMutableArray<NSIndexPath*>* ips = [[NSMutableArray alloc]init];
         
         for (ConversationIndex* convIndex in convs) {
             
-            if ([self.conversationsPerAccount containsConversationIndex:(NSInteger)convIndex.index
-                                                              inAccount:(NSInteger)convIndex.user.accountIndex]) {
+            if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)convIndex.index
+                                                              inAccount:(NSUInteger)convIndex.user.accountIndex]) {
                 
                 DDLogDebug(@"ConversationIndex:%ld in Account:%ld",
                           (long)convIndex.index,
@@ -675,7 +688,8 @@
     
     DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(daySections.count));
     
-    UITableView* strongTable = self.table;
+    UITableView* strongTable = self.table\
+    µ≤cXs   34`2;
     
     // Update Mail List "Day Section Headers"
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -735,8 +749,8 @@
         }
     
         // If this view already contains this conversation ...
-        if ([self.conversationsPerAccount containsConversationIndex:ciToInsert.index
-                                                          inAccount:(NSInteger)ciToInsert.user.accountIndex]) {
+        if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)ciToInsert.index
+                                                          inAccount:(NSUInteger)ciToInsert.user.accountIndex]) {
             return;
         }
         
@@ -765,7 +779,8 @@
             }
         }
     
-        [self.conversationsPerAccount addConversationIndex:ciToInsert.index forAccount:(NSInteger)ciToInsert.user.accountIndex];
+        [self.conversationsPerAccount addConversationIndex:(NSUInteger)ciToInsert.index
+                                                forAccount:ciToInsert.user.accountIndex];
                 
         BOOL added = NO;
         
@@ -985,8 +1000,8 @@
     
     for (ConversationIndex* conversationIndex in folderConvs) {
         
-        if ([self.conversationsPerAccount containsConversationIndex:conversationIndex.index
-                                                          inAccount:(NSInteger)conversationIndex.user.accountIndex]) {
+        if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)conversationIndex.index
+                                                          inAccount:conversationIndex.user.accountIndex]) {
             continue;
         }
         
@@ -1012,8 +1027,8 @@
             }
         }
         
-        [self.conversationsPerAccount addConversationIndex:conversationIndex.index
-                                                forAccount:(NSInteger)conversationIndex.user.accountIndex];
+        [self.conversationsPerAccount addConversationIndex:(NSUInteger)conversationIndex.index
+                                                forAccount:conversationIndex.user.accountIndex];
         
         [self.convByDay InsertConversation:conversationIndex];
     }
@@ -1155,8 +1170,8 @@
         DDLogInfo(@"Conversation in acntNum %@ indexNum %@ is in: dayIndex %@ conIndex %@.",
                   @(cIndex.index),@(cIndex.user.accountIndex),@(dayIndex),@(conIndex));
         
-        if ([self.conversationsPerAccount containsConversationIndex:(NSInteger)cIndex.index
-                                                          inAccount:(NSInteger)cIndex.user.accountIndex]) {
+        if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)cIndex.index
+                                                          inAccount:cIndex.user.accountIndex]) {
             
             NSUInteger dayCount = [self.convByDay dayCount];
             NSUInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
@@ -1186,10 +1201,10 @@
                 }
             }
             
-            [self.conversationsPerAccount removeConversationIndex:cIndex.index
-                                                       forAccount:(NSInteger)cIndex.user.accountIndex];
-        }
-    }
+            [self.conversationsPerAccount removeConversationIndex:(NSUInteger)cIndex.index
+                                                       forAccount:cIndex.user.accountIndex];
+        } // end if
+    } // end for
     
     //self.deletedSections = self.deletedSections + is.count;
 
@@ -1210,9 +1225,12 @@
     IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
     [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
 
-    if (conversationSectionIndeciesToDelete.count > 0) {
-        DDLogInfo(@"Delete Sections (days): %@",conversationRowIndeciesToDelete.description);
-        IBGLog(@"Delete Sections (days): %@",conversationRowIndeciesToDelete.description);
+    NSUInteger conversationSectionsToDeleteCount = conversationSectionIndeciesToDelete.count;
+    if ( conversationSectionsToDeleteCount > 0) {
+        
+        DDLogInfo(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
+        IBGLog(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
+        
         [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
     }
     
@@ -1920,7 +1938,7 @@
         
         [self checkConversationsUpdate];
         
-        NSInteger mailCountAfer = [self.conversationsPerAccount conversationsInAllAccounts];
+        NSInteger mailCountAfer = (NSInteger)[self.conversationsPerAccount conversationsInAllAccounts];
         
         self.indexCount = mailCountAfer;
         self.countBeforeLoadMore =  mailCountAfer;//MIN(mailCountAfer, self.countBeforeLoadMore + pageCount);

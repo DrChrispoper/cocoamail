@@ -63,7 +63,7 @@
         return dayDict[@"day"];
     }
 }
--(NSDate*)datetimeForConversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex
+-(NSDate*)datetimeForConversation:(NSUInteger)convIndex onDay:(NSUInteger)dayIndex
 {
     @synchronized (self.conversationsPerDay) {
         ConversationIndex *ci = [self conversation:convIndex onDay:dayIndex];

@@ -28,7 +28,7 @@
 // access elements of a day's conversations
 -(NSDate*)dateForDay:(NSUInteger)day;
 -(ConversationIndex*) conversation:(NSUInteger)convIndex onDay:(NSUInteger)dayIndex;
--(NSDate*)datetimeForConversation:(NSInteger)convIndex onDay:(NSInteger)dayIndex;
+-(NSDate*)datetimeForConversation:(NSUInteger)convIndex onDay:(NSUInteger)dayIndex;
 
 
 -(void)sortConversationsByDateForDay:(NSUInteger)dayIndex;

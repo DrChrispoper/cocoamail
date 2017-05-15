@@ -303,7 +303,7 @@
     return index;
 }
 
--(NSInteger) accountsCount
+-(NSUInteger) accountsCount
 {
     return self.accounts.count;
 }

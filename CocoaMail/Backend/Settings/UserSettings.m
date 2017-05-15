@@ -132,7 +132,7 @@
 
 -(NSUInteger)accountIndex
 {
-    return [AppSettings indexForAccountNum:_accountNum];
+    return (NSUInteger)[AppSettings indexForAccountNum:_accountNum];
 }
 
 -(BOOL)isDeleted

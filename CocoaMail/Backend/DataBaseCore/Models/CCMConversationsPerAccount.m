@@ -20,7 +20,7 @@
 
 @implementation CCMConversationsPerAccount
 
-- (instancetype)initWithAccountCapacity:(NSInteger)capacity
+- (instancetype)initWithAccountCapacity:(NSUInteger)capacity
 {
     self = [super init];
     if (self) {
@@ -36,14 +36,14 @@
     [self.conversationsByAccount addObject:[[NSMutableIndexSet alloc]init]];
 }
 
--(NSInteger)accountCount;
+-(NSUInteger)accountCount;
 {
     return self.conversationsByAccount.count;
 }
 
--(NSInteger)conversationsInAllAccounts
+-(NSUInteger)conversationsInAllAccounts
 {
-    NSInteger totalConversationCount = 0;
+    NSUInteger totalConversationCount = 0;
     
     for (NSMutableIndexSet* accountConversations in self.conversationsByAccount) {
         totalConversationCount += accountConversations.count;
@@ -53,7 +53,7 @@
 
 // MARK: - local safety methods
 
--(NSMutableIndexSet*)_conversationsForAccount:(NSInteger)accountIndex
+-(NSMutableIndexSet*)_conversationsForAccount:(NSUInteger)accountIndex
 {
     DDAssert(accountIndex>=0 && accountIndex<self.conversationsByAccount.count,
              @"Array Index (%@) out of range. Valid: (0 to %@)",
@@ -71,20 +71,20 @@
 // MARK: - Conversation: add, remove, contains?
 
 
--(void)addConversationIndex:(NSInteger)conversationIndex forAccount:(NSInteger)accountIndex
+-(void)addConversationIndex:(NSUInteger)conversationIndex forAccount:(NSUInteger)accountIndex
 {
     NSMutableIndexSet *conversations = [self _conversationsForAccount:accountIndex];
     
     [conversations addIndex:conversationIndex];
 }
--(void)removeConversationIndex:(NSInteger)conversationIndex forAccount:(NSInteger)accountIndex
+-(void)removeConversationIndex:(NSUInteger)conversationIndex forAccount:(NSUInteger)accountIndex
 {
     NSMutableIndexSet *conversations = [self _conversationsForAccount:accountIndex];
     
     [conversations removeIndex:conversationIndex];
 }
 
--(BOOL)containsConversationIndex:(NSInteger)conversationIndex inAccount:(NSInteger)accountIndex
+-(BOOL)containsConversationIndex:(NSUInteger)conversationIndex inAccount:(NSUInteger)accountIndex
 {
     NSMutableIndexSet *conversations = [self _conversationsForAccount:accountIndex];
     
@@ -97,11 +97,11 @@
 {
     NSMutableString *text = [NSMutableString string];
     
-    NSInteger acntCount = self.conversationsByAccount.count;
+    NSUInteger acntCount = self.conversationsByAccount.count;
     
     [text appendFormat:@"\n\nConversations Per Account has %@ accounts:",@(acntCount)];
     
-    for (NSInteger acntIndex = 0; acntIndex < acntCount; acntIndex++) {
+    for (NSUInteger acntIndex = 0; acntIndex < acntCount; acntIndex++) {
         
         NSMutableIndexSet *conversations = [self _conversationsForAccount:acntIndex];
         
