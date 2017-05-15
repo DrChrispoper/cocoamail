@@ -14,7 +14,7 @@
 
 @interface PullToRefresh ()
 
-@property (nonatomic, weak) UIActivityIndicatorView* pullToRefresh;
+@property (nonatomic, weak) UIActivityIndicatorView* pullToRefreshIndicatorView;
 @property (nonatomic, weak) UIView* pullToRefreshSupport;
 @property (nonatomic) UIEdgeInsets lastInset;
 
@@ -27,9 +27,11 @@
 
 -(void) scrollViewDidScroll:(UIScrollView*)scrollView
 {
-    UIActivityIndicatorView* strongPullToRefresh = self.pullToRefresh;
+    UIActivityIndicatorView* strongPullToRefresh = self.pullToRefreshIndicatorView;
     
+    // If the Activity Indicator (ie. Busy Spinner) is already spinning
     if (strongPullToRefresh.isAnimating) {
+        // then return
         return;
     }
     
@@ -66,7 +68,9 @@
         strongPullToRefresh.hidden = NO;
         
         CGFloat limite = -scrollView.contentInset.top - 60;
-        CGFloat pourc = scrollView.contentOffset.y / limite;
+        CGFloat pourc = scrollView.contentOffset.y / limite;    // pourc (French) is "For C" (English)
+        
+        // Cap pourc at 1.0F
         
         if (pourc>1.f) {
             pourc = 1.f;
@@ -87,7 +91,7 @@
         
         DDLogInfo(@"START OF PULL-TO-REFRESH");
         
-        [self.pullToRefresh startAnimating];
+        [self.pullToRefreshIndicatorView startAnimating];
         
         [scrollView setContentOffset:scrollView.contentOffset animated:NO];
         
@@ -110,7 +114,7 @@
 
 -(void) stopAnimating
 {
-    [self.pullToRefresh stopAnimating];
+    [self.pullToRefreshIndicatorView stopAnimating];
     
     if (self.sv) {
         self.sv.contentInset = self.lastInset;
