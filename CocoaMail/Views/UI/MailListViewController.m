@@ -66,7 +66,7 @@
 @property (nonatomic) BOOL serverSearchDone;
 @property (nonatomic) BOOL viewIsClosing;
 
-@property (nonatomic, strong) UIRefreshControl* refreshC;
+@property (nonatomic, strong) UIRefreshControl* refreshControl;
 
 @end
 
@@ -234,9 +234,6 @@
                                                                        screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
     
-    @synchronized (table) {
-        
-    
     CGFloat offsetToUse = 44.f;
     
     if (self.showOnlyThisPerson) {
@@ -311,9 +308,9 @@
     // If NOT displaying only this one person's emails ...
     if (!self.showOnlyThisPerson) {
         
-        self.refreshC = [[UIRefreshControl alloc] init];
-        [table addSubview:self.refreshC];
-        [self.refreshC addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
+        self.refreshControl = [[UIRefreshControl alloc] init];
+        [table addSubview:self.refreshControl];
+        [self.refreshControl addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
         //[self addPullToRefreshWithDelta:0];
         //table.emptyDataSetSource = self;
         //table.emptyDataSetDelegate = self;
@@ -322,7 +319,6 @@
     if ( [self.convByDay isEmpty] == 0) {
         [self setupData];
     }
-    } // end synchronized table
 }
 
 - (void)refreshTable {
@@ -618,6 +614,10 @@
         for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
             
             NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];
+            if ( tmpDay == nil ) {
+                DDLogError(@"No NSDate for day index %@",@(dayIndex));
+                continue;   // skip to next dayIndex
+            }
             
             NSUInteger convsOnDay = [self.convByDay conversationCountOnDay:dayIndex];
             
@@ -660,40 +660,50 @@
 // Update Day Sections
 -(void) updateDays:(NSArray<NSString *>*)days
 {
-    DDLogInfo(@"NSArray days; count = %@; elements = %@.",@(days.count),days.description);
+    DDAssert(days,@"Days array must exist.");
     
-    if (!days || days.count == 0){
-        DDLogWarn(@"Cannot update with zero days");
+    if (days.count == 0){
+        DDLogInfo(@"Zero days in array, nothing to do.");
         return;
     }
     
-    NSMutableIndexSet* daySections = [[NSMutableIndexSet alloc] init];
+    DDLogInfo(@"days.count = %@; days.elements = %@.",@(days.count),days.description);
+    
+    NSMutableIndexSet* daySections = [[NSMutableIndexSet alloc] init];  // unique unsigned integers
     
     // Create an index set "sections" containing the indexes off all the
     // dates in our Conversations By Day structure (Days.Conversations.Mails)
     // that match one or more of the day dates passed in.
     for (NSString* day in days) {
+        
         NSDateFormatter* s_df_day = [[NSDateFormatter alloc] init];
         s_df_day.dateFormat = @"d MMM yy";
         NSDate* dayDate = [s_df_day dateFromString:day];
         
         NSUInteger dayCount = [self.convByDay dayCount];
         for (NSUInteger dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
-            NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];
-            if ([dayDate compare:tmpDay] == NSOrderedSame){
+            
+            NSDate* tmpDay = [self.convByDay dateForDay:dayIndex];      // returns nil on error
+            if ( tmpDay == nil ) {
+                DDLogError(@"No NSDate for day index %@",@(dayIndex));
+                continue;   // skip to next dayIndex
+            }
+
+            if (tmpDay && [dayDate compare:tmpDay] == NSOrderedSame){
                 [daySections addIndex:dayIndex];
             }
         }
     }
     
-    DDLogDebug(@"NSMutableIndexSet sections; count = %@",@(daySections.count));
+    DDLogInfo(@"Number of table sections to update = %@",@(daySections.count));
     
-    UITableView* strongTable = self.table\
-    µ≤cXs   34`2;
+        
+    UITableView* strongTable = self.table;
     
     // Update Mail List "Day Section Headers"
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
+        @synchronized (self.table) {
         DDLogInfo(@"START: Update table day sections via block on mainQueue");
         
         [strongTable beginUpdates];
@@ -701,6 +711,7 @@
         [strongTable endUpdates];
         
         DDLogInfo(@"END: Update table table day setions via block on mainQueue");
+        } // end synchronized
 
     }];
 
@@ -790,7 +801,12 @@
             DDLogVerbose(@"DAY INDEX %@",@(dayIndex));
             
             // NB: Day (Date Only) Comparison
-            NSDate* indexedDayDate   = [self.convByDay dateForDay:dayIndex];
+            NSDate* indexedDayDate = [self.convByDay dateForDay:dayIndex];
+            if ( indexedDayDate == nil ) {
+                DDLogError(@"No NSDate for day index %@",@(dayIndex));
+                continue;   // skip to next dayIndex
+            }
+
             NSDate* convToInsertDate = [ciToInsert day];
             
             NSComparisonResult dayComparisonResult = [convToInsertDate compare:indexedDayDate];
@@ -892,6 +908,8 @@
 
 -(void)_insertTableSection:(NSUInteger)section
 {
+    @synchronized (self.table) {
+        
     UITableView *localTable = self.table;
     
     DDLogVerbose(@"Insert Section = %@",@(section));
@@ -903,9 +921,13 @@
     [localTable insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
     
     [localTable endUpdates];
+        
+    } // end synchronized
 }
 -(void)_insertTableRow:(NSUInteger)row inSection:(NSUInteger)section
 {
+    @synchronized (self.table) {
+        
     UITableView *localTable = self.table;
 
     DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
@@ -918,6 +940,8 @@
     [localTable insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
     
     [localTable endUpdates];
+        
+    } // end synchronized
 }
 
 //- (void)_InsertConversation:(ConversationIndex *)ciToInsert
@@ -929,6 +953,7 @@
 //    for (int dayIndex = 0 ; dayIndex < dayCount ; dayIndex++) {
 //        
 //        NSDate* indexedDayDate = [self.convByDay dateForDay:dayIndex];
+//          (add indexedDayDate nil check - see elsewehere in this file)
 //        
 //        NSComparisonResult result = [ciToInsert.day compare:indexedDayDate];
 //        
@@ -1135,6 +1160,8 @@
         [localNavBar setNeedsDisplay];
         [UIView setAnimationsEnabled:YES];
         
+        @synchronized (self.table) {
+
         NSArray* visibles = self.table.visibleCells;
         
         for (ConversationTableViewCell* cell in visibles) {
@@ -1143,12 +1170,13 @@
             }
         }
         [self.selectedCells removeAllObjects];
+            
+        } // end synchronized
     }];
 }
 
 -(void) _commonRemoveConvs:(NSMutableArray<NSIndexPath*>*)conversationIndexPaths
 {
-    UITableView *localTable = self.table;
     
     DDLogInfo(@"ENTERED");
 
@@ -1172,7 +1200,7 @@
         
         if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)cIndex.index
                                                           inAccount:cIndex.user.accountIndex]) {
-            
+        
             NSUInteger dayCount = [self.convByDay dayCount];
             NSUInteger conCount = [self.convByDay conversationCountOnDay:dayIndex];
             
@@ -1185,7 +1213,7 @@
                 if ( dayIndex < dayCount ) {
                     DDLogInfo(@"dayIndex %@ is less than dayCount %@, AND there is only a single conversation on this day, so add the dayIndex to the Days-To-Delete",
                               @(dayIndex),@(dayCount));
-                    
+                
                     [self.convByDay removeDayAtIndex:dayIndex];
                     [conversationSectionIndeciesToDelete addIndex:dayIndex];
                 }
@@ -1195,12 +1223,12 @@
                 if ( conIndex < conCount ) {
                     DDLogInfo(@"conIndex %@ is less than conCount %@, so add this coversation to the Conversations-To-Remove",
                               @(conIndex),@(conCount));
-                    
+                
                     [self.convByDay removeConversation:conIndex onDay:dayIndex];
                     [conversationRowIndeciesToDelete addObject:indexPath];
                 }
             }
-            
+        
             [self.conversationsPerAccount removeConversationIndex:(NSUInteger)cIndex.index
                                                        forAccount:cIndex.user.accountIndex];
         } // end if
@@ -1209,6 +1237,11 @@
     //self.deletedSections = self.deletedSections + is.count;
 
 #warning - are we on main queue?
+    
+    @synchronized (self.table) {
+        
+    UITableView *localTable = self.table;
+
     [localTable beginUpdates];
     
     NSInteger sectionCount = [self.table numberOfSections];
@@ -1237,10 +1270,14 @@
     [localTable endUpdates];
 
     //[localTable reloadEmptyDataSet];
+        
+    } // end synchronized
 }
 
 -(void) leftActionDoneForCell:(ConversationTableViewCell*)cell
 {
+    @synchronized (self.table) {
+
     UITableView *localTable = self.table;
     
     NSIndexPath* indexPath = [localTable indexPathForCell:cell];
@@ -1335,10 +1372,14 @@
             break;
         }
     }
+        
+    } // end synchronized
 }
 
 -(void) cell:(ConversationTableViewCell*)cell isChangingDuring:(double)timeInterval
 {
+    @synchronized (self.table) {
+
     UITableView *tbl = self.table;
     
     CGPoint point = CGPointMake(100, tbl.contentOffset.y + tbl.contentInset.top);
@@ -1347,6 +1388,8 @@
     if (CGRectContainsPoint(bigger, point)) {
         [self.navBar computeBlurForceNewDuring:timeInterval];
     }
+        
+    } // end synchronized
 }
 
 -(void) _manageCocoaButton
@@ -1413,7 +1456,11 @@
     
     DDAssert(self.table,@"self.table must be set.");
     
+    @synchronized (self.table) {
+
     [self.table reloadData];  // in UITableViewDataSource
+    
+    } // end synchronized
     
     dispatch_async(dispatch_get_main_queue(),^{
         if (self.deletes.count > 0) {
@@ -1532,7 +1579,14 @@
 
 -(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
-    NSDate* convDate = [self.convByDay dateForDay:(NSUInteger)section];
+    NSUInteger dayIndex = (NSUInteger)section;
+    
+    NSDate* convDate = [self.convByDay dateForDay:dayIndex];
+    if ( convDate == nil ) {
+        DDLogError(@"No NSDate for day index %@",@(dayIndex));
+        return @"";
+    }
+    
     NSString* dateS = [[DateUtil getSingleton] humanDate:convDate];
 
     NSInteger idx = [Mail isTodayOrYesterday:dateS];
@@ -1889,7 +1943,10 @@
     DDLogInfo(@"%@ searching local", done?@"Not":@"");
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        [self.table.tableFooterView setHidden:self.localSearchDone];
+        @synchronized (self.table) {
+            [self.table.tableFooterView setHidden:self.localSearchDone];
+        } // end synchronized
+
     }];
 }
 
@@ -1900,13 +1957,13 @@
     if (self.serverSearchDone) {
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             DDLogInfo(@"End RefreshControl refresh");
-            [self.refreshC endRefreshing];
+            [self.refreshControl endRefreshing];
         }];
     }
     else {
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             DDLogInfo(@"Begin RefreshControl refrest");
-            [self.refreshC beginRefreshing];
+            [self.refreshControl beginRefreshing];
         }];
     }
 }

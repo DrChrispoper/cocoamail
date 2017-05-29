@@ -107,13 +107,20 @@ static ViewController * s_self;
     self.contentView.clipsToBounds = YES;
     
     //[GIDSignIn sharedInstance].uiDelegate = self;
-    
-    [[[Accounts sharedInstance] currentAccount] connect];
+
+    Account* currentAccount = [[Accounts sharedInstance] currentAccount];
+    if ( currentAccount ) {
+        [currentAccount connect];
+    } else {
+        DDLogInfo(@"No current account to connect.");
+    }
 
     [self setup];
     
     CocoaButton* cb = [CocoaButton sharedButton];
+    // calculate the location of the CocoaButton
     cb.center = CGPointMake(self.view.frame.size.width - 30, self.view.frame.size.height - 30);
+    DDLogInfo(@"CocoaButton.center = CGPoint(x=%@,y=%@)",@(cb.center.x),@(cb.center.y));
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;
@@ -230,7 +237,6 @@ static ViewController * s_self;
     if (self.viewControllers.count<2) {
         return;
     }
-    
     
     switch (pgr.state) {
         case UIGestureRecognizerStateBegan:
