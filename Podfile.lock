@@ -8,11 +8,11 @@ PODS:
   - box-ios-sdk/logger (1.0.14)
   - box-ios-sdk/no-arc (1.0.14):
     - box-ios-sdk/logger
-  - CocoaLumberjack (3.1.0):
-    - CocoaLumberjack/Default (= 3.1.0)
-    - CocoaLumberjack/Extensions (= 3.1.0)
-  - CocoaLumberjack/Default (3.1.0)
-  - CocoaLumberjack/Extensions (3.1.0):
+  - CocoaLumberjack (3.2.0):
+    - CocoaLumberjack/Default (= 3.2.0)
+    - CocoaLumberjack/Extensions (= 3.2.0)
+  - CocoaLumberjack/Default (3.2.0)
+  - CocoaLumberjack/Extensions (3.2.0):
     - CocoaLumberjack/Default
   - DZNEmptyDataSet (1.8.1)
   - FMDB (2.6.2):
@@ -44,7 +44,7 @@ PODS:
   - GTMSessionFetcher/Core (1.1.9)
   - GTMSessionFetcher/Full (1.1.9):
     - GTMSessionFetcher/Core (= 1.1.9)
-  - Instabug (7.2.4)
+  - Instabug (7.2.6)
   - Instabug-CocoaLumberjack (1.0.2):
     - CocoaLumberjack
     - Instabug (>= 6.2)
@@ -113,7 +113,7 @@ DEPENDENCIES:
 SPEC CHECKSUMS:
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
   box-ios-sdk: 8034a7b0fcac562105725afa744011c81da99398
-  CocoaLumberjack: 8311463ddf9ee86a06ef92a071dd656c89244500
+  CocoaLumberjack: 9b4aed7073d242f29cc2f62068d995faf67f703a
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
   GoogleAnalytics: f42cc53a87a51fe94334821868d9c8481ff47a7b
@@ -122,7 +122,7 @@ SPEC CHECKSUMS:
   GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
   GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
   GTMSessionFetcher: 5c046c76a1f859bc9c187e918f18e4fc7bb57b5e
-  Instabug: 2bb20a8ed54b3e0c493f456fa8c2ce2aa83e2602
+  Instabug: 49d4fbf1bf14e2f9074dfb7774ca5611bae993b4
   Instabug-CocoaLumberjack: 569556b9d3891147021fa8dbaa7fbfbf8c9d3e98
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
