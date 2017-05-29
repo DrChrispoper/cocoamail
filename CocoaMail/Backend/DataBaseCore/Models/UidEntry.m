@@ -116,6 +116,7 @@
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
+    // Remove UID Entry from DB
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         BOOL success =  [db executeUpdate:@"DELETE FROM uid_entry WHERE msg_id = ? AND folder = ?;",
                     uid_entry.msgID,
@@ -125,9 +126,14 @@
         }
     }];
     
+    // Get all UID Entries with this Message ID from the DB.  If
+    // If all UID Entries for this message has been deleted, then ...
     if ([self getUidEntriesWithMsgId:uid_entry.msgID].count == 0) {
-        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(removeEmail:) object:uid_entry];
-        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+        EmailProcessor *ep = [EmailProcessor getSingleton];
+        
+        // Remove email with matching Message ID from the DB
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(removeEmail:) object:uid_entry];
+        [ep.operationQueue addOperation:nextOpUp];
     }
 }
 
@@ -224,7 +230,7 @@
         NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
         
         for (UidEntry* uidE in tmpUids) {
-            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            NSUInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
             [uids[index] addObject:uidE];
         }
         
@@ -261,9 +267,9 @@
     return uids;
 }
 
-+(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgID
++(NSMutableArray<UidEntry*>*) getUidEntriesWithMsgId:(NSString*)msgID
 {
-    NSMutableArray* uids = [[NSMutableArray alloc] init];
+    NSMutableArray<UidEntry*>* uids = [[NSMutableArray alloc] init];
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
     
@@ -305,7 +311,7 @@
         NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
         
         for (UidEntry* uidE in tmpUids) {
-            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            NSUInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
             [uids[index] addObject:uidE];
         }
         
@@ -320,6 +326,8 @@
     NSMutableSet* dbNums = [[NSMutableSet alloc] init];
     
     UidDBAccessor* databaseManager = [UidDBAccessor sharedManager];
+    
+    DDAssert(email, @"Mail message must exist");
     
     UidEntry* uidE = [email uidEWithFolder:folderNum];
     
@@ -371,7 +379,7 @@
         NSArray* sortedNums = [dbNums sortedArrayUsingDescriptors:@[sortOrder]];
         
         for (UidEntry* uidE in tmpUids) {
-            NSInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
+            NSUInteger index = [sortedNums indexOfObject:@(uidE.dbNum)];
             [uids[index] addObject:uidE];
         }
     }];

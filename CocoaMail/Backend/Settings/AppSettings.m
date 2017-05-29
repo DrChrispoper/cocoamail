@@ -392,7 +392,7 @@
     imapSession.port = (unsigned int)user.imapPort;
     imapSession.username = user.username;
     imapSession.password = user.password;
-    imapSession.connectionType = user.imapConnectionType;
+    imapSession.connectionType = (MCOConnectionType) user.imapConnectionType;
 
     if ([user isUsingOAuth]) {
         imapSession.OAuth2Token = [user oAuth];
@@ -434,7 +434,7 @@
     
     UserSettings* user = [AppSettings userWithNum:accountNum];
     
-    return user.accountIndex;
+    return (NSInteger)user.accountIndex;
     
     /*if (accountNum != 999) {
         return [AppSettings indexForAccountNum:accountNum];
@@ -467,15 +467,29 @@
         return idx;
     }
     else {
-        return [AppSettings numActiveAccounts];
+        return (NSInteger)[AppSettings numActiveAccounts];
     }
 }
 
 +(void) setLastAccountIndex:(NSInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSInteger num = (accountIndex == [AppSettings numActiveAccounts])?999:[AppSettings userWithIndex:accountIndex].accountNum;
-    [defaults setObject:@(num) forKey:[NSString stringWithFormat:@"lastAccountNum"]];
+    DDAssert(defaults,@"NSUserDefaults singleton must exist.");
+    
+    if ( accountIndex == [AppSettings numActiveAccounts] ) {
+        [defaults setObject:@999 forKey:[NSString stringWithFormat:@"lastAccountNum"]]; // I don't know why 999 is use
+    } else {
+        UserSettings *user = [AppSettings userWithIndex:(NSUInteger)accountIndex];
+        if ( user ) {
+            
+            NSInteger lastIndex = user.accountNum;
+            
+            [defaults setObject:@(lastIndex) forKey:[NSString stringWithFormat:@"lastAccountNum"]];
+        } else {
+            DDLogError(@"Could not find UserSettings for account index %@",@(accountIndex));
+        }
+        
+    }
 }
 
 +(NSNumber*) lastFolderIndex  // returns nil if key not found

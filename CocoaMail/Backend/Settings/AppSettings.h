@@ -55,7 +55,7 @@
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;
 +(BOOL) notifications:(NSInteger)accountNum;
 
-+(NSUInteger) defaultAccountIndex;
++(NSInteger) defaultAccountIndex;
 +(void) setDefaultAccountNum:(NSUInteger)accountNum;
 +(NSInteger) lastAccountIndex;
 +(void) setLastAccountIndex:(NSInteger)accountIndex;

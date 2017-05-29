@@ -1255,7 +1255,7 @@
     DDLogInfo(@"Folder %@ has %@ mails.",[self folderDescription:self.currentFolderType],@(currentFolderMailIndecies.count));
     
     // Create an array (resultingFolderMail) of all the conversations indexed by the current folder mail indecies
-    NSMutableArray* conversationsInCurrentFolder = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
+    NSMutableArray<Conversation*>* conversationsInCurrentFolder = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
     [self.allConversations enumerateObjectsAtIndexes:currentFolderMailIndecies
                                              options:0UL
                                           usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
@@ -1265,7 +1265,7 @@
     return conversationsInCurrentFolder;
 }
 
-#pragma mark - Update Mail from IMAP Server
+#pragma mark - Update Local Mail Store from IMAP Server
 
 -(void) runTestData
 {
@@ -1304,10 +1304,10 @@
 
     _runningUpToDateTest = YES;
     
-    // Get an array of all the Conversations for the requested Folder
+    // Get an array of all the Conversations in local memory for the requested Folder in this account
     NSArray<Conversation*>* conversationsInCurrentFolder = [self _conversationsInFolder:folderType];
 
-    // Update convefrsations in the current folder from the IMAP Server, and update
+    // Update conversations in the local store's current folder from the IMAP Server, and update
     [[ImapSync sharedServices:self.user] runUpToDateTest:conversationsInCurrentFolder
                                              folderIndex:self.currentFolderIdx
                                                completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
@@ -1315,12 +1315,17 @@
                                                    //[mailListDelegate removeConversationList:nil];
                                                    
                                                    // Update "Days" in mailing list delegate
-                                                   [self.mailListDelegate updateDays:days];
+                                                   // NB: Days can be nil if an error occurred
+                                                   if ( days ) {
+                                                       [self.mailListDelegate updateDays:days];
+                                                   }
                                                    
                                                    
                                                    // If the All Folder wasn't the one just updated
                                                    if (folderType.type != FolderTypeAll) {
                                                        // then update it now.
+                                                       
+                                                       // NB: RECURSION
                                                        [self _updateMailFromImapServerForConversationsInFolder:allFolderType()];
                                                    }
                                                    
@@ -1338,14 +1343,15 @@
         return;
     }
     
+    // For each mail passed in, find the the mail with the matching msgID in this account, and update its flag
     for (Mail* email in emails) {
         BOOL found = NO;
         
         for (Conversation* conv in self.allConversations) {
-            for (Mail* m in conv.mails) {
-                if ([m.msgID isEqualToString:email.msgID]) {
+            for (Mail* mailInConversation in conv.mails) {
+                if ([mailInConversation.msgID isEqualToString:email.msgID]) {
                     
-                    m.flag = email.flag;
+                    mailInConversation.flag = email.flag;
                     
                     found = YES;
                     break;
@@ -1609,7 +1615,7 @@
     // If we are not connected to this user's IMAP server ...
     if ( ![self isConnected] ) {
         
-        // Then connect ...
+        // Then connect (NB: Does not block)
         [self connect];
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{

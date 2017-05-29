@@ -761,6 +761,15 @@ static NSDateFormatter * s_df_hour = nil;
     return emailTwo;
 }
 
+
+/**
+ A single mail message may be in multiple mail folders, and will have
+ a UID Entry for each one.  Given the index of a mail folder, return
+ the UID Entry of this message in that folder.  Return  nil if not found.
+ 
+ @param folderNum mail folder index
+ @return matching UID Entry, or nil if not found.
+ */
 -(UidEntry*) uidEWithFolder:(NSInteger)folderNum
 {
     if (folderNum == -1) {

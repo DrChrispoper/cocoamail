@@ -32,7 +32,7 @@
 +(NSMutableArray*) getUidEntriesWithFolder:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum;
 +(NSMutableArray*) getUidEntriesFrom:(Mail*)email withFolder:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum;
 +(UidEntry*) getUidEntryWithFolder:(NSInteger)folderNum msgID:(NSString*)msgID;
-+(NSMutableArray*) getUidEntriesWithMsgId:(NSString*)msgID;
++(NSMutableArray<UidEntry*>*) getUidEntriesWithMsgId:(NSString*)msgID;
 
 +(BOOL) hasUidEntrywithMsgId:(NSString*)msgID withFolder:(NSInteger)folderNum inAccount:(NSInteger)accountNum;
 +(BOOL) hasUidEntrywithMsgId:(NSString*)msgID inAccount:(NSInteger)accountNum;

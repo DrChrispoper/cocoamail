@@ -333,13 +333,15 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
 {
-    DDLogInfo(@"ENTERED, folder num = %@, account num = %@, from Mail with Subj. \"%@\"",@(folderNum),@(accountNum),email.subject);
+    DDLogInfo(@"ENTERED, folder num = %@, account num = %@, from Mail with Subj. \"%@\"",@(folderNum),@(accountNum),
+              (email.subject?email.subject:@"nil"));
     
     NSMutableArray* uidsInGroups;
     
     NSInteger realFolderNum = folderNum;
     
     if ([Accounts sharedInstance].currentAccount.user.isAll) {
+        
         realFolderNum = [[AppSettings userWithNum:accountNum] numFolderWithFolder:[Accounts sharedInstance].currentAccount.currentFolderType];
     }
     

@@ -152,13 +152,13 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     
     for (Mail* mail in emails) {
         [self _switchDBForMail:mail];
-        [Mail updateMail:mail];
+        [Mail updateMail:mail];             // Update mail in DB
     }
     
     UserSettings* user  = [emails firstObject].user;
     
     if (user && !user.isDeleted) {
-        [user.linkedAccount deliverUpdate:emails];
+        [user.linkedAccount deliverUpdate:emails];      // Update mail in local store
     }
 }
 
