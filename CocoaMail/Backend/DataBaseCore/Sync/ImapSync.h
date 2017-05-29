@@ -18,10 +18,13 @@
 #define CCMCredentialsError     9003
 #define CCMNoSharedServiceError 9009
 #define CCMDeletedError         9004
+#define CCMFolderPathError      9005
+#define CCMSyncMgrError         9006
 
 
 @class RACSignal;
 @class UserSettings;
+@class Conversation;
 
 @interface ImapSync : NSObject <MCOHTMLRendererIMAPDelegate>
 
@@ -43,14 +46,14 @@
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
--(void) runUpToDateTest:(NSArray*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<Mail*>* dels, NSArray<Mail*>* ups, NSArray<NSString*>* days))completedBlock;
--(void) runUpToDateCachedTest:(NSArray*)data;
+-(void) runUpToDateTest:(NSArray<Conversation*>*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<Mail*>* dels, NSArray<Mail*>* ups, NSArray<NSString*>* days))completedBlock;
+//-(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deletedAndWait:(UserSettings*)deleteUser;
 //+(void) runInboxUnread:(UserSettings*)user;
 -(void) cancel;
 +(void) runInboxUnread:(UserSettings*)user completed:(void (^)(void))completedBlock;
-+(void) runUnreadCount:(UserSettings*)user folder:(CCMFolderType)folder completed:(void (^)(void))completedBlock;
+//+(void) runUnreadCount:(UserSettings*)user folder:(CCMFolderType)folder completed:(void (^)(void))completedBlock;
 
 
 //-(NSMutableSet*) emailIDs;
