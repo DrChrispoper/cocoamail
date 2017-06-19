@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -1684,9 +1684,10 @@
 		271D4CF61B846E4500D19373 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = CCS;
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0800;
-				ORGANIZATIONNAME = "Christopher Hockley";
+				ORGANIZATIONNAME = CocoaSoft;
 				TargetAttributes = {
 					271D4CFD1B846E4500D19373 = {
 						CreatedOnToolsVersion = 6.4;
@@ -1713,7 +1714,7 @@
 				};
 			};
 			buildConfigurationList = 271D4CF91B846E4500D19373 /* Build configuration list for PBXProject "CocoaMail" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
