@@ -27,7 +27,7 @@
 @synthesize name = _name;
 @synthesize initials = _initials;
 @synthesize color = _color;
-@synthesize importantFolders = _importantFolders;
+@synthesize importantFolderNames = _importantFolderNames;
 @synthesize allFoldersDisplayNames = _allFoldersDisplayNames;
 @synthesize accountNum = _accountNum;
 @synthesize deleted = _deleted;
@@ -115,12 +115,12 @@
     return _color;
 }
 
--(NSArray *)importantFolders
+-(NSArray<NSString*>*)importantFolderNames
 {
-    return _importantFolders;
+    return _importantFolderNames;
 }
 
--(NSArray *)allFoldersDisplayNames
+-(NSArray<NSString*>*)allFoldersDisplayNames
 {
     return _allFoldersDisplayNames;
 }
@@ -254,11 +254,11 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(void)setImportantFolders:(NSMutableArray *)importantFolders
+-(void)setImportantFolderNames:(NSMutableArray <NSString*>*)importantFolders
 {
     DDLogInfo(@"ENTERED");
 
-    _importantFolders = importantFolders;
+    _importantFolderNames = importantFolders;
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
@@ -343,18 +343,19 @@
 
 -(NSInteger) importantFolderNumforBaseFolder:(BaseFolderType)baseFolder
 {
-    return [_importantFolders[baseFolder] integerValue];
+    // TODO: converting a string to an integer.  Check that this works.
+    return [_importantFolderNames[baseFolder] integerValue];
 }
 
 -(void) setImportantFolderNum:(NSInteger)folder forBaseFolder:(BaseFolderType)baseFolder
 {
     DDLogInfo(@"ENTERED");
     
-    if (_importantFolders.count == 0) {
-        _importantFolders = [[NSMutableArray alloc] initWithObjects:@"", @"", @"", @"", @"", @"", nil];
+    if (_importantFolderNames.count == 0) {
+        _importantFolderNames = [[NSMutableArray alloc] initWithObjects:@"", @"", @"", @"", @"", @"", nil];
     }
     
-    _importantFolders[baseFolder] = @(folder);
+    _importantFolderNames[baseFolder] = @(folder);
     
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
@@ -365,8 +366,8 @@
         return FolderTypeWith(folder, 0);
     }
     
-    for (NSInteger idx = (NSInteger)_importantFolders.count-1 ; idx >= 0 ; idx--) {
-        if (folder == [_importantFolders[idx] integerValue]) {
+    for (NSInteger idx = (NSInteger)_importantFolderNames.count-1 ; idx >= 0 ; idx--) {
+        if (folder == [_importantFolderNames[idx] integerValue]) {
             return FolderTypeWith(idx, 0);
         }
     }
@@ -439,11 +440,11 @@
         _allFoldersDisplayNames = [NSMutableArray arrayWithObject:@"nothing here"];
     }
 
-    DDAssert(_importantFolders, @"_importantFolders must be initialized.");
+    DDAssert(_importantFolderNames, @"_importantFolders must be initialized.");
     
     NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
     
-    for (NSNumber* index in _importantFolders) {
+    for (NSNumber* index in _importantFolderNames) {
         if ([index intValue] >= 0) {
             [foldersSet removeObject:_allFoldersDisplayNames[[index intValue]]];
         }
@@ -503,7 +504,7 @@
     _initials = [decoder decodeObjectForKey:@"initials"];
     _color = [UserSettings _colorForString:[decoder decodeObjectForKey:@"color"]];
 
-    _importantFolders = [decoder decodeObjectForKey:@"importantFolders"];
+    _importantFolderNames = [decoder decodeObjectForKey:@"importantFolders"];
     _allFoldersDisplayNames = [decoder decodeObjectForKey:@"allFolders"];
     
 //    DDAssert(_allFoldersDisplayNames,@"_allFoldersDisplayNames should not be nil");
@@ -544,7 +545,7 @@
     [encoder encodeObject:_initials forKey:@"initials"];
     [encoder encodeObject:[UserSettings _stringForColor:_color] forKey:@"color"];
         
-    [encoder encodeObject:_importantFolders forKey:@"importantFolders"];
+    [encoder encodeObject:_importantFolderNames forKey:@"importantFolders"];
     [encoder encodeObject:_allFoldersDisplayNames forKey:@"allFolders"];
     
     if ( _allFoldersDisplayNames == nil ) {
@@ -617,12 +618,12 @@
     [desc appendFormat:@"\tcolor     = \"%@\"\n",[self.color description]];
     [desc appendString:@"\n"];
 
-    if (self.importantFolders == nil) {
+    if (self.importantFolderNames == nil) {
         [desc appendFormat:@"\tImportant Folders array is nil!\n"];
     } else {
         [desc appendFormat:@"\tImportant Folders count = %ld\n",
-         (unsigned long)[self.importantFolders count]];
-        for (NSString *importantFolderName in self.importantFolders) {
+         (unsigned long)[self.importantFolderNames count]];
+        for (NSString *importantFolderName in self.importantFolderNames) {
             [desc appendFormat:@"\t\tName = \"%@\"\n",importantFolderName];
         }
     }
