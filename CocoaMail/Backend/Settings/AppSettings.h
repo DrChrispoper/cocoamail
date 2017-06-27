@@ -55,10 +55,10 @@
 +(void) setNotifications:(BOOL)y accountNum:(NSInteger)accountNum;
 +(BOOL) notifications:(NSInteger)accountNum;
 
-+(NSInteger) defaultAccountIndex;
++(NSUInteger) defaultAccountIndex;
 +(void) setDefaultAccountNum:(NSUInteger)accountNum;
 +(NSInteger) lastAccountIndex;
-+(void) setLastAccountIndex:(NSInteger)accountIndex;
++(void) setLastAccountIndex:(NSUInteger)accountIndex;
 
 +(NSNumber*) lastFolderIndex;
 +(void) setLastFolderIndex:(NSNumber*)accountIndex;

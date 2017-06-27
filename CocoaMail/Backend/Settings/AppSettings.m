@@ -426,7 +426,7 @@
     return [defaults boolForKey:[NSString stringWithFormat:@"notifications_preference_%li", (long)accountNum]];
 }
 
-+(NSInteger) defaultAccountIndex
++(NSUInteger) defaultAccountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSNumber* activeAcctPreference = [defaults objectForKey:[NSString stringWithFormat:@"dAccountNum"]];
@@ -434,7 +434,7 @@
     
     UserSettings* user = [AppSettings userWithNum:accountNum];
     
-    return (NSInteger)user.accountIndex;
+    return user.accountIndex;
     
     /*if (accountNum != 999) {
         return [AppSettings indexForAccountNum:accountNum];
@@ -471,7 +471,7 @@
     }
 }
 
-+(void) setLastAccountIndex:(NSInteger)accountIndex
++(void) setLastAccountIndex:(NSUInteger)accountIndex
 {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     DDAssert(defaults,@"NSUserDefaults singleton must exist.");
