@@ -1148,7 +1148,7 @@
 #pragma mark - Fetch Data
 
 // Refresh contents of IMAP System Folders
--(void) importantFoldersRefresh:(NSInteger)pFolder
+-(void) _importantFoldersRefresh:(NSInteger)pFolder
 {
     DDLogInfo(@"ENTERED, folder=%ld",(long)pFolder);
     
@@ -1167,7 +1167,7 @@
     //If last important folder start full sync
     // AJC 2017-06-27 - Does this limit this function to only the first 4 Important Folders
     if (folder > 4) {
-        [self doLoadServer];
+        [self _doLoadServer];
         return;
     }
     
@@ -1197,21 +1197,21 @@
          
          if (error.code == CCMFolderSyncedError && [Accounts sharedInstance].currentAccountIdx == self.idx) {
 #warning Here be recursion
-             [self importantFoldersRefresh:++folder];
+             [self _importantFoldersRefresh:++folder];
          }
      }
      completed:^{
          self->_isSyncing = NO;
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
 #warning Here be recursion
-             [self importantFoldersRefresh:++folder];
+             [self _importantFoldersRefresh:++folder];
          }
      }];
 }
 
-// Called by -importantFoldersRefresh and itself (recursion)
+// Called by -_importantFoldersRefresh and itself (recursion)
 //
--(void) doLoadServer
+-(void) _doLoadServer
 {
     DDLogInfo(@"ENTERED");
     
@@ -1261,7 +1261,7 @@
                      DDLogInfo(@"This Account is the Currebnt Account, so call ourself RECURSIVELY!");
                      
 #warning Here be recursion!
-                     [self doLoadServer]; // recursion
+                     [self _doLoadServer]; // recursion
                  }
              default:
                  DDLogError(@"[SyncManager syncFolderUser] returned error, code = %@",@(error.code));
@@ -1281,12 +1281,12 @@
 //             DDLogInfo(@"[SyncManager syncFolderUser] This Account is Current Account, so calling self recursively???");
 //
 //#warning Here be recursion!
-//             [self doLoadServer];  // recursion
+//             [self _doLoadServer];  // recursion
 //         }
      }];
 }
 
-- (NSArray<Conversation*>*)_conversationsInFolder:(CCMFolderType)folder
+- (NSArray<Conversation*>*)conversationsInFolder:(CCMFolderType)folder
 {
     NSIndexSet* currentFolderMailIndecies = [self _mailIndeciesForFolder:folder];
     
@@ -1701,7 +1701,7 @@
              
              self->_currentFolderFullSyncCompleted = YES;
              self->_isSyncingCurrentFolder = NO;
-             [self importantFoldersRefresh:0];
+             [self _importantFoldersRefresh:0];
          }
      }
      completed:^{
@@ -1720,17 +1720,17 @@
              
              if (self->_currentFolderFullSyncCompleted) {
                  self->_isSyncingCurrentFolder = NO;
-                 [self importantFoldersRefresh:0];
+                 [self _importantFoldersRefresh:0];
              }
              else if (!self->_isSyncingCurrentFolder) {
                  self->_isSyncingCurrentFolder = YES;
-                 [self syncCurrentFolder];
+                 [self _syncCurrentFolder];
              }
          }
      }];
 }
 
--(void) syncCurrentFolder
+-(void) _syncCurrentFolder
 {
     DDLogInfo(@"ENTERED");
     
@@ -1752,11 +1752,12 @@
          self->_isSyncingCurrentFolder = NO;
          if (error.code == CCMFolderSyncedError) {
              self->_currentFolderFullSyncCompleted = YES;
-             [self importantFoldersRefresh:0];
+             [self _importantFoldersRefresh:0];
          }
      } completed:^{
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-             [self syncCurrentFolder];  // Recursive!
+#warning Here be recursion
+             [self _syncCurrentFolder];  // Recursive!
          }
      }];
 }
