@@ -47,7 +47,7 @@
     back = inIV;
     
     UILabel* n = [[UILabel alloc] initWithFrame:CGRectMake(44, 0, inIV.bounds.size.width - 50, 45)];
-    n.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
+    n.textColor = [UIColor colorWithWhite:0.47f alpha:1.0f];
     n.font = [UIFont systemFontOfSize:16];
     n.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [inIV addSubview:n];

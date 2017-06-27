@@ -154,12 +154,11 @@
 
 -(Person*) getPersonWithID:(NSInteger)idx
 {
-    
     if (idx < 0) {
-        return  self.allsNeg[ - idx];
+        return  self.allsNeg[(NSUInteger) -idx];
     }
     
-    return self.alls[idx];
+    return self.alls[(NSUInteger)idx];
 }
 
 -(NSInteger) indexForEmail:(NSString*)email

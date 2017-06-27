@@ -464,7 +464,7 @@ static NSString * currentFileName = nil;
     
     [UIView animateWithDuration:0.75 animations:^{
         self.tableView.alpha = 1.0;
-        downloadProgressView.alpha = 0.0;
+        self->downloadProgressView.alpha = 0.0;
     }];
     
     [self.tableView deselectRowAtIndexPath:[self.tableView indexPathForSelectedRow] animated:YES];
@@ -500,7 +500,7 @@ static NSString * currentFileName = nil;
 {
     [self.downloadProgressView setProgress:0.0];
     [UIView animateWithDuration:0.75 animations:^{
-        downloadProgressView.alpha = 1.0;
+        self->downloadProgressView.alpha = 1.0;
     }];
 }
 
@@ -510,7 +510,7 @@ static NSString * currentFileName = nil;
     
     [UIView animateWithDuration:0.75 animations:^{
         self.tableView.alpha = 1.0;
-        downloadProgressView.alpha = 0.0;
+        self->downloadProgressView.alpha = 0.0;
     }];
     
     self.navigationItem.title = [currentPath lastPathComponent];
@@ -567,8 +567,8 @@ static NSString * currentFileName = nil;
 {
     // Begin Background Process
     backgroundProcess = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-        [[UIApplication sharedApplication] endBackgroundTask:backgroundProcess];
-        backgroundProcess = UIBackgroundTaskInvalid;
+        [[UIApplication sharedApplication] endBackgroundTask:self->backgroundProcess];
+        self->backgroundProcess = UIBackgroundTaskInvalid;
     }];
     
     // Check if the file is a directory
@@ -663,7 +663,7 @@ static NSString * currentFileName = nil;
             
             [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel button") style:UIAlertActionStyleCancel handler:^(UIAlertAction* _Nonnull action) {}]];
             [alertView addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Overwrite", @"Dropbox alert view confirm button") style:UIAlertActionStyleDestructive handler:^(UIAlertAction* _Nonnull action) {
-                [self downloadFile:selectedFile replaceLocalVersion:YES];
+                [self downloadFile:self->selectedFile replaceLocalVersion:YES];
             }]];
             [self presentViewController:alertView animated:YES completion:nil];
             

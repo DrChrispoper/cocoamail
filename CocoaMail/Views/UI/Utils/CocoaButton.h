@@ -39,7 +39,7 @@
 
 -(void) replaceMainButton:(UIButton*)button;
 
--(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)())action;
+-(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)(void))action;
 
 +(void) animateHorizontalButtonCancelTouch:(UIButton*)button;
 

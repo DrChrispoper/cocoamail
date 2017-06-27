@@ -289,7 +289,7 @@
     }
 }
 
--(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)())action
+-(void) closeHorizontalButton:(UIButton*)button refreshCocoaButtonAndDo:(void (^)(void))action
 {
     self.userInteractionEnabled = NO;
     
@@ -347,7 +347,7 @@
     }];
 }
 
--(void) _boingAnimationForView:(UIView*)boing andThen:(void(^)())endAction
+-(void) _boingAnimationForView:(UIView*)boing andThen:(void(^)(void))endAction
 {
     
     double longtime = 0.4;

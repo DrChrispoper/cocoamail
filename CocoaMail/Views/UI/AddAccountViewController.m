@@ -266,15 +266,15 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
-    return self.settings.count;
+    return (NSInteger) self.settings.count;
 }
 
 -(NSInteger) tableView:(UITableView*)tableView numberOfRowsInSection:(NSInteger)section
 {
-    NSDictionary* sectionInfos = self.settings[section];
+    NSDictionary* sectionInfos = self.settings[(NSUInteger)section];
     NSArray* content = sectionInfos[CONTENT];
     
-    return content.count;
+    return (NSInteger) content.count;
 }
 
 -(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
@@ -292,9 +292,9 @@
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
     
-    NSDictionary* sectionInfos = self.settings[indexPath.section];
+    NSDictionary* sectionInfos = self.settings[(NSUInteger) indexPath.section];
     NSArray* content = sectionInfos[CONTENT];
-    NSDictionary* infoCell = content[indexPath.row];
+    NSDictionary* infoCell = content[(NSUInteger) indexPath.row];
     
     
     UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"noID"];
@@ -321,7 +321,7 @@
         cell.textLabel.textColor = [UIGlobal standardBlue];
     }
     else {
-        NSInteger labelWidth = MAX(cell.textLabel.frame.size.width+20, 100);
+        double labelWidth = MAX(cell.textLabel.frame.size.width+20, 100);
         
         UITextField* tf = [[UITextField alloc] initWithFrame:CGRectMake(labelWidth, 0, bounds.width - labelWidth - 10, bounds.height)];
         tf.delegate = self;
@@ -350,7 +350,7 @@
 
 -(NSString*) tableView:(UITableView*)tableView titleForHeaderInSection:(NSInteger)section
 {
-    NSDictionary* sectionInfos = self.settings[section];
+    NSDictionary* sectionInfos = self.settings[(NSUInteger) section];
     
     return sectionInfos[TITLE];
 }
@@ -688,7 +688,7 @@
     [AppSettings setNotifications:YES accountNum:user.accountNum];
     
     if (user.accountIndex == 0) {
-        [AppSettings setDefaultAccountNum:user.accountNum];
+        [AppSettings setDefaultAccountNum:(NSUInteger) user.accountNum];
     }
     
     // Store the folder path delimiter character and folder path prefix (if any) into user settings.
@@ -781,7 +781,7 @@
         
         [dispNamesFolders addObject:dispName];
         
-        [imapSync addFolder:folder withName:dispName toAccount:user.accountNum];
+        [imapSync addFolder:folder withName:dispName toAccount:(NSUInteger) user.accountNum];
 
         indexPath++;
     }
