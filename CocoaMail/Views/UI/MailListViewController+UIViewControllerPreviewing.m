@@ -15,8 +15,7 @@
 {
     if ([self isForceTouchAvailable]) {
         self.previewingContext =
-        [self registerForPreviewingWithDelegate:(id)self
-                                     sourceView:self.table];
+        [self registerForPreviewingWithDelegate:(id)self sourceView:self.tableView];
     }
 }
 
@@ -27,7 +26,7 @@
         return nil;
     }
     
-    NSIndexPath *path = [self.table indexPathForRowAtPoint:location];
+    NSIndexPath *path = [self.tableView indexPathForRowAtPoint:location];
     
     if (path) {
         UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
@@ -39,10 +38,10 @@
         Conversation* conv = [[Accounts sharedInstance] conversationForCI:ci];
 
         previewController.conversation = conv;
-        previewController.table = self.table;
+        previewController.table = self.tableView;
         previewController.indexPath = path;
         
-        UITableViewCell* cell = [self.table cellForRowAtIndexPath:path];
+        UITableViewCell* cell = [self.tableView cellForRowAtIndexPath:path];
         CGRect frame = cell.frame;
         
         previewingContext.sourceRect = frame;
@@ -66,8 +65,7 @@
     if ([self isForceTouchAvailable]) {
         if (!self.previewingContext) {
             self.previewingContext =
-            [self registerForPreviewingWithDelegate:(id)self
-                                         sourceView:self.table];
+            [self registerForPreviewingWithDelegate:(id)self sourceView:self.tableView];
         }
     } else {
         if (self.previewingContext) {
