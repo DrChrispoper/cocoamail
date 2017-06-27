@@ -321,6 +321,7 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
 -(void) application:(UIApplication*)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
     // Here be Background Fetch
+    DDLogInfo(@"ENTERED **( Background Fetch entry point )**");
         
     if ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == NotReachable ) {
         DDLogInfo(@"Cannot Background Fetch: Internet Unreachable");
@@ -366,7 +367,7 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
 
 // The method called prior to iOS v10.0
 //
-- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler {
+- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)(void))completionHandler {
     
     if ([identifier isEqualToString:CCMDeleteTriggerIdentifier]) {
         // handle it
