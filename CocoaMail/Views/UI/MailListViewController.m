@@ -228,7 +228,7 @@
         self.attachButton = attach;
     }
     
-    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
+    UITableView* tableView = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
                                                                        screenBounds.size.height - 20)
@@ -271,29 +271,29 @@
         line.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         [header addSubview:line];
         
-        [table addSubview:header];
+        [tableView addSubview:header];
         
         offsetToUse += 92;
     }
     
-    table.contentInset = UIEdgeInsetsMake(offsetToUse, 0, 60, 0);
+    tableView.contentInset = UIEdgeInsetsMake(offsetToUse, 0, 60, 0);
     
-    table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0,0.5);
-    table.allowsSelection = false;
-    table.rowHeight = 90;
-    table.separatorStyle = UITableViewCellSeparatorStyleNone;
-    table.backgroundColor = [UIGlobal standardLightGrey];
+    tableView.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0,0.5);
+    tableView.allowsSelection = false;
+    tableView.rowHeight = 90;
+    tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    tableView.backgroundColor = [UIGlobal standardLightGrey];
     
-    [self.view addSubview:table];
+    [self.view addSubview:tableView];
     
-    [self setupNavBarWith:item overMainScrollView:table];
+    [self setupNavBarWith:item overMainScrollView:tableView];
     
-    table.dataSource = self;
-    table.delegate = self;
-    self.table = table;
+    tableView.dataSource = self;
+    tableView.delegate = self;
+    self.tableView = tableView;
 
     UIView* headerView = [[UIView alloc] init];
-    headerView.backgroundColor = table.backgroundColor;
+    headerView.backgroundColor = tableView.backgroundColor;
     
     UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
@@ -303,13 +303,13 @@
     
     [headerView setHidden:YES];
     
-    table.tableFooterView = headerView;
+    tableView.tableFooterView = headerView;
     
     // If NOT displaying only this one person's emails ...
     if (!self.showOnlyThisPerson) {
         
         self.refreshControl = [[UIRefreshControl alloc] init];
-        [table addSubview:self.refreshControl];
+        [tableView addSubview:self.refreshControl];
         [self.refreshControl addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
         //[self addPullToRefreshWithDelta:0];
         //table.emptyDataSetSource = self;
@@ -422,9 +422,9 @@
 
 -(void) cleanBeforeGoingBack
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
         
-    UITableView* localTable = self.table;
+    UITableView* localTable = self.tableView;
 
     //self.pageIndex = 1;
     self.countBeforeLoadMore = 0;
@@ -473,9 +473,9 @@
 
 -(void) viewWillDisappear:(BOOL)animated
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
         
-    UITableView* localTable = self.table;
+    UITableView* localTable = self.tableView;
     
     [super viewWillDisappear:animated];
     
@@ -502,20 +502,16 @@
     BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
     if (isActiveAccountAll) {
         
-        DDLogDebug(@"\tActive Account is \"All\" Account");
+        DDLogDebug(@"Active Account is \"All\" Account");
         
-        NSUInteger activeAccountCount = (NSUInteger)[AppSettings numActiveAccounts];
-        
-        for (NSUInteger idx = 0; idx < activeAccountCount; idx++) {
-            Account* acnt = [[Accounts sharedInstance] account:idx];
-            [self _addConversationsForAccount:acnt folder:self.folder];
-
+        for (Account *account in [[Accounts sharedInstance] accounts]) {
+            [self _addConversationsForAccount:account folder:self.folder];
         }
     }
     else { // We are showing the Current account ...
         
         Account* acnt = [[Accounts sharedInstance] currentAccount];
-        DDLogDebug(@"\tActive Account Index = Current Account = %ld\n",(long)acnt.idx);
+        DDLogDebug(@"Active Account Index = Current Account = %ld\n",(long)acnt.idx);
         [self _addConversationsForAccount:acnt folder:self.folder];
     }
 }
@@ -698,19 +694,20 @@
     DDLogInfo(@"Number of table sections to update = %@",@(daySections.count));
     
         
-    UITableView* strongTable = self.table;
+    UITableView* strongTable = self.tableView;
     
     // Update Mail List "Day Section Headers"
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        @synchronized (self.table) {
-        DDLogInfo(@"START: Update table day sections via block on mainQueue");
-        
-        [strongTable beginUpdates];
-        [strongTable reloadSections:daySections withRowAnimation:UITableViewRowAnimationNone];
-        [strongTable endUpdates];
-        
-        DDLogInfo(@"END: Update table table day setions via block on mainQueue");
+        @synchronized (self.tableView) {
+            
+            DDLogInfo(@"START: Update table day sections via block on mainQueue");
+            
+            [strongTable beginUpdates];
+            [strongTable reloadSections:daySections withRowAnimation:UITableViewRowAnimationNone];
+            [strongTable endUpdates];
+            
+            DDLogInfo(@"END: Update table table day setions via block on mainQueue");
         } // end synchronized
 
     }];
@@ -908,38 +905,38 @@
 
 -(void)_insertTableSection:(NSUInteger)section
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
         
-    UITableView *localTable = self.table;
-    
-    DDLogVerbose(@"Insert Section = %@",@(section));
-    
-    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
-    
-    [localTable beginUpdates];
-    
-    [localTable insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
-    
-    [localTable endUpdates];
+        UITableView *localTable = self.tableView;
+        
+        DDLogVerbose(@"Insert Section = %@",@(section));
+        
+        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
+        
+        [localTable beginUpdates];
+        
+        [localTable insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
+        
+        [localTable endUpdates];
         
     } // end synchronized
 }
 -(void)_insertTableRow:(NSUInteger)row inSection:(NSUInteger)section
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
         
-    UITableView *localTable = self.table;
+        UITableView *localTable = self.tableView;
 
-    DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
+        DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
 
-    [localTable beginUpdates];
-    
-    NSArray<NSIndexPath*> *indexPaths = @[ [NSIndexPath indexPathForRow:(NSInteger)row
-                                                              inSection:(NSInteger)section] ];
-    
-    [localTable insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
-    
-    [localTable endUpdates];
+        [localTable beginUpdates];
+        
+        NSArray<NSIndexPath*> *indexPaths = @[ [NSIndexPath indexPathForRow:(NSInteger)row
+                                                                  inSection:(NSInteger)section] ];
+        
+        [localTable insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
+        
+        [localTable endUpdates];
         
     } // end synchronized
 }
@@ -1160,16 +1157,16 @@
         [localNavBar setNeedsDisplay];
         [UIView setAnimationsEnabled:YES];
         
-        @synchronized (self.table) {
+        @synchronized (self.tableView) {
 
-        NSArray* visibles = self.table.visibleCells;
-        
-        for (ConversationTableViewCell* cell in visibles) {
-            if ([self.selectedCells containsObject:[cell currentID]]) {
-                [cell animatedClose];
+            NSArray* visibles = self.tableView.visibleCells;
+            
+            for (ConversationTableViewCell* cell in visibles) {
+                if ([self.selectedCells containsObject:[cell currentID]]) {
+                    [cell animatedClose];
+                }
             }
-        }
-        [self.selectedCells removeAllObjects];
+            [self.selectedCells removeAllObjects];
             
         } // end synchronized
     }];
@@ -1235,20 +1232,18 @@
     } // end for
     
     //self.deletedSections = self.deletedSections + is.count;
-
-#warning - are we on main queue?
     
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
         
-    UITableView *localTable = self.table;
+    UITableView *localTable = self.tableView;
 
     [localTable beginUpdates];
     
-    NSInteger sectionCount = [self.table numberOfSections];
+    NSInteger sectionCount = [self.tableView numberOfSections];
     DDLogInfo(@"table has %@ sections.",@(sectionCount));
     IBGLog(@"table has %@ sections.",@(sectionCount));
     for ( NSInteger idx = 0; idx < sectionCount; idx++) {
-        NSInteger rowCount = [self.table numberOfRowsInSection:idx];
+        NSInteger rowCount = [self.tableView numberOfRowsInSection:idx];
         DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
         IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
     }
@@ -1276,9 +1271,9 @@
 
 -(void) leftActionDoneForCell:(ConversationTableViewCell*)cell
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
 
-    UITableView *localTable = self.table;
+    UITableView *localTable = self.tableView;
     
     NSIndexPath* indexPath = [localTable indexPathForCell:cell];
     
@@ -1378,9 +1373,9 @@
 
 -(void) cell:(ConversationTableViewCell*)cell isChangingDuring:(double)timeInterval
 {
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
 
-    UITableView *tbl = self.table;
+    UITableView *tbl = self.tableView;
     
     CGPoint point = CGPointMake(100, tbl.contentOffset.y + tbl.contentInset.top);
     CGRect bigger = CGRectInset(cell.frame, -500, 0);
@@ -1443,7 +1438,7 @@
 
 -(UIPanGestureRecognizer*) tableViewPanGesture
 {
-    return self.table.panGestureRecognizer;
+    return self.tableView.panGestureRecognizer;
 }
 
 -(void) reload
@@ -1452,21 +1447,22 @@
 
     //self.deletedSections = 0;
     
-    DDLogDebug(@"CALLS to -[TableViewDataSource reloadData]");
+    DDAssert(self.tableView,@"tableView must be set.");
     
-    DDAssert(self.table,@"self.table must be set.");
-    
-    @synchronized (self.table) {
+    @synchronized (self.tableView) {
 
-    [self.table reloadData];  // in UITableViewDataSource
-    
+        DDLogInfo(@"Reload mail list.");
+        [self.tableView reloadData];  // in UITableViewDataSource
+        
     } // end synchronized
     
-    dispatch_async(dispatch_get_main_queue(),^{
-        if (self.deletes.count > 0) {
+    // If there are deleted mails ...
+    if (self.deletes.count > 0) {
+        
+        dispatch_async(dispatch_get_main_queue(),^{
             [self removeConversationList:[self.deletes allObjects]];
-        }
-    });
+        });
+    }
 }
 
 
@@ -1497,7 +1493,7 @@
     NSUInteger dayIndex = (NSUInteger)indexPath.section;
     NSUInteger conIndex = (NSUInteger)indexPath.row;
     
-//    DDLogInfo(@"TABLEVIEW Get UITableViewCell for NSIndexPath SECTION %ld ROW %lu",(long)dayIndex,(unsigned long)conIndex);
+    DDLogInfo(@"indexPath.section(eg. dayIndex)=%@, indexPath.row(eg conIndex)=%@",@(dayIndex),@(conIndex));
     
 //    NSMutableArray<ConversationIndex*>* convs = [self.convByDay conversationsForDay:indexPath.section];
 //    ConversationIndex* conversationIndex = convs[indexPath.row];
@@ -1562,7 +1558,7 @@
         BOOL isInFolder = [conv isInFolder:currentFolderIdx];
         
         if (!isInFolder) {
-            DDLogDebug(@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ",
+            DDLogInfo(@"Showing cell, Conversation of %ld (%ld) - %@ -in folders %@ ",
                       (long)conv.mails.count, (long)conversationIndex.index,[conv firstMail].subject, fldrsStill);
             
             // Add this Conversation Index to those to be deleted
@@ -1573,6 +1569,10 @@
     BOOL isSelected = [self.selectedCells containsObject:[conv firstMail].msgID];
     
     [cell fillWithConversation:conv isSelected:isSelected isDebugMode:self.isDebugMode];
+    
+    if ( cell && cell.textLabel && cell.textLabel.text ) {
+        DDLogInfo(@"returining \"%@\" cell.",cell.textLabel.text);
+    }
     
     return cell;
 }
@@ -1943,8 +1943,8 @@
     DDLogInfo(@"%@ searching local", done?@"Not":@"");
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        @synchronized (self.table) {
-            [self.table.tableFooterView setHidden:self.localSearchDone];
+        @synchronized (self.tableView) {
+            [self.tableView.tableFooterView setHidden:self.localSearchDone];
         } // end synchronized
 
     }];

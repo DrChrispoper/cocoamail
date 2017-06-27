@@ -26,7 +26,7 @@
 -(void) reFetch:(BOOL)forceRefresh;
 -(void) removeConversationList:(NSArray<ConversationIndex*>*)convs;
 
-@property (nonatomic, weak) UITableView* table;
+@property (nonatomic, weak) UITableView* tableView;
 @property (nonatomic, strong) CCMConversationsByDay *convByDay;
 @property (nonatomic, weak) id <UIViewControllerPreviewing> previewingContext;
 @property (nonatomic, weak) AttachmentsViewController* attachSubscriber;
