@@ -39,7 +39,7 @@
                 
         sharedInstance = [[self alloc] init];
         sharedInstance.quickSwipeType = [[AppSettings getSingleton] quickSwipe];
-        sharedInstance.currentAccountIdx = [AppSettings lastAccountIndex];
+        sharedInstance.currentAccountIdx = (NSUInteger) [AppSettings lastAccountIndex];
         
         sharedInstance.localFetchQueue = [NSOperationQueue new];
         [sharedInstance.localFetchQueue setMaxConcurrentOperationCount:1];
@@ -53,7 +53,7 @@
          [UIColor colorWithRed:0.96f green:0.72f blue:0.02f alpha:1.f],
          [UIColor colorWithRed:0.07f green:0.71f blue:0.02f alpha:1.f]];*/
         
-        NSInteger numActiveAccounts = [AppSettings numActiveAccounts];
+        NSUInteger numActiveAccounts = [AppSettings numActiveAccounts];
         
         NSMutableArray* accounts = [[NSMutableArray alloc]initWithCapacity:numActiveAccounts];
         
@@ -81,7 +81,7 @@
         sharedInstance.accounts = accounts;
         
         if ([AppSettings numActiveAccounts] > 0) {
-            [sharedInstance runLoadData];
+            [sharedInstance _loadMailFromDatabasse];
         }
         
         DDLogVerbose(@"Accounts Singleton Initialized. Account count = %ld",(unsigned long)[accounts count]);
@@ -123,19 +123,20 @@
     return ac;
 }
 
--(void) runLoadData
+// Called only when the Accounts shared instance is initialized, if there are > 0 accounts
+//
+-(void) _loadMailFromDatabasse
 {
+    DDLogInfo(@"START PART 1 - Load All Mail for Current Account from Database.");
+
     // If this is NOT the All Mails user account ..
     if (!self.currentAccount.user.isAll) {
 
         DDLogDebug(@"User Account is not the All Mails one.");
         
         id<MailListDelegate> delegate = self.currentAccount.mailListDelegate;  // strong hold
-
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            
-            DDLogDebug(@"New Block on mainQueue.");
             
             //NSInteger refBatch = 5;
             //NSInteger __block batch = refBatch;
@@ -143,12 +144,14 @@
             
             DDLogInfo(@"Search DB for Mail Messages in current account.");
 
+            // Search for all email belonging to this account in the DB
+            //
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
 //                 DDLogDebug(@"SearchRunner next email \"%@\"",email.subject);
                  
-                 [self _sortEmail:email];
+                 [self _addMail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
                     //[self.currentAccount.mailListDelegate reFetch:YES];
@@ -162,18 +165,16 @@
         }]; // end mainQueue block
     } // end All Mail
     
-    DDLogInfo(@"START PART 2");
+    DDLogInfo(@"START PART 2 - Load \"All Mail\" Accounty from Database.");
 
     [self.localFetchQueue addOperationWithBlock:^{
-        
-        DDLogDebug(@"Adding BLOCK to localFetchQueue.");
         
         [[[SearchRunner getSingleton] allEmailsSearch]
          subscribeNext:^(Mail* email) {
 //             DDLogDebug(@"Next Mail from allEmailsSearch: Add mail \"%@\" from DB to local store.",email.subject);
              
              if (email && email.user && !email.user.isDeleted) {
-                 [self _sortEmail:email];
+                 [self _addMail:email];
              }
          }
          completed:^{
@@ -181,7 +182,7 @@
              
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  if (self.currentAccount.user.isAll) {
-                     for (NSInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
+                     for (NSUInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
                          [self.accounts[accountIndex] runTestData];
                      }
                  }
@@ -194,7 +195,7 @@
     
 }
 
--(void) _sortEmail:(Mail*)email
+-(void) _addMail:(Mail*)email
 {
     DDAssert(email,@"email must not be null");
     
@@ -318,10 +319,13 @@
     
     [account initContent];
     
+//    if ( self.accounts.count == 0 ) {
+//        return;
+//    }
+    
     //NSInteger currentIdx = self.currentAccountIdx;
     NSMutableArray* tmp = [self.accounts mutableCopy];
-    NSInteger putIdx = tmp.count - 1;
-    
+    NSUInteger putIdx = tmp.count - 1;
     [tmp insertObject:account atIndex:putIdx];
     self.accounts = tmp;
     
@@ -330,7 +334,7 @@
      }*/
 }
 
--(NSInteger) defaultAccountIdx
+-(NSUInteger) defaultAccountIdx
 {
     return [AppSettings defaultAccountIndex];
 }
@@ -354,11 +358,9 @@
 
 -(Account*) currentAccount
 {
-    if (self.currentAccountIdx >= 0) {
-        return self.accounts[self.currentAccountIdx];
-    }
+    // currentAccountIdx is unsigned, therefore always >= 0
     
-    return nil;
+    return self.accounts[self.currentAccountIdx];
 }
 
 -(NSArray<Account*>*) accounts

@@ -1153,99 +1153,137 @@
     DDLogInfo(@"ENTERED, folder=%ld",(long)pFolder);
     
     if (self.user.isDeleted) {
+        DDLogInfo(@"User is Deleted, return.");
         return;
     }
     
     if (![ImapSync canFullSync]){
+        DDLogInfo(@"Cannot full sync,return.");
         return;
     }
     
     NSInteger __block folder = pFolder;
     
     //If last important folder start full sync
+    // AJC 2017-06-27 - Does this limit this function to only the first 4 Important Folders
     if (folder > 4) {
         [self doLoadServer];
         return;
     }
     
-    if (!_isSyncing && !_isSyncingCurrentFolder) {
-        _isSyncing = YES;
-        
-        [[[SyncManager getSingleton] refreshImportantFolder:folder user:self.user]
-         subscribeNext:^(Mail* email) {
-             [self insertRows:email];
-         }
-         error:^(NSError* error) {
-             
-             if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
-                 [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
-             }
-             
-             self->_isSyncing = NO;
-             
-             if (error.code == CCMFolderSyncedError && [Accounts sharedInstance].currentAccountIdx == self.idx) {
-                 [self importantFoldersRefresh:++folder];
-             }
-         }
-         completed:^{
-             self->_isSyncing = NO;
-             if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                 [self importantFoldersRefresh:++folder];
-             }
-         }];
+    if ( _isSyncing ) {
+        DDLogInfo(@"_isSyncing is TRUE, so return");
+        return;
     }
+    
+    if ( _isSyncingCurrentFolder ) {
+        DDLogInfo(@"_isSyncingCurrentFolder is TRUE, so return.");
+        return;
+    }
+    
+    _isSyncing = YES;
+    
+    [[[SyncManager getSingleton] refreshImportantFolder:folder user:self.user]
+     subscribeNext:^(Mail* email) {
+         [self insertRows:email];
+     }
+     error:^(NSError* error) {
+         
+         if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
+             [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
+         }
+         
+         self->_isSyncing = NO;
+         
+         if (error.code == CCMFolderSyncedError && [Accounts sharedInstance].currentAccountIdx == self.idx) {
+#warning Here be recursion
+             [self importantFoldersRefresh:++folder];
+         }
+     }
+     completed:^{
+         self->_isSyncing = NO;
+         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+#warning Here be recursion
+             [self importantFoldersRefresh:++folder];
+         }
+     }];
 }
 
+// Called by -importantFoldersRefresh and itself (recursion)
+//
 -(void) doLoadServer
 {
     DDLogInfo(@"ENTERED");
     
     if ( self.user.isDeleted ) {
-        DDLogDebug(@"\tdoLoadServer: User-is-deleted, returning.");
+        DDLogDebug(@"User is deleted, returning.");
         return;
     }
     
     if ( ![ImapSync canFullSync] ){
-        DDLogDebug(@"\tdoLoadServer: Cannot Full Sync, returning.");
+        DDLogDebug(@"Cannot Full Sync, returning.");
         return;
     }
     
-    if (!_isSyncing && !_isSyncingCurrentFolder) {
-        DDLogDebug(@"\tNOT syncing AND NOT syncing current folder");
-        _isSyncing = YES;
-        [[[[SyncManager getSingleton] syncFoldersUser:self.user] deliverOn:[RACScheduler scheduler]]
-         subscribeNext:^(Mail* email) {
-             //[self insertRows:email];
-             DDLogDebug(@"\tsubscribeNext^(email)");
-         }
-         error:^(NSError* error) {
-            self->_isSyncing = NO;
-             
-             DDLogDebug(@"\tError: %@",error);
-             
-             //             if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
-             //                 DDLogError(@"\tSyncing error, error = %@",error);
-             //             }
-             
-             if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                 if (error.code == CCMAllSyncedError) {
-                     DDLogDebug(@"\tError code CCMAllSyncedError");
-                 }
-                 else if (error.code == CCMFolderSyncedError) {
-                     DDLogDebug(@"\tError code 9002, calling self recursively");
+    if ( _isSyncing ) {
+        DDLogDebug(@"_isSyncing = TRUE, returning.");
+        return;
+    }
+    
+    if (_isSyncingCurrentFolder ) {
+        DDLogDebug(@"_isSyncingCurrentFolder = TRUE, returning.");
+        return;
+    }
+    
+    // Start syncing with the IMAP server
+    
+    _isSyncing = YES;
+    
+    [[[[SyncManager getSingleton] syncFoldersUser:self.user] deliverOn:[RACScheduler scheduler]]
+     
+     subscribeNext:^(Mail* email) {
+         //[self insertRows:email];
+         DDLogDebug(@"[SyncManager syncFolderUser] subscribeNext^(email)");
+     }
+     
+     error:^(NSError* error) {
+         
+         self->_isSyncing = NO;
+         
+         switch ( error.code ) {
+             case CCMAllSyncedError:
+                 DDLogError(@"[SyncManager syncFolderUser] failed with CCMAllSyncedError");
+                 break;
+             case CCMFolderSyncedError:
+                 DDLogError(@"[SyncManager syncFolderUser] failed with CCMFolderSyncedError");
+                 
+                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+                     DDLogInfo(@"This Account is the Currebnt Account, so call ourself RECURSIVELY!");
+                     
+#warning Here be recursion!
                      [self doLoadServer]; // recursion
                  }
-             }
+             default:
+                 DDLogError(@"[SyncManager syncFolderUser] returned error, code = %@",@(error.code));
+                 break;
          }
-         completed:^{
-             DDLogDebug(@"\tSyncing completed.");
-             self->_isSyncing = NO;
-             if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                 DDLogDebug(@"\tCalling self recursively");
-                 [self doLoadServer];  // recursion
-             }
-         }];
-    }
+         
+     }
+     
+     completed:^{
+         
+         DDLogInfo(@"[SyncManager syncFolderUser] Syncing completed.");
+         
+         self->_isSyncing = NO;
+         
+//         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+//             
+//             DDLogInfo(@"[SyncManager syncFolderUser] This Account is Current Account, so calling self recursively???");
+//
+//#warning Here be recursion!
+//             [self doLoadServer];  // recursion
+//         }
+     }];
 }
 
 - (NSArray<Conversation*>*)_conversationsInFolder:(CCMFolderType)folder
@@ -1272,22 +1310,22 @@
     DDLogInfo(@"ENTERED");
     
     if (self.user.isDeleted) {
-        DDLogDebug(@"User is Deleted, DO NOTHING.");
+        DDLogInfo(@"User is Deleted, DO NOTHING.");
         return;
     }
     
     if ( self.user.isAll ) {
-        DDLogDebug(@"User is All, DO NOTHING.");
+        DDLogInfo(@"User is All, DO NOTHING.");
         return;
     }
     
     if ( self.allConversations.count == 0 ) {
-        DDLogDebug(@"No Conversations, DO NOTHING.");
+        DDLogInfo(@"No Conversations, DO NOTHING.");
         return;
     }
     
     if ( _runningUpToDateTest ) {
-        DDLogDebug(@"Already running Up To Date test, DO NOTHING.");
+        DDLogInfo(@"Already running Up To Date test, DO NOTHING.");
         return;
     }
     
@@ -1311,6 +1349,8 @@
     [[ImapSync sharedServices:self.user] runUpToDateTest:conversationsInCurrentFolder
                                              folderIndex:self.currentFolderIdx
                                                completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
+                                                   
+                                                   // NB: dels and ups are IGNORED.
                                                    
                                                    //[mailListDelegate removeConversationList:nil];
                                                    
@@ -1586,7 +1626,7 @@
 //
 -(void) refreshCurrentFolder
 {
-    DDLogInfo(@"for Folder \"%@\", Folder Index %@",[self currentFolderTypeValue],@(self.currentFolderIdx));
+    DDLogInfo(@"ENTERED for Folder \"%@\", Folder Index %@",[self currentFolderTypeValue],@(self.currentFolderIdx));
     
     // If the Current User Account is the "All" account ...
     if (self.user.isAll) {
@@ -1600,7 +1640,7 @@
                 [a refreshCurrentFolder];   // NB: Recursion
             }
         }
-        DDLogDebug(@"All Folders refreshed.");
+        DDLogInfo(@"All Folders refreshed.");
         
         // All folders refreshed, done with this method
         return;
@@ -1608,7 +1648,7 @@
     
     // If this user account is deleted, then don't refresh it
     if (self.user.isDeleted) {
-        DDLogDebug(@"Folder is Deleted.");
+        DDLogInfo(@"Folder is Deleted.");
         return;
     }
     
@@ -1622,7 +1662,7 @@
             [self.mailListDelegate serverSearchDone:YES];
         }];
         
-        DDLogDebug(@"IMAP Services not connected, tried connecting.");
+        DDLogInfo(@"IMAP Services NOT connected, tried connecting, set Server Search Done.");
         return;  // ??????????
     }
     
@@ -1632,23 +1672,22 @@
     
     [self runTestData];     // update local mail store from IMAP server
     
-    DDLogDebug(@"\tRefresh");
+    DDLogInfo(@"");
     
-    RACSignal *signal = [[SyncManager getSingleton] syncActiveFolderFromStart:YES
-                                                                         user:self.user];
+    RACSignal *signal = [[SyncManager getSingleton] syncActiveFolderFromStart:YES user:self.user];
     
     [[signal deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
      
      subscribeNext:^(Mail* email) {
          
-         DDLogDebug(@"\tsubscribeNext(Mail*)");
+         DDLogInfo(@"[SyncManager syncActiveFolderFromStart] - subscribeNext(Mail*)");
          
          new++;
          [self insertRows:email];
      }
      error:^(NSError* error) {
          
-         DDLogError(@"\tError = %@",error);
+         DDLogError(@"[SyncManager syncActiveFolderFromStart] - Error = %@",error);
          
          [self.mailListDelegate serverSearchDone:YES];
          
@@ -1667,7 +1706,7 @@
      }
      completed:^{
          
-         DDLogInfo(@"\tDone Refresh");
+         DDLogInfo(@"[SyncManager syncActiveFolderFromStart] - completed");
          
          [self.mailListDelegate serverSearchDone:YES];
          
