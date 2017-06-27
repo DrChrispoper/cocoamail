@@ -356,7 +356,7 @@ static NSDateFormatter * s_df_hour = nil;
     return mail;
 }
 
-+(Mail*) mailWithMCOIMAPMessage:(MCOIMAPMessage*)msg inFolder:(NSUInteger)folder andAccount:(NSInteger)accountNum
++(Mail*) mailWithMCOIMAPMessage:(MCOIMAPMessage*)msg inFolder:(NSInteger)folder andAccount:(NSInteger)accountNum
 {
     Mail* email = [[Mail alloc] init];
     
