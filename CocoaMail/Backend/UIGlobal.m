@@ -12,27 +12,27 @@
 
 +(UIColor*) bubbleFolderGrey
 {
-    return [UIColor colorWithWhite:0.8 alpha:1.0];
+    return [UIColor colorWithWhite:0.8f alpha:1.0f];
 }
 
 +(UIColor*) standardLightGrey
 {
-    return [UIColor colorWithWhite:0.92 alpha:1.0];
+    return [UIColor colorWithWhite:0.92f alpha:1.0f];
 }
 
 +(UIColor*) noImageBadgeColor //Weird Crash if not.
 {
-    return [UIColor colorWithCIColor:[CIColor colorWithCGColor:[UIColor colorWithWhite:120. / 255. alpha:1.0].CGColor]];
+    return [UIColor colorWithCIColor:[CIColor colorWithCGColor:[UIColor colorWithWhite:120.0f / 255.0f alpha:1.0f].CGColor]];
 }
 
 +(UIColor*) standardTableLineColor
 {
-    return [UIColor colorWithRed:200. / 255. green:199. / 255. blue:204. / 255. alpha:1.];
+    return [UIColor colorWithRed:200.0f / 255.0f green:199.0f / 255.0f blue:204.0f / 255.0f alpha:1.0f];
 }
 
 +(UIColor*) standardBlue
 {
-    return [UIColor colorWithRed:0. green:0.46 blue:1. alpha:1.];
+    return [UIColor colorWithRed:0.0f green:0.46f blue:1.0f alpha:1.0f];
 }
 
 
