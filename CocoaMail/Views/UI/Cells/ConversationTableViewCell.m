@@ -23,7 +23,7 @@
 @property (nonatomic, weak) UILabel* title;
 @property (nonatomic, weak) UILabel* time;
 
-@property (nonatomic, weak) UIImageView* favori;
+@property (nonatomic, weak) UIImageView* flaggedImageView;
 @property (nonatomic, weak) UIImageView* leftAction;
 @property (nonatomic, weak) UIImageView* backViewL;
 @property (nonatomic, weak) UIImageView* backViewR;
@@ -175,15 +175,18 @@
     [back addSubview:h];
     self.time = h;
     
-    
-    UIImageView* fav = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"cell_favoris_off"] highlightedImage:[UIImage imageNamed:@"cell_favoris_on"]];
+    //
+    // Set up Flagged (Favoris) Image View
+    UIImageView* fav = [[UIImageView alloc]
+                        initWithImage:[UIImage imageNamed:@"cell_favoris_off"]
+                        highlightedImage:[UIImage imageNamed:@"cell_favoris_on"]];
     CGRect f = fav.frame;
     f.origin.x = back.bounds.size.width - 38.5 - moreRightSpace;
     f.origin.y = 50.5;
     fav.frame = f;
     fav.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     [back addSubview:fav];
-    self.favori = fav;
+    self.flaggedImageView = fav;
     
     
     UIImageView* atc = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"mail_attachment_off"] highlightedImage:[UIImage imageNamed:@"mail_attachment_on"]];
@@ -203,7 +206,7 @@
     
     
     if ([self.delegate isPresentingDrafts]) {
-        self.favori.hidden = YES;
+        self.flaggedImageView.hidden = YES;
     }
     
 }
@@ -270,11 +273,11 @@
         case UIGestureRecognizerStatePossible:
         {
             // tap fav
-            CGRect bigger = CGRectInset(self.favori.frame, -10, -10);
+            CGRect bigger = CGRectInset(self.flaggedImageView.frame, -10, -10);
             
             if (CGRectContainsPoint(bigger, pos)) {
-                self.favori.tag = tagFavSelected;
-                self.favori.highlighted = !self.favori.highlighted;
+                self.flaggedImageView.tag = tagFavSelected;
+                self.flaggedImageView.highlighted = !self.flaggedImageView.highlighted;
             }
             
             // tap attachment
@@ -292,11 +295,11 @@
         }
         case UIGestureRecognizerStateEnded:
         {
-            CGRect bigger = CGRectInset(self.favori.frame, -10, -10);
+            CGRect bigger = CGRectInset(self.flaggedImageView.frame, -10, -10);
             
             if (CGRectContainsPoint(bigger, pos)) {
-                self.favori.tag = tagFavSelected;
-                self.favori.highlighted = !self.favori.highlighted;
+                self.flaggedImageView.tag = tagFavSelected;
+                self.flaggedImageView.highlighted = !self.flaggedImageView.highlighted;
             }
             
             // tap attachment
@@ -312,13 +315,13 @@
             }
 
             // tav fav
-            if (self.favori.tag == tagFavSelected) {
+            if (self.flaggedImageView.tag == tagFavSelected) {
                 
                 if (![[self.conversation firstMail].body isEqualToString:@"COCOAMAILSECRECTWEAPON"]) {
                     [self.conversation toggleFav];
                 }
                 
-                self.favori.tag = 0;
+                self.flaggedImageView.tag = 0;
             } // tap attachment
             else if (self.attachment.highlighted) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_CONVERSATION_ATTACHMENTS_NOTIFICATION object:nil
@@ -498,7 +501,7 @@
             
             [self.delegate cell:self isChangingDuring:0.05];
             
-            if (self.attachment.highlighted || self.favori.tag == tagFavSelected) {
+            if (self.attachment.highlighted || self.flaggedImageView.tag == tagFavSelected) {
                 
                 BOOL noMore = YES;
                 
@@ -515,9 +518,9 @@
                         self.attachment.highlighted = NO;
                     }
                     
-                    if (self.favori.tag == tagFavSelected) {
-                        self.favori.tag = 0;
-                        self.favori.highlighted = !self.favori.highlighted;
+                    if (self.flaggedImageView.tag == tagFavSelected) {
+                        self.flaggedImageView.tag = 0;
+                        self.flaggedImageView.highlighted = !self.flaggedImageView.highlighted;
                     }
                 }
             }
@@ -668,7 +671,7 @@
     }
     self.attachment.hidden = ![conv hasAttachments];
     
-    self.favori.highlighted = conv.isFav;
+    self.flaggedImageView.highlighted = conv.isFav;
     
     QuickSwipeType idxQuickSwipe = [self quickSwipeType];
     
