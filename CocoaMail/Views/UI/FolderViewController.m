@@ -152,7 +152,7 @@
 {
     UITableViewCell* cell;
     
-    NSString* text = @"";
+    NSString* folderName = @"";
     NSString* imageName = nil;
     
     Account* currentAcnt = [[Accounts sharedInstance] currentAccount];
@@ -162,8 +162,11 @@
         UIColor* colorBubble = nil;
         
         NSUInteger count = 0;
-        text = [[Accounts sharedInstance].currentAccount systemFolderNames][indexPath.row];
-        imageName = [Accounts systemFolderIcons][indexPath.row];
+        NSArray *systemFolderNames = [[Accounts sharedInstance].currentAccount systemFolderNames];
+        folderName = (NSString*)systemFolderNames[(NSUInteger) indexPath.row];
+        
+        NSArray *sysFolderIcons = [Accounts systemFolderIcons];
+        imageName = sysFolderIcons[(NSUInteger) indexPath.row];
         
         switch (indexPath.row) {
             case 0: // INBOX folder
@@ -224,11 +227,11 @@
         
         NSInteger indentation = [subfolder[1] integerValue];
         
-        text = subfolder[0];
+        folderName = subfolder[0];
         
-        NSArray<NSString*>* texts = [text componentsSeparatedByString:@"/"];
+        NSArray<NSString*>* texts = [folderName componentsSeparatedByString:@"/"];
         
-        text = [texts lastObject];
+        folderName = [texts lastObject];
         
         if (![texts[0] containsString:@"[Gmail]"] && indentation) {
             //NSRange rangeofSub = [text rangeOfString:@"/"];
@@ -250,9 +253,9 @@
         cell.separatorInset = UIEdgeInsetsMake(0, 53 + 27 * indentation, 0, 0);
     }
     
-    DDLogDebug(@"\t FolderViewController TableCell = \"%@\"",text);
+    DDLogDebug(@"\t FolderViewController TableCell = \"%@\"",folderName);
     
-    cell.textLabel.text = text;
+    cell.textLabel.text = folderName;
     UIImage* img = [[UIImage imageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     cell.imageView.image = img;
     cell.imageView.tintColor = currentAcnt.user.color;
@@ -329,14 +332,14 @@
              DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
-             _completionHandler(hasNewEmail);
+             self->_completionHandler(hasNewEmail);
          } completed:^{
              NSDate *fetchEnd = [NSDate date];
              NSTimeInterval timeElapsed = [fetchEnd timeIntervalSinceDate:fetchStart];
              DDLogDebug(@"Background Fetch Duration: %f seconds", timeElapsed);
              
              //_isBackgroundFetching = NO;
-             _completionHandler(hasNewEmail);
+             self->_completionHandler(hasNewEmail);
          }];
     //}
 }
