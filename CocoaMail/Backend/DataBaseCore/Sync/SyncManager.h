@@ -70,7 +70,7 @@
 // MARK: - getters
 -(BOOL) isFolderDeletedLocally:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 -(NSString *)retrieveFolderPathFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
--(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
+-(NSNumber *)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;
 
 -(NSDictionary*) retrieveState:(NSInteger)folderNum accountNum:(NSInteger)accountNum;  // for external getters
 
