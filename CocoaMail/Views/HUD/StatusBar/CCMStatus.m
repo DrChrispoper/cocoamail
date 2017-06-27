@@ -86,32 +86,32 @@
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        if (_statusWindow.hidden) {
-            _backgroundView.backgroundColor = [Accounts sharedInstance].currentAccount.user.color;
+        if (self->_statusWindow.hidden) {
+            self->_backgroundView.backgroundColor = [Accounts sharedInstance].currentAccount.user.color;
             
             [self setStatus:status code:code];
             [self dismissAfter:interval];
-            _statusWindow.hidden = NO;
+            self->_statusWindow.hidden = NO;
             
-            CGRect frame = _backgroundView.frame;
+            CGRect frame = self->_backgroundView.frame;
             frame.origin.y = frame.origin.y - 20;
-            _backgroundView.frame = frame;
+            self->_backgroundView.frame = frame;
             
             [UIView animateWithDuration:0.2 animations:^{
-                _statusWindow.alpha = 1;
+                self->_statusWindow.alpha = 1;
             } completion:^(BOOL finished) {
                 [UIView animateWithDuration:0.2 animations:^{
-                    _backgroundView.alpha = 1;
+                    self->_backgroundView.alpha = 1;
                     
-                    CGRect frame = _backgroundView.frame;
+                    CGRect frame = self->_backgroundView.frame;
                     frame.origin.y = frame.origin.y + 20;
                     
-                    _backgroundView.frame = frame;
+                    self->_backgroundView.frame = frame;
                 }];
             }];
         }
         else{
-            [_messageQueue insertObject:@{status:@(interval), status:@(code)} atIndex:0];
+            [self->_messageQueue insertObject:@{status:@(interval), status:@(code)} atIndex:0];
         }
         
     }];
@@ -121,27 +121,27 @@
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        if (_messageQueue.count == 0) {
+        if (self->_messageQueue.count == 0) {
             [UIView animateWithDuration:0.5 animations:^{
                 
-                _backgroundView.alpha = 0.0;
+                self->_backgroundView.alpha = 0.0;
                 
             } completion:^(BOOL finished) {
                 
                 [UIView animateWithDuration:0.2 animations:^{
                     
-                    _statusWindow.alpha = 0.0;
+                    self->_statusWindow.alpha = 0.0;
                     
                 } completion:^(BOOL finished) {
                     
-                    _statusWindow.hidden = YES;
+                    self->_statusWindow.hidden = YES;
                     [[[[UIApplication sharedApplication] delegate] window] makeKeyWindow];
                 }];
             }];
         }
         else {
-            NSDictionary* statusDic = [_messageQueue lastObject];
-            [_messageQueue removeLastObject];
+            NSDictionary* statusDic = [self->_messageQueue lastObject];
+            [self->_messageQueue removeLastObject];
             
             [UIView animateWithDuration:0.1 animations:^{
                 //_backgroundView.alpha = 0.0;
