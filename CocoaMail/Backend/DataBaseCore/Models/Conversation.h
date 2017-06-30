@@ -28,6 +28,7 @@
 -(BOOL) hasAttachments;
 -(BOOL) isFav;
 -(BOOL) isUnread;
+-(NSUInteger)unreadCount;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
 -(void) trash;

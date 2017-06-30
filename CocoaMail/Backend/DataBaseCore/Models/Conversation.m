@@ -143,6 +143,17 @@ static NSDateFormatter * s_df_hour = nil;
     
     return false;
 }
+-(NSUInteger)unreadCount
+{
+    NSUInteger unreadCount = 0;
+    
+    for (Mail* m in self.mails) {
+        if ( [m isRead] == NO ) {
+            unreadCount++;
+        }
+    }
+    return unreadCount;
+}
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
