@@ -1286,7 +1286,7 @@
      }];
 }
 
-- (NSArray<Conversation*>*)conversationsInFolder:(CCMFolderType)folder
+- (NSArray<Conversation*>*)_conversationsInFolder:(CCMFolderType)folder
 {
     NSIndexSet* currentFolderMailIndecies = [self _mailIndeciesForFolder:folder];
     
@@ -1343,7 +1343,7 @@
     _runningUpToDateTest = YES;
     
     // Get an array of all the Conversations in local memory for the requested Folder in this account
-    NSArray<Conversation*>* conversationsInCurrentFolder = [self conversationsInFolder:folderType];
+    NSArray<Conversation*>* conversationsInCurrentFolder = [self _conversationsInFolder:folderType];
 
     // Update conversations in the local store's current folder from the IMAP Server, and update
     [[ImapSync sharedServices:self.user] runUpToDateTest:conversationsInCurrentFolder
