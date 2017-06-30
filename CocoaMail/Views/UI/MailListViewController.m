@@ -745,6 +745,7 @@
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                 
         if (self.viewIsClosing) {
+            DDLogInfo(@"View is closing, so return");
             return;
         }
        
@@ -752,6 +753,7 @@
             // If the conversation does not contain a message to or from showOnlyThisPerson ...
             if (![self _findMessageToOrFromPerson:self.showOnlyThisPerson
                                    inConversation:ciToInsert]) {
+                DDLogInfo(@"Showing single person AND the conversation does not include a messzage to or from this single person, then return");
                 return;
             }
         }
@@ -759,6 +761,7 @@
         // If this view already contains this conversation ...
         if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)ciToInsert.index
                                                           inAccount:(NSUInteger)ciToInsert.user.accountIndex]) {
+            DDLogInfo(@"View already contains this conversation, so return");
             return;
         }
         
@@ -779,7 +782,7 @@
 #ifdef USING_INSTABUG
                 IBGLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
 #endif
-                DDLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
+                DDLogError(@"Conversation with index %ld, failed to insert, so return.",(long)ciToInsert.index);
                 
                 Account* a = [[Accounts sharedInstance] account:convToInsert.user.accountIndex];
                 [a deleteIndex:ciToInsert.index fromFolder:self.folder];
@@ -909,7 +912,7 @@
         
         UITableView *localTable = self.tableView;
         
-        DDLogVerbose(@"Insert Section = %@",@(section));
+        DDLogInfo(@"Insert Section = %@",@(section));
         
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
         

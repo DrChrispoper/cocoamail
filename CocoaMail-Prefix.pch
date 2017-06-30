@@ -6,7 +6,7 @@
 
 //#undef LOG_ASYNC_ENABLED         // make CocoaLumberjack logging synchronous
 
-#define KS_DEMO                     // Comment out to disable
+//#define KS_DEMO                     // Comment out to disable
 
 #define USING_INSTABUG   TRUE      // enable InstaBug (instabug.com)
 
