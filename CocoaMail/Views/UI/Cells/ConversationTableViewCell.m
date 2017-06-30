@@ -15,6 +15,13 @@
 #import "Draft.h"
 #import "NSDate+TimeAgo.h"
 
+
+const CGFloat kCellTextRowHeight = 44.0;
+const CGFloat kCellDividerHeight = 1.0;
+const CGFloat kUnreadCircleDiameter = kCellTextRowHeight * 0.40; // 40% of row height
+const CGFloat kUnreadCircleRadius = kUnreadCircleDiameter / 2.0;
+const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) / 2.0;
+
 @interface ConversationTableViewCell () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, weak) UIView* baseView;
@@ -29,10 +36,11 @@
 @property (nonatomic, weak) UIImageView* backViewR;
 
 @property (nonatomic, weak) UIView* badge;
+@property (nonatomic, weak) UIView* unreadCircle;
 
 @property (nonatomic, weak) UIImageView* attachment;
 
-@property (nonatomic, weak) UIView* readMask;
+//@property (nonatomic, weak) UIView* readMask;
 
 
 @property (nonatomic) BOOL dontGoBack;
@@ -62,7 +70,8 @@
     UIView* back = nil;
     CGFloat sepWidth =  0.0;
     
-    UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
+    UserSettings *user = [[Accounts sharedInstance] currentAccount].user;
+    UIColor* accountColor = user.color;
     
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     UIImageView* inIVL = [[UIImageView alloc] initWithImage:rBack];
@@ -146,8 +155,9 @@
     
     [self.contentView addSubview:back];
     
+
     
-    UIView* sep = [[UIView alloc] initWithFrame:CGRectMake(0, 44, sepWidth, 1)];
+    UIView* sep = [[UIView alloc] initWithFrame:CGRectMake(0, 44, sepWidth, kCellDividerHeight)];
     sep.backgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0];
     sep.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [back addSubview:sep];
@@ -200,6 +210,18 @@
     perso.backgroundColor = [UIColor clearColor];
     [back addSubview:perso];
     self.badge = perso;
+    
+    // View that will contain Unread Conversation Messenger UILabel
+    // Center Point relative to parent window
+    CGFloat view_x = kCellTextRowOffset;
+    CGFloat view_y = kCellTextRowHeight + kCellDividerHeight + kCellTextRowOffset;
+    // View width and height
+    CGFloat view_w = kUnreadCircleDiameter;
+    CGFloat view_h = kUnreadCircleDiameter;
+    UIView* unread = [[UIView alloc] initWithFrame:CGRectMake(view_x, view_y, view_w, view_h)];
+    unread.backgroundColor = [UIColor clearColor];
+    [back addSubview:unread];
+    self.unreadCircle = unread;
     
     self.currentSwipedPosition = 0.0;
     self.panBaseSize = self.baseView.frame.size;
@@ -684,50 +706,83 @@
         self.leftAction.highlighted = ![conv isInInbox];
     }
     
-#ifndef KS_DEMO
-    
-    if (![conv isUnread]) {
+    NSUInteger numberUnreadMailsInConversation = [conv unreadCount];
+    if ( numberUnreadMailsInConversation == 0 ) {
         // Conversation is READ
         
-        if (self.readMask == nil) {
-            UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
-            overView.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1.0];
-            overView.alpha = 0.5f;
-            overView.layer.cornerRadius = 20.f;
-            overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-            [self.baseView insertSubview:overView belowSubview:self.badge];
-            self.readMask = overView;
-        }
+//        if (self.readMask == nil) {
+//            UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
+//            overView.backgroundColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
+//            overView.alpha = 0.5f;
+//            overView.layer.cornerRadius = 20.f;
+//            overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+//            [self.baseView insertSubview:overView belowSubview:self.badge];
+//            self.readMask = overView;
+//        }
+        
+        // Remove the circleLabel if it exists
+        [self.unreadCircle.subviews.firstObject removeFromSuperview];
         
         if (idxQuickSwipe == QuickSwipeMark) {
             self.leftAction.highlighted = NO;
         }
         
-    }
-    else { // Conversation is UNREAD
         
-        [self.readMask removeFromSuperview];
-        self.readMask = nil;
+    }
+    else { // numberUnreadMailsInConversations > 0 // Conversation is UNREAD
+        
+        // Get account color
+        UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
+        DDAssert(accountColor, @"account color must be set");
+        
+        // draw circle in account color
+        UILabel *circleLabel = [self _createLabelForUnreadMails:numberUnreadMailsInConversation
+                                                      withColor:accountColor];
+        
+        // Replace the old circle label with the new one
+        [self.unreadCircle.subviews.firstObject removeFromSuperview];
+        [self.unreadCircle addSubview:circleLabel];
+
+        
+//        [self.readMask removeFromSuperview];
+//        self.readMask = nil;
         
         if (idxQuickSwipe == QuickSwipeMark) {
             self.leftAction.highlighted = YES;
         }
     }
-#else // is KS_DEMO (kickstarter demo)
-    DDLogVerbose(@"Conversation has %@ mails, IS KS_DEMO, all conv's are UNREAD.",@(conv.mails.count));
-    
-    [self.readMask removeFromSuperview];
-    self.readMask = nil;
-    
-    if (idxQuickSwipe == QuickSwipeMark) {
-        self.leftAction.highlighted = YES;
-    }
-
-#endif
     
     // selection
     self.currentSwipedPosition = (selected) ? -[self _limiteRightSwipe] : 0.f;
     [self _applyStableFrame];
+}
+
+-(UILabel *) _createLabelForUnreadMails:(NSUInteger)unreadMails withColor:()circleColor
+{
+    // The UILabel is positioned at x,y = 0.0 relative to its parent view
+    // The UILable has a heigh and width equal to the diameter for the circle
+    UILabel* unreadCircleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, kUnreadCircleDiameter, kUnreadCircleDiameter)];
+    
+    unreadCircleLabel.backgroundColor = circleColor;
+    
+    NSNumber *unreadCount = [NSNumber numberWithUnsignedInteger:unreadMails];
+    
+    // Only show the unread number if it greater than one
+    if ( [unreadCount unsignedIntegerValue] > 1 ) {
+        
+        unreadCircleLabel.text = [unreadCount stringValue];
+    }
+    else { // 1 unread message in conversation
+        unreadCircleLabel.text = @"";
+    }
+    
+    unreadCircleLabel.textAlignment = NSTextAlignmentCenter;
+    unreadCircleLabel.textColor = [UIColor whiteColor];
+    unreadCircleLabel.layer.cornerRadius = kUnreadCircleRadius;
+    unreadCircleLabel.layer.masksToBounds = YES;
+    unreadCircleLabel.font = [UIFont systemFontOfSize:12];
+    
+    return unreadCircleLabel;
 }
 
 -(void) _applyStableFrame
