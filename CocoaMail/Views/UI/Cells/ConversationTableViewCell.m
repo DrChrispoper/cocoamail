@@ -21,6 +21,7 @@ const CGFloat kCellDividerHeight = 1.0;
 const CGFloat kUnreadCircleDiameter = kCellTextRowHeight * 0.40; // 40% of row height
 const CGFloat kUnreadCircleRadius = kUnreadCircleDiameter / 2.0;
 const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) / 2.0;
+const CGFloat kCellEdgeInset = 5.5;
 
 @interface ConversationTableViewCell () <UIGestureRecognizerDelegate>
 
@@ -67,73 +68,76 @@ const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) 
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
-    UIView* back = nil;
+    UIView* cellBackgroundView = nil;
     CGFloat sepWidth =  0.0;
     
     UserSettings *user = [[Accounts sharedInstance] currentAccount].user;
     UIColor* accountColor = user.color;
     
     UIImage* rBack = [[UIImage imageNamed:@"cell_mail_unread"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    UIImageView* inIVL = [[UIImageView alloc] initWithImage:rBack];
-    inIVL.frame = CGRectMake(8 , 0 , 150, 89);
-    inIVL.tintColor = accountColor;
-    [self.contentView addSubview:inIVL];
-    inIVL.contentMode = UIViewContentModeTopLeft;
-    inIVL.clipsToBounds = YES;
-    self.backViewL = inIVL;
+    
+    // Load Unread cell left half background view
+    UIImageView* inLeftImageView = [[UIImageView alloc] initWithImage:rBack];
+    inLeftImageView.frame = CGRectMake(8 , 0 , 150, 89);
+    inLeftImageView.tintColor = accountColor;
+    [self.contentView addSubview:inLeftImageView];
+    inLeftImageView.contentMode = UIViewContentModeTopLeft;
+    inLeftImageView.clipsToBounds = YES;
+    self.backViewL = inLeftImageView;
     self.backViewL.alpha = 0.f;
     
-    UIImageView* inIVR = [[UIImageView alloc] initWithImage:rBack];
-    inIVR.frame = CGRectMake(screenBounds.size.width - 150 - 8 , 0 , 150, 89);
-    inIVR.tintColor = accountColor;
-    [self.contentView addSubview:inIVR];
-    inIVR.contentMode = UIViewContentModeTopRight;
-    inIVR.clipsToBounds = YES;
-    self.backViewR = inIVR;
+    // Load Unread cell right have background view
+    UIImageView* inRightImageView = [[UIImageView alloc] initWithImage:rBack];
+    inRightImageView.frame = CGRectMake(screenBounds.size.width - 150 - 8 , 0 , 150, 89);
+    inRightImageView.tintColor = accountColor;
+    [self.contentView addSubview:inRightImageView];
+    inRightImageView.contentMode = UIViewContentModeTopRight;
+    inRightImageView.clipsToBounds = YES;
+    self.backViewR = inRightImageView;
     self.backViewR.alpha = 0.f;
     
-    
+    // Set up Swipe Images
     UIImageView* arch = [self.delegate imageViewForQuickSwipeAction];
     CGRect fa = arch.frame;
     fa.origin.x = 8;
     fa.origin.y = 28;
     arch.frame = fa;
     arch.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
-    [inIVL addSubview:arch];
+    [inLeftImageView addSubview:arch];
     self.leftAction = arch;
     
-    
+    // Set up Swipe Image Selected image
     UIImageView* sel = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"swipe_select"]];
     CGRect fs = sel.frame;
-    fs.origin.x = inIVR.bounds.size.width - 8 - 30;
+    fs.origin.x = inRightImageView.bounds.size.width - 8 - 30;
     fs.origin.y = 28;
     sel.frame = fs;
     sel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-    [inIVR addSubview:sel];
-    
+    [inRightImageView addSubview:sel];
     
     
     CGFloat moreRightSpace = 0.f;
     
-    if ([self.reuseIdentifier isEqualToString:kCONVERSATION_CELL_ID]) {
-        UIImage* rBack2 = [[UIImage imageNamed:@"cell_conversation_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44,44, 44)];
-        //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack2];
-        iv.frame = CGRectMake(8., 0, screenBounds.size.width - 9, 89);
-        back = iv;
-        sepWidth = iv.bounds.size.width - 7.f;
-        moreRightSpace = 7.f;
-        
-    }
-    else {
+//    if ([self.reuseIdentifier isEqualToString:kCONVERSATION_CELL_ID]) {
+//        
+//        UIImage* rBack2 = [[UIImage imageNamed:@"cell_conversation_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44,44, 44)];
+//        //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+//        UIImageView* iv = [[UIImageView alloc] initWithImage:rBack2];
+//        iv.frame = CGRectMake(8., 0, screenBounds.size.width - 9, 89);
+//        cellBackgroundView = iv;
+//        sepWidth = iv.bounds.size.width - 7.f;
+//        moreRightSpace = 7.f;
+//        
+//    }
+//    else {
         UIImage* rBack3 = [[UIImage imageNamed:@"cell_mail_unread"] resizableImageWithCapInsets:UIEdgeInsetsMake(44, 44, 44, 44)];
         //rBack = [rBack imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         UIImageView* iv = [[UIImageView alloc] initWithImage:rBack3];
         iv.frame = CGRectMake(8, 0, screenBounds.size.width - 16, 89);
-        back = iv;
+        cellBackgroundView = iv;
         sepWidth = iv.bounds.size.width;
-    }
-    self.baseView = back;
+//    }
+    self.baseView = cellBackgroundView;
     
     //UILongPressGestureRecognizer* lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_press:)];
     //lpgr.minimumPressDuration = 0.01;
@@ -152,64 +156,62 @@ const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) 
     
     lpgr.delegate = self;
     
+    [self.contentView addSubview:cellBackgroundView];
     
-    [self.contentView addSubview:back];
+    // Set up cell row seperator line
+    UIView* cellRowsSeperator = [[UIView alloc] initWithFrame:CGRectMake(0, 44, sepWidth, kCellDividerHeight)];
+    cellRowsSeperator.backgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0];
+    cellRowsSeperator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [cellBackgroundView addSubview:cellRowsSeperator];
     
-
+    UILabel* nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, 0, cellBackgroundView.bounds.size.width - 135 - moreRightSpace, 45)];
+    nameLabel.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
+    nameLabel.font = [UIFont systemFontOfSize:16];
+    nameLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [cellBackgroundView addSubview:nameLabel];
+    self.name = nameLabel;
     
-    UIView* sep = [[UIView alloc] initWithFrame:CGRectMake(0, 44, sepWidth, kCellDividerHeight)];
-    sep.backgroundColor = [UIColor colorWithWhite:0.96 alpha:1.0];
-    sep.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [back addSubview:sep];
+    UILabel* titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, 44, cellBackgroundView.bounds.size.width - 88 - moreRightSpace, 45)];
+    titleLabel.textColor = [UIColor colorWithWhite:0.02 alpha:1.0];
+    titleLabel.font = [UIFont systemFontOfSize:16];
+    titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [cellBackgroundView addSubview:titleLabel];
+    self.title = titleLabel;
     
-    UILabel* n = [[UILabel alloc] initWithFrame:CGRectMake(44, 0, back.bounds.size.width - 135 - moreRightSpace, 45)];
-    n.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
-    n.font = [UIFont systemFontOfSize:16];
-    n.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [back addSubview:n];
-    self.name = n;
+    UILabel* timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(cellBackgroundView.bounds.size.width - 108 - moreRightSpace, 0, 100, 45)];
+    timeLabel.textAlignment = NSTextAlignmentRight;
+    timeLabel.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
+    timeLabel.font = [UIFont systemFontOfSize:13];
+    timeLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    [cellBackgroundView addSubview:timeLabel];
+    self.time = timeLabel;
     
-    UILabel* t = [[UILabel alloc] initWithFrame:CGRectMake(44, 44, back.bounds.size.width - 88 - moreRightSpace, 45)];
-    t.textColor = [UIColor colorWithWhite:0.02 alpha:1.0];
-    t.font = [UIFont systemFontOfSize:16];
-    t.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [back addSubview:t];
-    self.title = t;
+    // Create and position the Flagged Image View
     
-    
-    UILabel* h = [[UILabel alloc] initWithFrame:CGRectMake(back.bounds.size.width - 108 - moreRightSpace, 0, 100, 45)];
-    h.textAlignment = NSTextAlignmentRight;
-    h.textColor = [UIColor colorWithWhite:0.47 alpha:1.0];
-    h.font = [UIFont systemFontOfSize:13];
-    h.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-    [back addSubview:h];
-    self.time = h;
-    
-    //
-    // Set up Flagged (Favoris) Image View
-    UIImageView* fav = [[UIImageView alloc]
+    UIImageView* flaggedImage = [[UIImageView alloc]
                         initWithImage:[UIImage imageNamed:@"cell_favoris_off"]
-                        highlightedImage:[UIImage imageNamed:@"cell_favoris_on"]];
-    CGRect f = fav.frame;
-    f.origin.x = back.bounds.size.width - 38.5 - moreRightSpace;
+                        highlightedImage:[UIImage imageNamed:@"cell_favoris_off"]]; // should be on, made it off as I am working towards replacing this code
+    CGRect f = flaggedImage.frame;
+    f.origin.x = cellBackgroundView.bounds.size.width - 38.5 - moreRightSpace;
     f.origin.y = 50.5;
-    fav.frame = f;
-    fav.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-    [back addSubview:fav];
-    self.flaggedImageView = fav;
+    flaggedImage.frame = f;
+    flaggedImage.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    [cellBackgroundView addSubview:flaggedImage];
+    self.flaggedImageView = flaggedImage;
     
+    // Create and position the Attachment "Paper Clip" view.
+    UIImageView* attachmentImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"mail_attachment_off"] highlightedImage:[UIImage imageNamed:@"mail_attachment_on"]];
+    CGFloat att_view_x = cellBackgroundView.bounds.size.width - 38.5 - moreRightSpace;
+    CGFloat att_view_y = 50.5;
+    attachmentImage.frame = CGRectMake(att_view_x, att_view_y, 33, 33);
+    attachmentImage.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+    [cellBackgroundView addSubview:attachmentImage];
+    self.attachment = attachmentImage;
     
-    UIImageView* atc = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"mail_attachment_off"] highlightedImage:[UIImage imageNamed:@"mail_attachment_on"]];
-    atc.frame = CGRectMake(5.5, 50.5, 33, 33);
-    atc.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
-    [back addSubview:atc];
-    self.attachment = atc;
-    
-
-    UIView* perso = [[UIView alloc] initWithFrame:CGRectMake(5.5, 5.5, 33, 33)];
-    perso.backgroundColor = [UIColor clearColor];
-    [back addSubview:perso];
-    self.badge = perso;
+    UIView* personView = [[UIView alloc] initWithFrame:CGRectMake(kCellEdgeInset, kCellEdgeInset, 33, 33)];
+    personView.backgroundColor = [UIColor clearColor];
+    [cellBackgroundView addSubview:personView];
+    self.badge = personView;
     
     // View that will contain Unread Conversation Messenger UILabel
     // Center Point relative to parent window
@@ -218,10 +220,11 @@ const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) 
     // View width and height
     CGFloat view_w = kUnreadCircleDiameter;
     CGFloat view_h = kUnreadCircleDiameter;
-    UIView* unread = [[UIView alloc] initWithFrame:CGRectMake(view_x, view_y, view_w, view_h)];
-    unread.backgroundColor = [UIColor clearColor];
-    [back addSubview:unread];
-    self.unreadCircle = unread;
+    
+    UIView* unreadView = [[UIView alloc] initWithFrame:CGRectMake(view_x, view_y, view_w, view_h)];
+    unreadView.backgroundColor = [UIColor clearColor];
+    [cellBackgroundView addSubview:unreadView];
+    self.unreadCircle = unreadView;
     
     self.currentSwipedPosition = 0.0;
     self.panBaseSize = self.baseView.frame.size;
@@ -768,9 +771,17 @@ const CGFloat kCellTextRowOffset = (kCellTextRowHeight - kUnreadCircleDiameter) 
     NSNumber *unreadCount = [NSNumber numberWithUnsignedInteger:unreadMails];
     
     // Only show the unread number if it greater than one
-    if ( [unreadCount unsignedIntegerValue] > 1 ) {
-        
+    NSUInteger unreadCnt = [unreadCount unsignedIntegerValue];
+    
+    DDAssert(unreadCnt>0, @"Unread Count must be a Positive value.");
+    
+    if ( unreadCnt > 1 && unreadCnt < 10) {
+        // Display "1" to "9"
         unreadCircleLabel.text = [unreadCount stringValue];
+    }
+    else if ( unreadCnt > 9 ) {
+        // Display somethng for 2+ digit numbers
+        unreadCircleLabel.text = @"*";
     }
     else { // 1 unread message in conversation
         unreadCircleLabel.text = @"";
