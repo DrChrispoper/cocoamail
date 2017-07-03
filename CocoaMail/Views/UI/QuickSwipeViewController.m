@@ -219,16 +219,16 @@
 -(UIImageView*) imageViewForQuickSwipeAction
 {
     NSArray* imgNames = @[@"swipe_archive", @"swipe_delete", @"swipe_reply_single", @"swipe_read", @"swipe_inbox"];
-    NSInteger swipetype = [Accounts sharedInstance].quickSwipeType;
+    NSUInteger swipetype = [Accounts sharedInstance].quickSwipeType;
     
-    CCMFolderType type;
-    
-    if (swipetype == QuickSwipeArchive) {
-        type.type = FolderTypeAll;
-    }
-    else if (swipetype == QuickSwipeDelete) {
-        type.type = FolderTypeDeleted;
-    }
+//    CCMFolderType type;
+//
+//    if (swipetype == QuickSwipeArchive) {
+//        type.type = FolderTypeAll;
+//    }
+//    else if (swipetype == QuickSwipeDelete) {
+//        type.type = FolderTypeDeleted;
+//    }
     
     UIImageView* arch = [[UIImageView alloc] initWithImage:[UIImage imageNamed:imgNames[swipetype]]];
     
