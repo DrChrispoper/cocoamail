@@ -698,6 +698,7 @@ const CGFloat kCellEdgeInset = 5.5;
     
     self.flaggedImageView.highlighted = conv.isFav;
     
+    
     QuickSwipeType idxQuickSwipe = [self quickSwipeType];
     
     if (idxQuickSwipe == QuickSwipeReply) {
@@ -709,50 +710,55 @@ const CGFloat kCellEdgeInset = 5.5;
         self.leftAction.highlighted = ![conv isInInbox];
     }
     
-    NSUInteger numberUnreadMailsInConversation = [conv unreadCount];
-    if ( numberUnreadMailsInConversation == 0 ) {
-        // Conversation is READ
-        
-//        if (self.readMask == nil) {
-//            UIView* overView = [[UIView alloc] initWithFrame:self.baseView.bounds];
-//            overView.backgroundColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
-//            overView.alpha = 0.5f;
-//            overView.layer.cornerRadius = 20.f;
-//            overView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-//            [self.baseView insertSubview:overView belowSubview:self.badge];
-//            self.readMask = overView;
-//        }
-        
-        // Remove the circleLabel if it exists
-        [self.unreadCircle.subviews.firstObject removeFromSuperview];
-        
-        if (idxQuickSwipe == QuickSwipeMark) {
-            self.leftAction.highlighted = NO;
-        }
-        
-        
+    
+    
+    // Remove the circleLabel if it exists
+    [self.unreadCircle.subviews.firstObject removeFromSuperview];
+    
+    if (idxQuickSwipe == QuickSwipeMark) {
+        self.leftAction.highlighted = NO;
     }
-    else { // numberUnreadMailsInConversations > 0 // Conversation is UNREAD
-        
-        // Get account color
-        UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
-        DDAssert(accountColor, @"account color must be set");
-        
-        // draw circle in account color
-        UILabel *circleLabel = [self _createLabelForUnreadMails:numberUnreadMailsInConversation
-                                                      withColor:accountColor];
-        
-        // Replace the old circle label with the new one
-        [self.unreadCircle.subviews.firstObject removeFromSuperview];
-        [self.unreadCircle addSubview:circleLabel];
 
+    UILabel *circleLabel = nil;
+    
+    // Get account color
+    UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
+    DDAssert(accountColor, @"account color must be set");
+    
+    NSUInteger numberMailsInConversation = [conv mailCount];
+    if ( numberMailsInConversation == 1 )  {
+        // This cell contains a single mail, not a conversation
         
-//        [self.readMask removeFromSuperview];
-//        self.readMask = nil;
+        // Single message, unread: <account color> circle with no number label
+        circleLabel = [self _createCircleLabelWithNumber:0 andColor:accountColor];
+    } else {
+        // This cell contains a conversation
         
-        if (idxQuickSwipe == QuickSwipeMark) {
-            self.leftAction.highlighted = YES;
+        NSUInteger numberUnreadMailsInConversation = [conv unreadCount];
+        if ( numberUnreadMailsInConversation == 0 ) {
+            // This is a conversation but all are read
+            
+            // Conversation, all read: Gray circle with label number = number of messages in thread
+            circleLabel = [self _createCircleLabelWithNumber:numberMailsInConversation andColor:[UIColor grayColor]];
+        } else {
+            // The conversation has unread conversations
+            
+            // Conversation, with 1 or more unread messages: <account color> cirle with label number = number of messages in thread
+            circleLabel = [self _createCircleLabelWithNumber:numberMailsInConversation andColor:accountColor];
         }
+    }
+    DDAssert(circleLabel, @"Circle Label must exist.");
+    
+    // Replace the old circle label with the new one
+    [self.unreadCircle.subviews.firstObject removeFromSuperview];
+    [self.unreadCircle addSubview:circleLabel];
+    
+    
+    //        [self.readMask removeFromSuperview];
+    //        self.readMask = nil;
+    
+    if (idxQuickSwipe == QuickSwipeMark) {
+        self.leftAction.highlighted = YES;
     }
     
     // selection
@@ -760,40 +766,39 @@ const CGFloat kCellEdgeInset = 5.5;
     [self _applyStableFrame];
 }
 
--(UILabel *) _createLabelForUnreadMails:(NSUInteger)unreadMails withColor:()circleColor
+-(UILabel *) _createCircleLabelWithNumber:(NSUInteger)labelNumber andColor:(UIColor*)circleColor
 {
     // The UILabel is positioned at x,y = 0.0 relative to its parent view
-    // The UILable has a heigh and width equal to the diameter for the circle
-    UILabel* unreadCircleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, kUnreadCircleDiameter, kUnreadCircleDiameter)];
+    // The UILabel has a heigh and width equal to the diameter for the circle
+    UILabel* circleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, kUnreadCircleDiameter, kUnreadCircleDiameter)];
     
-    unreadCircleLabel.backgroundColor = circleColor;
+    circleLabel.backgroundColor = circleColor;
     
-    NSNumber *unreadCount = [NSNumber numberWithUnsignedInteger:unreadMails];
-    
-    // Only show the unread number if it greater than one
-    NSUInteger unreadCnt = [unreadCount unsignedIntegerValue];
-    
-    DDAssert(unreadCnt>0, @"Unread Count must be a Positive value.");
-    
-    if ( unreadCnt > 1 && unreadCnt < 10) {
+    if ( labelNumber == 0 ) {
+        // Zero means NO LABEL
+        
+        // Create circle with NO label
+        circleLabel.text = @"";
+    }
+    else if ( labelNumber > 9 ) {
+        // Label number has 2 or more digits
+        
+        // Display a special label
+        circleLabel.text = @"9+";
+    }
+    else { // Label number is 1 to 9
+        
         // Display "1" to "9"
-        unreadCircleLabel.text = [unreadCount stringValue];
-    }
-    else if ( unreadCnt > 9 ) {
-        // Display somethng for 2+ digit numbers
-        unreadCircleLabel.text = @"*";
-    }
-    else { // 1 unread message in conversation
-        unreadCircleLabel.text = @"";
+        circleLabel.text = [[NSNumber numberWithUnsignedInteger:labelNumber] stringValue];
     }
     
-    unreadCircleLabel.textAlignment = NSTextAlignmentCenter;
-    unreadCircleLabel.textColor = [UIColor whiteColor];
-    unreadCircleLabel.layer.cornerRadius = kUnreadCircleRadius;
-    unreadCircleLabel.layer.masksToBounds = YES;
-    unreadCircleLabel.font = [UIFont systemFontOfSize:12];
+    circleLabel.textAlignment = NSTextAlignmentCenter;
+    circleLabel.textColor = [UIColor whiteColor];
+    circleLabel.layer.cornerRadius = kUnreadCircleRadius;
+    circleLabel.layer.masksToBounds = YES;
+    circleLabel.font = [UIFont systemFontOfSize:12];
     
-    return unreadCircleLabel;
+    return circleLabel;
 }
 
 -(void) _applyStableFrame
