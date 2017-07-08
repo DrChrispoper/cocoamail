@@ -29,6 +29,7 @@
 -(BOOL) isFav;
 -(BOOL) isUnread;
 -(NSUInteger)unreadCount;
+-(NSUInteger)mailCount;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx;
 -(void) trash;
