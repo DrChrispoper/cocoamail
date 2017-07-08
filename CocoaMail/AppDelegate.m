@@ -367,7 +367,7 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
 
 // The method called prior to iOS v10.0
 //
-- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)(void))completionHandler {
+- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler {
     
     if ([identifier isEqualToString:CCMDeleteTriggerIdentifier]) {
         // handle it
