@@ -289,18 +289,23 @@ const CGFloat kCellEdgeInset = 5.5;
     [self.delegate cellIsUnselected:self];
 }
 
+-(BOOL)touchPosition:(CGPoint)touchPosition isInView:(UIView*)testView
+{
+    CGRect bigger = CGRectInset(testView.frame, -10, -10);
+    
+    return (CGRectContainsPoint(bigger, touchPosition));
+}
+
 -(void) _press:(UITapGestureRecognizer*)lpgr
 {
-    const CGPoint pos = [lpgr locationInView:lpgr.view];
+    const CGPoint touchPosition = [lpgr locationInView:lpgr.view];
     const NSInteger tagFavSelected = 972;
     
     switch (lpgr.state) {
         case UIGestureRecognizerStatePossible:
         {
             // tap fav
-            CGRect bigger = CGRectInset(self.flaggedImageView.frame, -10, -10);
-            
-            if (CGRectContainsPoint(bigger, pos)) {
+            if ( [self touchPosition:touchPosition isInView:self.flaggedImageView] ) {
                 self.flaggedImageView.tag = tagFavSelected;
                 self.flaggedImageView.highlighted = !self.flaggedImageView.highlighted;
             }
@@ -309,9 +314,8 @@ const CGFloat kCellEdgeInset = 5.5;
             if (self.attachment.hidden == NO) {
                 
                 if (![self.delegate isPresentingDrafts]) {
-                    bigger = CGRectInset(self.attachment.frame, -10, -10);
-                    
-                    if (CGRectContainsPoint(bigger, pos)) {
+
+                    if ( [self touchPosition:touchPosition isInView:self.attachment] ) {
                         self.attachment.highlighted = true;
                     }
                 }
@@ -320,9 +324,7 @@ const CGFloat kCellEdgeInset = 5.5;
         }
         case UIGestureRecognizerStateEnded:
         {
-            CGRect bigger = CGRectInset(self.flaggedImageView.frame, -10, -10);
-            
-            if (CGRectContainsPoint(bigger, pos)) {
+            if ( [self touchPosition:touchPosition isInView:self.flaggedImageView] ) {
                 self.flaggedImageView.tag = tagFavSelected;
                 self.flaggedImageView.highlighted = !self.flaggedImageView.highlighted;
             }
@@ -331,15 +333,14 @@ const CGFloat kCellEdgeInset = 5.5;
             if (self.attachment.hidden == NO) {
                 
                 if (![self.delegate isPresentingDrafts]) {
-                    bigger = CGRectInset(self.attachment.frame, -10, -10);
-                    
-                    if (CGRectContainsPoint(bigger, pos)) {
+
+                    if ( [self touchPosition:touchPosition isInView:self.attachment] ) {
                         self.attachment.highlighted = true;
                     }
                 }
             }
 
-            // tav fav
+            // tap fav
             if (self.flaggedImageView.tag == tagFavSelected) {
                 
                 if (![[self.conversation firstMail].body isEqualToString:@"COCOAMAILSECRECTWEAPON"]) {
@@ -356,9 +357,7 @@ const CGFloat kCellEdgeInset = 5.5;
             }
             else {
                 // tap user badge
-                CGRect bigger = CGRectInset(self.badge.frame, -10, -10);
-                
-                if (CGRectContainsPoint(bigger, pos)) {
+                if ( [self touchPosition:touchPosition isInView:self.badge] ) {
                     
                     Person* person;
                     
@@ -411,8 +410,8 @@ const CGFloat kCellEdgeInset = 5.5;
                                                           
                                                       }];
                                  }];
-            }
-            
+            } // end tap user badge
+            break;
         }
         default:
             break;
