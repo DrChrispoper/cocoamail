@@ -387,7 +387,8 @@
     DDAssert(folderPathDelim&&folderPathDelim.length>0,@"Folder Path Delimiter must exist");
     
     for (NSString* folderName in allUserFolderNames) {
-        [foldersNIndent addObject:@[folderName, @([folderName containsString:folderPathDelim])]];
+        BOOL folderNameContainsPathDelim = [folderName containsString:folderPathDelim];
+        [foldersNIndent addObject:@[ folderName, @(folderNameContainsPathDelim)] ];
     }
     
     return foldersNIndent;
