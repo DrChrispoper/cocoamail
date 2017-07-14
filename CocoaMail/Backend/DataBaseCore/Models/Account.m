@@ -1344,6 +1344,11 @@
         return;
     }
     
+    if (self.currentFolderIdx == -1) {
+        DDLogInfo(@"Current Folder Index is -1, DO NOTHING");
+        return;
+    }
+    
     // Update Mail from IMAP Server for all Conversations in Currenbt Folder
     [self _updateMailFromImapServerForConversationsInFolder:self.currentFolderType];
     

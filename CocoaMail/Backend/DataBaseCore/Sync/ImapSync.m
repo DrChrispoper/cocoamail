@@ -264,28 +264,35 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
     dispatch_async(imapDispatchQueue, ^{
         
         NSInteger folderNumber = [user numFolderWithFolder:folder];
-        NSString* serverFolderPath = [user folderServerName:folderNumber];
-        MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
-        MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
-        
-        [so start:^(NSError* error, MCOIndexSet* searchResult) {
-            DDLogInfo(@"STARTED Search for All Unread Mails Operation");
+        if ( folderNumber == -1 ) {
+            DDLogWarn(@"folder number is -1");
+        }
+        else {
+            // have a folder number
             
-            if (!error) {
-                DDLogInfo(@"Got Folder's Unread search results, count = %u",searchResult.count);
+            NSString* serverFolderPath = [user folderServerName:folderNumber];
+            MCOIMAPSearchExpression* expr = [MCOIMAPSearchExpression searchUnread];
+            MCOIMAPSearchOperation* so = [[ImapSync sharedServices:user].imapSession searchExpressionOperationWithFolder:serverFolderPath expression:expr];
+            
+            [so start:^(NSError* error, MCOIndexSet* searchResult) {
+                DDLogInfo(@"STARTED Search for All Unread Mails Operation");
                 
-                [AppSettings setInboxUnread:searchResult.count accountIndex:(NSInteger)user.accountIndex];
-            }
-            else {
-//                - On failure, `error` will be set with `MCOErrorDomain` as domain and an
-//                error code available in MCOConstants.h, `searchResult` will be nil
-                DDLogError(@"Search for All Unread Mails Operation Failed, error = %@",error);
-            }
-            
-            if (completedBlock) {
-                completedBlock();
-            }
-        }];
+                if (!error) {
+                    DDLogInfo(@"Got Folder's Unread search results, count = %u",searchResult.count);
+                    
+                    [AppSettings setInboxUnread:searchResult.count accountIndex:(NSInteger)user.accountIndex];
+                }
+                else {
+                    //                - On failure, `error` will be set with `MCOErrorDomain` as domain and an
+                    //                error code available in MCOConstants.h, `searchResult` will be nil
+                    DDLogError(@"Search for All Unread Mails Operation Failed, error = %@",error);
+                }
+                
+                if (completedBlock) {
+                    completedBlock();
+                }
+            }];
+        }
     });
  
 }
