@@ -222,24 +222,32 @@
     }
     else { // User Folders Section
         
-        imageName = [Accounts userFolderIcon];
-        NSArray* subfolder = [currentAcnt userFolders][indexPath.row];
+        NSUInteger folderNumber = (NSUInteger)indexPath.row;
         
-        NSInteger indentation = [subfolder[1] integerValue];
+        BOOL indentation = [currentAcnt userFolderAtIndexContainsPathDelimiter:folderNumber];
         
-        folderName = subfolder[0];
+        NSString *fullPathFolderName = [currentAcnt userFolderNameAtIndex:folderNumber];
         
-        NSArray<NSString*>* texts = [folderName componentsSeparatedByString:@"/"];
+        NSString *delimiter = currentAcnt.user.folderPathDelimiter;
+        DDAssert(delimiter, @"There must be a folder path delimiter");
+        DDAssert(delimiter.length, @"The folder path delimiter must have a length");
         
-        folderName = [texts lastObject];
+        NSArray<NSString*>* folderPathComponents = [fullPathFolderName componentsSeparatedByString:delimiter];
         
-        if (![texts[0] containsString:@"[Gmail]"] && indentation) {
+        folderName = [folderPathComponents lastObject];
+        
+        if ( ![folderPathComponents[0] containsString:@"[Gmail]"] && indentation) {
             //NSRange rangeofSub = [text rangeOfString:@"/"];
             //text = [text substringFromIndex:rangeofSub.location + 1];
-            imageName = [Accounts userFolderPadIcon];
+            
+            imageName = [Accounts userFolderPadIcon];   // Not Google Mail
         }
         else {
-            indentation = 0;
+            // Is Google Mail and includes a path delimiter
+            
+            imageName = [Accounts userFolderIcon];
+
+            indentation = FALSE;;
         }
         
         NSString* reuseID = @"kCellAccountPerso";
