@@ -31,7 +31,7 @@
 @property (nonatomic) NSString *initials;
 @property (nonatomic) UIColor* color;
 
-@property (nonatomic) NSMutableArray<NSString*>* importantFolderNames;      // TODO: Appears NOT to be accessed publically
+@property (nonatomic) NSMutableArray<NSNumber*>* importantFolderNumbers;
 @property (nonatomic) NSMutableArray<NSString*>* allFoldersDisplayNames;
 
 @property (nonatomic) NSString* folderPathDelimiter;      // folder path delimiter is actually a char
@@ -64,7 +64,7 @@
 -(NSString*) folderDisplayNameForType:(CCMFolderType)folder;
 
 -(NSString*) folderServerName:(NSInteger)folder;
--(NSArray*) allNonImportantFoldersName;
+-(NSArray<NSString*>*) allNonImportantFoldersName;
 
 -(Account*) linkedAccount;
 
