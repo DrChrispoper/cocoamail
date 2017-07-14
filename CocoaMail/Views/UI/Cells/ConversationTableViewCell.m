@@ -724,16 +724,24 @@ const CGFloat kCellEdgeInset = 5.5;
     UIColor* accountColor = [[Accounts sharedInstance] currentAccount].user.color;
     DDAssert(accountColor, @"account color must be set");
     
+    NSUInteger numberUnreadMailsInConversation = [conv unreadCount];
     NSUInteger numberMailsInConversation = [conv mailCount];
     if ( numberMailsInConversation == 1 )  {
         // This cell contains a single mail, not a conversation
         
-        // Single message, unread: <account color> circle with no number label
-        circleLabel = [self _createCircleLabelWithNumber:0 andColor:accountColor];
-    } else {
-        // This cell contains a conversation
+        if ( numberUnreadMailsInConversation > 0 ) {
+            // The single mail is unread - show the unread circle with no text
+            
+            // Single message, unread: <account color> circle with no number label
+            circleLabel = [self _createCircleLabelWithNumber:0 andColor:accountColor];
+        } else {
+            // The single mail is read - show NO circle
+            
+            // do nothing
+        }
         
-        NSUInteger numberUnreadMailsInConversation = [conv unreadCount];
+    } else { // This cell contains a conversation, not a single mail
+        
         if ( numberUnreadMailsInConversation == 0 ) {
             // This is a conversation but all are read
             
@@ -746,11 +754,15 @@ const CGFloat kCellEdgeInset = 5.5;
             circleLabel = [self _createCircleLabelWithNumber:numberMailsInConversation andColor:accountColor];
         }
     }
-    DDAssert(circleLabel, @"Circle Label must exist.");
     
-    // Replace the old circle label with the new one
+    // Remove the previous circle label, if it exists
     [self.unreadCircle.subviews.firstObject removeFromSuperview];
-    [self.unreadCircle addSubview:circleLabel];
+    
+    // If a new circle label has been created
+    if ( circleLabel ) {
+        // Display the new circle label
+        [self.unreadCircle addSubview:circleLabel];
+    }
     
     
     //        [self.readMask removeFromSuperview];
