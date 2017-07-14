@@ -68,7 +68,7 @@
 {
     Account* ac = [[Accounts sharedInstance] currentAccount];
     
-    return ac.userFolders.count;
+    return (NSInteger)ac.userFolders.count;
 }
 
 -(CGFloat) tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath*)indexPath
@@ -78,15 +78,13 @@
 
 -(UITableViewCell*) tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    
     NSString* imageName = [Accounts userFolderIcon];
     
     Account* cac = [[Accounts sharedInstance] currentAccount];
     
-    NSArray* subfolder = [cac userFolders][indexPath.row];
-    
-    NSString* text = subfolder[0];
-    NSInteger indentation = [subfolder[1] integerValue];
+    NSUInteger folderIndex = (NSUInteger)indexPath.row;
+    NSString* text = [cac userFolderNameAtIndex:folderIndex];
+    BOOL indentation = [cac userFolderAtIndexContainsPathDelimiter:folderIndex];
     
     NSString* reuseID = @"kCellAccountPerso";
     
