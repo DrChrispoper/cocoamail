@@ -26,6 +26,10 @@
 -(void) setNewUser:(UserSettings*)user;
 
 @property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
+-(NSUInteger)userFolderCount;
+-(NSString*)userFolderNameAtIndex:(NSUInteger)folderIndex;
+-(BOOL)userFolderAtIndexContainsPathDelimiter:(NSUInteger)folderIndex;
+
 @property (nonatomic) NSInteger currentFolderIdx;
 @property (nonatomic) NSInteger isSendingOut;
 @property (nonatomic) CCMFolderType currentFolderType;

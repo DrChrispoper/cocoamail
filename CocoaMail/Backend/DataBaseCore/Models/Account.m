@@ -79,6 +79,19 @@
     _user = user;
 }
 
+-(NSUInteger)userFolderCount
+{
+    return self.userFolders.count;
+}
+-(NSString*)userFolderNameAtIndex:(NSUInteger)folderIndex
+{
+    return self.userFolders[folderIndex][0];
+}
+-(BOOL)userFolderAtIndexContainsPathDelimiter:(NSUInteger)folderIndex
+{
+    return [self.userFolders[folderIndex][1] boolValue];
+}
+
 -(void) initContent
 {
     _currentFolderFullSyncCompleted = YES;
@@ -295,7 +308,7 @@
     [AppSettings setLastFolderIndex:@(encodeFolderTypeWith(folder))];
     
     if (folder.type == FolderTypeUser) {
-        NSString* name = [[Accounts sharedInstance] currentAccount].userFolders[(NSUInteger)folder.idx][0];
+        NSString* name = [[[Accounts sharedInstance] currentAccount] userFolderNameAtIndex:(NSUInteger)folder.idx];
         NSArray* names = [self.user allFoldersDisplayNames];
         for (NSUInteger i = 0; i < names.count; i++) {
             if ([name isEqualToString:names[i]]) {
@@ -1294,6 +1307,7 @@
     
     // Create an array (resultingFolderMail) of all the conversations indexed by the current folder mail indecies
     NSMutableArray<Conversation*>* conversationsInCurrentFolder = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
+    
     [self.allConversations enumerateObjectsAtIndexes:currentFolderMailIndecies
                                              options:0UL
                                           usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
