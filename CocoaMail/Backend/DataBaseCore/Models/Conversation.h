@@ -38,9 +38,7 @@
 
 @interface ConversationIndex : NSObject
 
-#warning "If index cannot be negative, change to UNSIGNED."
-
-@property (nonatomic) NSInteger index;
+@property (nonatomic) NSUInteger index;
 @property (nonatomic) UserSettings* user;
 
 +(ConversationIndex*) initWithIndex:(NSUInteger)index user:(UserSettings*)user;
