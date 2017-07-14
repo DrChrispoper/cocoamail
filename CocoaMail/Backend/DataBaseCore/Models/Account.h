@@ -74,7 +74,7 @@
 
 -(void) deliverUpdate:(NSArray<Mail*>*)emails;
 -(void) deliverDelete:(NSArray<Mail*>*)emails fromFolder:(CCMFolderType)folderFrom;
--(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom;
+-(BOOL) deleteIndex:(NSUInteger)index fromFolder:(CCMFolderType)folderFrom;
 
 -(void) doPersonSearch:(Person*)person;
 -(void) doTextSearch:(NSString*)searchString;

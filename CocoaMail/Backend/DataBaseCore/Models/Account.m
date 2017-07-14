@@ -1463,18 +1463,18 @@
 }
 
 
--(BOOL) deleteIndex:(NSInteger)index fromFolder:(CCMFolderType)folderFrom
+-(BOOL) deleteIndex:(NSUInteger)index fromFolder:(CCMFolderType)folderFrom
 {
     if (self.user.isDeleted) {
         return NO;
     }
     
     NSMutableIndexSet* currentFolderMailIndecies =
-    [self _mailIndeciesForFolder:self.currentFolderType];
+       [self _mailIndeciesForFolder:self.currentFolderType];
     
-    if ([currentFolderMailIndecies containsIndex:(NSUInteger)index]) {
-        DDLogError(@"Index %ld was still in set",(long)index);
-        [currentFolderMailIndecies removeIndex:(NSUInteger)index];
+    if ([currentFolderMailIndecies containsIndex:index]) {
+        DDLogInfo(@"Index %@ found in folder, deleting.",@(index));
+        [currentFolderMailIndecies removeIndex:index];
         return YES;
     }
     
