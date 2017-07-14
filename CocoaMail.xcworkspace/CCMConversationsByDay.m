@@ -239,7 +239,7 @@
     }
 }
 
-- (void)InsertConversation:(ConversationIndex *)ciToInsert
+- (void)insertConversation:(ConversationIndex *)ciToInsert
 {
     @synchronized (self.conversationsPerDay) {
         BOOL conversationAddedToConvByDate = NO;

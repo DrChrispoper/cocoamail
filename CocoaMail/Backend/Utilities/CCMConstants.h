@@ -24,7 +24,8 @@ typedef NS_ENUM(NSInteger, BaseFolderType) {
     FolderTypeAll,
     FolderTypeDeleted,
     FolderTypeSpam,
-    FolderTypeUser
+    FolderTypeUser,
+    FolderTypeCount     // number of elements in the enum
 };
 
 typedef struct CCMFolderType{

@@ -42,7 +42,7 @@
 -(void)removeConversation:(NSUInteger)conIndex onDay:(NSUInteger)dayIndex;
 -(void)exchangeConversationsAtIndex:(NSUInteger)convIndexOne withConversationAtIndex:(NSUInteger)convIndexTwo onDay:(NSUInteger)dayIndex;
 
-- (void)InsertConversation:(ConversationIndex *)ciToInsert;
+- (void)insertConversation:(ConversationIndex *)ciToInsert;
 
 -(NSString*)description;
 
