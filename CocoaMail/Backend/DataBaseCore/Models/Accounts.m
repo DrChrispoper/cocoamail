@@ -81,7 +81,7 @@
         sharedInstance.accounts = accounts;
         
         if ([AppSettings numActiveAccounts] > 0) {
-            [sharedInstance _loadMailFromDatabasse];
+            [sharedInstance _loadMailFromDatabase];
         }
         
         DDLogVerbose(@"Accounts Singleton Initialized. Account count = %ld",(unsigned long)[accounts count]);
@@ -125,7 +125,7 @@
 
 // Called only when the Accounts shared instance is initialized, if there are > 0 accounts
 //
--(void) _loadMailFromDatabasse
+-(void) _loadMailFromDatabase
 {
     DDLogInfo(@"START PART 1 - Load All Mail for Current Account from Database.");
 

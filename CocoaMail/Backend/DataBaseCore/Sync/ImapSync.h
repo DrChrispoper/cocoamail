@@ -46,7 +46,7 @@
 -(RACSignal*) runFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
--(void) runUpToDateTest:(NSArray<Conversation*>*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<Mail*>* dels, NSArray<Mail*>* ups, NSArray<NSString*>* days))completedBlock;
+-(void) runUpToDateTest:(NSArray<Conversation*>*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock;
 //-(void) runUpToDateCachedTest:(NSArray*)data;
 -(void) saveCachedData;
 +(void) deletedAndWait:(UserSettings*)deleteUser;

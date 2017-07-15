@@ -247,14 +247,12 @@
     // note: returned RACSignal is ignored.
     [[ImapSync doLogin:user] subscribeError:^(NSError *error) {
         
-        DDLogError(@"doLogin:\"%@\" failed with error = %@",self.user.username,error);
-        
         BOOL canShowUI = [Accounts sharedInstance].canUI;
         
         switch ( error.code ) {
                 
             case CCMConnectionError:
-                DDLogError(@"Login Connection Error (%@), displaying Status UI",@(error.code));
+                DDLogError(@"Login Connection Error (%@) to IMAP Server \"%@\"",user.imapHostname,@(error.code));
                 
                 if ( canShowUI ) {
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
@@ -263,7 +261,7 @@
                 break;
                 
             case CCMCredentialsError:
-                DDLogError(@"Login Credentials Error (%@), displaying Status UI",@(error.code));
+                DDLogError(@"Login Credentials Error (%@) to IMAP Server \"%@\"",user.imapHostname,@(error.code));
                 
                 if ( canShowUI ) {
                     [CCMStatus showStatus:NSLocalizedString(@"add-account-view.error.wrong-credentials", @"Credentials")  dismissAfter:2.0 code:2];
@@ -271,7 +269,7 @@
                 break;
                 
             default:
-                DDLogError(@"Uknown Login Error, displaying Status UI");
+                DDLogError(@"Uknown Login Error (IMAP Server \"%@\"), displaying Status UI",user.imapHostname);
                 
                 if ( canShowUI ) {
                     [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error")  dismissAfter:2.0 code:2];
@@ -1358,6 +1356,8 @@
 // requested folder.  If they folder is not the All Folder, it does it for that folder also.
 - (void)_updateMailFromImapServerForConversationsInFolder:(CCMFolderType)folderType
 {
+    DDAssert(self.currentFolderIdx != -1, @"The Current Folder must not be -1");
+    
     DDLogInfo(@"Update mail (from IMAP server) for folder: \"%@\"",[self folderDescription:folderType]);
 
     _runningUpToDateTest = YES;
@@ -1368,10 +1368,8 @@
     // Update conversations in the local store's current folder from the IMAP Server, and update
     [[ImapSync sharedServices:self.user] runUpToDateTest:conversationsInCurrentFolder
                                              folderIndex:self.currentFolderIdx
-                                               completed:^(NSArray *dels, NSArray *ups, NSArray* days) {
-                                                   
-                                                   // NB: dels and ups are IGNORED.
-                                                   
+                                               completed:^(NSArray* days) {
+                                                                                                      
                                                    //[mailListDelegate removeConversationList:nil];
                                                    
                                                    // Update "Days" in mailing list delegate
@@ -1584,6 +1582,8 @@
 
 -(void) localFetchMore:(BOOL)loadMore
 {
+    DDAssert(self.currentFolderIdx != -1, @"The Current Folder must not be -1");
+
     id<MailListDelegate> subscriber = self.mailListDelegate;      // strong hold
 
     DDLogDebug(@"-[Accounts localFetchMore:%@]",(loadMore?@"TRUE":@"FALSE"));
@@ -1646,6 +1646,8 @@
 //
 -(void) refreshCurrentFolder
 {
+    DDAssert(self.currentFolderIdx != -1, @"The Current Folder must not be -1");
+
     DDLogInfo(@"ENTERED for Folder \"%@\", Folder Index %@",[self currentFolderTypeValue],@(self.currentFolderIdx));
     
     // If the Current User Account is the "All" account ...

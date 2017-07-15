@@ -2035,9 +2035,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 // have been deleted or updated.  Call the completion handler with a list of the deleted Mails, a list of
 // the update Mails, and a list of the unique Days updated or deleted.  This will allow the delegate VC to update its view.
 
-#warning XYZZY
-
--(void) runUpToDateTest:(NSArray<Conversation*>*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<Mail*>* dels, NSArray<Mail*>* ups, NSArray<NSString*>* days))completedBlock
+-(void) runUpToDateTest:(NSArray<Conversation*>*)convs folderIndex:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock
 {
     DDLogInfo(@"****************");
     DDLogInfo(@"Folder # %@ has %@ conversations.",@(folderIdx),@(convs.count));
@@ -2075,7 +2073,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
     DDLogDebug(@"CHECK folder \"%@\" with %@ emails in accountIndex:%@", path, @(indeciesOfAllMailMessagesInFolder.count), @(self.user.accountNum));
     
     if (indeciesOfAllMailMessagesInFolder.count == 0) {
-        completedBlock(nil, nil, nil);
+        completedBlock(nil);
         return;
     }
     
@@ -2092,13 +2090,13 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 DDLogError(@"doLogin of user %@ failed with error= %@",self.user.name,error);
                 break;
         }
-        completedBlock(nil, nil, nil);
+        completedBlock(nil);
         
      } completed:^{
          
          if (!self.connected){
              DDLogWarn(@"doLogin succeeded, but not connected.");
-             completedBlock(nil, nil, nil);
+             completedBlock(nil);
              return;
          }
          
@@ -2117,7 +2115,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                  if (error) {
                      [self _setConnected:NO];
                      DDLogError(@"Fetching IMAP Messages at path \"%@\" failed, error=%@", path, error);
-                     completedBlock(nil, nil, nil);
+                     completedBlock(nil);
                      return;
                  }
                  
@@ -2224,10 +2222,9 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                  }
                  // At this point mailsDays contains all (unique) days having any updated or deleted mails
                  
-                 DDLogInfo(@"Calling completion block with %@ deleted mails, %@ updated mails, and %@ mail days",
-                           @(deletedMails.count),@(updatedMails.count),@(mailsDays.count));
+                 DDLogInfo(@"Calling completion block with %@ mail days",@(mailsDays.count));
                  
-                 completedBlock(deletedMails, updatedMails, mailsDays);
+                 completedBlock(mailsDays);
              }];
          });
      }];
