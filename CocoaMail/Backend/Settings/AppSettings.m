@@ -565,7 +565,12 @@
     }
     DDLogInfo(@"Set Icon Badge (Total of all unread in all inboxes) %ld",(long)badge);
     
-    [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
+    // Call UIApplication on the main thread
+    dispatch_async(dispatch_get_main_queue(), ^{
+        
+        [UIApplication sharedApplication].applicationIconBadgeNumber = badge;
+        
+    });
 }
 
 @end

@@ -261,46 +261,51 @@
         p.codeName = cN;
     }
     
-    if (UIApplicationStateBackground != [UIApplication sharedApplication].applicationState && mail) {
+    
+    // UIApplication.applicationState must be called on the main queue
+    dispatch_async(dispatch_get_main_queue(), ^{
         
-        NSURL* url = [p gravatarURL:mail];
-        
-        
-        NSURLRequest *request = [NSURLRequest
-                                 requestWithURL:url
-                                 cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
-                                 timeoutInterval:0.f];
-        
-        NSURLSession *session = [NSURLSession sharedSession];
-        
-//        DDLogInfo(@"Gravatar URL: \"%@\"",url.description);
-        
-        NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request
-                                                                completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
-                                                      NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
-                                                                    
-                                                                    if ( error ) {
-                                                                        DDLogError(@"NSURLSessionDownloadTask error \"%@\"",error.description);
-                                                                    }
-                                                      
-                                                      if (!error && httpResponse.statusCode != 404) {
-                                                          NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-                                                          NSURL *documentsDirectoryURL = [NSURL fileURLWithPath:documentsPath];
-                                                          NSURL *documentURL = [documentsDirectoryURL URLByAppendingPathComponent:[response
-                                                                                                                                   suggestedFilename]];
-                                                          [[NSFileManager defaultManager] moveItemAtURL:location
-                                                                                                  toURL:documentURL
-                                                                                                  error:nil];
-                                                          
-                                                          NSString* fP = [NSString stringWithFormat:@"%@/%@",documentsPath,[response suggestedFilename]];
-                                                          if ([[NSFileManager defaultManager] fileExistsAtPath:fP]) {
-                                                              p.image = [UIImage imageWithContentsOfFile:fP];
-                                                          }
-                                                      }
-                                                  }];
-        
-        [downloadTask resume];
-    }
+        if (UIApplicationStateBackground != [UIApplication sharedApplication].applicationState && mail) {
+            
+            NSURL* url = [p gravatarURL:mail];
+            
+            
+            NSURLRequest *request = [NSURLRequest
+                                     requestWithURL:url
+                                     cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                                     timeoutInterval:0.f];
+            
+            NSURLSession *session = [NSURLSession sharedSession];
+            
+            //        DDLogInfo(@"Gravatar URL: \"%@\"",url.description);
+            
+            NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request
+                                                                    completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+                                                                        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+                                                                        
+                                                                        if ( error ) {
+                                                                            DDLogError(@"NSURLSessionDownloadTask error \"%@\"",error.description);
+                                                                        }
+                                                                        
+                                                                        if (!error && httpResponse.statusCode != 404) {
+                                                                            NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+                                                                            NSURL *documentsDirectoryURL = [NSURL fileURLWithPath:documentsPath];
+                                                                            NSURL *documentURL = [documentsDirectoryURL URLByAppendingPathComponent:[response
+                                                                                                                                                     suggestedFilename]];
+                                                                            [[NSFileManager defaultManager] moveItemAtURL:location
+                                                                                                                    toURL:documentURL
+                                                                                                                    error:nil];
+                                                                            
+                                                                            NSString* fP = [NSString stringWithFormat:@"%@/%@",documentsPath,[response suggestedFilename]];
+                                                                            if ([[NSFileManager defaultManager] fileExistsAtPath:fP]) {
+                                                                                p.image = [UIImage imageWithContentsOfFile:fP];
+                                                                            }
+                                                                        }
+                                                                    }];
+            
+            [downloadTask resume];
+        }
+    });
     
     [[Persons sharedInstance] addPerson:p];
     

@@ -1993,7 +1993,10 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         DDLogDebug(@"Index: %ld",(long)index.index);
         DDLogDebug(@"Conversation: %@",[conv firstMail].subject);
         
-        [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+        // Call UIApplication on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+        });
     }
     
 }
