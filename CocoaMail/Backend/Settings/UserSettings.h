@@ -31,7 +31,7 @@
 @property (nonatomic) NSString *initials;
 @property (nonatomic) UIColor* color;
 
-@property (nonatomic) NSMutableArray<NSNumber*>* importantFolderNumbers;
+@property (nonatomic) NSMutableArray<NSNumber*>* importantFolderNumbers;  // not used outside this class
 @property (nonatomic) NSMutableArray<NSString*>* allFoldersDisplayNames;
 
 @property (nonatomic) NSString* folderPathDelimiter;      // folder path delimiter is actually a char

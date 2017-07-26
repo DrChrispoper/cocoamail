@@ -204,9 +204,9 @@ static NSDateFormatter * s_df_hour = nil;
 }
 
 // Return a Set of all the Folder Types of all the Mails in this Conversation
--(NSMutableSet*) foldersType
+-(NSMutableSet<NSNumber*>*) foldersType
 {
-    NSMutableSet* foldersOfConversationsMails = [[NSMutableSet alloc] init];
+    NSMutableSet<NSNumber*>* foldersOfConversationsMails = [[NSMutableSet alloc] init];
     
     NSArray<Mail*>* conversationMails = [self.mails copy];
     

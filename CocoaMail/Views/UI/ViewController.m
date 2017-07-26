@@ -170,9 +170,15 @@ static ViewController * s_self;
     if ([Accounts sharedInstance].accountsCount !=  1) {
         // other than 1 account
         
-        // Show the Mail List for the last folder
+        CCMFolderType folderType = CCMFolderTypeInbox; // use this in case of an error
         
-        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith([AppSettings lastFolderIndex].integerValue) ];
+        // Show the Mail List for the last folder
+        NSNumber *lastFolderNumber = [AppSettings lastFolderIndex];
+        if ( lastFolderNumber ) {
+            NSInteger lastFolderIndex = [[AppSettings lastFolderIndex] integerValue];
+            folderType = decodeFolderTypeWith(lastFolderIndex);
+        }
+        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:folderType];
         inbox.view.frame = self.contentView.bounds;
         nextView = inbox.view;
     

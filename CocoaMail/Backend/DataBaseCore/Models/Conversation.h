@@ -15,7 +15,7 @@
 @property (nonatomic, strong, readonly) NSMutableArray<Mail *>* mails;
 @property (nonatomic) BOOL isDraft;
 
--(NSMutableSet*) foldersType;
+-(NSMutableSet<NSNumber*>*) foldersType;
 -(NSDate*) latestDate;
 -(Mail*) firstMail;
 -(NSArray*) uidsWithFolder:(NSInteger)folder;

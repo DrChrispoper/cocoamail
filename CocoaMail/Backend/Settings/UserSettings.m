@@ -11,9 +11,12 @@
 #import "SyncManager.h"
 #import "Accounts.h"
 
+
+
 @implementation UserSettings {
     NSString* _localPath;
 }
+
 
 @synthesize identifier = _identifier;
 @synthesize username = _username;
@@ -34,6 +37,7 @@
 @synthesize all = _all;
 @synthesize folderPathDelimiter = _folderPathDelimiter;
 @synthesize folderPathPrefix = _folderPathPrefix;
+
 
 
 -(NSString *) folderPathPrefix
@@ -115,12 +119,14 @@
     return _color;
 }
 
--(NSArray<NSNumber*>*)importantFolderNumbers
+// Getter, only called by self.importantFolderNumbers in this class
+
+-(NSArray<NSNumber*>*)importantFolderNumbers    // array indexed by Important CCMFolderType s
 {
     // Initialize the Important Folder Numbers if they do not already exist
-    if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < FolderTypeCount) {
-        _importantFolderNumbers = [[NSMutableArray alloc] initWithCapacity:FolderTypeCount];
-        for (int i = 0; i < FolderTypeCount; i++) {
+    if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < ImportantFolderTypeCount) {
+        _importantFolderNumbers = [[NSMutableArray alloc] initWithCapacity:ImportantFolderTypeCount];
+        for (int i = 0; i < ImportantFolderTypeCount; i++) {
             [_importantFolderNumbers addObject:[NSNumber numberWithInteger:-1]];
         }
     }
@@ -261,6 +267,7 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
+// Setter, only called by self.importantFolderNumbers = something, from withing this class.
 -(void)setimportantFolderNumbers:(NSMutableArray<NSNumber*>*)importantFolderNumbers
 {
     DDLogInfo(@"ENTERED");
@@ -359,7 +366,7 @@
         return -1;
     }
     
-    NSNumber *importantNumber = self.importantFolderNumbers[baseFolder];
+    NSNumber *importantNumber = self.importantFolderNumbers[baseFolder]; // call via the Getter
     if ( importantNumber == nil ) {
         // error
         DDLogError(@"No valid NSNumber at ImportantFolderNumber[%@]",@(baseFolder));
@@ -385,33 +392,57 @@
     [NSKeyedArchiver archiveRootObject:self toFile:_localPath];
 }
 
--(CCMFolderType) typeOfFolder:(NSInteger)folder
-{
-    // If we are the all user, return this as a system folder type
-    if (_all) {
-        return FolderTypeWith(folder, 0);
-    }
-    
-    // If the folder is a system folder, return this
-    NSInteger folderNumberIndex = 0;
-    for (NSNumber *folderNumber in self.importantFolderNumbers) {
-        NSInteger folderNameIndex = [folderNumber integerValue];
-        if ( folder == folderNameIndex ) {
-            return FolderTypeWith(folderNumberIndex, 0);
-        }
-        folderNumberIndex++;
-    }
+#pragma mark - typeOfFolder: sub functions
 
-    NSArray* nonImportantFolderNames = [self allNonImportantFoldersName];
-    NSString* folderName = [self folderDisplayNameForIndex:(NSUInteger)folder];
-    
-    // If the folder name for this index can be found in the User Folders,
-    // turn return that folder type.
-    for (NSUInteger idx = 0; idx < nonImportantFolderNames.count;idx++) {
-        if ([folderName isEqualToString:nonImportantFolderNames[idx]]) {
-            NSInteger folderIndex = (NSInteger)idx;
-            return FolderTypeWith(FolderTypeUser, folderIndex);
+-(BaseFolderType)_folderIndexIsImportantFolder:(NSInteger)folderNameIndex
+{
+    // If the folder is a System Folder, return its CCMFolderType
+    NSUInteger importantFoldersMaxIndex = ImportantFolderTypeCount - 1;
+    for ( NSInteger importantFolderNumberIndex = 0; importantFolderNumberIndex < importantFoldersMaxIndex; importantFolderNumberIndex++) {
+        NSInteger importantFolderNameIndex = [self importantFolderNumforBaseFolder:importantFolderNumberIndex];
+        if ( importantFolderNameIndex != -1 ) {
+            // got a valid folder name index
+            
+            // If the folder name index we are searching for matches this important name index
+            if ( folderNameIndex == importantFolderNameIndex ) {
+                return importantFolderNumberIndex;
+            }
         }
+    }
+    return -1;       // No important folders matched
+}
+-(BOOL)_folderIndexIsUserFolder:(NSInteger)folderNameIndex
+{
+    // create index set of all user folder names
+    NSIndexSet *userFolderIndecies = [self _allUserFolderIndecies];
+    
+    // IF the folder name index is found in the user folder indecies
+    if ( [userFolderIndecies containsIndex:(NSUInteger)folderNameIndex] ) {
+        // then return its CCMFolderType
+        return TRUE;
+    }
+    return FALSE;   // No user folders matched
+}
+-(CCMFolderType) typeOfFolder:(NSInteger)folderNameIndex
+{
+    // If we are the all accounts user, return this as a system folder type
+    if ( self.isAll ) {
+        return FolderTypeWith(folderNameIndex, 0);   // NB(AJC): This looks incorrect to me ... maybe because all folder is index 0?
+    }
+    
+    NSInteger folderType = [self _folderIndexIsImportantFolder:folderNameIndex];
+    // Is this folder index that of an Important Folder?
+    if ( folderType != -1 ) {
+        // Then return the CCMFolderType for this important folder
+        DDLogVerbose(@"Folder Name Index %@ is an Important Folder.",@(folderNameIndex));
+        return FolderTypeWith((BaseFolderType)folderType, 0);
+
+    }
+    
+    // IF the folder name index is found in the user folder indecies
+    if ( [self _folderIndexIsUserFolder:folderNameIndex] ) {
+        // then return its CCMFolderType
+        return FolderTypeWith(FolderTypeUser, folderNameIndex);
     }
     
     // Otherwise return Folder Type ALL
@@ -468,36 +499,56 @@
     return folderIndex;      // NB: CAN RETURN -1
 }
 
--(NSArray<NSString*>*) allNonImportantFoldersName
+-(NSIndexSet*)_allUserFolderIndecies     // User == Non-Important
 {
-    if ( !_allFoldersDisplayNames ){
-        _allFoldersDisplayNames = [NSMutableArray arrayWithObject:@"nothing here"];
+    DDAssert(_allFoldersDisplayNames, @"All Folder Names array must exist");
+    
+    NSUInteger allFoldersCount = _allFoldersDisplayNames.count;
+    
+    NSMutableIndexSet* folderIndecies = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, allFoldersCount)];
+    
+    // Remove each of the Important folder indexes from the set of all folder indecies
+    for ( NSNumber* importantfolderIndex in self.importantFolderNumbers ) {
+        [folderIndecies removeIndex:[importantfolderIndex unsignedIntegerValue]];
     }
     
-    // Create an All Folders Names Set
-    NSMutableSet* foldersSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
+    return folderIndecies;
+}
+-(NSArray<NSString*>*) allNonImportantFoldersName
+{
+    DDAssert(_allFoldersDisplayNames, @"All Folder Display Names must be allocated.");
+    DDAssert(_allFoldersDisplayNames.count > 0, @"At least the Important Folder Display Names must be initialized.");
     
-    // Remove the Important Folder Names from the All Folders Name Set
+    // Create an All Folders Names Set
+    NSMutableSet<NSString*>* allFolderNamesSet = [NSMutableSet setWithArray:_allFoldersDisplayNames];
+    
+    // For each Important Folder's Index
     for (NSNumber* folderNumber in self.importantFolderNumbers) {
-        if ([folderNumber intValue] >= 0) {
+        if ( folderNumber ) {
+            // Convert NSNumber to index value
             NSUInteger folderNameIndex = [folderNumber unsignedIntegerValue];
             
-            NSString *fldNameToRemove = _allFoldersDisplayNames[folderNameIndex];
-            
-            // if we got a string and its more than 0 characters in length ...
-            if ( fldNameToRemove && fldNameToRemove.length) {
+            // If the index is within range
+            if ( folderNameIndex < _allFoldersDisplayNames.count ) {
+
+                // Get the name of the important field to remove from all fields
+                NSString *fldNameToRemove = _allFoldersDisplayNames[folderNameIndex];
                 
-                // then remove it from the folder set
-                [foldersSet removeObject:fldNameToRemove];
+                // if we got a string and its more than 0 characters in length ...
+                if ( fldNameToRemove && fldNameToRemove.length ) {
+                    
+                    // then remove it from the folder names set
+                    [allFolderNamesSet removeObject:fldNameToRemove];
+                }
             }
-            
         }
     }
     
-    NSArray <NSString*>* folderNames = [foldersSet allObjects];
-    
+    // Create an array from the remaining set of non-important user folder names
+    NSArray <NSString*>* userFolderNames = [allFolderNamesSet allObjects];
+        
     // Return an array of all Non Important (ie. User) Folders in sorted order
-    return [folderNames sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    return [userFolderNames sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
 -(Account*) linkedAccount   // Returns the Account object for self.accountNum
@@ -567,6 +618,17 @@
     _localPath = [folderPath stringByAppendingPathComponent:[NSString stringWithFormat:USER_SETTINGS_FILE_NAME_TEMPLATE,(unsigned long)_accountNum]];
     
     DDLogVerbose(@"DECODED UserSettings: %@",[self description]);
+    
+    // If the folder names were loaded
+    if ( _allFoldersDisplayNames && _allFoldersDisplayNames.count ) {
+        // but the important folder numbers were not
+        if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < ImportantFolderTypeCount ) {
+            // Then update important folder numbers
+            DDLogWarn(@"%@ Folder Names loaded, but Important Folder Numbers MISSING.",@(_allFoldersDisplayNames.count));
+            
+        }
+        
+    }
 
     return self;
 }

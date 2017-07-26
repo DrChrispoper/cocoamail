@@ -176,22 +176,10 @@
     [navBar setNeedsDisplay];
 }
 
-//-(NSInteger)_unreadMailCount
-//{
-//    NSInteger mailUnread = 0;
-//    
-//    return mailUnread;
-//}
 
-
--(void) viewDidLoad
+#pragma mark - viewDidLoad supporting methods
+-(void)_setupConversations
 {
-    [super viewDidLoad];
-    
-    [self check3DTouch];
-    
-    self.view.backgroundColor = [UIGlobal standardLightGrey];
-    
     self.convByDay = [[CCMConversationsByDay alloc] initWithDayCapacity:100]; // 100 days
     
     // conversationsPerAccount is an NSMutableAreray of index sets, one for each account
@@ -201,13 +189,46 @@
     
     // Set of conversation indecies
     self.deletes = [[NSMutableSet alloc]init];
-
+    
     for (Account* a in [Accounts sharedInstance].accounts) {
         if (!a.user.isAll) {
             // Add a new empty account mail index set for each non-All account
             [self.conversationsPerAccount appendEmptyAccount];
         }
     }
+    
+    if ( [self.convByDay isEmpty] ) {
+        [self setupData];
+    }
+    return;
+}
+-(UIView*)_setupHeaderViewOfColor:(UIColor*)backgroundColor
+{
+    UIView* headerView = [[UIView alloc] init];
+    headerView.backgroundColor = backgroundColor;
+    
+    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
+    [button startAnimating];
+    
+    [headerView addSubview:button];
+    
+    [headerView setHidden:YES];
+    
+    return headerView;
+}
+
+#pragma mark viewDidLoad
+
+-(void) viewDidLoad
+{
+    [super viewDidLoad];
+    
+    [self check3DTouch];
+    
+    self.view.backgroundColor = [UIGlobal standardLightGrey];
+    
+    [self _setupConversations];
     
     CGRect screenBounds = [UIScreen mainScreen].bounds;
     
@@ -290,20 +311,9 @@
     
     tableView.dataSource = self;
     tableView.delegate = self;
-    self.tableView = tableView;
-
-    UIView* headerView = [[UIView alloc] init];
-    headerView.backgroundColor = tableView.backgroundColor;
+    self.tableView = tableView;     // save to retain the view when this method goes out of scope
     
-    UIActivityIndicatorView* button = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    button.frame = CGRectMake(0.0, 0.0, [UIScreen mainScreen].bounds.size.width , 40.0);
-    [button startAnimating];
-    
-    [headerView addSubview:button];
-    
-    [headerView setHidden:YES];
-    
-    tableView.tableFooterView = headerView;
+    tableView.tableFooterView = [self _setupHeaderViewOfColor:tableView.backgroundColor];
     
     // If NOT displaying only this one person's emails ...
     if (!self.showOnlyThisPerson) {
@@ -316,9 +326,6 @@
         //table.emptyDataSetDelegate = self;
     }
     
-    if ( [self.convByDay isEmpty] == 0) {
-        [self setupData];
-    }
 }
 
 - (void)refreshTable {
@@ -344,7 +351,7 @@
         [[PKHUD sharedHUD] show];
         [[PKHUD sharedHUD] hideAfterDelay:2.0];*/
         
-        [self reload];
+        [self _reloadTableView];
     }
 }
 
@@ -541,15 +548,6 @@
     }
 }
 
--(void)_reloadTableViewOnMainThread
-{
-    DDLogInfo(@"ENTERED");
-
-    [self performSelectorOnMainThread:@selector(reload)
-                           withObject:nil
-                        waitUntilDone:NO];
-}
-
 -(void) _removeConversation:(NSArray<ConversationIndex*>*)convs
 {
     DDLogInfo(@"ENTERED, Remove %lu conversations",(unsigned long)convs.count);
@@ -737,13 +735,16 @@
 }
                           
                           
-
+// Insert a conversation into the local data structures and update the visible table view.
+//
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
 {
     DDLogInfo(@"Conversation Index date = %@",ciToInsert.date.description);
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-                
+        
+        [self.tableView beginUpdates];
+        
         if (self.viewIsClosing) {
             DDLogInfo(@"View is closing, so return");
             return;
@@ -753,18 +754,18 @@
             // If the conversation does not contain a message to or from showOnlyThisPerson ...
             if (![self _findMessageToOrFromPerson:self.showOnlyThisPerson
                                    inConversation:ciToInsert]) {
-                DDLogInfo(@"Showing single person AND the conversation does not include a messzage to or from this single person, then return");
+                DDLogInfo(@"Showing single person AND conversation does not include a message to or from this person, so return");
                 return;
             }
         }
     
-        // If this view already contains this conversation ...
+        // If this account already contains this conversation ...
         if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)ciToInsert.index
                                                           inAccount:(NSUInteger)ciToInsert.user.accountIndex]) {
-            DDLogInfo(@"View already contains this conversation, so return");
+            DDLogDebug(@"Account already contains this conversation, so return");
             return;
         }
-        
+                
         Conversation* convToInsert = [[Accounts sharedInstance] conversationForCI:ciToInsert];
         
         // folder currently being displayed in the view
@@ -774,23 +775,25 @@
         // if the current folder is NOT the All messages folder ...
         if (curFolderIndex != allFolderIndex) {
             
-            [convToInsert foldersType];  // return igored ... queries DB to get uid's for msgId????
+            // Prefetch conversation UIDs from Mail Database
+            [convToInsert foldersType];  // return ignored ... queries DB to get uid's for msgId????
             
             BOOL isInFolder = [convToInsert isInFolder:curFolderIndex];
             
-            if (!isInFolder) {
+            if (!isInFolder) {  // If the conversation to insert is NOT in the current folder
 #ifdef USING_INSTABUG
                 IBGLogError(@"Conversation with index %ld, failed to insert.",(long)ciToInsert.index);
 #endif
                 DDLogError(@"Conversation with index %ld, failed to insert, so return.",(long)ciToInsert.index);
                 
                 Account* a = [[Accounts sharedInstance] account:convToInsert.user.accountIndex];
+                
                 [a deleteIndex:ciToInsert.index fromFolder:self.folder];
                 return;
             }
         }
     
-        [self.conversationsPerAccount addConversationIndex:(NSUInteger)ciToInsert.index
+        [self.conversationsPerAccount addConversationIndex:ciToInsert.index
                                                 forAccount:ciToInsert.user.accountIndex];
                 
         BOOL added = NO;
@@ -854,12 +857,14 @@
                         }
                         
                         added = YES;
-                        break;
+                        
+                        break; // break out of the convIndex for loop
                     }
 //                    else {
 //                        DDLogDebug(@"DO NOTHING (Conv Comparison Result not Descending).");
 //                    }
-                }
+                    
+                } // end for convIndex
                 
                 if (!added) {
                     // Store index/date into conversations for covDay
@@ -879,11 +884,13 @@
                 }
                 
                 break;
-            }
+                
+            } // NSOrderedSame
 //            else {
 //                DDLogDebug(@"DO NOTHING - Day Date Compare Results == Ascending");
 //            }
-        }
+            
+        } // end for dayIndex
         
         if (!added) {
             //Date section not existing //Add new date //Add email to new date
@@ -902,6 +909,8 @@
 
             //}
         }
+        
+        [self.tableView endUpdates];
     }];
     
 }
@@ -1008,59 +1017,66 @@
 //      Then add it to both the4 Conversations Per Account and Conversations By Day structures
 -(void) insertConversations:(NSArray<ConversationIndex*>*) folderConversations  // array of folder's conversations
 {
-    DDLogInfo(@"ENTERED, Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
+    DDAssert(folderConversations, @"Method cannot be passed a nil");
     
-    if (self.showOnlyThisPerson) {
-        DDLogDebug(@"showOnlyThisPerson == TRUE");
-        folderConversations = [self _filterResultsForPerson:folderConversations];
-    }
-    
-    NSMutableArray<ConversationIndex*>* folderConvs = [folderConversations mutableCopy];
-    
-    // TODO: If pConvs/convs only has one entry, then sort by date seems unnedsecary
-    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
-    [folderConvs sortUsingDescriptors:@[sortByDate]];
-    
-    //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
-    
-    for (ConversationIndex* conversationIndex in folderConvs) {
+    if ( folderConversations.count == 0 ) {
+        DDLogWarn(@"ZERO Folder Conversations to insert, returning.");
+    } else {
+        DDLogInfo(@"Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
         
-        if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)conversationIndex.index
-                                                          inAccount:conversationIndex.user.accountIndex]) {
-            continue;
+        if (self.showOnlyThisPerson) {
+            DDLogDebug(@"showOnlyThisPerson == TRUE");
+            folderConversations = [self _filterResultsForPerson:folderConversations];
         }
         
-        Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
+        NSMutableArray<ConversationIndex*>* folderConvs = [folderConversations mutableCopy];
         
-        NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+        // TODO: If pConvs/convs only has one entry, then sort by date seems unnedsecary
+        NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(date)) ascending:NO];
+        [folderConvs sortUsingDescriptors:@[sortByDate]];
         
-        if (currentFolderIdx != [conv.user numFolderWithFolder:allFolderType()]) {
+        //[[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        for (ConversationIndex* conversationIndex in folderConvs) {
             
-            [conv foldersType];   // Why?
-            
-            BOOL isInFolder = [conv isInFolder:currentFolderIdx];
-            
-            if (!isInFolder) {
-#ifdef USING_INSTABUG
-                IBGLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
-#endif
-                DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
-                
-                Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
-                [a deleteIndex:conversationIndex.index fromFolder:self.folder];
+            if ([self.conversationsPerAccount containsConversationIndex:(NSUInteger)conversationIndex.index
+                                                              inAccount:conversationIndex.user.accountIndex]) {
                 continue;
             }
+            
+            Conversation* conv = [[Accounts sharedInstance] conversationForCI:conversationIndex];
+            
+            NSInteger currentFolderIdx = [conv.user numFolderWithFolder:self.folder];
+            
+            if (currentFolderIdx != [conv.user numFolderWithFolder:allFolderType()]) {
+                
+                // Prefetch conversation UIDs from Mail Database (?)
+                [conv foldersType];
+                
+                BOOL isInFolder = [conv isInFolder:currentFolderIdx];
+                
+                if (!isInFolder) {
+#ifdef USING_INSTABUG
+                    IBGLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
+#endif
+                    DDLogWarn(@"Insert cell: Conversation with error:%ld",(long)conversationIndex.index);
+                    
+                    Account* a = [[Accounts sharedInstance] account:conv.user.accountIndex];
+                    [a deleteIndex:conversationIndex.index fromFolder:self.folder];
+                    continue;
+                }
+            }
+            
+            [self.conversationsPerAccount addConversationIndex:(NSUInteger)conversationIndex.index
+                                                    forAccount:conversationIndex.user.accountIndex];
+            
+            [self.convByDay insertConversation:conversationIndex];
         }
         
-        [self.conversationsPerAccount addConversationIndex:(NSUInteger)conversationIndex.index
-                                                forAccount:conversationIndex.user.accountIndex];
+        [self _reloadTableViewOnMainThread];
         
-        [self.convByDay InsertConversation:conversationIndex];
+        self.initialLoading = NO;
     }
-    
-    [self reload];
-    self.initialLoading = NO;
-    
     
     [self _updateViewTitle];
     //}];
@@ -1444,20 +1460,28 @@
     return self.tableView.panGestureRecognizer;
 }
 
--(void) reload
+-(void)_reloadTableViewOnMainThread
 {
     DDLogInfo(@"ENTERED");
+    
+    [self performSelectorOnMainThread:@selector(_reloadTableView)
+                           withObject:nil
+                        waitUntilDone:NO];
+}
+
+-(void) _reloadTableView
+{
 
     //self.deletedSections = 0;
     
     DDAssert(self.tableView,@"tableView must be set.");
     
-    @synchronized (self.tableView) {
-
+//    @synchronized (self.tableView) {
+        
         DDLogInfo(@"Reload mail list.");
         [self.tableView reloadData];  // in UITableViewDataSource
         
-    } // end synchronized
+//    } // end synchronized
     
     // If there are deleted mails ...
     if (self.deletes.count > 0) {
@@ -1475,7 +1499,10 @@
 {
     NSInteger sectionCount = (NSInteger)[self.convByDay dayCount];
     
-    DDLogVerbose(@"Section count = %@",@(sectionCount));
+    DDLogInfo(@"Section count = %@",@(sectionCount));
+    if ( sectionCount == 0 ) {
+        DDLogWarn(@"ZERO sections in Mail List.");
+    }
     
     return sectionCount;    //MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
 }
@@ -1484,7 +1511,10 @@
 {
     NSInteger conversationCountOnDay = (NSInteger)[self.convByDay conversationCountOnDay:(NSUInteger)section];
     
-    DDLogVerbose(@"Section %ld has %lu rows.",(long)section,(unsigned long)conversationCountOnDay);
+    DDLogInfo(@"Section %@ has %@ rows.",@(section),@(conversationCountOnDay));
+    if ( conversationCountOnDay == 0 ) {
+        DDLogWarn(@"ZERO conversations in section %@",@(section));
+    }
     
     return conversationCountOnDay;
 }
@@ -1973,27 +2003,30 @@
 
 - (void)reFetch:(BOOL)forceRefresh
 {
-    DDLogInfo(@"ENTERED, force refresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
+    DDLogInfo(@"forceRefresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
 //        NSInteger mailCountBefore = [self.conversationsPerAccount conversationsInAllAccounts];
         
         //if (self.convByDay.count <= pageCount * self.pageIndex ) {
-            BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
-            if (isActiveAccountAll) {
-                NSUInteger activeAccounts = (NSUInteger)[AppSettings numActiveAccounts];
-                for (NSUInteger idx = 0; idx < activeAccounts; idx++) {
-                    Account* a = [[Accounts sharedInstance] account:idx];
-                    [self insertConversations:[a getConversationsForFolder:self.folder]];
-                    
-                }
-            }
-            else { // Not the "All" Mails account
-                
-                Account* a = [[Accounts sharedInstance] currentAccount];
+        BOOL isActiveAccountAll = [[Accounts sharedInstance] currentAccount].user.isAll;
+        if (isActiveAccountAll) {
+            NSUInteger activeAccounts = (NSUInteger)[AppSettings numActiveAccounts];
+            for (NSUInteger idx = 0; idx < activeAccounts; idx++) {
+                Account* a = [[Accounts sharedInstance] account:idx];
                 [self insertConversations:[a getConversationsForFolder:self.folder]];
+                
             }
+        }
+        else { // Not the "All" Mails account
+            
+            Account* currAcnt = [[Accounts sharedInstance] currentAccount];
+            
+            NSMutableArray<ConversationIndex*>* convForFolder = [currAcnt getConversationsForFolder:self.folder];
+            
+            [self insertConversations:convForFolder];
+        }
         //}
         
         [self checkConversationsUpdate];

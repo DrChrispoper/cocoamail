@@ -469,12 +469,21 @@
     [self addConversation:conv];
 }
 
--(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet*)folders
+-(void) _addCon:(NSUInteger)idx toFoldersContent:(NSSet<NSNumber*>*)folderIndecies
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    for (NSNumber* Fuser in folders) {
-        [self _addIdx:idx inArray:decodeFolderTypeWith([Fuser integerValue])];
+    for (NSNumber* fldInx in folderIndecies) {
+        
+        NSInteger folderIndex = [fldInx integerValue];
+        
+        CCMFolderType folderHandle = decodeFolderTypeWith(folderIndex);
+        
+        if ( folderHandle.type < 0 || folderHandle.type >= FolderTypeUser ) {
+            DDLogError(@"CCMFolderType type is invalid!");
+        } else {
+            [self _addIdx:idx inArray:folderHandle];
+        }
     }
 }
 
@@ -483,10 +492,24 @@
     NSMutableIndexSet *mailIndecies = nil;
     
     if (folderHandle.type == FolderTypeUser) {
-        mailIndecies = self.userFoldersContent[(NSUInteger)folderHandle.idx];
+        NSUInteger folderIndex = (NSUInteger)folderHandle.idx;
+        if ( folderIndex >= self.userFoldersContent.count ) {
+            DDLogError(@"Folder Index %@ is out of range (count = %@)",
+                       @(folderIndex),@(self.userFoldersContent.count));
+        } else {
+            DDLogInfo(@"Folder Index %@ is less than User Folder count %@",@(folderIndex),@(self.systemFoldersContent.count));
+            mailIndecies = self.userFoldersContent[folderIndex];
+        }
     }
     else {
-        mailIndecies = self.systemFoldersContent[folderHandle.type];
+        NSUInteger folderIndex = (NSUInteger)folderHandle.type;
+        if ( folderIndex >= self.systemFoldersContent.count ) {
+            DDLogError(@"Folder Index %@ is out of range (count = %@)",
+                       @(folderIndex),@(self.systemFoldersContent.count));
+        } else {
+            DDLogVerbose(@"Folder Index %@ is less than System Folder count %@",@(folderIndex),@(self.systemFoldersContent.count));
+            mailIndecies = self.systemFoldersContent[folderIndex];
+        }
     }
     return mailIndecies;
 }
@@ -538,9 +561,11 @@
         [self.allConversations addObject:conv];
         index  = self.allConversations.count - 1;
         
-        if (![conv.foldersType containsObject:numberWithFolderType(FolderTypeDeleted)] &&
-            ![conv.foldersType containsObject:numberWithFolderType(FolderTypeSpam)]    &&
-            ![conv.foldersType containsObject:numberWithFolderType(FolderTypeDrafts)]) {
+        NSMutableSet<NSNumber*>* folderIndecies = [conv foldersType];
+        
+        if (![folderIndecies containsObject:numberWithFolderType(FolderTypeDeleted)] &&
+            ![folderIndecies containsObject:numberWithFolderType(FolderTypeSpam)]    &&
+            ![folderIndecies containsObject:numberWithFolderType(FolderTypeDrafts)]) {
             
             [self _addIdx:index inArray:CCMFolderTypeAll];
         }
@@ -549,7 +574,7 @@
             [self _addIdx:index inArray:CCMFolderTypeFavoris];
         }
         
-        [self _addCon:index toFoldersContent:conv.foldersType];
+        [self _addCon:index toFoldersContent:folderIndecies];
     }
     else {
         Conversation* con = [self.allConversations objectAtIndex:index];
@@ -1659,7 +1684,7 @@
             if (!a.user.isAll) {
                 
                 // refresh this account's curent folder
-                [a refreshCurrentFolder];   // NB: Recursion
+                [a refreshCurrentFolder];   // NB: RECURSION
             }
         }
         DDLogInfo(@"All Folders refreshed.");

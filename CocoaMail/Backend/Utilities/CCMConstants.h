@@ -25,7 +25,6 @@ typedef NS_ENUM(NSInteger, BaseFolderType) {
     FolderTypeDeleted,
     FolderTypeSpam,
     FolderTypeUser,
-    FolderTypeCount     // number of elements in the enum
 };
 
 typedef struct CCMFolderType{
@@ -60,8 +59,24 @@ static inline CCMFolderType allFolderType()
     return FolderTypeWith(FolderTypeAll, 0);
 }
 
+static const NSUInteger ImportantFolderTypeCount = FolderTypeSpam + 1;
+static const NSUInteger AllFolderTypeCount = FolderTypeUser + 1;
+
+static inline BOOL CCMFolderTypeTypeIsValid(BaseFolderType type)
+{
+    NSInteger maxIndex = AllFolderTypeCount - 1;
+    
+    return ( type >= 0 && type <= maxIndex );
+}
+
 static inline NSUInteger encodeFolderTypeWith(CCMFolderType t)
 {
+    BaseFolderType folderType = t.type;
+    
+    if ( CCMFolderTypeTypeIsValid(folderType) == FALSE ) {
+        DDLogError(@"Bad CCMFolderType.type value %@",@(folderType));
+        return 0;
+    }
     return (t.type * 4096) + (NSUInteger)t.idx;
 }
 
@@ -72,6 +87,12 @@ static inline NSNumber* numberWithFolderType(BaseFolderType t)
 
 static inline CCMFolderType decodeFolderTypeWith(NSInteger code)
 {
+    BaseFolderType folderType = (BaseFolderType)(code / 4096);
+    
+    if ( CCMFolderTypeTypeIsValid(folderType) == FALSE ) {
+        DDLogError(@"Bad CCMFolderType.type value %@",@(folderType));
+        return inboxFolderType(); // needed something herer, so used inbox folder type
+    }
     CCMFolderType type;
     type.type = (BaseFolderType)(code / 4096);
     type.idx = code % 4096;
