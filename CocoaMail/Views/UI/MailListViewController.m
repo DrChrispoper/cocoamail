@@ -531,7 +531,7 @@
     
     NSMutableArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
     
-    DDLogInfo(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
+    DDLogDebug(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
     
     [self insertConversations:conversationsForFolder];
 }
@@ -550,7 +550,7 @@
 
 -(void) _removeConversation:(NSArray<ConversationIndex*>*)convs
 {
-    DDLogInfo(@"ENTERED, Remove %lu conversations",(unsigned long)convs.count);
+    DDLogDebug(@"ENTERED, Remove %lu conversations",(unsigned long)convs.count);
     
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
 
@@ -657,11 +657,11 @@
     DDAssert(days,@"Days array must exist.");
     
     if (days.count == 0){
-        DDLogInfo(@"Zero days in array, nothing to do.");
+        DDLogDebug(@"Zero days in array, nothing to do.");
         return;
     }
     
-    DDLogInfo(@"days.count = %@; days.elements = %@.",@(days.count),days.description);
+    DDLogDebug(@"days.count = %@; days.elements = %@.",@(days.count),days.description);
     
     NSMutableIndexSet* daySections = [[NSMutableIndexSet alloc] init];  // unique unsigned integers
     
@@ -699,13 +699,9 @@
         
         @synchronized (self.tableView) {
             
-            DDLogInfo(@"START: Update table day sections via block on mainQueue");
-            
             [strongTable beginUpdates];
             [strongTable reloadSections:daySections withRowAnimation:UITableViewRowAnimationNone];
             [strongTable endUpdates];
-            
-            DDLogInfo(@"END: Update table table day setions via block on mainQueue");
         } // end synchronized
 
     }];
@@ -734,7 +730,9 @@
     return FALSE;
 }
                           
-                          
+
+// TODO: insertConversationIndex needs refactoring -- too big
+
 // Insert a conversation into the local data structures and update the visible table view.
 //
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
@@ -746,7 +744,7 @@
         [self.tableView beginUpdates];
         
         if (self.viewIsClosing) {
-            DDLogInfo(@"View is closing, so return");
+            DDLogDebug(@"View is closing, so return");
             return;
         }
        
@@ -754,7 +752,7 @@
             // If the conversation does not contain a message to or from showOnlyThisPerson ...
             if (![self _findMessageToOrFromPerson:self.showOnlyThisPerson
                                    inConversation:ciToInsert]) {
-                DDLogInfo(@"Showing single person AND conversation does not include a message to or from this person, so return");
+                DDLogDebug(@"Showing single person AND conversation does not include a message to or from this person, so return");
                 return;
             }
         }
@@ -921,7 +919,7 @@
         
         UITableView *localTable = self.tableView;
         
-        DDLogInfo(@"Insert Section = %@",@(section));
+        DDLogDebug(@"Insert Section = %@",@(section));
         
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
         
@@ -939,7 +937,7 @@
         
         UITableView *localTable = self.tableView;
 
-        DDLogInfo(@"Insert Row %@ in Section %@",@(row),@(section));
+        DDLogDebug(@"Insert Row %@ in Section %@",@(row),@(section));
 
         [localTable beginUpdates];
         
@@ -1022,7 +1020,7 @@
     if ( folderConversations.count == 0 ) {
         DDLogWarn(@"ZERO Folder Conversations to insert, returning.");
     } else {
-        DDLogInfo(@"Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
+        DDLogDebug(@"Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
         
         if (self.showOnlyThisPerson) {
             DDLogDebug(@"showOnlyThisPerson == TRUE");
@@ -1193,7 +1191,6 @@
 
 -(void) _commonRemoveConvs:(NSMutableArray<NSIndexPath*>*)conversationIndexPaths
 {
-    
     DDLogInfo(@"ENTERED");
 
     NSMutableIndexSet* conversationSectionIndeciesToDelete = [[NSMutableIndexSet alloc] init];

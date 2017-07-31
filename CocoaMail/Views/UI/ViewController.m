@@ -112,7 +112,7 @@ static ViewController * s_self;
     if ( currentAccount ) {
         [currentAccount connect];
     } else {
-        DDLogInfo(@"No current account to connect.");
+        DDLogWarn(@"No current account to connect.");
     }
 
     [self setup];
