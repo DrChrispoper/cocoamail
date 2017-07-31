@@ -45,7 +45,7 @@
 -(void) connect;
 -(BOOL) isConnected;
 -(void) setConnected;
--(void) runTestData;
+-(void) updateLocalMailStoreFromImapServer;
 -(void) releaseContent;
 -(void) cancelSearch;
 -(void) sendOutboxs;

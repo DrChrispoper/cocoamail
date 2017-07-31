@@ -67,7 +67,7 @@
     [self addPullToRefreshWithDelta:0];
 
     if (currentAccount && !currentAccount.user.isAll) {
-        [ImapSync runInboxUnread:currentAccount.user completed:^{  }];
+        [ImapSync getInboxUnreadCountForUser:currentAccount.user completed:^{  }];
     }
 }
 
@@ -86,7 +86,7 @@
         [[NSNotificationCenter defaultCenter] postNotificationName:kCREATE_FIRST_ACCOUNT_NOTIFICATION object:nil];
     }
     else {
-        [ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{
+        [ImapSync getInboxUnreadCountForUser:[Accounts sharedInstance].currentAccount.user completed:^{
             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                 [self.table reloadData];
             }];

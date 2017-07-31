@@ -208,7 +208,7 @@
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    [ImapSync runInboxUnread:self.user completed:^{}];
+    [ImapSync getInboxUnreadCountForUser:self.user completed:^{}];
     
     [self refreshCurrentFolder];
     
@@ -536,7 +536,7 @@
                 // if the current account index is our account index ...
                 if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
                     // Then test the current folder for correct messages
-                    [self runTestData];
+                    [self updateLocalMailStoreFromImapServer];
                 }
             }
             
@@ -603,8 +603,8 @@
 
 -(NSMutableArray<ConversationIndex*>*) getConversationsForFolder:(CCMFolderType)folderHandle
 {
-    DDLogInfo(@"CCMFolderType .index=%@ .type=%@",
-              @(folderHandle.idx),@(folderHandle.type));
+//    DDLogInfo(@"CCMFolderType .index=%@ .type=%@",
+//              @(folderHandle.idx),@(folderHandle.type));
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
@@ -1343,7 +1343,7 @@
 
 #pragma mark - Update Local Mail Store from IMAP Server
 
--(void) runTestData
+-(void) updateLocalMailStoreFromImapServer
 {
     DDLogInfo(@"ENTERED");
     
@@ -1391,8 +1391,8 @@
     NSArray<Conversation*>* conversationsInCurrentFolder = [self _conversationsInFolder:folderType];
 
     // Update conversations in the local store's current folder from the IMAP Server, and update
-    [[ImapSync sharedServices:self.user] runUpToDateTest:conversationsInCurrentFolder
-                                             folderIndex:self.currentFolderIdx
+    [[ImapSync sharedServices:self.user] updateLocalMailFromImapServerInConversations:conversationsInCurrentFolder
+                                             ofFolder:self.currentFolderIdx
                                                completed:^(NSArray* days) {
                                                                                                       
                                                    //[mailListDelegate removeConversationList:nil];
@@ -1656,7 +1656,7 @@
                      self->_hasLoadedAllLocal = YES;
                  }
                  
-                 [self runTestData];
+                 [self updateLocalMailStoreFromImapServer];
                  
                  [subscriber localSearchDone:YES];
                  [subscriber reFetch:YES];
@@ -1717,7 +1717,7 @@
     
     [self.mailListDelegate serverSearchDone:NO];      // notify delegate VC
     
-    [self runTestData];     // update local mail store from IMAP server
+    [self updateLocalMailStoreFromImapServer];     // update local mail store from IMAP server
     
     DDLogInfo(@"");
     
@@ -1744,7 +1744,7 @@
          }
          else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
              
-             [self runTestData];
+             [self updateLocalMailStoreFromImapServer];
              
              self->_currentFolderFullSyncCompleted = YES;
              self->_isSyncingCurrentFolder = NO;
@@ -1763,7 +1763,7 @@
          
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
              
-             [self runTestData];
+             [self updateLocalMailStoreFromImapServer];
              
              if (self->_currentFolderFullSyncCompleted) {
                  self->_isSyncingCurrentFolder = NO;

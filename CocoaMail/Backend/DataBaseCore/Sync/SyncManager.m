@@ -143,8 +143,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    DDLogInfo(@"ENTERED, Sync ACTIVE Folder with IMAP Server. fromStart=%@ forUser=%@",
-              (isFromStart?@"YES":@"NO"),user.username);
+    DDLogInfo(@" fromStart=%@ forUser=%@",(isFromStart?@"YES":@"NO"),user.username);
     
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
@@ -153,17 +152,16 @@ static SyncManager * singleton = nil;
     
     NSInteger currentFolderIndex = [user.linkedAccount currentFolderIdx];  
     
-    RACSignal *racSignal = [imapSyncService runFolder:currentFolderIndex
+    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:currentFolderIndex
                                             fromStart:isFromStart
-                                           gettingAll:NO];
+                                            gettingAll:NO];
     
     return [self emailForSignal:racSignal];
 }
 
 -(RACSignal*) refreshImportantFolder:(BaseFolderType)baseFolder user:(UserSettings*)user
 {
-    DDLogInfo(@"ENTERED, Sync IMPORTANT Folder with IMAP Server. folder=%@ forUser=%@",
-              [user.linkedAccount baseFolderType:baseFolder],user.username);
+    DDLogInfo(@" folder=%@ forUser=%@",[user.linkedAccount baseFolderType:baseFolder],user.username);
     
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
@@ -172,7 +170,7 @@ static SyncManager * singleton = nil;
     
     NSInteger folderIndex = [user numFolderWithFolder:FolderTypeWith(baseFolder, 0)];
     
-    RACSignal *racSignal = [imapSyncService runFolder:folderIndex
+    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:folderIndex
                                             fromStart:YES
                                            gettingAll:NO];
     
@@ -181,15 +179,14 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncFoldersUser:(UserSettings*)user;
 {
-    DDLogInfo(@"ENTERED, Sync ALL Folders with IMAP Server. forUser=%@",
-              user.username);
+    DDLogInfo(@" forUser=%@",user.username);
     
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
     
     DDAssert(imapSyncService, @"IMAP Sync Services must exist for usesr %@",user.username);
     
-    RACSignal *racSignal = [imapSyncService runFolder:-1
+    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:-1
                                             fromStart:NO
                                            gettingAll:YES];
     
@@ -198,7 +195,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncInboxFoldersBackground
 {
-    DDLogInfo(@"ENTERED, Sync ALL Folders for ALL Users IN BACKGROUND with IMAP Server.");
+    DDLogInfo(@" - sync all user Inboxes from their IMAP server.");
 
     NSMutableArray* newEmailsSignalsArray = [[NSMutableArray alloc]init];
 
@@ -209,7 +206,7 @@ static SyncManager * singleton = nil;
         }
     //for (NSInteger accountIndex = 0 ; accountIndex < [AppSettings numActiveAccounts];accountIndex++) {
         
-        [ImapSync runInboxUnread:user completed:^{}];     // Why call this, as it has no completion block
+        [ImapSync getInboxUnreadCountForUser:user completed:^{}];     // Why call this, as it has no completion block
         
         NSInteger inboxFolderIndex = [user inboxFolderNumber];
         
@@ -218,7 +215,7 @@ static SyncManager * singleton = nil;
         
         DDAssert(imapSyncService, @"IMAP Sync Services must exist for usesr %@",user.username);
         
-        RACSignal *racSignal = [imapSyncService runFolder:inboxFolderIndex
+        RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:inboxFolderIndex
                                                 fromStart:YES
                                                gettingAll:NO];
         
@@ -354,6 +351,9 @@ static SyncManager * singleton = nil;
     if ( syncState ) {
         
         @synchronized (syncState) {
+            
+            DDLogInfo(@"FolderState[%@]: Saving %@",kFolderStateLastEndedKey,@(lastEIndex));
+            
             syncState[kFolderStateLastEndedKey] = @(lastEIndex);
             syncState[kFolderStateFullSyncKey]  = @(lastEIndex == 1);
         }

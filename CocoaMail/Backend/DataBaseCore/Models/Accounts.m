@@ -183,11 +183,11 @@
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  if (self.currentAccount.user.isAll) {
                      for (NSUInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
-                         [self.accounts[accountIndex] runTestData];
+                         [self.accounts[accountIndex] updateLocalMailStoreFromImapServer];
                      }
                  }
                  else {
-                     [self.currentAccount runTestData];
+                     [self.currentAccount updateLocalMailStoreFromImapServer];
                  }
              }];
          }];
