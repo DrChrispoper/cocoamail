@@ -217,7 +217,7 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
     [AppDelegate _saveAllCachedData];
         
     // if we received a notificatino and application is inactive
-    if (notification && application.applicationState == 1) {  // UIApplicationStateInactive
+    if (notification && application.applicationState == UIApplicationStateInactive) {  
         DDLogInfo(@"UILocalNotification Body: %@", notification.alertBody);
         // Save the notification for later
         self.launchedNotification = notification;
@@ -573,7 +573,7 @@ didSignInForUser:(GIDGoogleUser*)user
 
 // This method is called, in iOS 10.0 and above, when the User has acted on an on-screen notification.
 //
--(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(nonnull UNNotificationResponse *)response withCompletionHandler:(nonnull void (^)())completionHandler
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler
 {
     
     NSDictionary *userInfo = response.notification.request.content.userInfo;
