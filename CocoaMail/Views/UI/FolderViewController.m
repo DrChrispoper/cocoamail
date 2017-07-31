@@ -297,7 +297,7 @@
 
 -(void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-    CCMFolderType type;
+    CCMFolderType folderType;
     
     if (indexPath.section == kIMPORTANT_FOLDERS_SECTION) {
         if (indexPath.row == 7) {
@@ -305,16 +305,16 @@
             [tableView deselectRowAtIndexPath:indexPath animated:YES];
             return;
         }
-        type.type = indexPath.row;
-        type.idx = 0;
+        folderType.type = indexPath.row;
+        folderType.idx = 0;
     }
     else {
-        type.type = FolderTypeUser;
-        type.idx = indexPath.row;
+        folderType.type = FolderTypeUser;
+        folderType.idx = indexPath.row;
     }
     
-    [[[Accounts sharedInstance] currentAccount] setCurrentFolder:type];
-    NSNumber* encodedType = @(encodeFolderTypeWith(type));
+    [[[Accounts sharedInstance] currentAccount] setCurrentFolder:folderType];
+    NSNumber* encodedType = @(encodeFolderTypeWith(folderType));
     [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_FOLDER_NOTIFICATION object:nil userInfo:@{kPRESENT_FOLDER_TYPE:encodedType}];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
