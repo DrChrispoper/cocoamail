@@ -104,9 +104,16 @@
     }
     // TODO put it elsewhere
     
-    NSUInteger currFolderIdx = [[Accounts sharedInstance] currentAccount].currentFolderIdx;
-
-    self.folder = [[AppSettings userWithIndex:currFolderIdx] typeOfFolder:currFolderIdx];
+    NSInteger currFolderIdx = [[Accounts sharedInstance] currentAccount].currentFolderIdx;
+    
+    UserSettings *userSettings = [AppSettings userWithIndex:(NSUInteger)currFolderIdx];
+    if ( userSettings ) {
+        self.folder = [userSettings typeOfFolder:currFolderIdx];
+    }
+    else {
+        DDLogError(@"Unable to get CCMFolderType for folder index %@",@(currFolderIdx));
+        self.folder = FolderTypeWith(FolderTypeInbox, 0);   // Not sure what to do here?
+    }
     
     self.view.backgroundColor = [UIGlobal standardLightGrey];
     
