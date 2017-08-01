@@ -159,7 +159,7 @@ static ViewController * s_self;
 
 -(void) setup
 {
-    FolderViewController* fvc = [[FolderViewController alloc] init];
+    FolderViewController* folderVC = [[FolderViewController alloc] init];
 
     UIView* nextView;
     
@@ -178,18 +178,18 @@ static ViewController * s_self;
             NSInteger lastFolderIndex = [[AppSettings lastFolderIndex] integerValue];
             folderType = decodeFolderTypeWith(lastFolderIndex);
         }
-        MailListViewController* inbox = [[MailListViewController alloc] initWithFolder:folderType];
-        inbox.view.frame = self.contentView.bounds;
-        nextView = inbox.view;
+        MailListViewController* inboxVC = [[MailListViewController alloc] initWithFolder:folderType];
+        inboxVC.view.frame = self.contentView.bounds;
+        nextView = inboxVC.view;
     
-        self.viewControllers = [NSMutableArray arrayWithObjects:fvc, inbox, nil];
+        self.viewControllers = [NSMutableArray arrayWithObjects:folderVC, inboxVC, nil];
     }
     else { // only 1 account
         
-        fvc.view.frame = self.contentView.bounds;
-        nextView = fvc.view;
+        folderVC.view.frame = self.contentView.bounds;
+        nextView = folderVC.view;
         
-        self.viewControllers = [NSMutableArray arrayWithObjects:fvc, nil];
+        self.viewControllers = [NSMutableArray arrayWithObjects:folderVC, nil];
     }
     
     [self _manageCocoaButton:YES];
@@ -504,8 +504,8 @@ static ViewController * s_self;
 #endif
         DDLogInfo(kCREATE_FIRST_ACCOUNT_NOTIFICATION);
         
-        AddFirstAccountViewController* favc = [[AddFirstAccountViewController alloc] init];
-        favc.firstRunMode = YES;
+        AddFirstAccountViewController* firstAccountVC = [[AddFirstAccountViewController alloc] init];
+        firstAccountVC.firstRunMode = YES;
         
         if (self.viewControllers.count==1) {
             
@@ -513,7 +513,7 @@ static ViewController * s_self;
                 return;
             }
             
-            [self _animatePushVC:favc];
+            [self _animatePushVC:firstAccountVC];
             return;
         }
         
@@ -524,7 +524,7 @@ static ViewController * s_self;
             [self.viewControllers removeObjectsInRange:toRemove];
         }
         
-        [self.viewControllers insertObject:favc atIndex:1];
+        [self.viewControllers insertObject:firstAccountVC atIndex:1];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
         
@@ -546,25 +546,25 @@ static ViewController * s_self;
         //[[SearchRunner getSingleton] cancel];
         [[[Accounts sharedInstance] currentAccount] cancelSearch];
         
-        MailListViewController* mlvc1 = nil;
+        MailListViewController* mailListVC = nil;
         Person* person = [notif.userInfo objectForKey:kPRESENT_FOLDER_PERSON];
         
         if (person != nil) {
-            mlvc1 = [[MailListViewController alloc] initWithPerson:person];
+            mailListVC = [[MailListViewController alloc] initWithPerson:person];
         }
         else {
             NSNumber* codedType = [notif.userInfo objectForKey:kPRESENT_FOLDER_TYPE];
-            mlvc1 = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
+            mailListVC = [[MailListViewController alloc] initWithFolder:decodeFolderTypeWith(codedType.integerValue)];
         }
         
         // don't open the same view twice
         BOOL doNothing = NO;
-        InViewController* last = [self.viewControllers lastObject];
+        InViewController* lastVC = [self.viewControllers lastObject];
         
-        if ([last isKindOfClass:[MailListViewController class]]) {
-            MailListViewController* mlvc2 = (MailListViewController*)last;
+        if ([lastVC isKindOfClass:[MailListViewController class]]) {
+            MailListViewController* mlvc2 = (MailListViewController*)lastVC;
             
-            if ([mlvc1 istheSame:mlvc2]) {
+            if ([mailListVC istheSame:mlvc2]) {
                 doNothing = YES;
             }
         }
@@ -573,7 +573,7 @@ static ViewController * s_self;
             [[UIApplication sharedApplication] endIgnoringInteractionEvents];
         }
         else {
-            [self _animatePushVC:mlvc1];
+            [self _animatePushVC:mailListVC];
         }
     }];
 }
@@ -880,11 +880,12 @@ static ViewController * s_self;
         }
         
         if (self.viewControllers.count>2) {
-            NSUInteger activeFolderIndex  = [[[Accounts sharedInstance] currentAccount] currentFolderIdx];
+            NSInteger activeFolderIndex   = [[[Accounts sharedInstance] currentAccount] currentFolderIdx];
             NSUInteger activeAccountIndex = [[Accounts sharedInstance] currentAccountIdx];
-            CCMFolderType activeFolder    = [[AppSettings userWithIndex:activeAccountIndex] typeOfFolder:(NSInteger)activeFolderIndex];
-            MailListViewController* mlvc = [[MailListViewController alloc] initWithFolder:activeFolder];
-            [self.viewControllers replaceObjectAtIndex:1 withObject:mlvc];
+            CCMFolderType activeFolder    = [[AppSettings userWithIndex:activeAccountIndex] typeOfFolder:activeFolderIndex];
+            
+            MailListViewController* mailListVC = [[MailListViewController alloc] initWithFolder:activeFolder];
+            [self.viewControllers replaceObjectAtIndex:1 withObject:mailListVC];
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kBACK_NOTIFICATION object:nil];
@@ -895,15 +896,15 @@ static ViewController * s_self;
     [[NSNotificationCenter defaultCenter] addObserverForName:kBACK_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         //[[SearchRunner getSingleton] cancel];
         
-        DDLogInfo(@">> ENTERED \"%@\" notification observer block",notif.name);
+        DDLogVerbose(@">> ENTERED \"%@\" notification observer block",notif.name);
         
         if (self.viewControllers.count == 1) {
-            DDLogInfo(@"\tOnly 1 view controller, returning.");
+            DDLogVerbose(@"\tOnly 1 view controller, returning.");
             return;
         }
         
         if ([self _checkInteractionAndBlock]) {
-            DDLogInfo(@"\tAlready blocking interactions, returning.");
+            DDLogVerbose(@"\tAlready blocking interactions, returning.");
             return;
         }
         
@@ -982,7 +983,7 @@ static ViewController * s_self;
 {
     [[NSNotificationCenter defaultCenter] addObserverForName:kACCOUNT_CHANGED_NOTIFICATION object:nil queue:[NSOperationQueue mainQueue]  usingBlock:^(NSNotification* notif){
         
-        DDLogInfo(@"ENTERED \"%@\" notification observer block",notif.name);
+        DDLogVerbose(@"ENTERED \"%@\" notification observer block",notif.name);
         
 #ifdef USING_INSTABUG
         IBGLogInfo(kACCOUNT_CHANGED_NOTIFICATION);
@@ -1019,6 +1020,8 @@ static ViewController * s_self;
         }
         
         [self _manageCocoaButton:YES];
+        
+        DDAssert(self.contentView,@"Content View must be set!");
         
         [self.contentView insertSubview:nextView belowSubview:lastView];
         
