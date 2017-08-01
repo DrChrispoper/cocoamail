@@ -320,7 +320,7 @@
         
         self.refreshControl = [[UIRefreshControl alloc] init];
         [tableView addSubview:self.refreshControl];
-        [self.refreshControl addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
+        [self.refreshControl addTarget:self action:@selector(_refreshTable) forControlEvents:UIControlEventValueChanged];
         //[self addPullToRefreshWithDelta:0];
         //table.emptyDataSetSource = self;
         //table.emptyDataSetDelegate = self;
@@ -328,7 +328,7 @@
     
 }
 
-- (void)refreshTable {
+- (void)_refreshTable {
     
     DDLogInfo(@"START BACKGROUND REFRESH TABLE");
 
