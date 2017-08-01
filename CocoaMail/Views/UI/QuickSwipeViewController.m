@@ -11,6 +11,8 @@
 #import "Accounts.h"
 #import "ConversationTableViewCell.h"
 
+// TODO: ConversationCellDelgate doesn't appear to be used?  Remove it and method stubs.
+
 @interface QuickSwipeViewController () <UITableViewDataSource, UITableViewDelegate, ConversationCellDelegate>
 
 @property (nonatomic, strong) NSMutableArray* convs;
