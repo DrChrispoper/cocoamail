@@ -33,23 +33,23 @@
     item.titleView = [WhiteBlurNavBar titleViewForItemTitle:NSLocalizedString(@"move-email-to-folder-view.title", @"My Folders")];
     
     
-    UITableView* table = [[UITableView alloc] initWithFrame:CGRectMake(0,
+    UITableView* tableView = [[UITableView alloc] initWithFrame:CGRectMake(0,
                                                                        0,
                                                                        screenBounds.size.width,
                                                                        screenBounds.size.height - 20)
                                                       style:UITableViewStyleGrouped];
-    table.contentInset = UIEdgeInsetsMake(44 - 30, 0, 60, 0);
-    table.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
+    tableView.contentInset = UIEdgeInsetsMake(44 - 30, 0, 60, 0);
+    tableView.scrollIndicatorInsets = UIEdgeInsetsMake(44, 0, 0, 0);
     
-    table.backgroundColor = [UIGlobal standardLightGrey];
+    tableView.backgroundColor = [UIGlobal standardLightGrey];
     
-    [self.view addSubview:table];
+    [self.view addSubview:tableView];
     
-    [self setupNavBarWith:item overMainScrollView:table];
+    [self setupNavBarWith:item overMainScrollView:tableView];
     
-    table.dataSource = self;
-    table.delegate = self;
-    self.table = table;
+    tableView.dataSource = self;
+    tableView.delegate = self;
+    self.table = tableView;
 }
 
 -(void) _back
