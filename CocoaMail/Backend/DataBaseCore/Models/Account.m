@@ -1393,14 +1393,14 @@
     // Update conversations in the local store's current folder from the IMAP Server, and update
     [[ImapSync sharedServices:self.user] updateLocalMailFromImapServerInConversations:conversationsInCurrentFolder
                                              ofFolder:self.currentFolderIdx
-                                               completed:^(NSArray* days) {
+                                               completed:^(NSArray<NSString*>* daysWithAddsOrDeletes) {
                                                                                                       
                                                    //[mailListDelegate removeConversationList:nil];
                                                    
                                                    // Update "Days" in mailing list delegate
                                                    // NB: Days can be nil if an error occurred
-                                                   if ( days ) {
-                                                       [self.mailListDelegate updateDays:days];
+                                                   if ( daysWithAddsOrDeletes ) {
+                                                       [self.mailListDelegate updateDays:daysWithAddsOrDeletes];
                                                    }
                                                    
                                                    
