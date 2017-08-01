@@ -44,7 +44,6 @@
 		271D4D421B8471AC00D19373 /* libFMDB.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D371B8471AC00D19373 /* libFMDB.a */; };
 		271D4D461B8471AC00D19373 /* liblibextobjc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3B1B8471AC00D19373 /* liblibextobjc.a */; };
 		271D4D471B8471AC00D19373 /* libMBProgressHUD.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3C1B8471AC00D19373 /* libMBProgressHUD.a */; };
-		271D4D481B8471AC00D19373 /* libpop.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3D1B8471AC00D19373 /* libpop.a */; };
 		271D4D491B8471AC00D19373 /* libReachability.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3E1B8471AC00D19373 /* libReachability.a */; };
 		271D4D4A1B8471AC00D19373 /* libReactiveCocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 271D4D3F1B8471AC00D19373 /* libReactiveCocoa.a */; };
 		271D4D4E1B84720000D19373 /* AppSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = 271D4D4D1B84720000D19373 /* AppSettings.m */; };
@@ -860,7 +859,6 @@
 				271D4D421B8471AC00D19373 /* libFMDB.a in Frameworks */,
 				271D4D461B8471AC00D19373 /* liblibextobjc.a in Frameworks */,
 				271D4D471B8471AC00D19373 /* libMBProgressHUD.a in Frameworks */,
-				271D4D481B8471AC00D19373 /* libpop.a in Frameworks */,
 				271D4D491B8471AC00D19373 /* libReachability.a in Frameworks */,
 				271D4D4A1B8471AC00D19373 /* libReactiveCocoa.a in Frameworks */,
 				B8A904493AA0341E6EE4700A /* libPods-CocoaMail.a in Frameworks */,

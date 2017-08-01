@@ -1,12 +1,12 @@
 source 'https://github.com/CocoaPods/Specs.git'
-platform :ios, ‘9.0’
+platform :ios, ‘10.0’
 
 # ignore all warnings from all pods
 #inhibit_all_warnings!
 
 target 'CocoaMail' do
 
-	pod 'pop', '~> 1.0'
+	#pod 'pop', '~> 1.0'
 	pod 'ReactiveCocoa', '~> 2.3'
 	pod 'FMDB', '~> 2.6.0'
 	pod 'Reachability', '~> 3.1.1'
