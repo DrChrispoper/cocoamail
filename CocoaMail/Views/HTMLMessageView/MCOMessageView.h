@@ -6,7 +6,7 @@
 //
 
 #include <MailCore/MailCore.h>
-#import <POP/POP.h>
+//#import <POP/POP.h>
 
 @protocol MCOMessageViewDelegate;
 
