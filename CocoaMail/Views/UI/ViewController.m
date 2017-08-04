@@ -167,8 +167,9 @@ static ViewController * s_self;
     //      show the Folder View Controller,
     // otherwise
     //      show the Inbox Mail List View Controller.
-    if ([Accounts sharedInstance].accountsCount !=  1) {
-        // other than 1 account
+    if ([Accounts sharedInstance].accountsCount > 1) {
+        // More than one account
+        DDLogInfo(@"More than one Account, so load Folder and Mail List Views.");
         
         CCMFolderType folderType = CCMFolderTypeInbox; // use this in case of an error
         
@@ -185,6 +186,7 @@ static ViewController * s_self;
         self.viewControllers = [NSMutableArray arrayWithObjects:folderVC, inboxVC, nil];
     }
     else { // only 1 account
+        DDLogInfo(@"Only one Account, so load only Mail List View. (Do not load Folder View");
         
         folderVC.view.frame = self.contentView.bounds;
         nextView = folderVC.view;

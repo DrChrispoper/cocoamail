@@ -2000,9 +2000,9 @@
 
 - (void)reFetch:(BOOL)forceRefresh
 {
-    DDLogInfo(@"forceRefresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
-    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        DDLogInfo(@"forceRefresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
         
 //        NSInteger mailCountBefore = [self.conversationsPerAccount conversationsInAllAccounts];
         
