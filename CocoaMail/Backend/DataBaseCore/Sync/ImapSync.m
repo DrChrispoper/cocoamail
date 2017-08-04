@@ -339,8 +339,16 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 -(BOOL)_isRunningInBackground
 {
-    BOOL isInBackground = (UIApplicationStateBackground == [UIApplication sharedApplication].applicationState);
+    __block UIApplicationState appState;
     
+    // Run this query on the main queue, block till finished
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        UIApplication *app = [UIApplication sharedApplication];
+        appState = [app applicationState];
+    });
+        
+    BOOL isInBackground = ( appState == UIApplicationStateBackground);
+
     DDLogVerbose(@"\tApp isInBackground = %@",(isInBackground==TRUE?@"TRUE":@"FALSE") );
     
     return isInBackground;
@@ -354,7 +362,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
     Reachability* networkReachability = [Reachability reachabilityForInternetConnection];
     NetworkStatus networkStatus = [networkReachability currentReachabilityStatus];
     
-    DDLogInfo(@"%@",[self _networkStatusText:networkStatus]);
+    DDLogDebug(@"%@",[self _networkStatusText:networkStatus]);
     
     BOOL isAvailable = (networkStatus != NotReachable);
     
