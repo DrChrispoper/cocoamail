@@ -1058,7 +1058,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
             // already have this email in other folder than this one -> add folder in uid_entry
             
-            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
+            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryInFolder:currentFolder]];
             
             nextOp.completionBlock = ^{
                 [subscriber sendNext:email];
@@ -1727,7 +1727,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                     
                     DDLogVerbose(@"--- Message DOES NOT already exist in this Account's Database in Folder \"%@\", ADDING.",@(currentFolder));
                     
-                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEWithFolder:currentFolder]];
+                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryInFolder:currentFolder]];
                     
                     nextOp.completionBlock = ^{
                         if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {

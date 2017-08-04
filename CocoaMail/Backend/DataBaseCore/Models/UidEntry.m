@@ -329,7 +329,7 @@
     
     DDAssert(email, @"Mail message must exist");
     
-    UidEntry* uidE = [email uidEWithFolder:folderNum];
+    UidEntry* uidE = [email uidEntryInFolder:folderNum];
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;

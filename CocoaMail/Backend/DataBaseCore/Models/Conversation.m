@@ -52,8 +52,8 @@ static NSDateFormatter * s_df_hour = nil;
 {
     NSMutableArray* uids = [[NSMutableArray alloc]init];
     for (Mail* m in self.mails) {
-        if ([m uidEWithFolder:folder]) {
-            [uids addObject:[m uidEWithFolder:folder]];
+        if ([m uidEntryInFolder:folder]) {
+            [uids addObject:[m uidEntryInFolder:folder]];
         }
     }
     
@@ -67,6 +67,7 @@ static NSDateFormatter * s_df_hour = nil;
             return YES;
         }
     }
+    DDLogInfo(@"Tested %@ mails, did not find mail with folder number %@.",@(self.mails.count),@(folderNum));
     return NO;
 }
 
