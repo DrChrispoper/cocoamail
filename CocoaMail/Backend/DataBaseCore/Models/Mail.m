@@ -787,7 +787,7 @@ static NSDateFormatter * s_df_hour = nil;
             return uidE;
         }
         
-        DDLogVerbose(@"UID Entry Folder (%@) NOT EQUAL TO Folder (%@)",@(uidE.folder),@(folderNum));
+        DDLogVerbose(@"UID Entry Folder (%@) IS NOT IN Folder (%@)",@(uidE.folder),@(folderNum));
     }
     return nil;
 }

@@ -497,7 +497,7 @@
             DDLogError(@"Folder Index %@ is out of range (count = %@)",
                        @(folderIndex),@(self.userFoldersContent.count));
         } else {
-            DDLogInfo(@"Folder Index %@ is less than User Folder count %@",@(folderIndex),@(self.systemFoldersContent.count));
+            DDLogInfo(@"Folder Index %@ is less than User Folder count %@",@(folderIndex),@(self.userFoldersContent.count));
             mailIndecies = self.userFoldersContent[folderIndex];
         }
     }
@@ -507,7 +507,7 @@
             DDLogError(@"Folder Index %@ is out of range (count = %@)",
                        @(folderIndex),@(self.systemFoldersContent.count));
         } else {
-            DDLogInfo(@"Folder Index %@ is less than System Folder count %@",@(folderIndex),@(self.systemFoldersContent.count));
+            DDLogDebug(@"Folder Index %@ is less than System Folder count %@",@(folderIndex),@(self.systemFoldersContent.count));
             mailIndecies = self.systemFoldersContent[folderIndex];
         }
     }

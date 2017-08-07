@@ -163,22 +163,23 @@ static ViewController * s_self;
 
     UIView* nextView;
     
-    // If there is only 1 account,  - Because 1 account is "ALL" dummy account???
-    //      show the Folder View Controller,
+    // If there is only 1 account, the ALL accout
+    //      show the Folder View Controller (as we have no mail to display)
     // otherwise
     //      show the Inbox Mail List View Controller.
     if ([Accounts sharedInstance].accountsCount > 1) {
         // More than one account
-        DDLogInfo(@"More than one Account, so load Folder and Mail List Views.");
+        DDLogInfo(@"More than one Account, so load Folder AND Mail List Views.");
         
         CCMFolderType folderType = CCMFolderTypeInbox; // use this in case of an error
         
-        // Show the Mail List for the last folder
+        // Show the Mail List for the last folder displayed, if any
         NSNumber *lastFolderNumber = [AppSettings lastFolderIndex];
         if ( lastFolderNumber ) {
             NSInteger lastFolderIndex = [[AppSettings lastFolderIndex] integerValue];
             folderType = decodeFolderTypeWith(lastFolderIndex);
         }
+        
         MailListViewController* inboxVC = [[MailListViewController alloc] initWithFolder:folderType];
         inboxVC.view.frame = self.contentView.bounds;
         nextView = inboxVC.view;
@@ -186,9 +187,11 @@ static ViewController * s_self;
         self.viewControllers = [NSMutableArray arrayWithObjects:folderVC, inboxVC, nil];
     }
     else { // only 1 account
-        DDLogInfo(@"Only one Account, so load only Mail List View. (Do not load Folder View");
-        
+        // We have only one account, because NO user accounts have been added yet.
+        // The 1 account is the "fake" "ALL" account.  Therefore we don't load the
+        // Mail List view yet, because we don't have any mail to display.
         folderVC.view.frame = self.contentView.bounds;
+        
         nextView = folderVC.view;
         
         self.viewControllers = [NSMutableArray arrayWithObjects:folderVC, nil];

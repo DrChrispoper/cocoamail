@@ -281,7 +281,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 DDLogVerbose(@"STARTED Search for All Unread Mails Operation");
                 
                 if (!error) {
-                    DDLogInfo(@"Folder \"%@\" uas %@ unread mails.",
+                    DDLogInfo(@"Folder \"%@\" has %@ unread mails.",
                               serverFolderPath,@(searchResult.count));
                     
                     [AppSettings setInboxUnread:searchResult.count accountIndex:(NSInteger)user.accountIndex];
