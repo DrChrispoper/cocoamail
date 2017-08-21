@@ -814,6 +814,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 }
 
 #pragma mark - getImapMessagesInFolder local methods
+
+// ONLY called when loadImapMessagesIntoDatabaseForFolder (nee runFolder) is passed a folder value of -1
 -(NSInteger) _nextFolderToSync
 {
     DDLogInfo(@"ENTERED");
@@ -1164,16 +1166,18 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 }
 
 
-// MARK: - IMAP Sync Services: Process IMAP Folders and Messages
+// MARK: - IMAP Sync Services: Update all folders and mail from the IMAP Server
 
 // "folder" is a Folder Index, or -1
-// (Formerly called runFolder)
--(RACSignal*) getImapMessagesInFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll
+// (nee runFolder)
+-(RACSignal*) loadImapMessagesIntoDatabaseForFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)gettingAll
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"folder=%@ fromStart=%@ getAll=%@",
               @(folder),
               (isFromStart==TRUE?@"TRUE":@"FALSE"),
-              (getAll==TRUE?@"TRUE":@"FALSE"));
+              (gettingAll==TRUE?@"TRUE":@"FALSE"));
 
     
     if (folder == -1) {
@@ -1228,7 +1232,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         else {
             // if running in background, we only execute this for an INBOX
             
-            [self _logIntoImapServer:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
+            [self _logIntoImapServer:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:gettingAll];
         }
     }];
 }

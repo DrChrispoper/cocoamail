@@ -28,7 +28,6 @@
 
 @interface ImapSync : NSObject <MCOHTMLRendererIMAPDelegate>
 
-@property (nonatomic, strong) NSMutableArray* cachedData;
 @property (nonatomic, strong) MCOIMAPSession* imapSession;
 @property (nonatomic) BOOL connected;
 @property (nonatomic, strong) RACSignal* signal;
@@ -43,7 +42,7 @@
 -(void)addFolder:(MCOIMAPFolder *)folder withName:(NSString*)folderName toAccount:(NSUInteger)accountNum;
 
 
--(RACSignal*) getImapMessagesInFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
+-(RACSignal*) loadImapMessagesIntoDatabaseForFolder:(NSInteger)folder fromStart:(BOOL)isFromStart gettingAll:(BOOL)getAll;
 -(RACSignal*) runSearchText:(NSString*)text;
 -(RACSignal*) runSearchPerson:(Person*)person;
 -(void) updateLocalMailFromImapServerInConversations:(NSArray<Conversation*>*)convs ofFolder:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock;

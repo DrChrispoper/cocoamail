@@ -143,7 +143,7 @@ static SyncManager * singleton = nil;
 
 -(RACSignal*) syncActiveFolderFromStart:(BOOL)isFromStart user:(UserSettings*)user
 {
-    DDLogInfo(@" fromStart=%@ forUser=%@",(isFromStart?@"YES":@"NO"),user.username);
+    DDLogInfo(@"fromStart=%@ forUser=\"%@\"",(isFromStart?@"YES":@"NO"),user.username);
     
     // Get the IMAP Sync Service for this user's account
     ImapSync *imapSyncService = [ImapSync sharedServices:user];
@@ -152,7 +152,7 @@ static SyncManager * singleton = nil;
     
     NSInteger currentFolderIndex = [user.linkedAccount currentFolderIdx];  
     
-    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:currentFolderIndex
+    RACSignal *racSignal = [imapSyncService loadImapMessagesIntoDatabaseForFolder:currentFolderIndex
                                             fromStart:isFromStart
                                             gettingAll:NO];
     
@@ -170,7 +170,7 @@ static SyncManager * singleton = nil;
     
     NSInteger folderIndex = [user numFolderWithFolder:FolderTypeWith(baseFolder, 0)];
     
-    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:folderIndex
+    RACSignal *racSignal = [imapSyncService loadImapMessagesIntoDatabaseForFolder:folderIndex
                                             fromStart:YES
                                            gettingAll:NO];
     
@@ -186,7 +186,9 @@ static SyncManager * singleton = nil;
     
     DDAssert(imapSyncService, @"IMAP Sync Services must exist for usesr %@",user.username);
     
-    RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:-1
+    
+    // Passing -1 means "sync the next unsynced folder"
+    RACSignal *racSignal = [imapSyncService loadImapMessagesIntoDatabaseForFolder:-1
                                             fromStart:NO
                                            gettingAll:YES];
     
@@ -215,7 +217,7 @@ static SyncManager * singleton = nil;
         
         DDAssert(imapSyncService, @"IMAP Sync Services must exist for usesr %@",user.username);
         
-        RACSignal *racSignal = [imapSyncService getImapMessagesInFolder:inboxFolderIndex
+        RACSignal *racSignal = [imapSyncService loadImapMessagesIntoDatabaseForFolder:inboxFolderIndex
                                                 fromStart:YES
                                                gettingAll:NO];
         
