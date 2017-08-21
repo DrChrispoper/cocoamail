@@ -124,9 +124,9 @@
 -(NSArray<NSNumber*>*)importantFolderNumbers    // array indexed by Important CCMFolderType s
 {
     // Initialize the Important Folder Numbers if they do not already exist
-    if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < ImportantFolderTypeCount) {
-        _importantFolderNumbers = [[NSMutableArray alloc] initWithCapacity:ImportantFolderTypeCount];
-        for (int i = 0; i < ImportantFolderTypeCount; i++) {
+    if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < kImportantFolderTypeCount) {
+        _importantFolderNumbers = [[NSMutableArray alloc] initWithCapacity:kImportantFolderTypeCount];
+        for (int i = 0; i < kImportantFolderTypeCount; i++) {
             [_importantFolderNumbers addObject:[NSNumber numberWithInteger:-1]];
         }
     }
@@ -397,7 +397,7 @@
 -(BaseFolderType)_folderIndexIsImportantFolder:(NSInteger)folderNameIndex
 {
     // If the folder is a System Folder, return its CCMFolderType
-    NSUInteger importantFoldersMaxIndex = ImportantFolderTypeCount - 1;
+    NSUInteger importantFoldersMaxIndex = kImportantFolderTypeMaxIndex;
     for ( NSInteger importantFolderNumberIndex = 0; importantFolderNumberIndex < importantFoldersMaxIndex; importantFolderNumberIndex++) {
         NSInteger importantFolderNameIndex = [self importantFolderNumforBaseFolder:importantFolderNumberIndex];
         if ( importantFolderNameIndex != -1 ) {
@@ -622,7 +622,7 @@
     // If the folder names were loaded
     if ( _allFoldersDisplayNames && _allFoldersDisplayNames.count ) {
         // but the important folder numbers were not
-        if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < ImportantFolderTypeCount ) {
+        if ( _importantFolderNumbers == nil || _importantFolderNumbers.count < kImportantFolderTypeCount ) {
             // Then update important folder numbers
             DDLogWarn(@"%@ Folder Names loaded, but Important Folder Numbers MISSING.",@(_allFoldersDisplayNames.count));
             
