@@ -50,6 +50,7 @@ extern NSString *const CCMDeleteTriggerIdentifier;
 
 @interface ImapSync ()
 
+@property (nonatomic, strong) NSMutableArray* cachedData;
 @property (nonatomic) UserSettings* user;
 @property (nonatomic, strong) MCOIMAPOperation* imapCheckOp;
 @property (nonatomic) BOOL isCanceled;
