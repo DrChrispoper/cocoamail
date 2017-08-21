@@ -335,13 +335,25 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 }
 
 // MARK: - Local Methods, called by multiple methos
+// Like dispatch_sync but works on current queue
+// See: https://stackoverflow.com/questions/10984732/why-cant-we-use-a-dispatch-sync-on-the-current-queue/15725847#15725847
+//
+static inline void dispatch_synchronized (dispatch_queue_t queue,
+                                          dispatch_block_t block)
+{
+    dispatch_queue_set_specific (queue, (__bridge const void * _Nonnull)(queue), (void *)1, NULL);
+    if (dispatch_get_specific ((__bridge const void * _Nonnull)(queue)))
+        block ();
+    else
+        dispatch_sync (queue, block);
+}
 
 -(BOOL)_isRunningInBackground
 {
     __block UIApplicationState appState;
     
     // Run this query on the main queue, block till finished
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    dispatch_synchronized(dispatch_get_main_queue(), ^{
         UIApplication *app = [UIApplication sharedApplication];
         appState = [app applicationState];
     });
