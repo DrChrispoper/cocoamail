@@ -1613,13 +1613,16 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
             return;
         }
         
+        DDLogInfo(@"IMAP Server \"%@\" folder \"%@\" has %@ mail messages.",
+                  self.user.imapHostname, folderPath, @(imapFolderInfo.messageCount));
+        
         [self _fetchImapMessages:subscriber
                    currentFolder:currentFolder
                      isFromStart:isFromStart
                           getAll:getAll
                       folderPath:folderPath
                     messageCount:imapFolderInfo.messageCount
-                       lastEnded:[lastEnded integerValue]];
+                       lastEnded:lastEnded];
         
         [subscriber sendCompleted];
     }];
@@ -1627,7 +1630,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 - (void)_fetchImapMessages:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll folderPath:(NSString *)folderPath messageCount:(NSInteger)msgCount lastEnded:(NSInteger)lastEnded
 {
-    DDLogInfo(@"ENTERED, currFolder=%@ isFromStart=%@ getAll=%@ folder path = \"%@\" msgCount=%@ lastEnded=%@",
+    DDLogDebug(@"currFolder=%@ isFromStart=%@ getAll=%@ path = \"%@\" msgCount=%@ lastEnded=%@",
               @(currentFolder),(isFromStart?@"TRUE":@"FALSE"),(getAll?@"TRUE":@"FALSE"),folderPath,@(msgCount),@(lastEnded));
     
     DDAssert(self.s_queue, @"s_queue must be set");
@@ -1636,21 +1639,36 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         
         int batchsize = 50;
         
-        DDLogInfo(@"Folder has %ld emails", (long)msgCount);
-        
         if ( [self _isRunningInForeground] ) {
             
-            DDLogInfo(@"we are running in foreground, save email count (%lu) to Local State Storage",(long)msgCount);
+            DDLogInfo(@"IMAP server \"%@\" folder \"%@\", save msg count (%@) to FolderStates.",
+                      self.user.imapHostname, folderPath, @(msgCount) );
             
             // Save the folder mail count to local memory
             [self _writeFolderStateMessageCount:msgCount andFolder:currentFolder];
+            
+            
+//            if ( msgCount == 0 ) {
+//                DDLogInfo(@"Message count is Zero");
+//                [self _writeFolderStateLastEnded:1 andFolder:currentFolder];
+//            }
+//            else if ( lastEnded == 1 && !isFromStart ) {
+//
+//                [self _writeFolderStateLastEnded:0 andFolder:currentFolder];
+//            }
+//            else {
+//                [self _writeFolderStateLastEnded:lastEnded andFolder:currentFolder];
+//
+//            }
+            
+            // TODO: Check this against original code - is msgCount == 0 really an error?
             
             // If (the folder contains NO messages), OR
             // (we are NOT loading folder messages from Index
             //   Zero AND the last loaded message was Index One)
             if (msgCount == 0 || (!isFromStart && (lastEnded == 1))) {
                 
-                DDLogInfo(@"No Messages OR (Not from Start AND Last Ended == 1");
+                DDLogDebug(@"No Messages OR (Not from Start AND Last Ended == 1");
                 
                 NSInteger lastEndedIndex = 0;
                 if ( msgCount == 0 ) {
@@ -1660,11 +1678,10 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                     lastEndedIndex = lastEnded;
                 }
                 
-                DDLogInfo(@"Save Last Ended Index (%lu) to Local State Storage",(long)lastEndedIndex);
-                
+                DDLogInfo(@"IMAP server \"%@\" folder \"%@\", save Last Ended index (%@) to FolderStates.",
+                          self.user.imapHostname, folderPath, @(lastEndedIndex) );
+
                 [self _writeFolderStateLastEnded:lastEndedIndex andFolder:currentFolder];
-                
-                DDLogInfo(@"and send CCMFolderSyncedError to subscriber.");
                 
                 [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderSyncedError userInfo:nil]];
                 return;
@@ -1816,53 +1833,20 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                 NSDate* currentDateAndTime = [NSDate date];
                 NSDate* oneMonthBeforeCurrentDateAndTime = [currentDateAndTime dateByAddingTimeInterval:- ONE_MONTH_IN_SECONDS];
                 
+                // TODO: A better date range might be (last date in inbox - first date in inbox)
+                
                 // If the email message is older than one month ....
                 if ([email.datetime compare:oneMonthBeforeCurrentDateAndTime] == NSOrderedAscending) {
                     
-                    BOOL isNew = [self _saveEmail:email folder:currentFolder];
-                    
-                    if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                        if ( [self _isRunningInBackground] ) {
-                            if (isNew) {
-                                [subscriber sendNext:email];
-                            }
-                        }
-                        else {
-                            [subscriber sendNext:email];
-                        }
-                    }
-                    
-                    if ([email.msgID isEqualToString:lastMsgID]) {
-                        if ( !isFromStart && [self _isRunningInForeground] ) {
-                            [self _writeFolderStateLastEnded:from andFolder:currentFolder];
-                        }
-                        [subscriber sendCompleted];
-                    }
+                    [self _saveEmailToDatabase:currentFolder email:email from:from getAll:getAll isFromStart:isFromStart lastMsgID:lastMsgID subscriber:subscriber];
                 }
-                else { // the email message is not older than one month
+                else { // the email message is not older than one month, render its HTML body now (kinda klugey, huh?)
                     
                     [[self.imapSession htmlBodyRenderingOperationWithMessage:imapMsg folder:folderPath] start:^(NSString* htmlString, NSError* error) {
+                        
                         email.htmlBody = htmlString;
                         
-                        BOOL isNew = [self _saveEmail:email folder:currentFolder];
-                        
-                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                            if ( [self _isRunningInBackground] ) {
-                                if (isNew) {
-                                    [subscriber sendNext:email];
-                                }
-                            }
-                            else {
-                                [subscriber sendNext:email];
-                            }
-                        }
-                        
-                        if ([email.msgID isEqualToString:lastMsgID]) {
-                            if ( !isFromStart && [self _isRunningInForeground] ) {
-                                [self _writeFolderStateLastEnded:from andFolder:currentFolder];
-                            }
-                            [subscriber sendCompleted];
-                        }
+                        [self _saveEmailToDatabase:currentFolder email:email from:from getAll:getAll isFromStart:isFromStart lastMsgID:lastMsgID subscriber:subscriber];
                     }];
                 }
             }];
@@ -1871,25 +1855,54 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     
 }
 
--(BOOL) _saveEmail:(Mail*)email folder:(NSInteger)currentFolder
+- (void)_saveEmailToDatabase:(NSInteger)currentFolder email:(Mail *)email from:(NSInteger)from getAll:(BOOL)getAll isFromStart:(BOOL)isFromStart lastMsgID:(NSString *)lastMsgID subscriber:(id)subscriber {
+    
+    BOOL isCached = [self _cacheOrSaveEmail:email toFolder:currentFolder];
+    
+    if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+        if ( [self _isRunningInBackground] ) {
+            if (isCached) {
+                [subscriber sendNext:email];
+            }
+        }
+        else {
+            [subscriber sendNext:email];
+        }
+    }
+    
+    // if this is the last email in the folder ...
+    if ([email.msgID isEqualToString:lastMsgID]) {
+        
+        // If isFromStart==NO adn we are running in the foreground ...
+        if ( !isFromStart && [self _isRunningInForeground] ) {
+            // Save the FolderState's Last Ended value to the Sync Manager and its backup file
+            [self _writeFolderStateLastEnded:from andFolder:currentFolder];
+        }
+        
+        // Notify the subscriber that there are no more emails.
+        [subscriber sendCompleted];
+    }
+}
+
+-(BOOL) _cacheOrSaveEmail:(Mail*)email toFolder:(NSInteger)currentFolder
 {
     //Cache email if in Background
     if ( [self _isRunningInBackground] ) {
         
         DDLogVerbose(@"Running in the Background, so Cache Email.");
-        return [self _cacheEmail:currentFolder email:email];
+        return [self _cacheEmail:currentFolder email:email];    // return YES if email cached
     }
-    else {
-        DDLogVerbose(@"NOT Running in the background, so save mail in database.");
-
-        NSInvocationOperation* nextOp
-        = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
-                                               selector:@selector(addEmailWrapper:)
-                                                 object:email];
-        
-        [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
-        [[EmailProcessor getSingleton].operationQueue waitUntilAllOperationsAreFinished];
-    }
+    
+    // Save the email
+    DDLogVerbose(@"NOT Running in the background, so save mail in database.");
+    
+    NSInvocationOperation* nextOp
+    = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
+                                           selector:@selector(addEmailWrapper:)
+                                             object:email];
+    
+    [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+    [[EmailProcessor getSingleton].operationQueue waitUntilAllOperationsAreFinished];
     
     return NO;
 }
@@ -1900,7 +1913,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 {
     DDLogVerbose(@"Cache mail:%@ in Folder:%@",email.sender.displayName,@(currentFolder));
     
-    BOOL emailCached = NO;
+    BOOL emailCached = NO;  // for return
     
     BOOL isInInbox = (currentFolder == [self.user numFolderWithFolder:inboxFolderType()]);
     BOOL isUnread = !(email.flag & MCOMessageFlagSeen);
@@ -2082,58 +2095,164 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     
     SyncManager *sm = [SyncManager getSingleton];
     [sm updateLastEndedIndex:lastEIndex forFolderNumber:folderNum andAccountNum:self.user.accountNum];
-    
-    //[[[Accounts sharedInstance] getAccount:self.currentAccountIndex] showProgress];
 }
 
 
-// MARK: - IMAP Sync Server: Up to Date Test
-// MARK: Called by -[Account updateLocalMailStoreFromImapServer]
+// MARK: - IMAP Sync Server - Supporting Methods
+
+// All mail in the first argument MINUS all emails in the second argument,
+// results in all local mails not on the server (i.e. deleted)
+
+- (MCOIndexSet*) _localFolderMailMessages:(MCOIndexSet *)indeciesOfAllMailMessagesInFolder
+                   noLongerOnImapServer:(NSArray<MCOIMAPMessage*>*)imapMessages
+{
+    DDLogInfo(@"Local Folder Mail Index Count = %@",@(indeciesOfAllMailMessagesInFolder.count));
+    DDLogInfo(@"IMAP Folder Mail Count = %@",@(imapMessages.count));
+    
+    MCOIndexSet* indeciesOfLocalMailNotFoundInIMAPMail = [indeciesOfAllMailMessagesInFolder copy];
+    
+    for (MCOIMAPMessage* imapMsg in imapMessages) {
+        
+        DDAssert(imapMsg.uid, @"Message UID must exist.");
+        
+        // If the IMAP message is found in the local folder
+        if ( [indeciesOfLocalMailNotFoundInIMAPMail containsIndex:imapMsg.uid] ) {
+            
+            // then remove that message from the indecies set
+            [indeciesOfLocalMailNotFoundInIMAPMail removeIndex:imapMsg.uid];
+        }
+    }
+    
+    DDLogInfo(@"Returing: Local Folder Mail NOT FOUND in IMAP Folder Mail: %@",@(indeciesOfLocalMailNotFoundInIMAPMail.count));
+    
+    // Returns only those Local mail messages not found in the IMAP messages (i.e. they are removed or updated)
+    return indeciesOfLocalMailNotFoundInIMAPMail;
+}
+
+- (NSMutableArray<Mail *>*) _mailMessages:(NSArray<Mail*>*)localMessages
+                                 inFolder:(NSInteger)folderIndex
+             notFoundInImapFolderMessages:(NSArray<MCOIMAPMessage*>*)imapMessages
+{
+    DDLogInfo(@"Local Folder Mail Index Count = %@",@(localMessages.count));
+    DDLogInfo(@"IMAP Folder Mail Count = %@",@(imapMessages.count));
+    
+    NSMutableArray<Mail*>* deletedMessages = [[NSMutableArray alloc] init];
+    
+    for (Mail *localMsg in localMessages) {
+        
+        UidEntry *uidEntry = [localMsg uidEntryInFolder:folderIndex];
+        if ( uidEntry ) {
+            
+            BOOL matchingIMAPMessage = NO;
+            for (MCOIMAPMessage* imapMsg in imapMessages) {
+                
+                // If there universal ID numbers match ...
+                if ( uidEntry.uid == imapMsg.uid ) {
+                    
+                    // the local mail message is also on the IMAP server, so not deleted
+                    
+                    matchingIMAPMessage = YES;
+                    break;   // on to testing the next local message
+                }
+            }
+            
+            if ( matchingIMAPMessage == NO ) {
+                [deletedMessages addObject:localMsg];
+            }
+        }
+    }
+    return deletedMessages;
+}
+
+- (NSMutableArray<Mail*>*) _mailMessages:(NSArray<Mail *> *)mailMessages
+                              inFolder:(NSInteger)folderIdx
+          withMessagesWithChangedFlags:(NSArray *)imapMessages
+{
+    NSMutableArray<Mail*>* updatedMails = [NSMutableArray array];
+    
+    for (Mail* mailMsg in mailMessages) {
+        
+        // get the UID of the message in the folder
+        UidEntry* mailMsgUID = [mailMsg uidEntryInFolder:folderIdx];
+        if ( mailMsgUID ) {
+            
+            // For every fetched IMAP message
+            for (MCOIMAPMessage* imapMsg in imapMessages) {
+                
+                // if the Imap Messaage and the Local Message have the same UID but different FLAG
+                if (imapMsg.uid == mailMsgUID.uid && imapMsg.flags != mailMsg.flag) {
+                    // then update the local message flag
+                    mailMsg.flag = imapMsg.flags;
+                    
+                    // and add the local message to the list of update mail messages
+                    [updatedMails addObject:mailMsg];
+                }
+            }
+        }
+    }
+    return updatedMails;
+}
+
+
+// MARK: - IMAP Sync Server: Update/Delete a Local Folder's emails from the IMAP Server.  Does not Add.
 
 // Fetch IMAP Mail Message *Headers* and *Flags* ONLY, and determine which Local Memory mail messages (in the given folder)
 // have been deleted or updated.  Call the completion handler with a list of the Days with updated or deleted messages.
 
--(void) updateLocalMailFromImapServerInConversations:(NSArray<Conversation*>*)convs ofFolder:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock
+// nee runUpToDateTest
+
+
+-(void) updateLocalMailFromImapServerInConversations:(NSArray<Conversation*>*)conversationsInFolder ofFolder:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock
 {
-    DDLogInfo(@" Folder # %@ has %@ conversations.",@(folderIdx),@(convs.count));
+    DDLogInfo(@"*** ENTRY POINT ***");
     
-    // Given all the Conversations in a Folder, get all the UIDs of all the Mail messages of the folder's conversations
+    // NB: This does NOT add New Mails to the conversations, it only updates mail with changed flags, or removes deleted entries.
+
+    NSString* path = [self.user folderServerName:folderIdx];
     
-    MCOIndexSet* indeciesOfAllMailMessagesInFolder = [[MCOIndexSet alloc] init];  // array of index , each a Unsigned Integer
-    NSMutableArray<Mail*>* allMailMessagesInFolder = [NSMutableArray arrayWithCapacity:convs.count];
+    DDAssert( path && path.length , @"Folder Path must exist.");
     
-    // For each conversation passed in
-    for (Conversation* conv in convs) {
-        
+    DDLogInfo(@"Local Mail Folder \"%@\" (%@) has %@ conversations.", path, @(folderIdx), @(conversationsInFolder.count) );
+    
+    
+    MCOIndexSet* indeciesOfAllMailMessagesInLocalFolder = [MCOIndexSet indexSet];  // array of index , each a Unsigned Integer
+    NSMutableArray<Mail*>* allMailMessagesInLocalFolder = [NSMutableArray arrayWithCapacity:conversationsInFolder.count]; // mimimum size
+    
+    // Create the indecies of all mail messages in all the conversations in a folder.
+    // ALso Create an array of Mail of all the mail messages in the conversations in a folder.
+    
+    // For each conversation in the folder
+    for (Conversation* conv in conversationsInFolder) {
+
         // For each mail message in this conversation ...
         for (Mail* mail in conv.mails) {
-            
-            // If this mail message contains a UID with a matching folder ...
-            UidEntry *uidEntry = [mail uidEWithFolder:folderIdx];
-            
+
+            // If this mail message contains at least one UID contained in the folder ..
+            UidEntry *uidEntry = [mail uidEntryInFolder:folderIdx];
+
             // If the return value is not nil (ie. not an error)
             if ( uidEntry ) {
                 // Add this UID to the IndexSet of all mail messages in the folder
-                [indeciesOfAllMailMessagesInFolder addIndex:uidEntry.uid];
-                
+                [indeciesOfAllMailMessagesInLocalFolder addIndex:uidEntry.uid];
+
                 // Add this mail message to the Array of all mail messages in this folderr
-                [allMailMessagesInFolder addObject:mail];
+                [allMailMessagesInLocalFolder addObject:mail];
             }
         }
     }
     
-    DDLogInfo(@" Folder # %@ has %@ mail messages",@(folderIdx),@(allMailMessagesInFolder.count));
+//    if ( allMailMessagesInLocalFolder.count < conversationsInFolder.count ) {
+//        DDLogWarn(@"Why is number of messages (%@) less than numnber of conversations (%@)?",@(allMailMessagesInLocalFolder.count),@(conversationsInFolder.count));
+//    }
     
-    NSString* path = [self.user folderServerName:folderIdx];
-    
-    DDLogDebug(@"CHECK folder \"%@\" with %@ emails in accountIndex:%@", path, @(indeciesOfAllMailMessagesInFolder.count), @(self.user.accountNum));
-    
-    if (indeciesOfAllMailMessagesInFolder.count == 0) {
+    if (indeciesOfAllMailMessagesInLocalFolder.count == 0) {
+        DDLogWarn(@"Local Folder \"%@\" has zero mail messages, nothing to update or delete, so returning.",path);
         completedBlock(nil);
         return;
     }
     
-
+    DDLogInfo(@"Local Mail Folder \"%@\" (%@) has %@ messages and %@ indecies.", path, @(folderIdx), @(allMailMessagesInLocalFolder.count), @(indeciesOfAllMailMessagesInLocalFolder.count));
+ 
     // Login to the folder's IMAP server
     [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
         
@@ -2151,10 +2270,12 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
      } completed:^{
          
          if (!self.connected){
-             DDLogWarn(@"doLogin succeeded, but not connected.");
+             DDLogWarn(@"doLogin succeeded, but not connected, returning.");
              completedBlock(nil);
              return;
          }
+         
+         DDLogInfo(@"Login of \"%@\" successful.",self.user.name);
          
          DDAssert(self.s_queue, @"s_queue must be set");
          
@@ -2166,98 +2287,74 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
          
          dispatch_async(self.s_queue, ^{
              
-             MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path requestKind:requestKind uids:indeciesOfAllMailMessagesInFolder];
+             MCOIMAPFetchMessagesOperation* op = [self.imapSession fetchMessagesOperationWithFolder:path
+                                                                                        requestKind:requestKind
+                                                                                               uids:indeciesOfAllMailMessagesInLocalFolder];
              
              [op start:^(NSError* error, NSArray* imapMessages, MCOIndexSet* vanishedMessages) {
                  
                  if (error) {
                      [self _setConnected:NO];
-                     DDLogError(@"Fetching IMAP Messages at path \"%@\" failed, error=%@", path, error);
+                     DDLogError(@"Fetching IMAP Messages at path \"%@\" failed, error=%@, returning.", path, error);
                      completedBlock(nil);
                      return;
                  }
                  
-                 DDLogInfo(@"Fetch of IMAP Messages successful for folder \"%@\".",path);
+                 DDLogInfo(@"IMAP Server returned headers and flags for %@ IMAP Mail Messages.", @(imapMessages.count));
                  
-                 
-                 // Remove all IMAP Message Indecies from list of all local indecies
-                 
-                 // For each IMAP message fetched from the server
-                 for (MCOIMAPMessage* imapMsg in imapMessages) {
-
-                     // If the IMAP message uid is found in the local folder
-                     if ( [indeciesOfAllMailMessagesInFolder containsIndex:imapMsg.uid] ) {
-                         
-                         // then remove that message from the indecies set
-                         [indeciesOfAllMailMessagesInFolder removeIndex:imapMsg.uid];
-
-                     }
-                 }
-                 
-                 // NB: indeciesOfAllMailMessagesInFolder - Now contains only those message uids
-                 // that are in the local list but not returned from the IMAP survey.
-                 //     (ie. they must have been deleted or updated on the server)
-                 
-                 // basically, this is a name change for the variable
-                 MCOIndexSet *indeciesOfMailMessagesDeletedOrUpdated = indeciesOfAllMailMessagesInFolder;
-                 
-                 // xyzzy
-                 NSMutableArray<Mail*>* deletedMails = [[NSMutableArray alloc]init];
-                 NSMutableArray<Mail*>* updatedMails = [[NSMutableArray alloc]init];
-                 
-                 // Determine which MESSAGES have been deleted and which have been updated (deleted and added changed)
-                 
-                 // For each mail in the local folder
-                 for (Mail* localMailMsg in allMailMessagesInFolder) {
-                     
-                     // get its UID
-                     UidEntry* localUidEntry = [localMailMsg uidEWithFolder:folderIdx];
-                     
-                     // If the local mail UID is STILL found in the remaining local indecies
-                     if ([indeciesOfMailMessagesDeletedOrUpdated containsIndex:localUidEntry.uid]) {
-                         
-                         // Then add this message to the deleted list
-                         [deletedMails addObject:localMailMsg];
-                     }
-                     else { // the local message is not in the list of server messages deleted or updated
-                         
-                         // For every fetched IMAP message
-                         for (MCOIMAPMessage* imapMsg in imapMessages) {
-                             
-                             // if the Imap Messaage and the Local Message have the same UID but different FLAG
-                             if (imapMsg.uid == localUidEntry.uid && imapMsg.flags != localMailMsg.flag) {
-                                 // then update the local message flag
-                                 localMailMsg.flag = imapMsg.flags;
-                                 
-                                 // and add the local message to the list of update mail messages
-                                 [updatedMails addObject:localMailMsg];
-                             }
-                         }
-                     }
-                 }
                  
                  EmailProcessor* emailProcessor = [EmailProcessor getSingleton];
                  
-                 // If any local messages have been deleted on the server, then remove them locally
-                 //     Note that this is queued seperately
+                 // *************************************************************************************
+                 // Updated Mails = Local Messages, with a matching IMAP Message, that has changed Flags
+                 // *************************************************************************************
+
+                 // Create an array of the mail messages that need to be updated
+                 NSMutableArray<Mail*>* updatedMails = [self _mailMessages:allMailMessagesInLocalFolder
+                                                                  inFolder:folderIdx
+                                              withMessagesWithChangedFlags:imapMessages];
+                 
+                  DDLogInfo(@"IMAP folder \"%@\" will update %@ mail messages in local folder.", path, @(updatedMails.count));
+                 
+                 if (updatedMails.count > 0) {
+                     // Update mail in DB and Local store
+                     NSInvocationOperation* nextOp
+                     = [[NSInvocationOperation alloc] initWithTarget:emailProcessor
+                                                            selector:@selector(updateFlag:)
+                                                              object:updatedMails];
+                     
+                     [emailProcessor.operationQueue addOperation:nextOp];
+                 }
+
+                 
+                 // *************************************************************************************
+                 // Deleted Mails = Local Messages no longer found in Imap Messages
+                 // *************************************************************************************
+
+                 NSMutableArray<Mail*>* deletedMails = [self _mailMessages:(NSArray *)allMailMessagesInLocalFolder
+                                                                  inFolder:folderIdx
+                                              notFoundInImapFolderMessages:imapMessages];
+
+                 DDLogInfo(@"IMAP folder \"%@\" will delete %@ mail messages in local folder.", path,         @(deletedMails.count));
+
                  if (deletedMails.count > 0) {
-                     DDLogInfo(@"Delete %lu emails", (unsigned long)deletedMails.count);
-                     NSDictionary* data = [[NSDictionary alloc]initWithObjects:@[deletedMails,@(folderIdx)] forKeys:@[@"datas",@"folderIdx"]];
+
+                     NSDictionary* data = [[NSDictionary alloc] initWithObjects:@[deletedMails,@(folderIdx)] forKeys:@[@"datas",@"folderIdx"]];
                      
                      // Delete UID and mail message from DB and Local store
-                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:emailProcessor selector:@selector(removeFromFolderWrapper:) object:data];
+                     NSInvocationOperation* nextOp
+                     = [[NSInvocationOperation alloc] initWithTarget:emailProcessor
+                                                            selector:@selector(removeFromFolderWrapper:)
+                                                              object:data];
+                     
                      [emailProcessor.operationQueue addOperation:nextOp];
                  }
                  
-                 // If any local messages have been updated on the server, then update them locally
-                 //     Note that this is queued seperately
-                 if (updatedMails.count > 0) {
-                     DDLogInfo(@"Update %lu emails", (unsigned long)updatedMails.count);
-                     
-                     // Update mail in DB and Local store
-                     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:emailProcessor selector:@selector(updateFlag:) object:updatedMails];
-                     [emailProcessor.operationQueue addOperation:nextOp];
-                 }
+                 
+                 // *************************************************************************************
+                 // Create an array of the dates of all the days that had msgs updated or deleted
+                 // *************************************************************************************
+
                  
                  // Make sure deleted Mails Days are included in the list of mail days to be passed to the delegate
                  NSMutableArray<NSString*>* mailsDays = [[NSMutableArray alloc]init];  // from Mail.day
