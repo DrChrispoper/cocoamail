@@ -1079,13 +1079,17 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
             // already have this email in other folder than this one -> add folder in uid_entry
             
-            NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryInFolder:currentFolder]];
-            
-            nextOp.completionBlock = ^{
-                [subscriber sendNext:email];
-            };
-            
-            [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+            UidEntry *uidEntry = [email uidEntryInFolder:currentFolder];
+            if ( uidEntry ) {
+                
+                NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:uidEntry];
+                
+                nextOp.completionBlock = ^{
+                    [subscriber sendNext:email];
+                };
+                
+                [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+            }
         }
         else {
             [subscriber sendNext:email];
