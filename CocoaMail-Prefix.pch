@@ -37,8 +37,6 @@
 #define CCMAccountFour 0x81d8ab
 #define CCMAccountFive 0xf6db6e
 
-
-
 // Change this to change the log level for CocoaLumberjack
 #ifdef DEBUG    
 // For the DEBUG build, don't show Debug or Verbose logging.
