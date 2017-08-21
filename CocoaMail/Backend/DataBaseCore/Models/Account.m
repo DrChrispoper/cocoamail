@@ -40,7 +40,7 @@
 @property (nonatomic, strong) NSMutableArray<Conversation*>* allConversations;
 
 // All Conversation ID's, used only(?) in InsertRows() function.
-@property (nonatomic, strong) NSMutableSet* convIDs;
+@property (nonatomic, strong) NSMutableSet<NSString*>* conversationIDs;
 
 // User Folders Mail Index Sets
 @property (nonatomic, strong) NSArray<NSMutableIndexSet*>* userFoldersContent;
@@ -54,14 +54,14 @@
 
 +(instancetype) emptyAccount
 {
-    Account* a = [[Account alloc] init];
+    Account* newAccount = [[Account alloc] init];
     
     // MARK: We should collect statistics on how many messages most people have
-    a.allConversations = [NSMutableArray arrayWithCapacity:500];
+    newAccount.allConversations = [NSMutableArray arrayWithCapacity:500];
     
-    a.convIDs = [NSMutableSet setWithCapacity:500];
+    newAccount.conversationIDs = [NSMutableSet setWithCapacity:500];
     
-    return a;
+    return newAccount;
 }
 
 -(NSInteger) idx
@@ -111,9 +111,9 @@
     //
     
     // create structure
-    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:7];
+    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:kImportantFolderTypeCount];
     
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < kImportantFolderTypeCount; i++) {
         [array addObject:[[NSMutableIndexSet alloc] init]];
     }
     self.systemFoldersContent = array;
@@ -143,7 +143,7 @@
     
     NSNumber *lastFolderIndex = [AppSettings lastFolderIndex];
     if ( lastFolderIndex == nil ) {
-        DDLogWarn(@"Last Folder Index not found.");
+        DDLogInfo(@"Last Folder Index not found, setting folder to Inbox.");
         self.currentFolderType = inboxFolderType(); // we could not find a previous folder, so start in Inbox
     }
     else {        
@@ -290,11 +290,11 @@
 {
     DDLogInfo(@"%@",[self stringWithFolderType:folder]);
     
-    if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
-        NSString *folderTypeName = [self baseFolderType:folder.type];
-        DDLogWarn(@"setCurrentFolder: Current Folder is unchanged, do nothing. Type=\"%@\" Index=%@",folderTypeName,@(folder.idx));
-        return;
-    }
+//    if (encodeFolderTypeWith(self.currentFolderType) == encodeFolderTypeWith(folder)) {
+//        NSString *folderTypeName = [self baseFolderType:folder.type];
+//        DDLogWarn(@"setCurrentFolder: Current Folder is unchanged, do nothing. Type=\"%@\" Index=%@",folderTypeName,@(folder.idx));
+//        return;
+//    }
     
     self.currentFolderType = folder;
     _currentFolderFullSyncCompleted = NO;
@@ -332,6 +332,9 @@
             [self localFetchMore:NO];
         }
     }
+    
+    [self.mailListDelegate reloadTableView];
+    
 }
 
 -(void) releaseContent
@@ -409,20 +412,15 @@
 -(void) insertRows:(Mail*)email
 {
     if (self.user.isDeleted) {
-        DDLogWarn(@"insertRows:(Mail*)mail, but self.user.isDeleted");
+        DDLogInfo(@"User is deleted, returning.");
         return;
     }
     
     NSString *sonID = [email sonID];
     
-    // Andy was debugging non duplicate messages showing as threaded
-    //    if ( [email.subject containsString:@"Review blocked"]) {
-    //        DDLogInfo(@"Email subj:\"%@\" has son ID \"%@\"",email.subject,sonID);
-    //    }
-    
     if ( [sonID isEqualToString:@""] ||
         [sonID isEqualToString:@"0"] ||
-        ![_convIDs containsObject:sonID] ) {
+        ![_conversationIDs containsObject:sonID] ) {
         
         // No conversation with a matching sonID ...
         [self _addNewConversationWithMail:email];
@@ -431,24 +429,29 @@
         
         // Find the conversation with the matching sonID,
         // and add this mail message to the conversation,
-        // and
+        BOOL matchingUidFound = NO;
         for (NSUInteger idx = 0; idx < self.allConversations.count; idx++) {
-            Conversation* conv = self.allConversations[idx];
+            
+            Conversation* conversation = self.allConversations[idx];
             
             // If the indexed conversation matche's the email sonID
-            NSString *firstMailSonID = [[conv firstMail] sonID];
+            NSString *firstMailSonID = [[conversation firstMail] sonID];
+            
             if ([firstMailSonID isEqualToString:sonID]) {
                 
                 // Add the mail message to the conversation
-                [conv addMail:email];
+                [conversation addMail:email];
                 
-                [self _addCon:idx toFoldersContent:[conv foldersType]];
+                [self _addCon:idx toFoldersContent:[conversation foldersType]];
                 
-                return; // we match only once (could be break;)
+                matchingUidFound = YES;
+                
+                // we match only once
+                break;
             }
-            else {
-                DDLogVerbose(@"Coversation's First Mail's Son ID \"%@\" equals given mail Son ID",firstMailSonID);
-            }
+        }
+        if ( matchingUidFound == NO ) {
+            DDLogError(@"No Matching UID Found, but one must exist!.");
         }
     }
     
@@ -464,7 +467,7 @@
         conv.isDraft = YES;
     }
     
-    [_convIDs addObject:[email sonID]];
+    [_conversationIDs addObject:[email sonID]];
     
     [self addConversation:conv];
 }
@@ -479,10 +482,10 @@
         
         CCMFolderType folderHandle = decodeFolderTypeWith(folderIndex);
         
-        if ( folderHandle.type < 0 || folderHandle.type >= FolderTypeUser ) {
+        if ( CCMFolderTypeTypeIsValid(folderHandle.type) == NO ) {
             DDLogError(@"CCMFolderType type is invalid!");
         } else {
-            [self _addIdx:idx inArray:folderHandle];
+            [self _addMailIndex:idx toIndexSetOfFolder:folderHandle];
         }
     }
 }
@@ -514,15 +517,15 @@
     return mailIndecies;
 }
 
--(void) _addIdx:(NSUInteger)idx inArray:(CCMFolderType)folderHandle
+-(void) _addMailIndex:(NSUInteger)mailIndex toIndexSetOfFolder:(CCMFolderType)folderHandle
 {
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
     NSMutableIndexSet* folderMailIndecies = [self _mailIndeciesForFolder:folderHandle];
     
-    if ( ![folderMailIndecies containsIndex:idx] ) {
+    if ( ![folderMailIndecies containsIndex:mailIndex] ) {
         
-        [folderMailIndecies addIndex:idx];
+        [folderMailIndecies addIndex:mailIndex];
         
         // if the folder passed in is the current folder ....
         if (encodeFolderTypeWith(folderHandle) == encodeFolderTypeWith(self.currentFolderType)) {
@@ -531,16 +534,16 @@
             //NSInteger tmpEmailCount = [syncState[@"emailCount"] integerValue];
             
             // if this (current) folder has exactly 20 mail messages ...
-            if ( [folderMailIndecies count] == 20) {
-                
-                // if the current account index is our account index ...
-                if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                    // Then test the current folder for correct messages
-                    [self updateLocalMailStoreFromImapServer];
-                }
-            }
+//            if ( [folderMailIndecies count] == 20) {
+//                
+//                // if the current account index is our account index ...
+//                if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+//                    // Then test the current folder for correct messages
+//                    [self updateCurrentFolderMailInDatabaseFromImapServer];
+//                }
+//            }
             
-            ConversationIndex* ci = [ConversationIndex initWithIndex:idx user:self.user];
+            ConversationIndex* ci = [ConversationIndex initWithIndex:mailIndex user:self.user];
             
             //if (set.count == 50 || (tmpEmailCount < 50 && set.count == tmpEmailCount)) {
             //[mailListDelegate reFetch:YES];
@@ -567,11 +570,11 @@
             ![folderIndecies containsObject:numberWithFolderType(FolderTypeSpam)]    &&
             ![folderIndecies containsObject:numberWithFolderType(FolderTypeDrafts)]) {
             
-            [self _addIdx:index inArray:CCMFolderTypeAll];
+            [self _addMailIndex:index toIndexSetOfFolder:CCMFolderTypeAll];
         }
         
         if ([conv isFav]) {
-            [self _addIdx:index inArray:CCMFolderTypeFavoris];
+            [self _addMailIndex:index toIndexSetOfFolder:CCMFolderTypeFavoris];
         }
         
         [self _addCon:index toFoldersContent:folderIndecies];
@@ -608,18 +611,17 @@
     
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableIndexSet* conversationIndexSet = [[self _mailIndeciesForFolder:folderHandle] mutableCopy];
+    NSIndexSet* conversationIndexSet = [[self _mailIndeciesForFolder:folderHandle] mutableCopy];
     
     NSMutableArray<ConversationIndex *>* conversationsForFolder = [NSMutableArray arrayWithCapacity:[conversationIndexSet count]];
     
-    NSMutableArray<Conversation*>* allConversations = [self.allConversations mutableCopy]; // why copy it? It doesn't look like we are going to change it??
-    
-    [allConversations enumerateObjectsAtIndexes:conversationIndexSet
-                                        options:0UL
-                                     usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop) {
-                                         ConversationIndex* ci = [ConversationIndex initWithIndex:idx user:self.user];
-                                         [conversationsForFolder addObject:ci];
-                                     }];
+    [self.allConversations  enumerateObjectsAtIndexes:conversationIndexSet
+                                              options:0UL
+                                           usingBlock:^(Conversation* obj, NSUInteger idx, BOOL* stop) {
+                                               
+         ConversationIndex* ci = [ConversationIndex initWithIndex:idx user:self.user];
+         [conversationsForFolder addObject:ci];
+     }];
     
     // For debugging INBOX
 #if (LOG_VERBOSE)
@@ -971,8 +973,7 @@
     // Cannot move a converstaion from the All Mails folder
     DDAssert(!self.user.isAll, @"Should not be called by all Accounts");
     
-    NSMutableArray<Conversation*>* tmp = [self.allConversations mutableCopy];
-    NSUInteger idx = [tmp indexOfObject:conversation];
+    NSUInteger idx = [self.allConversations indexOfObject:conversation];
     
     if (idx == NSNotFound) {
         DDLogError(@"Conversation with subject \"%@\" not found.",
@@ -1184,10 +1185,12 @@
 
 #pragma mark - Fetch Data
 
-// Refresh contents of IMAP System Folders
--(void) _importantFoldersRefresh:(NSInteger)pFolder
+// Refresh contents of the the System Folders in the Mail Database from the IMAP Server
+-(void) _importantFoldersRefresh:(NSInteger)folderNumber
 {
-    DDLogInfo(@"ENTERED, folder=%ld",(long)pFolder);
+    // called recursively to load each important folder
+    
+    DDLogInfo(@"ENTERED, folder=%@",@(folderNumber));
     
     if (self.user.isDeleted) {
         DDLogInfo(@"User is Deleted, return.");
@@ -1199,11 +1202,11 @@
         return;
     }
     
-    NSInteger __block folder = pFolder;
+    NSInteger __block folder = folderNumber;
     
     //If last important folder start full sync
-    // AJC 2017-06-27 - Does this limit this function to only the first 4 Important Folders
-    if (folder > 4) {
+    NSInteger lastImportantFolderIndex = kImportantFolderTypeMaxIndex;
+    if (folder > lastImportantFolderIndex) {
         [self _doLoadServer];
         return;
     }
@@ -1221,10 +1224,14 @@
     _isSyncing = YES;
     
     [[[SyncManager getSingleton] refreshImportantFolder:folder user:self.user]
+     
      subscribeNext:^(Mail* email) {
+         DDLogInfo(@"subscribeNext received for refreshImportantFolder");
+
+        
          [self insertRows:email];
-     }
-     error:^(NSError* error) {
+        
+     } error:^(NSError* error) {
          
          if (error.code != CCMFolderSyncedError && error.code != CCMAllSyncedError) {
              [CCMStatus showStatus:NSLocalizedString(@"status-bar-message.connecting_error", @"Connection error") dismissAfter:2 code:2];
@@ -1241,7 +1248,7 @@
          self->_isSyncing = NO;
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
 #warning Here be recursion
-             [self _importantFoldersRefresh:++folder];
+             [self _importantFoldersRefresh:++folder];  // NB: Note increase in folder number;
          }
      }];
 }
@@ -1263,12 +1270,12 @@
     }
     
     if ( _isSyncing ) {
-        DDLogDebug(@"_isSyncing = TRUE, returning.");
+        DDLogDebug(@"_isSyncing = YES, returning.");
         return;
     }
     
     if (_isSyncingCurrentFolder ) {
-        DDLogDebug(@"_isSyncingCurrentFolder = TRUE, returning.");
+        DDLogDebug(@"_isSyncingCurrentFolder = YES, returning.");
         return;
     }
     
@@ -1279,8 +1286,9 @@
     [[[[SyncManager getSingleton] syncFoldersUser:self.user] deliverOn:[RACScheduler scheduler]]
      
      subscribeNext:^(Mail* email) {
+         DDLogInfo(@"subscribeNext received for syncFoldersUser");
+
          //[self insertRows:email];
-         DDLogDebug(@"[SyncManager syncFolderUser] subscribeNext^(email)");
      }
      
      error:^(NSError* error) {
@@ -1294,10 +1302,9 @@
              case CCMFolderSyncedError:
                  DDLogError(@"[SyncManager syncFolderUser] failed with CCMFolderSyncedError");
                  
+#warning Here be recursion
                  if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-                     DDLogInfo(@"This Account is the Currebnt Account, so call ourself RECURSIVELY!");
-                     
-#warning Here be recursion!
+                     DDLogInfo(@"SYNC ERROR: This Account is the Current Account, so call this method RECURSIVELY!");
                      [self _doLoadServer]; // recursion
                  }
              default:
@@ -1313,37 +1320,37 @@
          
          self->_isSyncing = NO;
          
-//         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
-//             
-//             DDLogInfo(@"[SyncManager syncFolderUser] This Account is Current Account, so calling self recursively???");
-//
-//#warning Here be recursion!
-//             [self _doLoadServer];  // recursion
-//         }
+#warning Here be recursion
+         if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
+             DDLogInfo(@"COMPLETED: This Account is the Current Account, so call this method RECURSIVELY!");
+             [self _doLoadServer];  // recursion
+         }
      }];
 }
 
 - (NSArray<Conversation*>*)_conversationsInFolder:(CCMFolderType)folder
 {
-    NSIndexSet* currentFolderMailIndecies = [self _mailIndeciesForFolder:folder];
+    // Get the indecies of all the mail in the folder
+    NSIndexSet* mailIndeciesInFolder = [self _mailIndeciesForFolder:folder];
     
-    DDLogInfo(@"Folder %@ has %@ mails.",[self folderDescription:self.currentFolderType],@(currentFolderMailIndecies.count));
+    DDLogInfo(@"Folder \"%@\" has %@ mails.",[self folderDescription:folder],@(mailIndeciesInFolder.count));
     
-    // Create an array (resultingFolderMail) of all the conversations indexed by the current folder mail indecies
-    NSMutableArray<Conversation*>* conversationsInCurrentFolder = [NSMutableArray arrayWithCapacity:[currentFolderMailIndecies count]];
+    NSMutableArray<Conversation*>* conversationsInFolder = [NSMutableArray arrayWithCapacity:mailIndeciesInFolder.count];
     
-    [self.allConversations enumerateObjectsAtIndexes:currentFolderMailIndecies
+    // From All Conversations in the Account, get only those conversations indexed by folderMailIndecies
+    [self.allConversations enumerateObjectsAtIndexes:mailIndeciesInFolder
                                              options:0UL
                                           usingBlock:^(id obj, NSUInteger idx, BOOL* stop){
-                                              [conversationsInCurrentFolder addObject:obj];
+                                              [conversationsInFolder addObject:obj];
                                           }];
-    
-    return conversationsInCurrentFolder;
+    DDLogInfo(@"Folder \"%@\" has %@ conversations.",[self folderDescription:folder],@(conversationsInFolder.count));
+
+    return conversationsInFolder;
 }
 
-#pragma mark - Update Local Mail Store from IMAP Server
+#pragma mark - Update Mail Database from IMAP Server (nee runTestData)
 
--(void) updateLocalMailStoreFromImapServer
+-(void) updateCurrentFolderMailInDatabaseFromImapServer
 {
     DDLogInfo(@"ENTERED");
     
@@ -1379,6 +1386,38 @@
 
 // Updates all mail messages from the IMAP server for all the conversations in the
 // requested folder.  If they folder is not the All Folder, it does it for that folder also.
+
+- (void)_updateMailFromImapServerForAllFolder {
+    
+    ImapSync *imapSyncService = [ImapSync sharedServices:self.user];
+
+    if (![ImapSync canFullSync]){
+        self->_runningUpToDateTest = NO;
+        return;
+    }
+    
+    // Get an array of all the Conversations in local memory for the requested Folder in this account
+    NSArray<Conversation*>* conversationsInAllFolder = [self _conversationsInFolder:CCMFolderTypeAll];
+    
+    NSInteger folderIndex = [self.user numFolderWithFolder:CCMFolderTypeAll];
+    
+    [imapSyncService updateLocalMailFromImapServerInConversations:conversationsInAllFolder
+                                                         ofFolder:folderIndex
+                                                        completed:^(NSArray<NSString*>* daysWithUpdatesOrDeletes)
+    {
+                                                            
+        self->_runningUpToDateTest = NO;
+        
+        // Update "Days" in mailing list delegate
+        // NB: Days can be nil if an error occurred
+        if ( daysWithUpdatesOrDeletes ) {
+            [self.mailListDelegate updateDays:daysWithUpdatesOrDeletes];
+        }
+    }];
+}
+
+// NB: Only deletes and updates, doesn't add new messages to mail db
+
 - (void)_updateMailFromImapServerForConversationsInFolder:(CCMFolderType)folderType
 {
     DDAssert(self.currentFolderIdx != -1, @"The Current Folder must not be -1");
@@ -1389,36 +1428,45 @@
     
     // Get an array of all the Conversations in local memory for the requested Folder in this account
     NSArray<Conversation*>* conversationsInCurrentFolder = [self _conversationsInFolder:folderType];
-
+    
+    ImapSync *imapSyncService = [ImapSync sharedServices:self.user];
+    
     // Update conversations in the local store's current folder from the IMAP Server, and update
-    [[ImapSync sharedServices:self.user] updateLocalMailFromImapServerInConversations:conversationsInCurrentFolder
+    [imapSyncService updateLocalMailFromImapServerInConversations:conversationsInCurrentFolder
                                              ofFolder:self.currentFolderIdx
-                                               completed:^(NSArray<NSString*>* daysWithAddsOrDeletes) {
-                                                                                                      
-                                                   //[mailListDelegate removeConversationList:nil];
+                                               completed:^(NSArray<NSString*>* daysWithUpdatesOrDeletes) {
                                                    
-                                                   // Update "Days" in mailing list delegate
-                                                   // NB: Days can be nil if an error occurred
-                                                   if ( daysWithAddsOrDeletes ) {
-                                                       [self.mailListDelegate updateDays:daysWithAddsOrDeletes];
-                                                   }
+       // Update "Days" in mailing list delegate
+       // NB: Days can be nil if an error occurred
+       if ( daysWithUpdatesOrDeletes ) {
+           [self.mailListDelegate updateDays:daysWithUpdatesOrDeletes];
+       }
                                                    
-                                                   
-                                                   // If the All Folder wasn't the one just updated
-                                                   if (folderType.type != FolderTypeAll) {
-                                                       // then update it now.
-                                                       
-                                                       // NB: RECURSION
-                                                       [self _updateMailFromImapServerForConversationsInFolder:allFolderType()];
-                                                   }
-                                                   
-                                                   self->_runningUpToDateTest = NO;
-                                               }];
+       // If the All Folder wasn't the one just updated
+       if (folderType.type != FolderTypeAll) {
+           
+           [self _updateMailFromImapServerForAllFolder];
+       }
+       self->_runningUpToDateTest = NO;
+    }];
 }
 
 
 
 #pragma mark - Deliver Update, Delete, and Index
+
+-(Mail*)_findConversationMailWithMatchingMsgID:(NSString*)msgId
+{
+    for (Conversation* conv in self.allConversations) {
+        for (Mail* mailInConversation in conv.mails) {
+            if ([mailInConversation.msgID isEqualToString:msgId]) {
+                
+                return mailInConversation;
+            }
+        }
+    }
+    return nil;     // Failed
+}
 
 -(void) deliverUpdate:(NSArray <Mail*>*)emails
 {
@@ -1428,26 +1476,13 @@
     
     // For each mail passed in, find the the mail with the matching msgID in this account, and update its flag
     for (Mail* email in emails) {
-        BOOL found = NO;
         
-        for (Conversation* conv in self.allConversations) {
-            for (Mail* mailInConversation in conv.mails) {
-                if ([mailInConversation.msgID isEqualToString:email.msgID]) {
-                    
-                    mailInConversation.flag = email.flag;
-                    
-                    found = YES;
-                    break;
-                }
-            }
-            
-            if (found) {
-                break;
-            }
+        Mail *mailInConversation = [self _findConversationMailWithMatchingMsgID:email.msgID];
+        if (mailInConversation) {
+            mailInConversation.flag = email.flag;
         }
-        
-        if (!found) {
-            DDLogError(@"Error Conversation to delete not found");
+        else {
+            DDLogInfo(@"No match found for mail (subj:\"%@\"",email.subject);
         }
     }
 }
@@ -1463,11 +1498,12 @@
     NSMutableIndexSet* fromFolderMailIndecies = [self _mailIndeciesForFolder:folderFrom];
     
     for (Mail* email in emails) {
-        BOOL found = NO;
-        NSUInteger index = 0;
         
-        for (; !found && index < self.allConversations.count; index++) {
-            for (Mail* m in ((Conversation* )self.allConversations[index]).mails) {
+        BOOL found = NO;
+        NSUInteger conservationIndex = 0;
+        
+        for (; !found && conservationIndex < self.allConversations.count; conservationIndex++) {
+            for (Mail* m in ((Conversation* )self.allConversations[conservationIndex]).mails) {
                 if ([m.msgID isEqualToString:email.msgID]) {
                     found = YES;
                     break;
@@ -1475,15 +1511,15 @@
             }
         }
         
-        index--;
+        conservationIndex--;
         
         if (!found) {
             DDLogError(@"Error Conversation to delete not found");
         }
         else {
-            if ([fromFolderMailIndecies containsIndex:index]) {
-                [idxs addObject:[ConversationIndex initWithIndex:index user:self.user]];
-                [fromFolderMailIndecies removeIndex:index];
+            if ([fromFolderMailIndecies containsIndex:conservationIndex]) {
+                [idxs addObject:[ConversationIndex initWithIndex:conservationIndex user:self.user]];
+                [fromFolderMailIndecies removeIndex:conservationIndex];
             }
         }
     }
@@ -1512,7 +1548,7 @@
 
 -(void) doPersonSearch:(Person*)person
 {
-    id<MailListDelegate> subscriber = self.mailListDelegate;  // strong hold
+    id<MailListDelegate> delegate = self.mailListDelegate;  // strong hold
     
     if (self.user.isDeleted) {
         return;
@@ -1521,13 +1557,15 @@
     //NSInteger refBatch = 5;
     //NSInteger __block batch = refBatch;
     
-    [subscriber localSearchDone:NO];
-    [subscriber serverSearchDone:NO];
+    [delegate localSearchDone:NO];
+    [delegate serverSearchDone:NO];
     
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] senderSearch:person inAccountNum:self.user.accountNum]
          subscribeNext:^(Mail* email) {
+             DDLogInfo(@"subscribeNext received for senderSearch");
+
              [self insertRows:email];
              //if (batch-- == 0) {
              //    batch = refBatch;
@@ -1543,6 +1581,8 @@
     //ServerSearch
     [[[[SyncManager getSingleton] searchPerson:person user:self.user] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Mail* email) {
+         DDLogInfo(@"subscribeNext received for searchPerson");
+
          [self insertRows:email];
          //if (batch-- == 0) {
          //    batch = refBatch;
@@ -1554,14 +1594,14 @@
          [self.mailListDelegate reFetch:YES];
      }
      completed:^{
-         [subscriber reFetch:YES];
-         [subscriber serverSearchDone:YES];
+         [delegate reFetch:YES];
+         [delegate serverSearchDone:YES];
      }];
 }
 
 -(void) doTextSearch:(NSString*)searchString
 {
-    id<MailListDelegate> subscriber = self.mailListDelegate;  // strong hold
+    id<MailListDelegate> mailListDelegate = self.mailListDelegate;  // strong hold
 
     if (self.user.isDeleted) {
         return;
@@ -1570,14 +1610,16 @@
     //NSInteger refBatch = 5;
     //NSInteger __block batch = refBatch;
     
-    [subscriber localSearchDone:NO];
-    [subscriber serverSearchDone:NO];
+    [mailListDelegate localSearchDone:NO];
+    [mailListDelegate serverSearchDone:NO];
     
     
     //LocalSearch
     [_localFetchQueue addOperationWithBlock:^{
         [[[SearchRunner getSingleton] search:searchString inAccountNum:self.user.accountNum]
          subscribeNext:^(Mail* email) {
+             DDLogInfo(@"subscribeNext received for search");
+
              [self insertRows:email];
              //if (batch-- == 0) {
              //    batch = refBatch;
@@ -1585,23 +1627,25 @@
              //}
          }
          completed:^{
-             [subscriber reFetch:YES];
-             [subscriber serverSearchDone:YES];
+             [mailListDelegate reFetch:YES];
+             [mailListDelegate serverSearchDone:YES];
          }];
     }];
     
     //ServerSearch
     [[[[SyncManager getSingleton] searchText:searchString user:self.user] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Mail* email) {
+         DDLogInfo(@"subscribeNext received for searchText");
+
          [self insertRows:email];
      }
      error:^(NSError* error) {
          DDLogError(@"Error: %@", error.localizedDescription);
-         [subscriber reFetch:YES];
+         [mailListDelegate reFetch:YES];
      }
      completed:^{
-         [subscriber reFetch:YES];
-         [subscriber serverSearchDone:YES];
+         [mailListDelegate reFetch:YES];
+         [mailListDelegate serverSearchDone:YES];
      }];
 }
 
@@ -1639,6 +1683,8 @@
         [_localFetchQueue addOperationWithBlock:^{
             [[[SearchRunner getSingleton] activeFolderSearch:loadMore?self->_lastEmails[(NSUInteger)self.currentFolderIdx]:nil inAccountNum:self.user.accountNum]
              subscribeNext:^(Mail* email) {
+                 DDLogInfo(@"subscribeNext received for activeFolderSearch");
+
                  more = YES;
                  
                  if (email.user && !email.user.isDeleted) {
@@ -1656,7 +1702,7 @@
                      self->_hasLoadedAllLocal = YES;
                  }
                  
-                 [self updateLocalMailStoreFromImapServer];
+                 [self updateCurrentFolderMailInDatabaseFromImapServer];
                  
                  [subscriber localSearchDone:YES];
                  [subscriber reFetch:YES];
@@ -1667,10 +1713,14 @@
 
 #pragma mark - Both Pull-To-Refresh and Background-Update call here!
 
-// Both Pull-To-Refresh and Background-Update call here
+// Called by Pull To Refresh
+// Called by Background Update
+// Called by setConnected
 //
 -(void) refreshCurrentFolder
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+    
     DDAssert(self.currentFolderIdx != -1, @"The Current Folder must not be -1");
 
     DDLogInfo(@"ENTERED for Folder \"%@\", Folder Index %@",[self currentFolderTypeValue],@(self.currentFolderIdx));
@@ -1717,7 +1767,7 @@
     
     [self.mailListDelegate serverSearchDone:NO];      // notify delegate VC
     
-    [self updateLocalMailStoreFromImapServer];     // update local mail store from IMAP server
+    [self updateCurrentFolderMailInDatabaseFromImapServer];     // update local mail store from IMAP server
     
     DDLogInfo(@"");
     
@@ -1726,9 +1776,8 @@
     [[signal deliverOn:[RACScheduler schedulerWithPriority:RACSchedulerPriorityBackground]]
      
      subscribeNext:^(Mail* email) {
-         
-         DDLogInfo(@"[SyncManager syncActiveFolderFromStart] - subscribeNext(Mail*)");
-         
+         DDLogInfo(@"subscribeNext received for syncActiveFolderFromStart");
+
          new++;
          [self insertRows:email];
      }
@@ -1744,7 +1793,7 @@
          }
          else if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
              
-             [self updateLocalMailStoreFromImapServer];
+             [self updateCurrentFolderMailInDatabaseFromImapServer];
              
              self->_currentFolderFullSyncCompleted = YES;
              self->_isSyncingCurrentFolder = NO;
@@ -1763,7 +1812,7 @@
          
          if ([Accounts sharedInstance].currentAccountIdx == self.idx) {
              
-             [self updateLocalMailStoreFromImapServer];
+             [self updateCurrentFolderMailInDatabaseFromImapServer];
              
              if (self->_currentFolderFullSyncCompleted) {
                  self->_isSyncingCurrentFolder = NO;
@@ -1773,6 +1822,8 @@
                  self->_isSyncingCurrentFolder = YES;
                  [self _syncCurrentFolder];
              }
+             
+             [self.mailListDelegate reloadTableView];
          }
      }];
 }
@@ -1793,10 +1844,14 @@
     
     [[[[SyncManager getSingleton] syncActiveFolderFromStart:NO user:self.user] deliverOn:[RACScheduler mainThreadScheduler]]
      subscribeNext:^(Mail* email) {
+         DDLogInfo(@"subscribeNext received for syncActiveFolderFromStart");
+
          //[self insertRows:email];
      } error:^(NSError* error) {
+         
          DDLogError(@"Error: %@", error.localizedDescription);
          self->_isSyncingCurrentFolder = NO;
+         
          if (error.code == CCMFolderSyncedError) {
              self->_currentFolderFullSyncCompleted = YES;
              [self _importantFoldersRefresh:0];
