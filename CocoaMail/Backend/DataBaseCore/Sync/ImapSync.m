@@ -121,9 +121,6 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
             ImapSync* sharedService = [[super allocWithZone:nil] init];
             sharedService.user = user;
             sharedService.connected = NO;
-            
-//            sharedService.s_queue = dispatch_queue_create("CocoaMail" /*DISPATCH_QUEUE_PRIORITY_DEFAULT*/, DISPATCH_QUEUE_SERIAL);
-            
             sharedService.s_queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
             
             // If an updated Imap Session was passed in, and its username matches this user, then update the new service
@@ -133,7 +130,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 sharedService.connected = YES;
             }
             else {
-                // We do not have an updated IMAP Session with a user that matches this one
+                // method was called with update=nil, or update is not for this user
                 
                 dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
                 
@@ -285,6 +282,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                     DDLogInfo(@"Folder \"%@\" has %@ unread mails.",
                               serverFolderPath,@(searchResult.count));
                     
+                    // TODO: To be used for OTHER mailboxes, this should be other than Inbox only!
                     [AppSettings setInboxUnread:searchResult.count accountIndex:(NSInteger)user.accountIndex];
                 }
                 else {
@@ -645,6 +643,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 [sharedService _checkForCachedActions];
                 [sharedService _getImapFolderNamesAndUpdateLocal];
                 
+                DDLogInfo(@"IMAP host \"%@\" OAuth login complete.",sharedService.user.imapHostname);
+                
                 [subscriber sendCompleted];
                 
             }
@@ -680,6 +680,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 [sharedService.user.linkedAccount setConnected];    // calls down to runData
                 [sharedService _checkForCachedActions];
                 [sharedService _getImapFolderNamesAndUpdateLocal];
+                
+                DDLogInfo(@"IMAP host \"%@\" Password login complete.",sharedService.user.imapHostname);
                 
                 [subscriber sendCompleted];
             }
@@ -757,7 +759,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         // then it is a NEW folder and needs to be added.
         if ( imapFolderMatchesLocalFolder == FALSE ) {
             
-            DDLogDebug(@"IMAP Folder \"%@\" NOT found in local folders.",[imapFolder path]);
+            DDLogInfo(@"IMAP folder \"%@\" NOT found in local folders.",[imapFolder path]);
             
             NSString *dispName = [ImapSync displayNameForFolder:imapFolder usingSession:self.imapSession];
             
@@ -912,6 +914,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 -(RACSignal*) runSearchText:(NSString*)text
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"ENTERED, search text = \"%@\"",text);
     
     @weakify(self);
@@ -952,6 +956,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 -(RACSignal*) runSearchPerson:(Person*)person
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"ENTERED, person name = %@",person.name);
 
     @weakify(self);
@@ -1124,7 +1130,11 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 -(void)addFolder:(MCOIMAPFolder *)folder withName:(NSString*)folderName toAccount:(NSUInteger)accountNum
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
 //    NSString* dispName = [ImapSync displayNameForFolder:folder usingSession:imapSession];
+    
+    // TODO: Where is adding folder to IMAP server???
     
     // Append a new Folder Sync State Object for this Account
     SyncManager* syncManager = [SyncManager getSingleton];
@@ -1265,7 +1275,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
             }
         }
         else { // we are connected
-            DDLogDebug(@"SUCCESSFULLY Connected.");
+            DDLogInfo(@"Login to IMAP server \"%@\" successful.",self.user.imapHostname);
             
             [self _getImapFolders:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
         }
@@ -1274,7 +1284,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 - (void)_getImapFolders:(id)subscriber currentFolder:(NSInteger)currentFolder isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
-    DDLogInfo(@"currentFolder=%@ fromStart=%@ getAll=%@",
+    DDLogDebug(@"currentFolder=%@ fromStart=%@ getAll=%@",
               @(currentFolder),
               (isFromStart?@"TRUE":@"FALSE"),
               (getAll?@"TRUE":@"FALSE"));
@@ -1302,9 +1312,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 [subscriber sendCompleted];
                 
                 return;
-            } else {
-                DDLogDebug(@"Fetch All IMAP Folders Success, have %@ folders.",@(imapFolders.count));
             }
+            DDLogInfo(@"IMAP server \"%@\" has %@ folders.",self.user.imapHostname,@(imapFolders.count));
             
             [self _processFoldersAndGetImapMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll imapFolders:imapFolders];
         }];//Fetch All Folders
@@ -1328,6 +1337,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         
         if ( aFolderWasDeleted ) {
             
+            DDLogInfo(@"IMAP server \"%@\" has at least one deleted folder.", self.user.imapHostname);
+
             [self _replaceDeletedImportantFolders:currentFolder imapFolders:imapFolders];
         }
         
@@ -1411,7 +1422,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 {
     SyncManager *syncMgr = [SyncManager getSingleton];
     
-    DDLogInfo(@"Current Folder = %@, MCOIMAPFolder count = %@",@(currentFolder),@(imapFolders.count));
+    DDLogDebug(@"Current Folder = %@, MCOIMAPFolder count = %@",@(currentFolder),@(imapFolders.count));
     
     // If the Current Folder is one of the deleted folders, and it is an Important
     // folder, then try to find a replacement folder.
@@ -1681,18 +1692,18 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                 return;
             }
             
-            DDLogInfo(@"got %lu messages.",(unsigned long)imapMessages.count);
+            DDLogInfo(@"IMAP server \"%@\" folder \"%@\", Loaded %@ IMAP messages.",
+                      self.user.imapHostname, folderPath, @(imapMessages.count) );
             
             if ( imapMessages.count > 0 ) {
                 [self _processImapMessages:imapMessages subscriber:(id)subscriber currentFolder:currentFolder from:from isFromStart:isFromStart getAll:getAll];
             }
             
-            
-            
         }];//Fetch Messages
     });
     
 }
+
 
 - (void)_processImapMessages:(NSArray<MCOIMAPMessage*>*)imapMessages subscriber:(id)subscriber currentFolder:(NSInteger)currentFolder from:(NSInteger)from isFromStart:(BOOL)isFromStart getAll:(BOOL)getAll
 {
@@ -1704,23 +1715,22 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         
         SyncManager *syncMgr = [SyncManager getSingleton];
         
+        NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
+        
+        if ( folderPath == nil ) {
+            DDLogError(@"Could not get Folder Path from Sync Manager for folder=%@ in account=%@",@(currentFolder),@(self.user.accountNum));
+            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderPathError userInfo:nil]];
+            return;
+        }
+        
         // Message ID of the last mail message returned by the IMAP server
         NSString* lastMsgID = [imapMessages lastObject].header.messageID;
         
         for (MCOIMAPMessage* imapMsg in imapMessages) {
             
-            
             if (self.isCanceled) {
-                DDLogVerbose(@"isCancelled == TRUE, so sending Completed to subscriber");
+                DDLogInfo(@"isCancelled == TRUE, so sending Completed to subscriber");
                 [subscriber sendCompleted];
-                return;
-            }
-            
-            NSString* folderPath = [syncMgr retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
-            
-            if ( folderPath == nil ) {
-                DDLogError(@"Could not get Folder Path from Sync Manager for folder=%@ in account=%@",@(currentFolder),@(self.user.accountNum));
-                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMFolderPathError userInfo:nil]];
                 return;
             }
             
@@ -1731,23 +1741,28 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
             
             if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
                 
-//                DDLogInfo(@"--- Message already exists in this Account's Databsase");
+                DDLogVerbose(@"--- Message already exists in this Account's Databsase");
                 
                 if (![UidEntry hasUidEntrywithMsgId:email.msgID withFolder:currentFolder inAccount:self.user.accountNum]) {
+                    
                     // already have this email in other folder than this one -> add folder in uid_entry
                     
                     DDLogVerbose(@"--- Message DOES NOT already exist in this Account's Database in Folder \"%@\", ADDING.",@(currentFolder));
                     
-                    NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:[email uidEntryInFolder:currentFolder]];
-                    
-                    nextOp.completionBlock = ^{
-                        if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-                            [email loadBody];
-                            [subscriber sendNext:email];
-                        }
-                    };
-                    
-                    [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                    UidEntry *uidEntry = [email uidEntryInFolder:currentFolder];
+                    if ( uidEntry ) {
+                        
+                        NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addToFolderWrapper:) object:uidEntry];
+                        
+                        nextOp.completionBlock = ^{
+                            if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
+                                [email loadBody];
+                                [subscriber sendNext:email];
+                            }
+                        };
+                        
+                        [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
+                    }
                 }
                 else {
                     DDLogDebug(@"--- Message already exists in this Account's Database in Folder \"%@\"",@(currentFolder));
@@ -1758,12 +1773,9 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
                     if (!isFromStart && [self _isRunningInForeground]) {
                         [self _writeFolderStateLastEnded:from andFolder:currentFolder];
                     }
-                    
-                    // TODO: is sendCompleted correct here?
-                    [subscriber sendCompleted];
                 }
                 
-                //We already have email with folder
+                //We already have this email in this folder
                 continue;
             }
             else {
@@ -1771,7 +1783,8 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
             }
             
             
-            [[self.imapSession plainTextBodyRenderingOperationWithMessage:imapMsg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
+            [[self.imapSession
+              plainTextBodyRenderingOperationWithMessage:imapMsg folder:folderPath stripWhitespace:NO] start:^(NSString* plainTextBodyString, NSError* error) {
                 
                 DDLogVerbose(@"Loading Email from IMAP Server into Database");
                 
