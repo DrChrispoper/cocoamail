@@ -1241,36 +1241,36 @@
     
     @synchronized (self.tableView) {
         
-    UITableView *localTable = self.tableView;
-
-    [localTable beginUpdates];
-    
-    NSInteger sectionCount = [self.tableView numberOfSections];
-    DDLogInfo(@"table has %@ sections.",@(sectionCount));
-    IBGLog(@"table has %@ sections.",@(sectionCount));
-    for ( NSInteger idx = 0; idx < sectionCount; idx++) {
-        NSInteger rowCount = [self.tableView numberOfRowsInSection:idx];
-        DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
-        IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
-    }
-    
-    
-    DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
-    IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
-    [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
-
-    NSUInteger conversationSectionsToDeleteCount = conversationSectionIndeciesToDelete.count;
-    if ( conversationSectionsToDeleteCount > 0) {
+        UITableView *localTable = self.tableView;
         
-        DDLogInfo(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
-        IBGLog(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
+        [localTable beginUpdates];
         
-        [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
-    }
-    
-    [localTable endUpdates];
-
-    //[localTable reloadEmptyDataSet];
+        NSInteger sectionCount = [self.tableView numberOfSections];
+        DDLogInfo(@"table has %@ sections.",@(sectionCount));
+//        IBGLog(@"table has %@ sections.",@(sectionCount));
+        for ( NSInteger idx = 0; idx < sectionCount; idx++) {
+            NSInteger rowCount = [self.tableView numberOfRowsInSection:idx];
+            DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+//            IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+        }
+        
+        
+        DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+//        IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+        [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
+        
+        NSUInteger conversationSectionsToDeleteCount = conversationSectionIndeciesToDelete.count;
+        if ( conversationSectionsToDeleteCount > 0) {
+            
+            DDLogInfo(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
+//            IBGLog(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
+            
+            [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
+        }
+        
+        [localTable endUpdates];
+        
+        //[localTable reloadEmptyDataSet];
         
     } // end synchronized
 }
