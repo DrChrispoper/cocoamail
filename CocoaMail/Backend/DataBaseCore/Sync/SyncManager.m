@@ -393,24 +393,20 @@ static SyncManager * singleton = nil;
 
 // 2017-06-26 return changed from an NSInteger to an NSNumber so nil can be returned if there is an error
 
--(NSNumber *)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
+-(NSInteger)retrieveLastEndedFromFolderState:(NSInteger)folderNum accountNum:(NSInteger)accountNum
 {
-    NSNumber *lastEnded = nil;
+    NSInteger lastEnded = -1;   // -1 == ERROR
     
     id valForKey = [self _folderStateValueForKey:kFolderStateLastEndedKey
                                         account:accountNum
                                          folder:folderNum];
     if ( valForKey )
     {
-        NSInteger iVal = (NSInteger)valForKey;
-        lastEnded = [NSNumber numberWithInteger:iVal];
+        lastEnded = [valForKey integerValue];
         
-        DDLogInfo(@"FolderState[%@] returning %@",kFolderStateLastEndedKey,[lastEnded stringValue]);
+        DDLogInfo(@"FolderState[\"%@\"] returning %@",kFolderStateLastEndedKey,@(lastEnded));
     }
-    
-    
     return lastEnded;
-   
 }
 
 // MARK: - Get "Folder Path" state for Account Folder

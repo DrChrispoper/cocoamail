@@ -1547,14 +1547,20 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
         return;
     }
     
-    NSNumber* lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder accountNum:acntNumber];
+    NSInteger lastEnded = [syncMgr retrieveLastEndedFromFolderState:currentFolder accountNum:acntNumber];
     
-    if ( lastEnded == nil )  {
+    if ( lastEnded == -1 )  {
         DDLogError(@"Unable to retrieve last ended for folder=%@ and account=%@",
                    @(currentFolder),@(acntNumber));
         NSError *syncManagerError = [NSError errorWithDomain:CCMErrorDomain code:CCMSyncMgrError userInfo:nil];
         [subscriber sendError:syncManagerError];
         return;
+    }
+    
+    if ( lastEnded < 0 ) {
+        DDLogError(@"lastEnded (%@) should be a positive integer, setting to 1.",@(lastEnded));
+        lastEnded = 1;
+        [syncMgr updateLastEndedIndex:lastEnded forFolderNumber:currentFolder andAccountNum:acntNumber];
     }
     
     
