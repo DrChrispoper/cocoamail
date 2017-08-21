@@ -686,7 +686,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) loadBody
 {
-    DDLogInfo(@"ENTERED");
+    DDLogInfo(@"for mail with subject \"%@\".",self.subject);
     
     FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[EmailProcessor dbNumForDate:self.datetime]]]];
     
@@ -794,7 +794,8 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(BOOL)isInFolder:(NSInteger)folderNum
 {
-    return [self uidEntryInFolder:folderNum] > 0;
+    UidEntry *uidEntry = [self uidEntryInFolder:folderNum];
+    return (uidEntry && uidEntry > 0 );
 }
 
 +(void) tableCheck
@@ -1064,17 +1065,24 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) moveFromFolder:(NSInteger)fromFolderIdx ToFolder:(NSInteger)toFolderIdx
 {
-    DDLogInfo(@"Move from folder %@ to %@", [self.user folderDisplayNameForIndex:fromFolderIdx],  [self.user folderDisplayNameForIndex:toFolderIdx]);
+    UidEntry *uidFrom = [self uidEntryInFolder:toFolderIdx];
+    UidEntry *uidTo   = [self uidEntryInFolder:fromFolderIdx];
     
-    if ([self uidEntryInFolder:fromFolderIdx]) {
+    DDLogInfo(@"Move from folder %@ to %@",
+              [self.user folderDisplayNameForIndex:(NSUInteger)fromFolderIdx],
+              [self.user folderDisplayNameForIndex:(NSUInteger)toFolderIdx] );
+    
+    if ( uidFrom ) {
+        
         if (([self.user numFolderWithFolder:CCMFolderTypeAll] == fromFolderIdx && [self.user numFolderWithFolder:CCMFolderTypeDeleted] != toFolderIdx) || [self.user numFolderWithFolder:CCMFolderTypeFavoris] == toFolderIdx) {
-            [UidEntry copy:[self uidEntryInFolder:fromFolderIdx] toFolder:toFolderIdx];
+            
+            [UidEntry copy:uidFrom toFolder:toFolderIdx];
         }
-        else if ([self uidEntryInFolder:toFolderIdx]) {
-            [UidEntry deleteUidEntry:[self uidEntryInFolder:fromFolderIdx]];
+        else if ( uidTo ) {
+            [UidEntry deleteUidEntry:uidFrom];
         }
         else {
-            [UidEntry move:[self uidEntryInFolder:fromFolderIdx] toFolder:toFolderIdx];
+            [UidEntry move:uidFrom toFolder:toFolderIdx];
         }
         
         _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];

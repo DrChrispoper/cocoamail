@@ -52,8 +52,9 @@ static NSDateFormatter * s_df_hour = nil;
 {
     NSMutableArray* uids = [[NSMutableArray alloc]init];
     for (Mail* m in self.mails) {
-        if ([m uidEntryInFolder:folder]) {
-            [uids addObject:[m uidEntryInFolder:folder]];
+        UidEntry *uidEntry = [m uidEntryInFolder:folder];
+        if (uidEntry) {
+            [uids addObject:uidEntry];
         }
     }
     

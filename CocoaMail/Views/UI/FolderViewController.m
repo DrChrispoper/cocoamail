@@ -333,6 +333,8 @@
         //_isBackgroundFetching = YES;
         [[[[SyncManager getSingleton] syncInboxFoldersBackground] deliverOn:[RACScheduler mainThreadScheduler]]
          subscribeNext:^(Mail* email) {
+             DDLogInfo(@"subscribeNext received for syncInboxFoldersBackground");
+
              hasNewEmail = YES;
          } error:^(NSError* error) {
              NSDate *fetchEnd = [NSDate date];

@@ -330,6 +330,10 @@
     DDAssert(email, @"Mail message must exist");
     
     UidEntry* uidE = [email uidEntryInFolder:folderNum];
+    if ( uidE == nil ) {
+        DDLogWarn(@"No UID found for mail in folder.");
+        return uids;
+    }
     
     [databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
         FMResultSet* results;
