@@ -22,8 +22,8 @@
 
 -(RACSignal*) deleteEmailsInAccountNum:(NSInteger)accountNum;
 -(RACSignal*) activeFolderSearch:(Mail*)email inAccountNum:(NSInteger)accountNum;
--(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum;
--(RACSignal*) allEmailsSearch;
+//-(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum;
+-(RACSignal*) allEmailsDBSearch;
 
 @property (assign) volatile BOOL cancelled; // flag for when we cancel a search op
 @property (nonatomic, readwrite,strong) NSOperationQueue* operationQueue;

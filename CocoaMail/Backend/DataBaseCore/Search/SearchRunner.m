@@ -65,6 +65,8 @@ static SearchRunner * searchSingleton = nil;
 
 -(RACSignal*) search:(NSString*)searchText inAccountNum:(NSInteger)accountNum
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"ENTERED, search text = \"%@\", account num = %@",searchText,@(accountNum));
     
     NSArray* dbNumbers = [SearchRunner dbNumsInAccountNum:accountNum];
@@ -139,67 +141,69 @@ static SearchRunner * searchSingleton = nil;
 
 #pragma mark Folder "Search"
 
--(RACSignal*) performThreadSearch:(NSString*)thread withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
-{
-    DDLogInfo(@"ENTERED, thread = \"%@\", dbNumbers[0..%@], account num %@",thread,@(dbNums.count),@(accountNum));
-    
-    return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
-        self.cancelled = NO;
-        
-        NSMutableArray* uids = [UidEntry getUidEntriesWithThread:thread];
-        
-        NSMutableString* query = [NSMutableString string];
-        [query appendString:kQueryThread];
-        
-        for (UidEntry* p in uids) {
-            [query appendFormat:@"%@ OR ", p.msgID];
-        }
-        
-        query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-3)]];
-        [query appendFormat:@"'"];
-        
-        for (NSNumber* dbNum in dbNums) {
-            if (self.cancelled) {
-                [subscriber sendCompleted];
-            }
-            
-            FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
-            [queue inDatabase:^(FMDatabase* db) {
-                //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
-                //[databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
-                FMResultSet* results = [db executeQuery:query];
-                
-                while ([results next]) {
-                    DDLogDebug(@"Have One");
-                    Mail* email = [Mail newMailFromDatabaseResult:results];
-                    
-                    if (!email) {
-                        continue;
-                    }
-                    
-                    if ([email isInMultipleAccounts]) {
-                        Mail* e = [email secondAccountDuplicate];
-                        
-                        if (e.user.accountNum == accountNum) {
-                            email = e;
-                        }
-                    }
-                    
-                    if (email.user.accountNum == accountNum) {
-                        [subscriber sendNext:email];
-                    }
-                }
-                
-                [results close];
-            }];
-        }
-        [subscriber sendCompleted];
-        
-        return [RACDisposable disposableWithBlock:^{}];
-    }];
-}
+//-(RACSignal*) _performThreadSearch:(NSString*)thread withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
+//{
+//    DDLogInfo(@"*** ENTRY POINT ***");
+//
+//    DDLogInfo(@"ENTERED, thread = \"%@\", dbNumbers[0..%@], account num %@",thread,@(dbNums.count),@(accountNum));
+//
+//    return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
+//        self.cancelled = NO;
+//
+//        NSMutableArray* uids = [UidEntry getUidEntriesWithThread:thread];
+//
+//        NSMutableString* query = [NSMutableString string];
+//        [query appendString:kQueryThread];
+//
+//        for (UidEntry* p in uids) {
+//            [query appendFormat:@"%@ OR ", p.msgID];
+//        }
+//
+//        query = [[NSMutableString alloc]initWithString:[query substringToIndex:(query.length-3)]];
+//        [query appendFormat:@"'"];
+//
+//        for (NSNumber* dbNum in dbNums) {
+//            if (self.cancelled) {
+//                [subscriber sendCompleted];
+//            }
+//
+//            FMDatabaseQueue* queue = [FMDatabaseQueue databaseQueueWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
+//            [queue inDatabase:^(FMDatabase* db) {
+//                //[databaseManager setDatabaseFilepath:[StringUtil filePathInDocumentsDirectoryForFileName:[GlobalDBFunctions dbFileNameForNum:[dbNum integerValue]]]];
+//                //[databaseManager.databaseQueue inDatabase:^(FMDatabase* db) {
+//                FMResultSet* results = [db executeQuery:query];
+//
+//                while ([results next]) {
+//                    DDLogDebug(@"Have One");
+//                    Mail* email = [Mail newMailFromDatabaseResult:results];
+//
+//                    if (!email) {
+//                        continue;
+//                    }
+//
+//                    if ([email isInMultipleAccounts]) {
+//                        Mail* e = [email secondAccountDuplicate];
+//
+//                        if (e.user.accountNum == accountNum) {
+//                            email = e;
+//                        }
+//                    }
+//
+//                    if (email.user.accountNum == accountNum) {
+//                        [subscriber sendNext:email];
+//                    }
+//                }
+//
+//                [results close];
+//            }];
+//        }
+//        [subscriber sendCompleted];
+//
+//        return [RACDisposable disposableWithBlock:^{}];
+//    }];
+//}
 
--(RACSignal*) performAllSearch
+-(RACSignal*) _performAllSearch
 {
     ddLogLevel = DDLogLevelInfo;       // Limit reporting to Info and above for now
     
@@ -284,7 +288,7 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) performDeleteAccountNum:(NSInteger)accountNum
+-(RACSignal*) _performDeleteAccountNum:(NSInteger)accountNum
 {
     return [RACSignal createSignal:^RACDisposable* (id<RACSubscriber> subscriber) {
         
@@ -331,9 +335,9 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
+-(RACSignal*) _performFolderSearch:(NSInteger)folderNum inAccountNum:(NSInteger)accountNum from:(Mail*)email
 {
-    DDLogInfo(@"ENTERED, folder num = %@, account num = %@, from Mail with Subj. \"%@\"",@(folderNum),@(accountNum),
+    DDLogInfo(@"folder num = %@, account num = %@, from Mail with Subj. \"%@\"",@(folderNum),@(accountNum),
               (email.subject?email.subject:@"nil"));
     
     NSMutableArray* uidsInGroups;
@@ -408,8 +412,10 @@ static SearchRunner * searchSingleton = nil;
                     }
                     
                     UidEntry* uidE = [email uidEntryInFolder:realFolderNum];
+                    if ( uidE ) {
+                        [tmp removeObject:uidE];
+                    }
                     
-                    [tmp removeObject:uidE];
                     
                     if ([email isInMultipleAccounts]) {
                         Mail* e = [email secondAccountDuplicate];
@@ -455,22 +461,29 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
--(RACSignal*) allEmailsSearch
+-(RACSignal*) allEmailsDBSearch     // Nee allEmailsSearch
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"BEGIN");
     
     self.cancelled = NO;
     
-    return [self searchForSignal:[self performAllSearch]];
+    return [self searchForSignal:[self _performAllSearch]];
 }
 
 -(RACSignal*) deleteEmailsInAccountNum:(NSInteger)accountNum
 {
-    return [self searchForSignal:[self performDeleteAccountNum:accountNum]];
+    DDLogInfo(@"*** ENTRY POINT ***");
+
+    return [self searchForSignal:[self _performDeleteAccountNum:accountNum]];
 }
 
+// If first argument, "email", is nil, then search for all email in the account
 -(RACSignal*) activeFolderSearch:(Mail*)email inAccountNum:(NSInteger)accountNum
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     self.cancelled = NO;
 
     if (email && !email.msgID) {
@@ -479,23 +492,27 @@ static SearchRunner * searchSingleton = nil;
     
     NSInteger folderIndex = [Accounts sharedInstance].currentAccount.currentFolderIdx;
     
-    return [self searchForSignal:[self performFolderSearch:folderIndex
+    return [self searchForSignal:[self _performFolderSearch:folderIndex
                                               inAccountNum:accountNum
                                                       from:email]];
 }
 
--(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum
-{
-    NSArray* nums  = [SearchRunner dbNumsInAccountNum:accountNum];
-    
-    return [self searchForSignal:[self performThreadSearch:thread withDbNum:nums inAccountNum:accountNum]];
-}
+//-(RACSignal*) threadSearch:(NSString*)thread inAccountNum:(NSInteger)accountNum
+//{
+//    DDLogInfo(@"*** ENTRY POINT ***");
+//
+//    NSArray* nums  = [SearchRunner dbNumsInAccountNum:accountNum];
+//    
+//    return [self searchForSignal:[self _performThreadSearch:thread withDbNum:nums inAccountNum:accountNum]];
+//}
 
 // Sender Search
 #pragma mark Sender Search
 
 -(RACSignal*) senderSearch:(Person*)person inAccountNum:(NSInteger)accountNum
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     self.cancelled = NO;
     
     NSArray* dbNumbers = [SearchRunner dbNumsInAccountNum:accountNum];
@@ -503,10 +520,10 @@ static SearchRunner * searchSingleton = nil;
     NSSortDescriptor* sortOrder = [NSSortDescriptor sortDescriptorWithKey:NSStringFromSelector(@selector(self)) ascending:NO];
     dbNumbers = [dbNumbers sortedArrayUsingDescriptors:@[sortOrder]];
     
-    return [self searchForSignal:[self performSenderSearch:person withDbNum:dbNumbers inAccountNum:accountNum]];
+    return [self searchForSignal:[self _performSenderSearch:person withDbNum:dbNumbers inAccountNum:accountNum]];
 }
 
--(RACSignal*) performSenderSearch:(Person*)person withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
+-(RACSignal*) _performSenderSearch:(Person*)person withDbNum:(NSArray*)dbNums inAccountNum:(NSInteger)accountNum
 {
     DDLogInfo(@"ENTERED, person(.name) = \"%@\", dbNumbers[0..%@], account num %@",person.name,@(dbNums.count),@(accountNum));
     

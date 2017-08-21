@@ -149,8 +149,10 @@
             [[[SearchRunner getSingleton] activeFolderSearch:nil
                                                 inAccountNum:self.currentAccount.user.accountNum]
              subscribeNext:^(Mail* email) {
+                 DDLogInfo(@"subscribeNext received for activeFolderSearch");
 //                 DDLogDebug(@"SearchRunner next email \"%@\"",email.subject);
                  
+                 // Add the mail message to the account's Conversation book keeeping.
                  [self _addMail:email];
                  //if (batch-- == 0) {
                 //   batch = refBatch;
@@ -160,34 +162,39 @@
              completed:^{
                  DDLogDebug(@"SearchRunner returned \"completed\", so alerting currentAccount's mailListDelegate that the localSearchDone:YES and reFetch:YES");
                  [delegate localSearchDone:YES];
-                 [delegate reFetch:YES];
+                 
+                 [delegate reFetch:YES];  // This will cause the Mail List tableView to redraw
+                 
              }]; // end SearchRunner completed block
         }]; // end mainQueue block
     } // end All Mail
     
-    DDLogInfo(@"START PART 2 - Load \"All Mail\" Accounty from Database.");
+    DDLogInfo(@"START PART 2 - Load \"All Mail\" Account from Database.");
 
     [self.localFetchQueue addOperationWithBlock:^{
         
-        [[[SearchRunner getSingleton] allEmailsSearch]
+        [[[SearchRunner getSingleton] allEmailsDBSearch]
          subscribeNext:^(Mail* email) {
-//             DDLogDebug(@"Next Mail from allEmailsSearch: Add mail \"%@\" from DB to local store.",email.subject);
-             
-             if (email && email.user && !email.user.isDeleted) {
-                 [self _addMail:email];
-             }
+             DDLogInfo(@"subscribeNext received for allEmailsDBSearch");
+             [self _addMail:email];
          }
          completed:^{
-            DDLogDebug(@"Completed loading email from DB, calling runTestData on account.");
+            DDLogInfo(@"Completed loading email from DB, calling updateCurrentFolderMailInDatabaseFromImapServer on account.");
+             
+             [self.currentAccount.mailListDelegate reloadTableView];
              
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                 
                  if (self.currentAccount.user.isAll) {
-                     for (NSUInteger accountIndex = 0; accountIndex < [AppSettings numActiveAccounts]; accountIndex++) {
-                         [self.accounts[accountIndex] updateLocalMailStoreFromImapServer];
+                     // update all accounts
+                     for (Account *acnt in self.accounts) {
+                         [acnt updateCurrentFolderMailInDatabaseFromImapServer];
                      }
                  }
                  else {
-                     [self.currentAccount updateLocalMailStoreFromImapServer];
+                     // not the all account
+                     
+                     [self.currentAccount updateCurrentFolderMailInDatabaseFromImapServer];
                  }
              }];
          }];
