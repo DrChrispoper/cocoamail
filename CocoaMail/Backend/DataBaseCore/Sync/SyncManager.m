@@ -346,7 +346,7 @@ static SyncManager * singleton = nil;
     }
     
 }
--(void)updateLastEndedIndex:(NSInteger)lastEIndex forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum
+-(void)updateLastEndedIndex:(NSInteger)lastEnded forFolderNumber:(NSInteger)folderNum andAccountNum:(NSInteger)accountNum
 {
     NSMutableDictionary* syncState = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
     
@@ -354,10 +354,10 @@ static SyncManager * singleton = nil;
         
         @synchronized (syncState) {
             
-            DDLogInfo(@"FolderState[%@]: Saving %@",kFolderStateLastEndedKey,@(lastEIndex));
+            DDLogInfo(@"FolderState[%@]: Saving %@",kFolderStateLastEndedKey,@(lastEnded));
             
-            syncState[kFolderStateLastEndedKey] = @(lastEIndex);
-            syncState[kFolderStateFullSyncKey]  = @(lastEIndex == 1);
+            syncState[kFolderStateLastEndedKey] = @(lastEnded);
+            syncState[kFolderStateFullSyncKey]  = @(lastEnded == 1);
         }
         
         [self _persistState:syncState forFolderNum:folderNum accountNum:accountNum];
