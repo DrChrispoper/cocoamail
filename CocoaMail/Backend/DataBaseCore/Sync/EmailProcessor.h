@@ -35,7 +35,7 @@
 -(void) addToFolderWrapper:(UidEntry*)data;
 -(void) removeFromFolderWrapper:(NSDictionary*)data;
 -(void) addEmailWrapper:(Mail*)email;
--(void) addEmail:(Mail*)email;
+//-(void) _addEmail:(Mail*)email;
 -(void) updateEmailWrapper:(Mail*)email;
 
 

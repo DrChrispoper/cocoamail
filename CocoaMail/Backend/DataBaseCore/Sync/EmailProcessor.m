@@ -176,8 +176,9 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 	for (Mail* mail in emails) {
         
         UidEntry *uid = [mail uidEntryInFolder:folderIdx];
-        
-        [UidEntry removeFromFolderUid:uid];
+        if ( uid ) {
+            [UidEntry removeFromFolderUid:uid];
+        }
     }
     
     UserSettings* user  = [emails firstObject].user;
@@ -209,11 +210,11 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
 
 -(void) addEmailWrapper:(Mail*)mail
 {
-	[self addEmail:mail];
-    [self addAttachments:mail.attachments];
+	[self _addEmail:mail];
+    [self _addAttachments:mail.attachments];
 }
 
--(void) addEmail:(Mail*)mail
+-(void) _addEmail:(Mail*)mail
 {
     if (self.shuttingDown) {
         return;
@@ -240,7 +241,7 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     }
 }
 
--(void) addAttachments:(NSArray*)atts
+-(void) _addAttachments:(NSArray*)atts
 {
     [CCMAttachment addAttachments:atts];
 }
