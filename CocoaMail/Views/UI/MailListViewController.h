@@ -42,5 +42,6 @@
 -(void) reFetch:(BOOL)forceRefresh;
 -(BOOL) isPresentingDrafts;
 -(void) insertConversationIndex:(ConversationIndex*)ci;
+-(void) reloadTableView;
 
 @end

@@ -223,6 +223,8 @@
 
 -(void) viewDidLoad
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     [super viewDidLoad];
     
     [self check3DTouch];
@@ -329,6 +331,7 @@
     
 }
 
+// Called when the user does a pull to refresh
 - (void)_refreshTable {
     
     DDLogInfo(@"START BACKGROUND REFRESH TABLE");
@@ -337,6 +340,8 @@
     [self _updateViewTitle];
     //[[Accounts sharedInstance].currentAccount localFetchMore:NO];
     //[ImapSync runInboxUnread:[Accounts sharedInstance].currentAccount.user completed:^{}];
+    
+    [self _reloadTableView];
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -544,9 +549,7 @@
     if (convs) {
         [self _removeConversation:convs];
     }
-    else {
-        [self _reloadTableViewOnMainThread];
-    }
+    [self _reloadTableView];
 }
 
 -(void) _removeConversation:(NSArray<ConversationIndex*>*)convs
@@ -652,7 +655,7 @@
     }];
 }
 
-// Update Day Sections
+// Update Day Sections that were deleted or changed on the IMAP server
 -(void) updateDays:(NSArray<NSString *>*)days
 {
     DDAssert(days,@"Days array must exist.");
@@ -666,13 +669,14 @@
     
     NSMutableIndexSet* daySections = [[NSMutableIndexSet alloc] init];  // unique unsigned integers
     
-    // Create an index set "sections" containing the indexes off all the
+    // Create an index set "sections" containing the indexes of all the
     // dates in our Conversations By Day structure (Days.Conversations.Mails)
     // that match one or more of the day dates passed in.
+    NSDateFormatter* s_df_day = [[NSDateFormatter alloc] init];
+    s_df_day.dateFormat = @"d MMM yy";
+    
     for (NSString* day in days) {
         
-        NSDateFormatter* s_df_day = [[NSDateFormatter alloc] init];
-        s_df_day.dateFormat = @"d MMM yy";
         NSDate* dayDate = [s_df_day dateFromString:day];
         
         NSUInteger dayCount = [self.convByDay dayCount];
@@ -684,7 +688,7 @@
                 continue;   // skip to next dayIndex
             }
 
-            if (tmpDay && [dayDate compare:tmpDay] == NSOrderedSame){
+            if ([dayDate compare:tmpDay] == NSOrderedSame){
                 [daySections addIndex:dayIndex];
             }
         }
@@ -692,21 +696,7 @@
     
     DDLogInfo(@"Number of table sections to update = %@",@(daySections.count));
     
-        
-    UITableView* strongTable = self.tableView;
-    
-    // Update Mail List "Day Section Headers"
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        
-        @synchronized (self.tableView) {
-            
-            [strongTable beginUpdates];
-            [strongTable reloadSections:daySections withRowAnimation:UITableViewRowAnimationNone];
-            [strongTable endUpdates];
-        } // end synchronized
-
-    }];
-
+    [self _reloadTableView];
 }
 
 - (BOOL)_findMessageToOrFromPerson:(Person*)person inConversation:(ConversationIndex*)ci
@@ -738,9 +728,9 @@
 //
 -(void) insertConversationIndex:(ConversationIndex*)ciToInsert
 {
-    DDLogInfo(@"Conversation Index date = %@",ciToInsert.date.description);
-    
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        DDLogDebug(@"Conversation Index date = \"%@\"",ciToInsert.date.description);
         
         [self.tableView beginUpdates];
         
@@ -1012,16 +1002,15 @@
 //}
 
 // Given an array of ConversationIndex (from a folder)
-// If each one is not already found in the Conversations Per Accounty ...
-//      Then add it to both the4 Conversations Per Account and Conversations By Day structures
+// If each one is not already found in the Conversations Per Account ...
+//      Then add it to both the Conversations Per Account and Conversations By Day structures
 -(void) insertConversations:(NSArray<ConversationIndex*>*) folderConversations  // array of folder's conversations
 {
     DDAssert(folderConversations, @"Method cannot be passed a nil");
     
-    if ( folderConversations.count == 0 ) {
-        DDLogWarn(@"ZERO Folder Conversations to insert, returning.");
-    } else {
-        DDLogDebug(@"Will put %ld Conversations into Mail List Table",(long)folderConversations.count);
+    if ( folderConversations.count > 0 ) {
+        
+        DDLogInfo(@"Will put %@ Conversations into Mail List Table",@(folderConversations.count));
         
         if (self.showOnlyThisPerson) {
             DDLogDebug(@"showOnlyThisPerson == TRUE");
@@ -1072,7 +1061,7 @@
             [self.convByDay insertConversation:conversationIndex];
         }
         
-        [self _reloadTableViewOnMainThread];
+        [self _reloadTableView];
         
         self.initialLoading = NO;
     }
@@ -1458,36 +1447,30 @@
     return self.tableView.panGestureRecognizer;
 }
 
--(void)_reloadTableViewOnMainThread
-{
-    DDLogInfo(@"ENTERED");
-    
-    [self performSelectorOnMainThread:@selector(_reloadTableView)
-                           withObject:nil
-                        waitUntilDone:NO];
-}
 
 -(void) _reloadTableView
 {
-
-    //self.deletedSections = 0;
+    if ( self.tableView == nil ) {
+        DDLogInfo(@"MailListViewController tableView is nil.");
+        return;
+    }
     
-    DDAssert(self.tableView,@"tableView must be set.");
-    
-//    @synchronized (self.tableView) {
-        
-        DDLogInfo(@"Reload mail list.");
-        [self.tableView reloadData];  // in UITableViewDataSource
-        
-//    } // end synchronized
-    
-    // If there are deleted mails ...
-    if (self.deletes.count > 0) {
+    @synchronized (self.tableView) {
         
         dispatch_async(dispatch_get_main_queue(),^{
-            [self removeConversationList:[self.deletes allObjects]];
+        
+            DDLogInfo(@"Reload mail list Table View.");
+            [self.tableView reloadData];  // in UITableViewDataSource
+        
+            // If there are deleted mails ...
+            if (self.deletes.count > 0) {
+                [self removeConversationList:[self.deletes allObjects]];
+            }
+            
+            DDLogInfo(@"tableView visible cells = %@",@(self.tableView.visibleCells.count));
         });
-    }
+
+    } // end synchronized
 }
 
 
@@ -1498,9 +1481,6 @@
     NSInteger sectionCount = (NSInteger)[self.convByDay dayCount];
     
     DDLogInfo(@"Section count = %@",@(sectionCount));
-    if ( sectionCount == 0 ) {
-        DDLogWarn(@"ZERO sections in Mail List.");
-    }
     
     return sectionCount;    //MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
 }
@@ -1999,6 +1979,7 @@
     }
 }
 
+// Refetch conversations from the database, and update the table view
 - (void)reFetch:(BOOL)forceRefresh
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
@@ -2049,8 +2030,13 @@
             return;
         }
         
-        [self _reloadTableViewOnMainThread];
+        [self _reloadTableView];
     }];
+}
+
+-(void) reloadTableView
+{
+    [self _reloadTableView];
 }
 
 #pragma mark - EmptyDataSet
