@@ -148,7 +148,7 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
             [newSharedServices addObject:sharedService];
         }
         
-        sharedServices = [[NSArray alloc]initWithArray:newSharedServices];
+        sharedServices = [NSArray arrayWithArray:newSharedServices];
         
         return sharedServices;
         
