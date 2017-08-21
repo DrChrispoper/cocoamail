@@ -80,7 +80,9 @@
         
         sharedInstance.accounts = accounts;
         
+        // If we've loaded any accounts from from memory ...
         if ([AppSettings numActiveAccounts] > 0) {
+            // update the account mail from the database
             [sharedInstance _loadMailFromDatabase];
         }
         
@@ -127,6 +129,8 @@
 //
 -(void) _loadMailFromDatabase
 {
+    DDLogInfo(@"*** ENTRY POINT ***");
+
     DDLogInfo(@"START PART 1 - Load All Mail for Current Account from Database.");
 
     // If this is NOT the All Mails user account ..
@@ -248,6 +252,8 @@
         
         [[[SearchRunner getSingleton] deleteEmailsInAccountNum:account.user.accountNum]
          subscribeNext:^(Mail* email) {
+             DDLogInfo(@"subscribeNext received for deleteEmailsInAccountNum");
+
              DDLogVerbose(@"[SearchRunner deleteEmailsInAccountNum:%@] - subscribeNext:(for mail %@",
                           @(account.user.accountNum),email.subject);
          }
