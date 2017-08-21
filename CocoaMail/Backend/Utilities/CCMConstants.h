@@ -40,6 +40,16 @@ static CCMFolderType CCMFolderTypeAll       = { FolderTypeAll, 0 };
 static CCMFolderType CCMFolderTypeDeleted   = { FolderTypeDeleted, 0 };
 static CCMFolderType CCMFolderTypeSpam      = { FolderTypeSpam, 0 };
 
+
+static const NSUInteger kImportantFolderTypeMaxIndex = FolderTypeSpam;
+static const NSUInteger kImportantFolderTypeCount = kImportantFolderTypeMaxIndex + 1;
+static const NSUInteger kAllFolderTypeCount = FolderTypeUser + 1;
+
+static inline BOOL CCMFolderTypeTypeIsValid(BaseFolderType type)
+{
+    return ( type >= 0 && type <= kImportantFolderTypeMaxIndex );
+}
+
 static inline CCMFolderType FolderTypeWith(BaseFolderType t, NSInteger idx)
 {
     CCMFolderType type;
@@ -57,16 +67,6 @@ static inline CCMFolderType inboxFolderType()
 static inline CCMFolderType allFolderType()
 {
     return FolderTypeWith(FolderTypeAll, 0);
-}
-
-static const NSUInteger ImportantFolderTypeCount = FolderTypeSpam + 1;
-static const NSUInteger AllFolderTypeCount = FolderTypeUser + 1;
-
-static inline BOOL CCMFolderTypeTypeIsValid(BaseFolderType type)
-{
-    NSInteger maxIndex = AllFolderTypeCount - 1;
-    
-    return ( type >= 0 && type <= maxIndex );
 }
 
 static inline NSUInteger encodeFolderTypeWith(CCMFolderType t)
