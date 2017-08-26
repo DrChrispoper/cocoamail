@@ -38,7 +38,8 @@
         
         DDAssert(dayIndex < dayCount, @"Day Index %@ must be less than Day Count %@",@(dayIndex),@(dayCount));
         
-        NSDictionary *convsForDay = self.conversationsPerDay[dayIndex];
+        // conversationsPerDay is mutable, and we are returning a non mutable, so return a copy in case original is modifed
+        NSDictionary *convsForDay = [self.conversationsPerDay[dayIndex] copy];
         
         DDAssert(convsForDay, @"Conversations for Day must exist for Day Index %@",@(dayIndex));
     

@@ -324,7 +324,8 @@ static SyncManager * singleton = nil;
 {
     NSMutableDictionary* folderStates = [self _folderStatesForAccountNumber:accountNum folderNumber:folderNum];
 
-    return folderStates;        // NB: this could be nil
+    // Returning a non mutable dictionary, so return a copy so it doesn't change
+    return [folderStates copy];        // NB: this could be nil
 }
 
 // MARK: - SETTERS

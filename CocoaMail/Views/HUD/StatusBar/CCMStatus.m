@@ -140,7 +140,7 @@
             }];
         }
         else {
-            NSDictionary* statusDic = [self->_messageQueue lastObject];
+            NSDictionary* statusDic = [[self->_messageQueue lastObject] copy];
             [self->_messageQueue removeLastObject];
             
             [UIView animateWithDuration:0.1 animations:^{
