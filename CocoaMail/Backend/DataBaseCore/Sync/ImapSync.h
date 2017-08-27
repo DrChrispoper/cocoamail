@@ -37,6 +37,10 @@
 +(NSArray<ImapSync*>*) allSharedServices:(MCOIMAPSession*)update;
 +(RACSignal*) doLogin:(UserSettings*)user;
 
+// TODO: These are probably better off elsewhere
++(BOOL)isRunningInForeground;
++(BOOL)isRunningInBackground;
+
 +(NSString *)displayNameForFolder:(MCOIMAPFolder *)folder usingSession:(MCOIMAPSession*)imapSession;
 
 -(void)addFolder:(MCOIMAPFolder *)folder withName:(NSString*)folderName toAccount:(NSUInteger)accountNum;

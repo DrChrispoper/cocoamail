@@ -348,7 +348,11 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         dispatch_sync (queue, block);
 }
 
--(BOOL)_isRunningInBackground
++(BOOL)isRunningInForeground
+{
+    return ([ImapSync isRunningInBackground] == FALSE);
+}
++(BOOL)isRunningInBackground
 {
     __block UIApplicationState appState;
     
@@ -363,10 +367,6 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     DDLogVerbose(@"\tApp isInBackground = %@",(isInBackground==TRUE?@"TRUE":@"FALSE") );
     
     return isInBackground;
-}
--(BOOL)_isRunningInForeground
-{
-    return ([self _isRunningInBackground] == FALSE);
 }
 +(BOOL) _isNetworkAvailable
 {
@@ -1250,7 +1250,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
             
             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAllSyncedError userInfo:nil]];
         }
-        else if ([self _isRunningInBackground] && currentFolder != [self.user inboxFolderNumber]) {
+        else if ([ImapSync isRunningInBackground] && currentFolder != [self.user inboxFolderNumber]) {
             
             DDLogInfo(@"Running in Background && folder is not Inbox folder. We are completed.");
 
@@ -1270,16 +1270,18 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 {
     DDLogDebug(@"IMAP Server=\"%@\"",self.user.imapHostname);
     
+    DDLogInfo(@"CALLING doLogin:\"%@\"", self.user.imapHostname );
+
     [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
         DDLogError(@"Login attempt failed. Send ERROR CCMConnectionError to subscriber");
         [subscriber sendError:error];
     } completed:^{
-        DDLogDebug(@"Login attempt Completed.");
+        DDLogInfo(@"COMPLETED doLogin:\"%@\"", self.user.imapHostname );
         
         if (!self.connected) {
             DDLogDebug(@"NOT Connected.");
             
-            if ( [self _isRunningInBackground] ) {
+            if ( [ImapSync isRunningInBackground] ) {
                 DDLogDebug(@"NOT CONNECTED in BACKGROUND, so send COMPLETED to subscriber");
                 
                 [subscriber sendCompleted];
@@ -1639,7 +1641,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         
         int batchsize = 50;
         
-        if ( [self _isRunningInForeground] ) {
+        if ( [ImapSync isRunningInForeground] ) {
             
             DDLogInfo(@"IMAP server \"%@\" folder \"%@\", save msg count (%@) to FolderStates.",
                       self.user.imapHostname, folderPath, @(msgCount) );
@@ -1690,7 +1692,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         
         NSInteger from = msgCount;
         
-        if ( !isFromStart && [self _isRunningInForeground] && lastEnded != 0) {
+        if ( !isFromStart && [ImapSync isRunningInForeground] && lastEnded != 0) {
             from = lastEnded-1;
         }
         
@@ -1803,7 +1805,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                 }
                 
                 if ([email.msgID isEqualToString:lastMsgID]) {
-                    if (!isFromStart && [self _isRunningInForeground]) {
+                    if (!isFromStart && [ImapSync isRunningInForeground]) {
                         [self _writeFolderStateLastEnded:from andFolder:currentFolder];
                     }
                 }
@@ -1860,7 +1862,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     BOOL isCached = [self _cacheOrSaveEmail:email toFolder:currentFolder];
     
     if ((currentFolder == [Accounts sharedInstance].currentAccount.currentFolderIdx) | getAll) {
-        if ( [self _isRunningInBackground] ) {
+        if ( [ImapSync isRunningInBackground] ) {
             if (isCached) {
                 [subscriber sendNext:email];
             }
@@ -1874,7 +1876,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     if ([email.msgID isEqualToString:lastMsgID]) {
         
         // If isFromStart==NO adn we are running in the foreground ...
-        if ( !isFromStart && [self _isRunningInForeground] ) {
+        if ( !isFromStart && [ImapSync isRunningInForeground] ) {
             // Save the FolderState's Last Ended value to the Sync Manager and its backup file
             [self _writeFolderStateLastEnded:from andFolder:currentFolder];
         }
@@ -1887,7 +1889,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 -(BOOL) _cacheOrSaveEmail:(Mail*)email toFolder:(NSInteger)currentFolder
 {
     //Cache email if in Background
-    if ( [self _isRunningInBackground] ) {
+    if ( [ImapSync isRunningInBackground] ) {
         
         DDLogVerbose(@"Running in the Background, so Cache Email.");
         return [self _cacheEmail:currentFolder email:email];    // return YES if email cached
