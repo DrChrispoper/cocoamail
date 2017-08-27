@@ -120,7 +120,7 @@ static ViewController * s_self;
     CocoaButton* cb = [CocoaButton sharedButton];
     // calculate the location of the CocoaButton
     cb.center = CGPointMake(self.view.frame.size.width - 30, self.view.frame.size.height - 30);
-    DDLogInfo(@"CocoaButton.center = CGPoint(x=%@,y=%@)",@(cb.center.x),@(cb.center.y));
+    DDLogDebug(@"CocoaButton.center = CGPoint(x=%@,y=%@)",@(cb.center.x),@(cb.center.y));
     [self.view addSubview:cb];
     cb.datasource = self;
     self.cocoaButton = cb;

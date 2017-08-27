@@ -416,7 +416,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 +(RACSignal*) doLogin:(UserSettings*)user
 {
-    DDLogInfo(@"Try to log in to \"%@\"",user.imapHostname);
+    DDLogDebug(@"Try to log in to \"%@\"",user.imapHostname);
     
     if (!user || user.isDeleted) {
         
@@ -445,13 +445,12 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     }
     
     // CURIOUS: Are these always equal?
-    if ( user != sharedService.user ) {
-        DDLogInfo(@"Andy is CURIOUS: \"user\" != \"sharedService.user\"");
-    }
+    DDLogInfo(@"Andy is CURIOUS: \"user\" %@ \"sharedService.user\"",(user == sharedService.user?@"DOES":@"DOES NOT"));
 
+    
     if (![ImapSync _isNetworkAvailable]) {
         
-        DDLogError(@"+[ImapSync _isNetworkAvailable] returned NO");
+        DDLogError(@"Network is not available, send CCMConnectionError to subscriber.");
         
         return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
             sharedService.connected = NO;
@@ -464,31 +463,29 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     
     if ( sharedService.signal ) {
         
-        DDLogDebug(@"Returning (existing) Shared IMAP Sync Service Signal");
+        DDLogInfo(@"Returning (existing) Shared IMAP Sync Service Signal");
         
         return sharedService.signal;
     }
     
-    DDLogDebug(@"CREATE NEW Shared IMAP Sync Service Signal.");
+    DDLogInfo(@"CREATE NEW Shared IMAP Sync Service Signal.");
     
     sharedService.signal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler]
                       block:^(id<RACSubscriber> subscriber)
     {
         if (sharedService.connected) {
-            DDLogDebug(@"Shared IMAP Sync Service is Connected");
+            DDLogInfo(@"Shared IMAP Sync Service: is Connected");
             [subscriber sendCompleted];
             return;
         }
 
-        DDLogDebug(@"Shared IMAP Sync Service is NOT Connected");
-
         if ([sharedService.user isUsingOAuth]) {
-            DDLogDebug(@"Attempting to log in with OAuth.");
+            DDLogInfo(@"Shared IMAP Sync Service: Attempt log in with OAuth.");
 
             [self _loginWithOAuth:sharedService forUser:user withSubscriber:subscriber];
         }
         else { //Not using OAuth
-            DDLogDebug(@"Attempting to log in with Password.");
+            DDLogDebug(@"Shared IMAP Sync Service: Attempt log in with Password.");
 
             [self _loginWithPassword:sharedService forUser:user withSubscriber:subscriber];
         }
@@ -1210,6 +1207,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     if (folder == -1) {
         DDLogDebug(@"folderIndex = -1, so getting next folder to sync.");
         folder = [self _nextFolderToSync];
+        DDLogInfo(@"[self _nextFolderToSync] returned folder number %@",@(folder));
     }
     DDLogDebug(@"folderIndex = %@",@(folder));
     
@@ -2203,6 +2201,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 // nee runUpToDateTest
 
+// TODO: Why not do "Added" messages at the same time?
 
 -(void) updateLocalMailFromImapServerInConversations:(NSArray<Conversation*>*)conversationsInFolder ofFolder:(NSInteger)folderIdx completed:(void (^)(NSArray<NSString*>* days))completedBlock
 {
@@ -2255,6 +2254,8 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     
     DDLogInfo(@"Local Mail Folder \"%@\" (%@) has %@ messages and %@ indecies.", path, @(folderIdx), @(allMailMessagesInLocalFolder.count), @(indeciesOfAllMailMessagesInLocalFolder.count));
  
+    DDLogInfo(@"CALLING doLogin:\"%@\"", self.user.imapHostname );
+
     // Login to the folder's IMAP server
     [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
         
@@ -2264,20 +2265,19 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                 break;
                 
             default:
-                DDLogError(@"doLogin of user %@ failed with error= %@",self.user.name,error);
+                DDLogError(@"doLogin of user %@ failed with error= %@",self.user.imapHostname,error);
                 break;
         }
         completedBlock(nil);
         
      } completed:^{
+         DDLogInfo(@"COMPLETED doLogin:\"%@\"SUCCESSFULLY)", self.user.imapHostname );
          
          if (!self.connected){
              DDLogWarn(@"doLogin succeeded, but not connected, returning.");
              completedBlock(nil);
              return;
          }
-         
-         DDLogInfo(@"Login of \"%@\" successful.",self.user.name);
          
          DDAssert(self.s_queue, @"s_queue must be set");
          
