@@ -807,7 +807,7 @@ static NSDateFormatter * s_df_hour = nil;
 
 +(void) tableCheck:(FMDatabase*)db
 {
-    DDLogInfo(@"ENTERED]");
+    DDLogVerbose(@"ENTERED]");
     
     if (![db executeUpdate:@"CREATE TABLE IF NOT EXISTS email "
           "(pk INTEGER PRIMARY KEY,"
@@ -1100,40 +1100,53 @@ static NSDateFormatter * s_df_hour = nil;
 
 -(void) toggleFav
 {
-    if (!(self.flag & MCOMessageFlagFlagged)) {
-        [UidEntry addFlag:MCOMessageFlagFlagged to:[self getFirstUIDE]];
-        self.flag |= MCOMessageFlagFlagged;
+    UidEntry* firstUidEntry = [self getFirstUIDE];
+    
+    if ( firstUidEntry ) {
+        
+        if (!(self.flag & MCOMessageFlagFlagged)) {
+            [UidEntry addFlag:MCOMessageFlagFlagged to:firstUidEntry];
+            self.flag |= MCOMessageFlagFlagged;
+        }
+        else {
+            [UidEntry removeFlag:MCOMessageFlagFlagged to:firstUidEntry];
+            self.flag = self.flag & ~MCOMessageFlagFlagged;
+        }
+        
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
+                                                                               selector:@selector(updateFlag:)
+                                                                                 object:@[self]];
+        
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+        
+        [nextOpUp waitUntilFinished];
+        
+        _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];
     }
-    else {
-        [UidEntry removeFlag:MCOMessageFlagFlagged to:[self getFirstUIDE]];
-        self.flag = self.flag & ~MCOMessageFlagFlagged;
-    }
-    
-    NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
-    [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
-    
-    [nextOpUp waitUntilFinished];
-    
-    _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];
 }
 
 -(void) toggleRead
 {
-    if (!(self.flag & MCOMessageFlagSeen)) {
-        [UidEntry addFlag:MCOMessageFlagSeen to:[self getFirstUIDE]];
-        self.flag |= MCOMessageFlagSeen;
+    UidEntry* firstUidEntry = [self getFirstUIDE];
+    
+    if ( firstUidEntry ) {
+        
+        if (!(self.flag & MCOMessageFlagSeen)) {
+            [UidEntry addFlag:MCOMessageFlagSeen to:firstUidEntry];
+            self.flag |= MCOMessageFlagSeen;
+        }
+        else {
+            [UidEntry removeFlag:MCOMessageFlagSeen to:firstUidEntry];
+            self.flag = self.flag & ~MCOMessageFlagSeen;
+        }
+        
+        NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
+        [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
+        
+        [nextOpUp waitUntilFinished];
+        
+        _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];
     }
-    else {
-        [UidEntry removeFlag:MCOMessageFlagSeen to:[self getFirstUIDE]];
-        self.flag = self.flag & ~MCOMessageFlagSeen;
-    }
-    
-    NSInvocationOperation* nextOpUp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(updateFlag:) object:@[self]];
-    [[EmailProcessor getSingleton].operationQueue addOperation:nextOpUp];
-    
-    [nextOpUp waitUntilFinished];
-    
-    _uids = [UidEntry getUidEntriesWithMsgId:self.msgID];
 }
 
 +(void) clean:(NSString*)msgID dbNum:(NSInteger)dbNum
