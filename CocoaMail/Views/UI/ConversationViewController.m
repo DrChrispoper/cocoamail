@@ -104,14 +104,15 @@
     }
     // TODO put it elsewhere
     
-    NSInteger currFolderIdx = [[Accounts sharedInstance] currentAccount].currentFolderIdx;
+    Account *currentAccount = [[Accounts sharedInstance] currentAccount];
     
-    UserSettings *userSettings = [AppSettings userWithIndex:(NSUInteger)currFolderIdx];
-    if ( userSettings ) {
-        self.folder = [userSettings typeOfFolder:currFolderIdx];
+    DDAssert(currentAccount,@"Current Account must exist.");
+    
+    if ( currentAccount.user ) {
+        self.folder = [currentAccount.user typeOfFolder:currentAccount.currentFolderIdx];
     }
     else {
-        DDLogError(@"Unable to get CCMFolderType for folder index %@",@(currFolderIdx));
+        DDLogError(@"Unable to get CCMFolderType for folder index %@",@(currentAccount.currentFolderIdx));
         self.folder = FolderTypeWith(FolderTypeInbox, 0);   // Not sure what to do here?
     }
     
