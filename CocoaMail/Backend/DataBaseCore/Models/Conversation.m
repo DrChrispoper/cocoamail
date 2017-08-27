@@ -103,6 +103,7 @@ static NSDateFormatter * s_df_hour = nil;
 {
     for (Mail* tmpMail in self.mails) {
         if ([tmpMail isEqualToMail:mail]) {
+            // this mail already exists, so do not add it
             return;
         }
     }
