@@ -152,14 +152,14 @@
     if (isActiveAccountAll) {
         for (NSUInteger idx = 0; idx < [AppSettings numActiveAccounts]; idx++) {
             Account* a = [[Accounts sharedInstance] account:idx];
-            NSMutableArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
+            NSArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
             [alls addObjectsFromArray:ci];
             
         }
     }
     else {
         Account* a = [[Accounts sharedInstance] currentAccount];
-        NSMutableArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
+        NSArray<ConversationIndex*>* ci = [a getConversationsForFolder:CCMFolderTypeAll];
         [alls addObjectsFromArray:ci];
     }
     
