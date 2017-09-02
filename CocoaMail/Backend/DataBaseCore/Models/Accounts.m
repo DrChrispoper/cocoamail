@@ -83,7 +83,13 @@
         // If we've loaded any accounts from from memory ...
         if ([AppSettings numActiveAccounts] > 0) {
             // update the account mail from the database
-            [sharedInstance _loadMailFromDatabase];
+            Account *currAccount = [sharedInstance account:sharedInstance.currentAccountIdx];
+            if ( currAccount ) {
+                [sharedInstance _loadMailFromDatabaseForAccount:currAccount];
+            }
+            else {
+                DDLogWarn(@"No Account found for account index %@",@(sharedInstance.currentAccountIdx));
+            }
         }
         
         DDLogVerbose(@"Accounts Singleton Initialized. Account count = %ld",(unsigned long)[accounts count]);
@@ -125,35 +131,35 @@
     return ac;
 }
 
-// Called only when the Accounts shared instance is initialized, if there are > 0 accounts
+// Called only when the Accounts shared instance is initialized, and there are > 0 accounts
 //
--(void) _loadMailFromDatabase
+-(void) _loadMailFromDatabaseForAccount:(Account*)account
 {
     DDLogInfo(@"*** ENTRY POINT ***");
 
-    DDLogInfo(@"START PART 1 - Load All Mail for Current Account from Database.");
+    DDLogInfo(@"START PART 1 - If Current Account is ALL Account, then load All Mail from Database.");
 
     // If this is NOT the All Mails user account ..
-    if (!self.currentAccount.user.isAll) {
-
-        DDLogDebug(@"User Account is not the All Mails one.");
+    if ( !account.user.isAll ) {
         
-        id<MailListDelegate> delegate = self.currentAccount.mailListDelegate;  // strong hold
+        DDLogInfo(@"Not the All Mail Account.");
+        
+        id<MailListDelegate> delegate = account.mailListDelegate;  // strong hold
         
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             
             //NSInteger refBatch = 5;
             //NSInteger __block batch = refBatch;
-            [self.currentAccount.mailListDelegate localSearchDone:NO];
+            [account.mailListDelegate localSearchDone:NO];
             
-            DDLogInfo(@"Search DB for Mail Messages in current account.");
-
             // Search for all email belonging to this account in the DB
             //
-            [[[SearchRunner getSingleton] activeFolderSearch:nil
-                                                inAccountNum:self.currentAccount.user.accountNum]
+            DDLogInfo(@"CALLING activeFolderSearch:nil inAccountNum:%@ (\"%@\") ", @(account.user.accountNum), account.user.imapHostname );
+
+            [[[SearchRunner getSingleton] activeFolderSearch:nil inAccountNum:account.user.accountNum]
+             
              subscribeNext:^(Mail* email) {
-                 DDLogInfo(@"subscribeNext received for activeFolderSearch");
+                 DDLogDebug(@"subscribeNext received for activeFolderSearch");
 //                 DDLogDebug(@"SearchRunner next email \"%@\"",email.subject);
                  
                  // Add the mail message to the account's Conversation book keeeping.
@@ -164,32 +170,46 @@
                  //}
              } // end SearchRunner subscribeNext block
              completed:^{
-                 DDLogDebug(@"SearchRunner returned \"completed\", so alerting currentAccount's mailListDelegate that the localSearchDone:YES and reFetch:YES");
+                DDLogInfo(@"COMPLETED activeFolderSearch:nil inAccountNum:%@ (\"%@\") ", @(account.user.accountNum), account.user.imapHostname );
+
                  [delegate localSearchDone:YES];
                  
                  [delegate reFetch:YES];  // This will cause the Mail List tableView to redraw
                  
              }]; // end SearchRunner completed block
         }]; // end mainQueue block
-    } // end All Mail
+    } // end Not All Mail Account
+    else { // this IS the All Mail Account
+        DDLogInfo(@"PART 1 - Do Nothing (because All Mail Account)");
+    }
     
-    DDLogInfo(@"START PART 2 - Load \"All Mail\" Account from Database.");
+    DDLogInfo(@"START PART 2 - Load All Mails from Database.");
 
+    NSUInteger __block _mailCount = 0;
+    
     [self.localFetchQueue addOperationWithBlock:^{
         
+        DDLogInfo(@"QUEUEING allEmailsDBSearch");
+        
+        // Load ALL email messages from the database, setting up its in memory structures (e.g. conversations)
+        
         [[[SearchRunner getSingleton] allEmailsDBSearch]
+         
          subscribeNext:^(Mail* email) {
-             DDLogInfo(@"subscribeNext received for allEmailsDBSearch");
+             _mailCount++;
              [self _addMail:email];
          }
          completed:^{
-            DDLogInfo(@"Completed loading email from DB, calling updateCurrentFolderMailInDatabaseFromImapServer on account.");
+             DDLogInfo(@"COMPLETED allEmailsDBSearch");
+
+             DDLogInfo(@"PART 2 - Loaded %@ mail messages from database; will refresh table view and Update deleted and changed from IMAP server.",@(_mailCount));
+             _mailCount = 0;
              
-             [self.currentAccount.mailListDelegate reloadTableView];
+             [account.mailListDelegate reloadTableView];
              
              [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                  
-                 if (self.currentAccount.user.isAll) {
+                 if (account.user.isAll) {
                      // update all accounts
                      for (Account *acnt in self.accounts) {
                          [acnt updateCurrentFolderMailInDatabaseFromImapServer];
@@ -198,7 +218,8 @@
                  else {
                      // not the all account
                      
-                     [self.currentAccount updateCurrentFolderMailInDatabaseFromImapServer];
+                     // UPDATE current folder mail from IMAP server: remove deleted, update updated (e.g. flagged)
+                     [account updateCurrentFolderMailInDatabaseFromImapServer];
                  }
              }];
          }];
@@ -227,7 +248,7 @@
     }
     else {
         // Add email message to user account
-        [email.user.linkedAccount insertRows:email];
+        [email.user.linkedAccount insertIntoConversation:email];
     }
 }
 
@@ -250,6 +271,8 @@
         
         [[SearchRunner getSingleton] cancel];
         
+        DDLogInfo(@"CALLING deleteEmailsInAccountNum:%@ (\"%@\")", @(account.user.accountNum), account.user.imapHostname );
+
         [[[SearchRunner getSingleton] deleteEmailsInAccountNum:account.user.accountNum]
          subscribeNext:^(Mail* email) {
              DDLogInfo(@"subscribeNext received for deleteEmailsInAccountNum");
@@ -258,9 +281,10 @@
                           @(account.user.accountNum),email.subject);
          }
          completed:^{
-             
+             DDLogInfo(@"COMPLETED deleteEmailsInAccountNum:%@ (\"%@\")", @(account.user.accountNum), account.user.imapHostname );
+
              NSMutableArray* tmp = [self.accounts mutableCopy];
-             NSInteger removeIdx = [tmp indexOfObject:account];
+             NSUInteger removeIdx = [tmp indexOfObject:account];
              
              if (removeIdx != NSNotFound) {
                  [ImapSync deletedAndWait:account.user];
@@ -273,7 +297,7 @@
                  if ([AppSettings defaultAccountIndex] == account.idx) {
                      for (UserSettings* user in [AppSettings getSingleton].users) {
                          if (!user.isDeleted) {
-                             [AppSettings setDefaultAccountNum:user.accountNum];
+                             [AppSettings setDefaultAccountNum:(NSUInteger)user.accountNum];
                              break;
                          }
                      }
