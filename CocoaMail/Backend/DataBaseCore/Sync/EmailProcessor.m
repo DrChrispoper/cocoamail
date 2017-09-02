@@ -222,11 +222,11 @@ BOOL transactionOpen = NO; // caused effect (with firstOne): After we start up, 
     
     [self _switchDBForMail:mail];
     
-    [Mail insertMail:mail];
+    [Mail insertIntoMailDatabase:mail];
     
     if ([mail.user.name isEqualToString:@""]) {
-        UidEntry* u = [mail uidEntryInFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
-        if (u) {
+        UidEntry* uidEntry = [mail uidEntryInFolder:[mail.user numFolderWithFolder:CCMFolderTypeSent]];
+        if (uidEntry) {
             if (![mail.sender.displayName isEqualToString:@""] || ![mail.sender.displayName isEqualToString:mail.sender.mailbox]) {
                 DDLogInfo(@"New display name:%@",mail.sender.displayName);
                 mail.user.name = mail.sender.displayName;
