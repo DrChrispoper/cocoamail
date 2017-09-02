@@ -313,22 +313,22 @@ static NSArray<ImapSync*>* sharedServices = nil;        // Obj-C now allows Clas
 
 -(void) saveCachedData
 {
-    //NSMutableArray* ops = [[NSMutableArray alloc] initWithCapacity:self.cachedData.count];
-    /*EmailProcessor* ep = [EmailProcessor getSingleton];
-     
-     NSURL* someURL = [[NSURL alloc] initFileURLWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:@"cache"]];
-     [[[NSArray alloc]init] writeToURL:someURL atomically:YES];
-     
-     if (self.cachedData) {
-     for (Mail* mail in self.cachedData) {
-     DDLogInfo(@"Saving Cached Email: %@", mail.subject);
-     
-     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:mail];
-     //[ops addObject:nextOp];
-     }
-     }
-     
-     [ep.operationQueue addOperations:ops waitUntilFinished:YES];*/
+//    NSMutableArray* ops = [[NSMutableArray alloc] initWithCapacity:self.cachedData.count];
+//    /*EmailProcessor* ep = [EmailProcessor getSingleton];
+//     
+//     NSURL* someURL = [[NSURL alloc] initFileURLWithPath:[StringUtil filePathInDocumentsDirectoryForFileName:@"cache"]];
+//     [[[NSArray alloc]init] writeToURL:someURL atomically:YES];
+//     
+//     if (self.cachedData) {
+//     for (Mail* mail in self.cachedData) {
+//     DDLogInfo(@"Saving Cached Email: %@", mail.subject);
+//     
+//     NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:ep selector:@selector(addEmailWrapper:) object:mail];
+//     [ops addObject:nextOp];
+//     }
+//     }
+//     
+//     [ep.operationQueue addOperations:ops waitUntilFinished:YES];*/
     
     self.cachedData = nil;
     
@@ -1065,9 +1065,12 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 -(void) _saveSearchedEmail:(MCOIMAPMessage*)msg inFolder:(NSInteger)currentFolder withSubscriber:(id<RACSubscriber>)subscriber lastMsgID:(NSString*)lastMsgID
 {
+
     NSString* folderPath = [[SyncManager getSingleton] retrieveFolderPathFromFolderState:currentFolder accountNum:self.user.accountNum];
     
     Mail* email = [Mail mailWithMCOIMAPMessage:msg inFolder:currentFolder andAccount:self.user.accountNum];
+    
+    DDLogInfo(@"ENTERED: (v1) Cache mail:%@ in Folder:%@",email.sender.displayName,@(currentFolder));
     
     if ([UidEntry hasUidEntrywithMsgId:email.msgID inAccount:self.user.accountNum]) {
         
@@ -1121,6 +1124,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                 
                 DDLogDebug(@"START IMAP Session HTML Body Rendering Operation");
                 
+                // Save email body and attachments
                 NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:email];
                 
                 [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
@@ -1190,7 +1194,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 }
 
 
-// MARK: - IMAP Sync Services: Update all folders and mail from the IMAP Server
+// MARK: - IMAP Sync Services: Update all folders and mail from the IMAP Server (nee runFolder)
 
 // "folder" is a Folder Index, or -1
 // (nee runFolder)
@@ -1268,13 +1272,11 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 {
     DDLogDebug(@"IMAP Server=\"%@\"",self.user.imapHostname);
     
-    DDLogInfo(@"CALLING doLogin:\"%@\"", self.user.imapHostname );
-
     [[ImapSync doLogin:self.user] subscribeError:^(NSError *error) {
         DDLogError(@"Login attempt failed. Send ERROR CCMConnectionError to subscriber");
         [subscriber sendError:error];
     } completed:^{
-        DDLogInfo(@"COMPLETED doLogin:\"%@\"", self.user.imapHostname );
+        DDLogDebug(@"COMPLETED doLogin:\"%@\"", self.user.imapHostname );
         
         if (!self.connected) {
             DDLogDebug(@"NOT Connected.");
@@ -1291,7 +1293,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
             }
         }
         else { // we are connected
-            DDLogInfo(@"Login to IMAP server \"%@\" successful.",self.user.imapHostname);
+            DDLogInfo(@"Login to IMAP server \"%@\" successful, retrieve IMAP folders.",self.user.imapHostname);
             
             [self _getImapFolders:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll];
         }
@@ -1313,6 +1315,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
         DDLogDebug(@"BEGIN Fetch All IMAP Folders Operation");
         
         [fio start:^(NSError* error, NSArray<MCOIMAPFolder*>* imapFolders) {
+            
             if (error) {
                 DDLogError(@"Fetch All IMAP Folders Failed, error = %@.",error.description);
                 
@@ -1322,16 +1325,19 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
                 
                 return;
             }
-            else if (!imapFolders || imapFolders.count == 0) {
+            
+            if (!imapFolders || imapFolders.count == 0) {
                 
-                DDLogDebug(@"Fetch All IMAP Folders Success, but NO Folders.");
+                DDLogInfo(@"Fetch All IMAP Folders Success, but NO Folders.");
                 [subscriber sendCompleted];
                 
                 return;
             }
+            
             DDLogInfo(@"IMAP server \"%@\" has %@ folders.",self.user.imapHostname,@(imapFolders.count));
             
             [self _processFoldersAndGetImapMessages:subscriber currentFolder:currentFolder isFromStart:isFromStart getAll:getAll imapFolders:imapFolders];
+            
         }];//Fetch All Folders
     });
 }
@@ -1886,6 +1892,8 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 -(BOOL) _cacheOrSaveEmail:(Mail*)email toFolder:(NSInteger)currentFolder
 {
+    DDLogInfo(@"ENTERED: (v2) Cache mail: \"%@\" in Folder %@",email.sender.displayName,@(currentFolder));
+
     //Cache email if in Background
     if ( [ImapSync isRunningInBackground] ) {
         
@@ -1896,6 +1904,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     // Save the email
     DDLogVerbose(@"NOT Running in the background, so save mail in database.");
     
+    // Save email body and attachments
     NSInvocationOperation* nextOp
     = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton]
                                            selector:@selector(addEmailWrapper:)
@@ -1911,7 +1920,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 - (BOOL)_cacheEmail:(NSInteger)currentFolder email:(Mail *)email
 {
-    DDLogVerbose(@"Cache mail:%@ in Folder:%@",email.sender.displayName,@(currentFolder));
+    DDLogInfo(@"ENTERED: (v3) Cache mail:%@ in Folder:%@",email.sender.displayName,@(currentFolder));
     
     BOOL emailCached = NO;  // for return
     
@@ -1935,7 +1944,7 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
             [eIds addObject:newE.msgID];
             [AppSettings getSingleton].cache = [eIds allObjects];
             
-            // Save email message to the database
+            // Save email body and attachments to the database
             NSInvocationOperation* nextOp = [[NSInvocationOperation alloc] initWithTarget:[EmailProcessor getSingleton] selector:@selector(addEmailWrapper:) object:email];
             [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
             [[EmailProcessor getSingleton].operationQueue waitUntilAllOperationsAreFinished];
