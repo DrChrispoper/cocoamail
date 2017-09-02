@@ -844,7 +844,7 @@ static NSDateFormatter * s_df_hour = nil;
     [db executeUpdate:@"DELETE FROM search_email WHERE msg_id NOT IN (SELECT msg_id FROM email)"];
 }
 
-+(NSInteger) insertMail:(Mail*)email
++(NSInteger) insertIntoMailDatabase:(Mail*)email
 {
     DDLogInfo(@"Mail from: \"%@\" subj: \"%@\"",email.sender.displayName,email.subject);
     
@@ -880,7 +880,7 @@ static NSDateFormatter * s_df_hour = nil;
         }
     }];
     
-    return (int)success;
+    return (NSInteger)success;
 }
 
 +(void) updateMail:(Mail*)email;

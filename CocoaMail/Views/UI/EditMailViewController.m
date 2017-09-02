@@ -366,7 +366,7 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
          [[EmailProcessor getSingleton].operationQueue addOperation:nextOp];
          }*/
         
-        //[self.selectedAccount insertRows:self.mail];
+        //[self.selectedAccount insertIntoConversation:self.mail];
         
         [self.draft saveToDraftsFolder];
     }

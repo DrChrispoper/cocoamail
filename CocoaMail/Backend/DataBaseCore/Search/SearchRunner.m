@@ -461,6 +461,7 @@ static SearchRunner * searchSingleton = nil;
     }];
 }
 
+// Load ALL email messages from the database, setting up its in memory structures (e.g. conversations)
 -(RACSignal*) allEmailsDBSearch     // Nee allEmailsSearch
 {
     DDLogInfo(@"*** ENTRY POINT ***");

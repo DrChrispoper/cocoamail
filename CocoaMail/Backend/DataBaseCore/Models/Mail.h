@@ -95,7 +95,7 @@ static NSString* kQueryDelete = @"DELETE FROM email WHERE email.msg_id = ?";
 +(Mail*) newMailFromDatabaseResult:(FMResultSet*)result;
 
 +(void) clean:(NSString*)msgID dbNum:(NSInteger)dbNum;
-+(NSInteger) insertMail:(Mail*)mail;
++(NSInteger) insertIntoMailDatabase:(Mail*)mail;
 +(void) updateMail:(Mail*)mail;
 +(BOOL) removeMail:(NSString*)msgIdDel;
 
