@@ -19,7 +19,7 @@
 #import "DateUtil.h"
 #import "SyncManager.h"
 #import "SearchRunner.h"
-//#import "ImapSync.h"
+#import "ImapSync.h"            // to access isRunningInBackground
 #import "UserFolderViewController.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
 #import "CCMStatus.h"
@@ -466,7 +466,7 @@
     
     [self serverSearchDone:YES];
 
-    [self reFetch:YES];  // was commented out; AJC uncommented it
+//    [self reFetch:YES];  // was commented out; AJC uncommented it / and commented out again
 }
 
 -(void) viewDidAppear:(BOOL)animated
@@ -482,6 +482,8 @@
     if (self.showOnlyThisPerson) {
         [[Accounts sharedInstance].currentAccount doPersonSearch:self.showOnlyThisPerson];
     }
+    
+    [self _reloadTableView];
 }
 
 -(void) viewWillDisappear:(BOOL)animated
@@ -535,7 +537,7 @@
     
     account.mailListDelegate = self;
     
-    NSMutableArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
+    NSArray<ConversationIndex*>* conversationsForFolder = [account getConversationsForFolder:folder];
     
     DDLogDebug(@"\t\tAccount Folder has %@ Conversations",@(conversationsForFolder.count));
     
@@ -544,12 +546,14 @@
 
 -(void) removeConversationList:(NSArray<ConversationIndex*>*)convs
 {
-    DDLogInfo(@"ENTERED");
+    DDLogDebug(@"ENTERED");
     
     if (convs) {
         [self _removeConversation:convs];
     }
-    [self _reloadTableView];
+    else {
+        DDLogWarn(@"called with ZERO conversations.");
+    }
 }
 
 -(void) _removeConversation:(NSArray<ConversationIndex*>*)convs
@@ -661,7 +665,7 @@
     DDAssert(days,@"Days array must exist.");
     
     if (days.count == 0){
-        DDLogDebug(@"Zero days in array, nothing to do.");
+        DDLogInfo(@"Zero days in array, nothing to do.");
         return;
     }
     
@@ -731,8 +735,6 @@
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
         DDLogDebug(@"Conversation Index date = \"%@\"",ciToInsert.date.description);
-        
-        [self.tableView beginUpdates];
         
         if (self.viewIsClosing) {
             DDLogDebug(@"View is closing, so return");
@@ -898,10 +900,7 @@
 
             //}
         }
-        
-        [self.tableView endUpdates];
     }];
-    
 }
 
 -(void)_insertTableSection:(NSUInteger)section
@@ -910,14 +909,11 @@
         
         UITableView *localTable = self.tableView;
         
-        DDLogDebug(@"Insert Section = %@",@(section));
-        
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:section];
         
         [localTable beginUpdates];
-        
+        DDLogInfo(@"INSERTING SECTION INTO TABLE");
         [localTable insertSections:indexSet withRowAnimation:UITableViewRowAnimationFade];
-        
         [localTable endUpdates];
         
     } // end synchronized
@@ -927,16 +923,13 @@
     @synchronized (self.tableView) {
         
         UITableView *localTable = self.tableView;
-
-        DDLogDebug(@"Insert Row %@ in Section %@",@(row),@(section));
-
-        [localTable beginUpdates];
         
         NSArray<NSIndexPath*> *indexPaths = @[ [NSIndexPath indexPathForRow:(NSInteger)row
                                                                   inSection:(NSInteger)section] ];
         
+        [localTable beginUpdates];
+        DDLogInfo(@"INSERTING %@ ROWS INTO TABLE",@(indexPaths.count));
         [localTable insertRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationFade];
-        
         [localTable endUpdates];
         
     } // end synchronized
@@ -1181,7 +1174,7 @@
 
 -(void) _commonRemoveConvs:(NSMutableArray<NSIndexPath*>*)conversationIndexPaths
 {
-    DDLogInfo(@"ENTERED");
+    DDLogInfo(@"ENTERED, Number of conversationIndexPaths to remove = %@ (section count = %@)",@(conversationIndexPaths.count),@([self _sectionCount]));
 
     NSMutableIndexSet* conversationSectionIndeciesToDelete = [[NSMutableIndexSet alloc] init];
     
@@ -1243,36 +1236,42 @@
         
         UITableView *localTable = self.tableView;
         
-        [localTable beginUpdates];
+//        NSInteger sectionCount = [self.tableView numberOfSections];
+//        DDLogInfo(@"table has %@ sections.",@(sectionCount));
+////        IBGLog(@"table has %@ sections.",@(sectionCount));
+//        for ( NSInteger idx = 0; idx < sectionCount; idx++) {
+//            NSInteger rowCount = [self.tableView numberOfRowsInSection:idx];
+//            DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+////            IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+//        }
         
-        NSInteger sectionCount = [self.tableView numberOfSections];
-        DDLogInfo(@"table has %@ sections.",@(sectionCount));
-//        IBGLog(@"table has %@ sections.",@(sectionCount));
-        for ( NSInteger idx = 0; idx < sectionCount; idx++) {
-            NSInteger rowCount = [self.tableView numberOfRowsInSection:idx];
-            DDLogInfo(@"Section %@ has %@ rows.",@(idx),@(rowCount));
-//            IBGLog(@"Section %@ has %@ rows.",@(idx),@(rowCount));
+        
+        if ( conversationRowIndeciesToDelete.count > 0 ) {
+            DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+            //        IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
+            [localTable beginUpdates];
+            [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
+            [localTable endUpdates];
         }
-        
-        
-        DDLogInfo(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
-//        IBGLog(@"Delete Rows (conversations): %@",conversationRowIndeciesToDelete.description);
-        [localTable deleteRowsAtIndexPaths:conversationRowIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
-        
+
         NSUInteger conversationSectionsToDeleteCount = conversationSectionIndeciesToDelete.count;
         if ( conversationSectionsToDeleteCount > 0) {
             
             DDLogInfo(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
 //            IBGLog(@"Delete Sections (days): %@",@(conversationSectionsToDeleteCount));
             
+            [localTable beginUpdates];
             [localTable deleteSections:conversationSectionIndeciesToDelete withRowAnimation:UITableViewRowAnimationFade];
+            [localTable endUpdates];
         }
         
-        [localTable endUpdates];
         
         //[localTable reloadEmptyDataSet];
         
     } // end synchronized
+    
+    DDLogInfo(@"EXITING (section count = %@)",@([self _sectionCount]));
+
 }
 
 -(void) leftActionDoneForCell:(ConversationTableViewCell*)cell
@@ -1454,16 +1453,21 @@
         DDLogInfo(@"MailListViewController tableView is nil.");
         return;
     }
-    
+        
     @synchronized (self.tableView) {
         
         dispatch_async(dispatch_get_main_queue(),^{
         
-            DDLogInfo(@"Reload mail list Table View.");
-            [self.tableView reloadData];  // in UITableViewDataSource
+            if ( [ImapSync isRunningInForeground] ) {
+                DDLogInfo(@"Reload mail list Table View.");
+                [self.tableView reloadData];  // in UITableView
+            }
+            else {
+                DDLogInfo(@"Running in background, do not reload table view.");
+            }
         
             // If there are deleted mails ...
-            if (self.deletes.count > 0) {
+            if (self.deletes.count > 0) {   // TODO: Why is this code in this method?
                 [self removeConversationList:[self.deletes allObjects]];
             }
             
@@ -1478,6 +1482,11 @@
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView*)tableView
 {
+    return [self _sectionCount];    //MIN([self.convByDay dayCount], (pageCount * self.pageIndex)+1-self.deletedSections);
+}
+
+-(NSInteger) _sectionCount
+{
     NSInteger sectionCount = (NSInteger)[self.convByDay dayCount];
     
     DDLogInfo(@"Section count = %@",@(sectionCount));
@@ -1489,7 +1498,7 @@
 {
     NSInteger conversationCountOnDay = (NSInteger)[self.convByDay conversationCountOnDay:(NSUInteger)section];
     
-    DDLogInfo(@"Section %@ has %@ rows.",@(section),@(conversationCountOnDay));
+    DDLogDebug(@"Section %@ has %@ rows.",@(section),@(conversationCountOnDay));
     if ( conversationCountOnDay == 0 ) {
         DDLogWarn(@"ZERO conversations in section %@",@(section));
     }
@@ -1504,7 +1513,7 @@
     NSUInteger dayIndex = (NSUInteger)indexPath.section;
     NSUInteger conIndex = (NSUInteger)indexPath.row;
     
-    DDLogInfo(@"indexPath.section(eg. dayIndex)=%@, indexPath.row(eg conIndex)=%@",@(dayIndex),@(conIndex));
+    DDLogDebug(@"indexPath.section(eg. dayIndex)=%@, indexPath.row(eg conIndex)=%@",@(dayIndex),@(conIndex));
     
 //    NSMutableArray<ConversationIndex*>* convs = [self.convByDay conversationsForDay:indexPath.section];
 //    ConversationIndex* conversationIndex = convs[indexPath.row];
@@ -1984,7 +1993,7 @@
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         
-        DDLogInfo(@"forceRefresh = %@]",(forceRefresh?@"TRUE":@"FALSE"));
+        DDLogInfo(@"forceRefresh = %@",(forceRefresh?@"TRUE":@"FALSE"));
         
 //        NSInteger mailCountBefore = [self.conversationsPerAccount conversationsInAllAccounts];
         
@@ -2002,7 +2011,7 @@
             
             Account* currAcnt = [[Accounts sharedInstance] currentAccount];
             
-            NSMutableArray<ConversationIndex*>* convForFolder = [currAcnt getConversationsForFolder:self.folder];
+            NSArray<ConversationIndex*>* convForFolder = [currAcnt getConversationsForFolder:self.folder];
             
             [self insertConversations:convForFolder];
         }
