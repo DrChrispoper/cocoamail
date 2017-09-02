@@ -55,7 +55,7 @@
 -(NSInteger) unreadInInbox;
 -(NSInteger) outBoxNb;
 
--(void) insertRows:(Mail*)email;
+-(void) insertIntoConversation:(Mail*)email;
 -(NSUInteger) addConversation:(Conversation*)conv;
 -(NSMutableArray<ConversationIndex*>*) getConversationsForFolder:(CCMFolderType)type;
 -(Conversation*) getConversationForIndex:(NSUInteger)index;
@@ -63,7 +63,7 @@
 -(BOOL) moveConversation:(Conversation*)conversation from:(CCMFolderType)folderFrom to:(CCMFolderType)folderTo updateUI:(BOOL)updateUI;
 -(void) star:(BOOL)add conversation:(Conversation*)conversation;
 
--(NSMutableArray<Conversation*>*) conversations;
+-(NSArray<Conversation*>*) conversations;
 
 -(void) sendDraft:(Draft*)draft to:(NSArray *)toPersonIDs;
 -(void) deleteDraft:(Draft*)draft;
