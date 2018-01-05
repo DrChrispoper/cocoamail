@@ -401,27 +401,45 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
 
 -(BOOL) _openURL:(NSURL *)url
 {
-    if ([[DBSession sharedSession] handleOpenURL:url]) {
-        NSDictionary* statusText = @{@"cloudServiceName":@"Dropbox"};
-        [[NSNotificationCenter defaultCenter]
-         postNotificationName:@"AuthNotification"
-         object:nil
-         userInfo:statusText];
-        
+    DDLogInfo(@"Open URL = \"%@\"",url.path);
+    
+    // Google Oauth2 Authorization WorkFlow
+    
+    // Sends the URL to the current authorization flow (if any) which will
+    // process it if it relates to an authorization response.
+    if ([_currentAuthorizationFlow resumeAuthorizationFlowWithURL:url]) {
+        _currentAuthorizationFlow = nil;
         return YES;
     }
     
+    // Dropbox Session
+//    if ([[DBSession sharedSession] handleOpenURL:url]) {
+//        NSDictionary* statusText = @{@"cloudServiceName":@"Dropbox"};
+//        [[NSNotificationCenter defaultCenter]
+//         postNotificationName:@"AuthNotification"
+//         object:nil
+//         userInfo:statusText];
+//
+//        return YES;
+//    }
+    
+    //
+    // 2017-10-11 What is the code block below doing?
+    //
     NSFileManager *filemgr = [NSFileManager defaultManager];
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     NSString* inboxPath = [documentsDirectory stringByAppendingPathComponent:@"Inbox"];
-    NSArray *dirFiles = [filemgr contentsOfDirectoryAtPath:inboxPath error:nil];
+    NSArray *filesInInboxFolder = [filemgr contentsOfDirectoryAtPath:inboxPath error:nil];
     
-    if (dirFiles.count > 0) {
+    if (filesInInboxFolder.count > 0) {
+        
+        // Create a draft message (to which all attachments will be attached?)
         Draft* draft = [Draft newDraftFormCurrentAccount];
-        
-        
-        for (NSString* fileName in dirFiles) {
+    
+
+        // Create an Attachment for each file in the Inbox Folder
+        for (NSString* fileName in filesInInboxFolder) {
             Attachment* attach = [[Attachment alloc]init];
             attach.fileName = fileName;
             attach.msgID = draft.msgID;
@@ -432,25 +450,18 @@ NSString *const CCMDeleteTriggerIdentifier = @"com.cocoamail.delete";
                 attach.data = [filemgr contentsAtPath:localPath];
                 attach.size = [attach.data length];
             }
-            
-            /*if (mail.attachments == nil) {
-             mail.attachments = @[attach];
-             }
-             else {
-             NSMutableArray* ma = [mail.attachments mutableCopy];
-             [ma addObject:attach];
-             mail.attachments = ma;
-             }*/
         }
         
-        for (NSString* fileName in dirFiles) {
+        // Delete all files in the Inbox Folder
+        for (NSString* fileName in filesInInboxFolder) {
             NSString* localPath = [inboxPath stringByAppendingPathComponent:fileName];
             [filemgr removeItemAtPath:localPath error:nil];
         }
-        
-        
+    
+        // Send the EDITMAIL notification with the draft message that includes all the now deleted inbox file daya
         [[NSNotificationCenter defaultCenter] postNotificationName:kPRESENT_EDITMAIL_NOTIFICATION object:nil userInfo:@{kPRESENT_MAIL_KEY:draft}];
     }
+    
     // Add whatever other url handling code your app requires here
     return NO;
     

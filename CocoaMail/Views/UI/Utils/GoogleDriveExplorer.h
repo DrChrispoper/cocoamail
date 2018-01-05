@@ -6,8 +6,9 @@
 //  Copyright (c) 2015 CocoaSoft. All rights reserved.
 //
 
-#import "GTLDrive.h"
-#import "GTMOAuth2ViewControllerTouch.h"
+#import "GTLRDrive.h"
+//#import "GTMOAuth2ViewControllerTouch.h"
+
 
 typedef enum kGDFileConflictError : NSInteger {
     kGDriveFileNewerError = 1,
@@ -25,7 +26,7 @@ typedef enum kGDFileConflictError : NSInteger {
 
 //@property (weak, nonatomic) IBOutlet UIBarButtonItem* refreshButton;
 
-@property (nonatomic, strong) GTLServiceDrive* service;
+@property (nonatomic) GTLRDriveService* service;
 @property (retain) NSMutableArray* driveFiles;
 @property BOOL isAuthorized;
 
@@ -65,10 +66,10 @@ typedef enum kGDFileConflictError : NSInteger {
 -(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didFailToDownloadFile:(NSString*)fileName;
 
 /// Sent to the delegate if the selected file already exists locally
--(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error;
+-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLRDrive_File*)gdriveFile withError:(NSError*)error;
 
 /// Sent to the delegate when the user selects a file. Implementing this method will require you to download or manage the selection on your own. Otherwise, automatically downloads file if not implemented.
--(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didSelectFile:(GTLDriveFile*)file;
+-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didSelectFile:(GTLRDrive_File*)file;
 
 /// Sent to the delegate if the share link is successfully loaded
 -(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didLoadShareLink:(NSString*)link;

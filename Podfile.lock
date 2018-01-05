@@ -1,4 +1,5 @@
 PODS:
+  - AppAuth (0.9.1)
   - box-ios-browse-sdk (1.0.4):
     - box-ios-sdk
     - MBProgressHUD (~> 0.9.1)
@@ -8,43 +9,30 @@ PODS:
   - box-ios-sdk/logger (1.0.14)
   - box-ios-sdk/no-arc (1.0.14):
     - box-ios-sdk/logger
-  - CocoaLumberjack (3.2.1):
-    - CocoaLumberjack/Default (= 3.2.1)
-    - CocoaLumberjack/Extensions (= 3.2.1)
-  - CocoaLumberjack/Default (3.2.1)
-  - CocoaLumberjack/Extensions (3.2.1):
+  - CocoaLumberjack (3.3.0):
+    - CocoaLumberjack/Default (= 3.3.0)
+    - CocoaLumberjack/Extensions (= 3.3.0)
+  - CocoaLumberjack/Default (3.3.0)
+  - CocoaLumberjack/Extensions (3.3.0):
     - CocoaLumberjack/Default
   - DZNEmptyDataSet (1.8.1)
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
-  - GoogleAnalytics (3.17.0)
-  - GoogleAPIClient/Core (1.0.5):
+  - GoogleAPIClientForREST/Core (1.3.1):
+    - GTMSessionFetcher (>= 1.1.7)
+  - GoogleAPIClientForREST/Drive (1.3.1):
+    - GoogleAPIClientForREST/Core
+    - GTMSessionFetcher (>= 1.1.7)
+  - GTMAppAuth (0.6.1):
+    - AppAuth (~> 0.9.0)
     - GTMSessionFetcher (~> 1.1)
-  - GoogleAPIClient/Drive (1.0.5):
-    - GoogleAPIClient/Core
-    - GTMSessionFetcher (~> 1.1)
-  - GoogleSignIn (4.0.2):
-    - GoogleToolboxForMac/NSDictionary+URLArguments (~> 2.1)
-    - GoogleToolboxForMac/NSString+URLArguments (~> 2.1)
-    - GTMOAuth2 (~> 1.0)
-    - GTMSessionFetcher/Core (~> 1.1)
-  - GoogleToolboxForMac/DebugUtils (2.1.1):
-    - GoogleToolboxForMac/Defines (= 2.1.1)
-  - GoogleToolboxForMac/Defines (2.1.1)
-  - GoogleToolboxForMac/NSDictionary+URLArguments (2.1.1):
-    - GoogleToolboxForMac/DebugUtils (= 2.1.1)
-    - GoogleToolboxForMac/Defines (= 2.1.1)
-    - GoogleToolboxForMac/NSString+URLArguments (= 2.1.1)
-  - GoogleToolboxForMac/NSString+URLArguments (2.1.1)
-  - GTMOAuth2 (1.1.4):
-    - GTMSessionFetcher (~> 1.1)
-  - GTMSessionFetcher (1.1.11):
-    - GTMSessionFetcher/Full (= 1.1.11)
-  - GTMSessionFetcher/Core (1.1.11)
-  - GTMSessionFetcher/Full (1.1.11):
-    - GTMSessionFetcher/Core (= 1.1.11)
-  - Instabug (7.3.6)
+  - GTMSessionFetcher (1.1.12):
+    - GTMSessionFetcher/Full (= 1.1.12)
+  - GTMSessionFetcher/Core (1.1.12)
+  - GTMSessionFetcher/Full (1.1.12):
+    - GTMSessionFetcher/Core (= 1.1.12)
+  - Instabug (7.3.9)
   - Instabug-CocoaLumberjack (1.0.2):
     - CocoaLumberjack
     - Instabug (>= 6.2)
@@ -98,10 +86,8 @@ DEPENDENCIES:
   - CocoaLumberjack
   - DZNEmptyDataSet
   - FMDB (~> 2.6.0)
-  - GoogleAnalytics
-  - GoogleAPIClient/Drive (~> 1.0)
-  - GoogleSignIn
-  - GTMOAuth2 (~> 1.1.0)
+  - GoogleAPIClientForREST/Drive
+  - GTMAppAuth
   - Instabug
   - Instabug-CocoaLumberjack
   - libextobjc (~> 0.4)
@@ -109,24 +95,22 @@ DEPENDENCIES:
   - ReactiveCocoa (~> 2.3)
 
 SPEC CHECKSUMS:
+  AppAuth: f7d9a2ce4ffe79a62a8b0c1d0938e88d9809b846
   box-ios-browse-sdk: ed7cee4ad46bf27eb360f0407362836741dca650
   box-ios-sdk: 8034a7b0fcac562105725afa744011c81da99398
-  CocoaLumberjack: 2800c03334042fe80589423c8d80e582dcaec482
+  CocoaLumberjack: 3c8c74683302f9012bb168e1c4b7ae3c0b558431
   DZNEmptyDataSet: 9525833b9e68ac21c30253e1d3d7076cc828eaa7
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
-  GoogleAnalytics: f42cc53a87a51fe94334821868d9c8481ff47a7b
-  GoogleAPIClient: 77df755d41d70ee5a99b7b752614fbb439f19438
-  GoogleSignIn: d7ad83f13480e1f30453471d00d19b5293ac46af
-  GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
-  GTMOAuth2: 7fc9c10f5c745f4d9850419ea88889fe3baa6b7d
-  GTMSessionFetcher: 5ad62e8200fa00ed011fe5e08d27fef72c5b1429
-  Instabug: 5ede8c13b5cee8ae36043829f5dfbcf0fad8d72d
+  GoogleAPIClientForREST: d18c6704317d6d5c56d70f724f8990eb125359a4
+  GTMAppAuth: ae710e1e53431e2bcdd57f9f92daa16a58a2947d
+  GTMSessionFetcher: ebaa1f79a5366922c1735f1566901f50beba23b7
+  Instabug: 927096f3267f38bdc79a2ecdceac68ab293b5bd0
   Instabug-CocoaLumberjack: 569556b9d3891147021fa8dbaa7fbfbf8c9d3e98
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: 1569cf7ace17a8bac47aabfbb8580a49690386d1
   Reachability: dd9aa4fb6667b9f787690a74f53cb7634ce99893
   ReactiveCocoa: e2db045570aa97c695e7aa97c2bcab222ae51f4a
 
-PODFILE CHECKSUM: 48855c2ee4acff5f617c32e1d9d14d0a60d8589c
+PODFILE CHECKSUM: d1e9a017518c526ad1d90d7b3a8201ba421f2c41
 
 COCOAPODS: 1.2.0

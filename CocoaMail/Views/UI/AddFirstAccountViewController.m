@@ -11,8 +11,8 @@
 #import "EditCocoaButtonView.h"
 #import <MailCore/MailCore.h>
 //#import <Google/SignIn.h>
-#import "GTMOAuth2Authentication.h"
-#import "GTMOAuth2ViewControllerTouch.h"
+//#import "GTMOAuth2Authentication.h"
+//#import "GTMOAuth2ViewControllerTouch.h"
 #import "UserSettings.h"
 #import "SyncManager.h"
 #import "AppSettings.h"
@@ -22,6 +22,8 @@
 #import "CocoaMail-Swift.h"
 #import "OnePasswordExtension.h"
 #import "LoginTableViewCell.h"
+#import "CCMConstants.h"
+#import "AppDelegate.h"
 
 // 20160731_1356 AJCerier
 // Error: "'init' is unavailable"
@@ -50,6 +52,10 @@
 
 @property (nonatomic, weak) UIButton* googleBtn;
 @property (nonatomic, weak) UIView* Ok;
+
+
+// For Google App Authorization
+@property(nonatomic, nullable) GTMAppAuthFetcherAuthorization *authorization;
 
 
 @end
@@ -244,70 +250,89 @@
     [self _hideKeyboard];
 }
 
+// Do Google OAuth2
+
+// Called when user touches the Google Button
+
 - (void) _startOAuth2:(UIButton*)sender
 {
-    SEL selectorFinish = @selector(viewController:finishedWithAuth:error:);
-    SEL selectorButtonCancel = @selector(buttonCancelTapped:);
+    // Present the Google Authorization interface
+    OIDServiceConfiguration *configuration =
+    [GTMAppAuthFetcherAuthorization configurationForGoogle];
     
-    UINavigationController *navController = [[UINavigationController alloc] init];
+    // builds authentication request
+    OIDAuthorizationRequest *request =
+    [[OIDAuthorizationRequest alloc] initWithConfiguration:configuration
+                                                  clientId:kNewClientID
+                                              clientSecret:kClientSecret
+                                                    scopes:@[OIDScopeOpenID,OIDScopeEmail]
+                                               redirectURL:[NSURL URLWithString:kRedirectUrl]
+                                              responseType:OIDResponseTypeCode
+                                      additionalParameters:nil];
     
-    UINavigationBar *navigationBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 63)];
-    UINavigationItem *navigationItem = [[UINavigationItem alloc] initWithTitle:@"Gmail"];
-    UIBarButtonItem *barButtonItemCancel = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:selectorButtonCancel];
+    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+
+    // performs authentication request
+    appDelegate.currentAuthorizationFlow =
+    [OIDAuthState authStateByPresentingAuthorizationRequest:request
+                                                   presentingViewController:[ViewController mainVC]
+                                                   callback:^(OIDAuthState *_Nullable authState,
+                                                              NSError *_Nullable error) {
+                                                       if (authState) {
+                                                           // Creates the GTMAppAuthFetcherAuthorization from the OIDAuthState.
+                                                           GTMAppAuthFetcherAuthorization *authorization =
+                                                           [[GTMAppAuthFetcherAuthorization alloc] initWithAuthState:authState];
+                                                           
+                                                           self.authorization = authorization;
+                                                           DDLogInfo(@"Got authorization tokens. Access token: %@",
+                                                                 authState.lastTokenResponse.accessToken);
+                                                       } else {
+                                                           DDLogError(@"Authorization error: %@", [error localizedDescription]);
+                                                           [self showAlert:@"Authentication Error" message:error.localizedDescription];
+                                                           self.authorization = nil;
+                                                       }
+                                                   }];
     
-    [navigationItem setRightBarButtonItem:barButtonItemCancel];
-    [navigationBar setTranslucent:NO];
-    [navigationBar setItems:[NSArray arrayWithObjects: navigationItem,nil]];
-    
-    [navController.view addSubview:navigationBar];
-    
-    NSInteger accountNum = 1;
-    
-    for (UserSettings* user in [AppSettings getSingleton].users) {
-        if (user.isAll) {
-            continue;
-        }
-        
-        accountNum++;
-    }
-    
-    GTMOAuth2ViewControllerTouch *authViewController = [GTMOAuth2ViewControllerTouch controllerWithScope:@"https://mail.google.com/"
-                                                                                                clientID:CLIENT_ID
-                                                                                            clientSecret:CLIENT_SECRET
-                                                                                        keychainItemName:[NSString stringWithFormat:@"%@%ld", TKN_KEYCHAIN_NAME,(long)accountNum]
-                                                                                                delegate:self
-                                                                                        finishedSelector:selectorFinish];
-    [navController addChildViewController:authViewController];
-    
-    [[ViewController mainVC] presentViewController:navController animated:YES completion:nil];
+}
+
+// Helper for showing an alert
+-(void) showAlert:(NSString*)title message:(NSString*)message
+{
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)buttonCancelTapped:(UIBarButtonItem *)sender {
     [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
+    
+    
 }
 
-- (void)viewController:(GTMOAuth2ViewControllerTouch *)viewController finishedWithAuth:(GTMOAuth2Authentication *)authResult error:(NSError *)error {
-    [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
-    
-    if (error != nil) {
-        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
-    }
-    else {
-        [self loadWithAuth:authResult];
-    }
-}
+//- (void)viewController:(GTMOAuth2ViewControllerTouch *)viewController finishedWithAuth:(GTMOAuth2Authentication *)authResult error:(NSError *)error {
+//    [[ViewController mainVC] dismissViewControllerAnimated:YES completion:^(void){}];
+//
+//    if (error != nil) {
+//
+//        // TODO: Check for [error code] == kGTMOAuthErrorWindowClosed  ?
+//        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
+//    }
+//    else {
+//        [self loadWithAuth:authResult];
+//    }
+//}
 
 // 20160824_1055 AJCerier
 // Error: "Use of undeclared identifier 'GTMHTTPFetcher'"
 // Resolution: Changed GTMHTTPFetcher to GTMSessionFetcher.
-- (void)auth:(GTMOAuth2Authentication *)authResult finishedRefreshWithFetcher:(GTMSessionFetcher *)fetcher error:(NSError *)error {
-    if (error != nil) {
-        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
-    }
-    else {
-        [self loadWithAuth:authResult];
-    }
-}
+//- (void)auth:(GTMOAuth2Authentication *)authResult finishedRefreshWithFetcher:(GTMSessionFetcher *)fetcher error:(NSError *)error {
+//    if (error != nil) {
+//        [ViewController presentAlertOk:NSLocalizedString(@"add-account-view.error.try-again",@"There was an issue connecting. Please try to login again.")];
+//    }
+//    else {
+//        [self loadWithAuth:authResult];
+//    }
+//}
 
 -(void) _hideKeyboard
 {
@@ -401,12 +426,14 @@
     return [regex matchesInString:text options:NSMatchingReportProgress range:NSMakeRange(0, text.length)].count;
 }
 
--(void) loadWithAuth:(GTMOAuth2Authentication *)auth
+-(void) loadWithAuth:(GTMAppAuthFetcherAuthorization *)auth
 {
     self.email.text = [auth userEmail];
     self.password.text = @"";
     
-    [self loadAccountWithUsername:[auth userEmail] password:nil oauth2Token:[auth accessToken]];
+    NSString *oAuth2Token = self.authorization.authState.lastTokenResponse.accessToken;
+
+    [self loadAccountWithUsername:[auth userEmail] password:nil oauth2Token:oAuth2Token];
 }
 
 - (void)loadAccountWithUsername:(NSString *)username
@@ -706,6 +733,10 @@
     UserSettings *user = [self _createUserSettings];
     
     Account *account = [self _addFirstAccount:user];
+    
+    DDAssert(self.authorization,@"GTMAppAuthFetcherAuthorization must be set");
+    account.authorization = self.authorization;  // store the Google App Authorization into the Account
+
     
     //Folder Settings
     

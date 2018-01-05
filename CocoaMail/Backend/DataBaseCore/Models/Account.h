@@ -12,6 +12,7 @@
 #import "MailListViewController.h"
 #import "Conversation.h"
 #import "CCMConstants.h"
+#import <GTMAppAuth/GTMAppAuth.h>
 
 //@class Conversation;
 //@class Mail;
@@ -24,6 +25,9 @@
 -(NSInteger) idx;               // Account index
 -(UserSettings*) user;
 -(void) setNewUser:(UserSettings*)user;
+
+// For Google App Authorization
+@property(nonatomic, nullable) GTMAppAuthFetcherAuthorization *authorization;
 
 @property (nonatomic, strong) NSArray* userFolders; // Array of {folder name, name contains "/"}
 -(NSUInteger)userFolderCount;

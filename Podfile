@@ -1,4 +1,5 @@
 source 'https://github.com/CocoaPods/Specs.git'
+project '../clean-cocoamail/CocoaMail.xcodeproj'
 platform :ios, ‘10.0’
 
 # ignore all warnings from all pods
@@ -11,10 +12,8 @@ target 'CocoaMail' do
 	pod 'FMDB', '~> 2.6.0'
 	pod 'Reachability', '~> 3.1.1'
 	pod 'libextobjc', '~> 0.4'
-  pod 'GoogleSignIn'
-  pod 'GoogleAnalytics'
-	pod 'GoogleAPIClient/Drive', '~> 1.0'
-	pod 'GTMOAuth2', '~> 1.1.0'
+	pod 'GoogleAPIClientForREST/Drive'
+	pod 'GTMAppAuth'
 	pod 'box-ios-browse-sdk', '1.0.4'
 	pod 'DZNEmptyDataSet'
 	

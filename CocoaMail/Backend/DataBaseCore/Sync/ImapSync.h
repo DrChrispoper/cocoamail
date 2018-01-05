@@ -20,11 +20,13 @@
 #define CCMDeletedError         9004
 #define CCMFolderPathError      9005
 #define CCMSyncMgrError         9006
+#define CCMAppAuthError         9007
 
 
 @class RACSignal;
 @class UserSettings;
 @class Conversation;
+@class GTMAppAuthFetcherAuthorization;
 
 @interface ImapSync : NSObject <MCOHTMLRendererIMAPDelegate>
 
@@ -57,6 +59,9 @@
 -(void) cancel;
 +(void) getInboxUnreadCountForUser:(UserSettings*)user completed:(void (^)(void))completedBlock;
 //+(void) runUnreadCount:(UserSettings*)user folder:(CCMFolderType)folder completed:(void (^)(void))completedBlock;
+
+// Get Google OAuth info from the keychain
++(GTMAppAuthFetcherAuthorization*)getGoogleAuthFromKeychainForUser:(UserSettings*)user;
 
 
 //-(NSMutableSet*) emailIDs;

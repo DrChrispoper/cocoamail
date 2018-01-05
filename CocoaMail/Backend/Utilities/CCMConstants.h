@@ -9,6 +9,16 @@
 #ifndef CCMConstants_h
 #define CCMConstants_h
 
+// For Google Authentication and Access
+//static NSString * const kClientID  = @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com";
+static NSString * const kNewClientID = @"489238945643-pcrdvgo8mea32775a1j6ietjkq0fb8fr.apps.googleusercontent.com";
+static NSString * const kClientSecret = @"AIzaSyAujlK4b0fM2FwhH1eI7HFqI_2f9U9By9w";
+static NSString * const kRedirectUrl = @"com.cocoasoft.cocoamail:/oauthredirect";
+
+// For Google Drive
+static NSString * const kKeychainItemName = @"CocoaMail: Google Drive";
+
+
 typedef NS_ENUM(NSUInteger, QuickSwipeType) {
     QuickSwipeArchive,
     QuickSwipeDelete,

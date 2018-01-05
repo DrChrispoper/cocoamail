@@ -10,6 +10,7 @@
 #import "ImapSync.h"
 #import "SyncManager.h"
 #import "AppSettings.h"
+#import "AppDelegate.h"
 #import "SearchRunner.h"
 #import "EmailProcessor.h"
 #import "UidEntry.h"
@@ -17,10 +18,10 @@
 #import "Attachments.h"
 #import "Reachability.h"
 #import <libextobjc/EXTScope.h>
-//#import <Google/SignIn.h>
-#import "GTMOAuth2Authentication.h"
-#import "GTMOAuth2ViewControllerTouch.h"
 #import "Mail.h"
+
+#import "GTMAppAuth.h"
+#import "GTMSessionFetcher.h"
 
 #import "ViewController.h"
 #import "StringUtil.h"
@@ -524,6 +525,58 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
 
 // MARK: Local methods for dologin:
 
++(GTMAppAuthFetcherAuthorization*)getGoogleAuthFromKeychainForUser:(UserSettings*)user
+{
+    // Try to load in the new keychain format
+    id<GTMFetcherAuthorizationProtocol> authFromKeychain =
+    [GTMAppAuthFetcherAuthorization authorizationFromKeychainForName:NEW_USR_TKN_KEYCHAIN_NAME];
+    
+    // If no data found in the new format, try to deserialize data from GTMOAuth2
+    if (!authFromKeychain) {
+        
+        // Tries to load the data serialized by GTMOAuth2 using old keychain name.
+        // If you created a new client id, be sure to use the *previous* client id and secret here.
+        authFromKeychain =
+        [GTMOAuth2KeychainCompatibility authForGoogleFromKeychainForName:OLD_USR_TKN_KEYCHAIN_NAME
+                                                                clientID:CLIENT_ID
+                                                            clientSecret:CLIENT_SECRET];
+        if (authFromKeychain) {
+            // Remove previously stored GTMOAuth2-formatted data.
+            [GTMOAuth2KeychainCompatibility removeAuthFromKeychainForName:OLD_USR_TKN_KEYCHAIN_NAME];
+            // Serialize to Keychain in GTMAppAuth format.
+            [GTMAppAuthFetcherAuthorization saveAuthorization:(GTMAppAuthFetcherAuthorization *)authFromKeychain
+                                            toKeychainForName:NEW_USR_TKN_KEYCHAIN_NAME];
+        }
+    }
+    return (GTMAppAuthFetcherAuthorization*)authFromKeychain;
+}
+
++(void) _showImapCheckOpError:(NSError*)error
+{
+    /*
+     * Display IMAP Check Error code debugging information
+     */
+    
+    switch ( error.code ) {
+        case MCOErrorConnection:
+            /** An error related to the connection occurred.*/
+            /** It could not connect or it's been disconnected.*/
+            DDLogWarn(@"IMAP Check Account Operation returned Error \"Could not Connect\"");
+            break;
+            
+        case MCOErrorAuthentication:
+            
+            // Use DDLogWarn so icon appears to pull attention
+            DDLogWarn(@"IMAP Check Account Operation returned Error \"Invalid OAuth Credentials\"");
+            break;
+            
+        default:
+            DDLogWarn(@"IMAP Check Account Operatation returned unknown error code %@, see \"MCOConstants.h\"",@(error.code));
+            break;
+    }
+    DDLogInfo(@"Will attempt Google OAuth reauthorization");
+}
+
 +(void) _loginWithOAuth:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
 {
     DDLogDebug(@"ENTERED");
@@ -538,128 +591,143 @@ static inline void dispatch_synchronized (dispatch_queue_t queue,
     DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
     dispatch_async(imapDispatchQueue, ^{
         
-        DDLogDebug(@"BLOCK START - DISPATCH_QUEUE_PRIORITY_DEFAULT");
-        
+        // imapCheckOp will try to login, using the OAuth2 access token if one has been set
         [sharedService.imapCheckOp start:^(NSError* error) {
-            if (error) {
+            
+            // If NO error doing the IMAP Check operation ...
+            if (error == nil) {
                 
-                if ( [error.domain  isEqual: MCOErrorDomain] ) {
-                    
-                    switch ( error.code ) {
-                        case MCOErrorConnection:
-                            /** An error related to the connection occurred.*/
-                            /** It could not connect or it's been disconnected.*/
-                            DDLogWarn(@"IMAP Check Account Operation returned Error \"Could not Connect\"");
-                            break;
-                            
-                        case MCOErrorAuthentication:
-                            
-                            // Use DDLogWarn so icon appears to pull attention
-                            DDLogWarn(@"IMAP Check Account Operation returned Error \"Invalid OAuth Credentials\"");
-                            break;
-                            
-                        default:
-                            DDLogWarn(@"IMAP Check Account Operatation returned unknown error code %@, see \"MCOConstants.h\"",@(error.code));
-                            break;
-                    }
-                    DDLogInfo(@"Will attempt Google OAuth reauthorization");
-
-                }
-                
-                GTMOAuth2Authentication * auth = [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
-                                                                                                       clientID:CLIENT_ID
-                                                                                                   clientSecret:CLIENT_SECRET];
-                
-                [auth setUserEmail:sharedService.user.username];
-                
-                if ( ![auth canAuthorize] ) {
-                    
-                    
-                    auth.clientID = CLIENT_ID;
-                    auth.clientSecret = CLIENT_SECRET;
-                    
-                    BOOL didAuth = [GTMOAuth2ViewControllerTouch authorizeFromKeychainForName:USR_TKN_KEYCHAIN_NAME
-                                                                               authentication:auth
-                                                                                        error:NULL];
-                    if (didAuth) {
-                        [GTMOAuth2ViewControllerTouch saveParamsToKeychainForName:USR_TKN_KEYCHAIN_NAME authentication:auth];
-                    }
-                    else {
-                        sharedService.connected = NO;
-                        [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                        
-                        DDLogWarn(@"Google OAuth reauthorization failed for user \"%@\"",[auth userEmail]);
-                    }
-                }
-                else {
-                    NSURL *tokenURL = auth.tokenURL;
-                    
-                    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:tokenURL];
-                    [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
-                    
-                    NSString *userAgent = [auth userAgent];
-                    [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
-                    
-                    [[NSOperationQueue mainQueue] addOperationWithBlock:^{  
-                        
-                        [auth authorizeRequest:request completionHandler:^(NSError *error) {
-                            
-                            if ([auth accessToken] && ![[auth accessToken] isEqualToString:@""]) {
-                                DDLogDebug(@"\tNew Token");
-                                
-                                DDLogDebug(@"\tRefresh Token:%@",[auth refreshToken]);
-                                
-                                [sharedService.user setOAuth:[auth accessToken]];
-                                sharedService.imapSession = [AppSettings imapSession:sharedService.user];
-                                sharedService.imapSession.dispatchQueue = sharedService.s_queue;
-                                
-                                dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
-                                DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
-                                dispatch_async(imapDispatchQueue, ^{
-                                    
-                                    DDLogDebug(@"\tLoggin Again with OAuth with token:%@", [sharedService.user oAuth]);
-                                    
-                                    sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
-                                    [sharedService.imapCheckOp start:^(NSError* error) {
-                                        if (!error) {
-                                            DDLogDebug(@"\tAccount:%ld check OK", (long)sharedService.user.accountNum);
-                                            sharedService.connected = YES;
-                                            [sharedService.user.linkedAccount setConnected];
-                                            [sharedService _checkForCachedActions];
-                                            [sharedService _getImapFolderNamesAndUpdateLocal];
-                                            
-                                            [subscriber sendCompleted];
-                                        }
-                                        else {
-                                            DDLogError(@"Error 2:%@ loading oauth account:%@", error, sharedService.user.username);
-                                            [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                                        }
-                                    }];
-                                });
-                            }
-                            else {
-                                DDLogError(@"Error 3:%@ loading oauth account:%@", error, sharedService.user.username);
-                                [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
-                            }
-                        }];
-                    }];
-                }
-            }
-            else {
                 DDLogDebug(@"Account:%ld check OK", (long)sharedService.user.accountNum);
                 sharedService.connected = YES;
                 [sharedService.user.linkedAccount setConnected];
                 [sharedService _checkForCachedActions];
                 [sharedService _getImapFolderNamesAndUpdateLocal];
                 
-                DDLogInfo(@"IMAP host \"%@\" OAuth login complete.",sharedService.user.imapHostname);
+                DDLogInfo(@"IMAP host \"%@\" OAuth login successful.",sharedService.user.imapHostname);
                 
                 [subscriber sendCompleted];
+            }
+            else { // the IMAP Check Operation returned an error
                 
+                if ( [error.domain isEqual:MCOErrorDomain] ) {
+                    [ImapSync _showImapCheckOpError:error];
+                }
+                
+                /*
+                 * Get any existing Auth info from the keychain.
+                 */
+                
+                // Get Authorization Info from the Keychain
+//                GTMAppAuthFetcherAuthorization* auth = [GTMOAuth2KeychainCompatibility authForGoogleFromKeychainForName:USR_TKN_KEYCHAIN_NAME
+//                                                                                                       clientID:CLIENT_ID
+//                                                                                                   clientSecret:CLIENT_SECRET];
+                
+                // Attempt to deserialize from Keychain in GTMAppAuth format.
+                GTMAppAuthFetcherAuthorization* authFromKeychain = [ImapSync getGoogleAuthFromKeychainForUser:user];
+                if ( authFromKeychain == nil ) {
+                    DDLogError(@"getGoogleAuthFromKeychainForUser Failed to return a GTMAppAuthFetcherAuthorization.\"");
+                    [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMAppAuthError userInfo:nil]];
+                }
+                
+                user.linkedAccount.authorization = authFromKeychain; // both point to same object
+                
+//                [auth setUserEmail:sharedService.user.username];
+
+                // See if we are NOT already authorized (e.g. don't have a token or have an error from trying to access the token)
+                if ( ![authFromKeychain canAuthorize] ) {
+
+                    OIDServiceConfiguration *configuration =
+                    [GTMAppAuthFetcherAuthorization configurationForGoogle];
+                    
+                    OIDAuthorizationRequest *authRequest =
+                    [[OIDAuthorizationRequest alloc] initWithConfiguration:configuration
+                                                                  clientId:kNewClientID
+                                                              clientSecret:kClientSecret
+                                                                    scopes:@[OIDScopeOpenID, OIDScopeProfile]
+                                                               redirectURL:[NSURL URLWithString:kRedirectUrl]
+                                                              responseType:OIDResponseTypeCode
+                                                      additionalParameters:nil];
+                    
+                    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+                    
+                    // performs authentication request, storing the auth flow in the app delegate so it can be processed
+                    // when it reutrns to the app
+                    appDelegate.currentAuthorizationFlow =
+                    [OIDAuthState authStateByPresentingAuthorizationRequest:authRequest
+                                                   presentingViewController:[ViewController mainVC]
+                                                                   callback:^(OIDAuthState *_Nullable authState,
+                                                                              NSError *_Nullable error) {
+                                                                       
+                                                                       if (authState) {
+                                                                           
+                                                                           [GTMAppAuthFetcherAuthorization
+                                                                            saveAuthorization:(GTMAppAuthFetcherAuthorization *)authFromKeychain
+                                                                                                           toKeychainForName:NEW_USR_TKN_KEYCHAIN_NAME];
+                                                                       } else {
+                                                                           // what goes here?
+                                                                           
+                                                                           // maybe one of these calls: ??
+                                                                           [subscriber sendCompleted];
+
+                                                                       }
+                                                                   }];
+                }
+                else { // We are authorized (e.g. We have a valid token)
+                    
+                    // This call will refresh if required
+                    [authFromKeychain.authState performActionWithFreshTokens:
+                     ^(NSString * _Nullable accessToken, NSString * _Nullable idToken, NSError * _Nullable error) {
+                         
+                         if ( error ) {
+                             // A token refresh failed
+                             DDLogError(@"Google OAuth Token Refresh Error = \"%@\"",error.localizedDescription);
+                         }
+                         else {
+                             // we have a valid token
+                             
+                             // If we received an access token, and it is not an em,pty string ..
+                             if ( accessToken && ![accessToken isEqualToString:@""] ) {
+                                 
+                                 DDLogDebug(@"\tNew Access Token");
+                                 
+                                 [sharedService.user setOAuth:accessToken];
+                                 sharedService.imapSession = [AppSettings imapSession:sharedService.user];
+                                 sharedService.imapSession.dispatchQueue = sharedService.s_queue;
+                                 
+                                 dispatch_queue_t imapDispatchQueue = [ImapSync sharedServices:user].s_queue;
+                                 DDAssert(imapDispatchQueue, @"IMAP Displatch Queue must exist!");
+                                 dispatch_async(imapDispatchQueue, ^{
+                                     
+                                     DDLogDebug(@"\tdo IMAP Check operation with OAuth2 token:\"%@\"", [sharedService.user oAuth]);
+                                     
+                                     sharedService.imapCheckOp = [sharedService.imapSession checkAccountOperation];
+                                     [sharedService.imapCheckOp start:^(NSError* error) {
+                                         if (!error) {
+                                             DDLogDebug(@"\tAccount:%ld check OK", (long)sharedService.user.accountNum);
+                                             sharedService.connected = YES;
+                                             [sharedService.user.linkedAccount setConnected];
+                                             [sharedService _checkForCachedActions];
+                                             [sharedService _getImapFolderNamesAndUpdateLocal];
+                                             
+                                             [subscriber sendCompleted];
+                                         }
+                                         else {
+                                             DDLogError(@"Error 2:%@ loading oauth account:%@", error, sharedService.user.username);
+                                             [subscriber sendError:[NSError errorWithDomain:CCMErrorDomain code:CCMConnectionError userInfo:nil]];
+                                         }
+                                     }];
+                                 });
+                             }
+                         }
+                    }];
+                }
             }
         }];
     });
 }
+
+            
+            
 
 +(void) _loginWithPassword:(ImapSync *)sharedService forUser:(UserSettings *)user withSubscriber:(id<RACSubscriber>) subscriber
 {

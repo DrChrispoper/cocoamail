@@ -10,10 +10,10 @@
 #import "Accounts.h"
 #import "AppSettings.h"
 #import "UserSettings.h"
-#import "GTLDrive.h"
+//#import "GTLDrive.h"
 #import <BoxBrowseSDK/BoxBrowseSDK.h>
 #import "DropboxBrowserViewController.h"
-#import "GoogleDriveExplorer.h"
+//#import "GoogleDriveExplorer.h"
 #import "ImapSync.h"
 #import "EmailProcessor.h"
 #import "MCOMessageView.h"
@@ -47,7 +47,7 @@ typedef enum : NSUInteger {
 @end
 
 @interface EditMailViewController () <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate, ExpendableBadgeDelegate,
-UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, GDriveExplorerDelegate,BOXFolderViewControllerDelegate, CCMAttachmentViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, MCOMessageViewDelegate>{
+UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDataSource, UITableViewDelegate,DropboxBrowserDelegate, /* GDriveExplorerDelegate, */ BOXFolderViewControllerDelegate, CCMAttachmentViewDelegate, QLPreviewControllerDataSource, QLPreviewControllerDelegate, MCOMessageViewDelegate>{
     NSArray* _activityItems;
 }
 
@@ -1706,35 +1706,35 @@ UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewData
 
 #pragma mark - GDRIVE
 
--(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
-{
-    if (isLocalFileOverwritten == YES) {
-        DDLogInfo(@"Downloaded %@ by overwriting local file", fileName);
-    }
-    else {
-        DDLogInfo(@"Downloaded %@ without overwriting", fileName);
-    }
-    
-    /*Attachment* attach = [[Attachment alloc]init];
-    attach.fileName = fileName;
-    
-    [attach loadLocalFile];
-    
-    if (self.mail.attachments == nil) {
-        self.mail.attachments = @[attach];
-    }
-    else {
-        NSMutableArray* ma = [self.mail.attachments mutableCopy];
-        [ma addObject:attach];
-        self.mail.attachments = ma;
-    }
-    [self _updateAttachView];*/
-}
-
--(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
-{
-    
-}
+//-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer didDownloadFile:(NSString*)fileName didOverwriteFile:(BOOL)isLocalFileOverwritten
+//{
+//    if (isLocalFileOverwritten == YES) {
+//        DDLogInfo(@"Downloaded %@ by overwriting local file", fileName);
+//    }
+//    else {
+//        DDLogInfo(@"Downloaded %@ without overwriting", fileName);
+//    }
+//    
+//    /*Attachment* attach = [[Attachment alloc]init];
+//    attach.fileName = fileName;
+//    
+//    [attach loadLocalFile];
+//    
+//    if (self.mail.attachments == nil) {
+//        self.mail.attachments = @[attach];
+//    }
+//    else {
+//        NSMutableArray* ma = [self.mail.attachments mutableCopy];
+//        [ma addObject:attach];
+//        self.mail.attachments = ma;
+//    }
+//    [self _updateAttachView];*/
+//}
+//
+//-(void) gdriveExplorer:(GoogleDriveExplorer*)explorer fileConflictWithLocalFile:(NSURL*)localFileURL withGDriveFile:(GTLDriveFile*)gdriveFile withError:(NSError*)error
+//{
+//    
+//}
 
 #pragma mark - Dropbox
 

@@ -409,7 +409,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.489238945643-srn36elrk3p1evrasetj40r53q7cbfhp</string>
+				<string>489238945643-pcrdvgo8mea32775a1j6ietjkq0fb8fr.apps.googleusercontent.com</string>
 			</array>
 		</dict>
 		<dict>
@@ -430,7 +430,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1763</string>
+	<string>1854</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>

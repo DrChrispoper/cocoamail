@@ -26,7 +26,7 @@
 		1403FF061E90063B0085E099 /* Account.m in Sources */ = {isa = PBXBuildFile; fileRef = 1403FF051E90063B0085E099 /* Account.m */; };
 		141339E01E21421A003F3B75 /* CCMConversationsByDay.m in Sources */ = {isa = PBXBuildFile; fileRef = 141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */; };
 		1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685AE81D6CCE4300A261AA /* libMailCore-ios.a */; };
-		14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */; };
+		144BDC9A1FAA2A35008C3F66 /* libGoogleAPIClientForREST.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 144BDC9B1FAA2A35008C3F66 /* libGoogleAPIClientForREST.a */; };
 		147B9CCA1E4E79F4004BBB29 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147B9CC91E4E79F4004BBB29 /* DropboxSDK.framework */; };
 		14ADBBF91E23F1540087E9B7 /* CCMConversationsPerAccount.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ADBBF81E23F1530087E9B7 /* CCMConversationsPerAccount.m */; };
 		14E657CD1E54CC5F009070E9 /* CCMDDLogFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = 14E657CC1E54CC5F009070E9 /* CCMDDLogFormatter.m */; };
@@ -112,7 +112,6 @@
 		277D64D41C8F0BBA00C0135F /* NSDate+TimeAgo.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D64D21C8F0BBA00C0135F /* NSDate+TimeAgo.m */; };
 		277D64D51C8F0BBA00C0135F /* NSDateTimeAgo.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 277D64D31C8F0BBA00C0135F /* NSDateTimeAgo.bundle */; };
 		277D89021BB14B1B00FAFED5 /* DropboxBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */; };
-		277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 277D89041BB14BA200FAFED5 /* GoogleDriveExplorer.m */; };
 		277D895C1BB183B300FAFED5 /* folder.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D89081BB183B300FAFED5 /* folder.png */; };
 		277D895D1BB183B300FAFED5 /* folder@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D89091BB183B300FAFED5 /* folder@2x.png */; };
 		277D895E1BB183B300FAFED5 /* folder_app.png in Resources */ = {isa = PBXBuildFile; fileRef = 277D890A1BB183B300FAFED5 /* folder_app.png */; };
@@ -409,6 +408,7 @@
 		1403FF051E90063B0085E099 /* Account.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Account.m; sourceTree = "<group>"; };
 		141339DE1E21421A003F3B75 /* CCMConversationsByDay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCMConversationsByDay.h; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.h; sourceTree = "<group>"; };
 		141339DF1E21421A003F3B75 /* CCMConversationsByDay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCMConversationsByDay.m; path = ../../../../CocoaMail.xcworkspace/CCMConversationsByDay.m; sourceTree = "<group>"; };
+		144BDC9B1FAA2A35008C3F66 /* libGoogleAPIClientForREST.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libGoogleAPIClientForREST.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		14685ADA1D6CCE4300A261AA /* mailcore2.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = mailcore2.xcodeproj; path = "../mailcore2/build-mac/mailcore2.xcodeproj"; sourceTree = "<group>"; };
 		14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGoogleAPIClient.a; path = "../../Library/Developer/Xcode/DerivedData/CocoaMail-acxkrqpryzdogfbdyhuywxpfxkjw/Build/Products/Debug-iphonesimulator/GoogleAPIClient/libGoogleAPIClient.a"; sourceTree = "<group>"; };
 		1476686B1E9AFBF400AE24BA /* XcodeWarnings.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = XcodeWarnings.xcconfig; path = CocoaMail/XcodeWarnings.xcconfig; sourceTree = "<group>"; };
@@ -567,8 +567,6 @@
 		277D64D31C8F0BBA00C0135F /* NSDateTimeAgo.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = NSDateTimeAgo.bundle; sourceTree = "<group>"; };
 		277D89001BB14B1B00FAFED5 /* DropboxBrowserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DropboxBrowserViewController.h; sourceTree = "<group>"; };
 		277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DropboxBrowserViewController.m; sourceTree = "<group>"; };
-		277D89031BB14BA200FAFED5 /* GoogleDriveExplorer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GoogleDriveExplorer.h; sourceTree = "<group>"; };
-		277D89041BB14BA200FAFED5 /* GoogleDriveExplorer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GoogleDriveExplorer.m; sourceTree = "<group>"; };
 		277D89081BB183B300FAFED5 /* folder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = folder.png; sourceTree = "<group>"; };
 		277D89091BB183B300FAFED5 /* folder@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "folder@2x.png"; sourceTree = "<group>"; };
 		277D890A1BB183B300FAFED5 /* folder_app.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = folder_app.png; sourceTree = "<group>"; };
@@ -833,8 +831,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				144BDC9A1FAA2A35008C3F66 /* libGoogleAPIClientForREST.a in Frameworks */,
 				1423E0871D6E301C000A6120 /* libMailCore-ios.a in Frameworks */,
-				14685B051D6E0DE400A261AA /* libGoogleAPIClient.a in Frameworks */,
 				27D3B1051BB2D8C400D5B1E4 /* AudioToolbox.framework in Frameworks */,
 				27D3B1061BB2D8C400D5B1E4 /* CoreGraphics.framework in Frameworks */,
 				27D3B1071BB2D8C500D5B1E4 /* CoreMotion.framework in Frameworks */,
@@ -1299,8 +1297,6 @@
 		277D88FF1BB14AFB00FAFED5 /* DriveExplorer */ = {
 			isa = PBXGroup;
 			children = (
-				277D89031BB14BA200FAFED5 /* GoogleDriveExplorer.h */,
-				277D89041BB14BA200FAFED5 /* GoogleDriveExplorer.m */,
 				277D89001BB14B1B00FAFED5 /* DropboxBrowserViewController.h */,
 				277D89011BB14B1B00FAFED5 /* DropboxBrowserViewController.m */,
 			);
@@ -1600,6 +1596,7 @@
 		BF2226EDEE049E09103949DC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				144BDC9B1FAA2A35008C3F66 /* libGoogleAPIClientForREST.a */,
 				14685B041D6E0DE400A261AA /* libGoogleAPIClient.a */,
 				27D3B0FC1BB2D8C400D5B1E4 /* AudioToolbox.framework */,
 				27D3B0FD1BB2D8C400D5B1E4 /* CoreGraphics.framework */,
@@ -1688,7 +1685,6 @@
 				TargetAttributes = {
 					271D4CFD1B846E4500D19373 = {
 						CreatedOnToolsVersion = 6.4;
-						DevelopmentTeam = 2MGU5T4CQD;
 						LastSwiftMigration = 0830;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
@@ -2113,7 +2109,6 @@
 				27F3AD611CB2413D00F6430E /* CCMSearchTableViewController.m in Sources */,
 				271D4D991B84758E00D19373 /* SearchRunner.m in Sources */,
 				277108691C61500600A459E1 /* HTMLTreeEnumerator.m in Sources */,
-				277D89051BB14BA200FAFED5 /* GoogleDriveExplorer.m in Sources */,
 				27818C5C1BABF22500D26D1A /* SettingsViewController.m in Sources */,
 				1403FEFA1E8DAD250085E099 /* PKHUDTextView.swift in Sources */,
 				27818C5A1BABF22500D26D1A /* QuickSwipeViewController.m in Sources */,
@@ -2371,7 +2366,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = CocoaMail/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(inherited)";
@@ -2380,7 +2375,7 @@
 					"-ObjC",
 					"-all_load",
 					"-l\"FMDB\"",
-					"-l\"GoogleAPIClient\"",
+					"-l\"GoogleAPIClientForREST\"",
 					"-l\"MBProgressHUD\"",
 					"-l\"Reachability\"",
 					"-l\"ReactiveCocoa\"",
@@ -2450,7 +2445,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = CocoaMail/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(inherited)";
@@ -2459,7 +2454,7 @@
 					"-ObjC",
 					"-all_load",
 					"-l\"FMDB\"",
-					"-l\"GoogleAPIClient\"",
+					"-l\"GoogleAPIClientForREST\"",
 					"-l\"MBProgressHUD\"",
 					"-l\"Reachability\"",
 					"-l\"ReactiveCocoa\"",

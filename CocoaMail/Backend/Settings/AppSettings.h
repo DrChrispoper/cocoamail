@@ -14,8 +14,15 @@
 
 #define CLIENT_ID @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com"
 #define CLIENT_SECRET @"LhDDzVoxcxbVT95lNPSDWkCg"
-#define TKN_KEYCHAIN_NAME @"CocoaMail iOS"
-#define USR_TKN_KEYCHAIN_NAME [NSString stringWithFormat:@"%@%lu", TKN_KEYCHAIN_NAME,(unsigned long)user.accountNum]
+
+// Pre GTMAppAuth
+#define OLD_TKN_KEYCHAIN_NAME @"CocoaMail iOS"
+#define OLD_USR_TKN_KEYCHAIN_NAME [NSString stringWithFormat:@"%@%lu", OLD_TKN_KEYCHAIN_NAME,(unsigned long)user.accountNum]
+
+// For GTMAppAuth
+#define NEW_TKN_KEYCHAIN_NAME @"CocoaMail iOS GTMAppAuth"
+#define NEW_USR_TKN_KEYCHAIN_NAME [NSString stringWithFormat:@"%@%lu", NEW_TKN_KEYCHAIN_NAME,(unsigned long)user.accountNum]
+
 
 @interface AppSettings : NSObject
 

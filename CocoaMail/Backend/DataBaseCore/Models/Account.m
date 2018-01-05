@@ -94,6 +94,8 @@
 
 -(void) initContent
 {
+    _authorization = nil;
+    
     _currentFolderFullSyncCompleted = YES;
     _runningUpToDateTest = NO;
     _drafts = [[NSMutableArray alloc]init];

@@ -7,15 +7,15 @@
 //
 
 #import "GoogleDriveExplorer.h"
+#import "CCMConstants.h"
+#import "ImapSync.h"
 
-// View tags to differeniate alert views
-static NSString * const kKeychainItemName = @"CocoaMail: Google Drive";
-static NSString * const kClientId = @"489238945643-oqhsao0g40kf8qe7qkrao3ivmhoeuifl.apps.googleusercontent.com";
-static NSString * const kClientSecret = @"LhDDzVoxcxbVT95lNPSDWkCg";
-
+#import "GTMAppAuth.h"
+#import "GTMSessionFetcher.h"
+#import "GTLRDrive.h"
 
 @interface GoogleDriveExplorer () {
-    GTLDriveFile* selectedFile;
+    GTLRDrive_File* selectedFile;
     GoogleDriveExplorer* newSubdirectoryController;
     UIBackgroundTaskIdentifier backgroundProcess;
     BOOL isLocalFileOverwritten;
@@ -46,11 +46,16 @@ static NSString * currentFileName = nil;
         self.currentPath = @"root";
     }
 
-    self.service = [[GTLServiceDrive alloc] init];
+    self.service = [[GTLRDriveService alloc] init];
+    
     self.service.authorizer =
     [GTMOAuth2ViewControllerTouch authForGoogleFromKeychainForName:kKeychainItemName
                                                           clientID:kClientId
                                                       clientSecret:kClientSecret];
+    
+    // can I get the user settings for the current account?
+    
+    self.service.authorizer = [[ImapSync sharedServices:<#(UserSettings *)#>]]
 }
 
 -(void) viewDidUnload
@@ -97,28 +102,28 @@ static NSString * currentFileName = nil;
 
 // Handle completion of the authorization process, and update the Drive API
 // with the new credentials.
--(void) viewController:(GTMOAuth2ViewControllerTouch*)viewController
-      finishedWithAuth:(GTMOAuth2Authentication*)authResult
-                 error:(NSError*)error
-{
-    if (error != nil) {
-        [self showAlert:@"Authentication Error" message:error.localizedDescription];
-        self.service.authorizer = nil;
-    }
-    else {
-        self.service.authorizer = authResult;
-        self.isAuthorized = YES;
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
-}
+//-(void) viewController:(GTMOAuth2ViewControllerTouch*)viewController
+//      finishedWithAuth:(GTMOAuth2Authentication*)authResult
+//                 error:(NSError*)error
+//{
+//    if (error != nil) {
+//        [self showAlert:@"Authentication Error" message:error.localizedDescription];
+//        self.service.authorizer = nil;
+//    }
+//    else {
+//        self.service.authorizer = authResult;
+//        self.isAuthorized = YES;
+//        [self dismissViewControllerAnimated:YES completion:nil];
+//    }
+//}
 
 // Helper for showing an alert
--(void) showAlert:(NSString*)title message:(NSString*)message
-{
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
-}
+//-(void) showAlert:(NSString*)title message:(NSString*)message
+//{
+//    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+//    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+//    [self presentViewController:alert animated:YES completion:nil];
+//}
 
 -(BOOL) shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
